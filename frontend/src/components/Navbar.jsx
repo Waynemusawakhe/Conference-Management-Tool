@@ -7,6 +7,7 @@ const navItems = ["Home", "Conferences", "About", "Help & FAQ", "Testimonials", 
 
 // Items that live on their own page rather than as a section on Home.
 const routes = {
+  About: "/about",
   Contact: "/contact",
   "Help & FAQ": "/help-faq",
 };
