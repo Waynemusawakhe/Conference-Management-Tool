@@ -15,10 +15,30 @@ The backend provides RESTful API endpoints for authentication, user management, 
 * **API Documentation:** Swagger / OpenAPI (L5-Swagger)
 * **Dependency Management:** Composer
 * **Version Control:** Git / GitHub
+* **API Testing:** Postman
 
 ---
 
-## Project Structure
+## Requirements
+
+Before setting up the project, make sure you have installed:
+
+* PHP 8.2 or higher
+* Composer
+* PostgreSQL
+* Git
+* Postman
+
+Check your installed versions:
+
+```bash
+php -v
+composer -V
+```
+
+---
+
+# Project Structure
 
 The backend follows a **modular, feature-driven architecture**.
 
@@ -57,28 +77,9 @@ app/
 
 ---
 
-## Requirements
+# Installation
 
-Before setting up the project, make sure you have installed:
-
-* PHP 8.2 or higher
-* Composer
-* PostgreSQL
-* Git
-* Postman *(optional, for API testing)*
-
-Check your versions:
-
-```bash
-php -v
-composer -V
-```
-
----
-
-## Installation
-
-### 1. Clone the repository
+## 1. Clone the Repository
 
 ```bash
 git clone <REPOSITORY_URL>
@@ -90,33 +91,33 @@ Move into the backend directory:
 cd Conference-Management-Tool/backend
 ```
 
-### 2. Install PHP dependencies
+## 2. Install Dependencies
 
 ```bash
 composer install
 ```
 
-### 3. Create the environment file
+## 3. Create the Environment File
 
-**Windows:**
+### Windows
 
 ```cmd
 copy .env.example .env
 ```
 
-**Linux/macOS:**
+### Linux/macOS
 
 ```bash
 cp .env.example .env
 ```
 
-### 4. Generate the application key
+## 4. Generate the Application Key
 
 ```bash
 php artisan key:generate
 ```
 
-### 5. Configure the database
+## 5. Configure the Database
 
 Update your `.env` file with the PostgreSQL credentials supplied by the database team.
 
@@ -133,7 +134,7 @@ DB_PASSWORD=your_password
 
 > **Important:** Never commit `.env` to GitHub.
 
-### 6. Run migrations
+## 6. Run Database Migrations
 
 ```bash
 php artisan migrate
@@ -145,13 +146,13 @@ If seeders are available:
 php artisan db:seed
 ```
 
-### 7. Start the development server
+## 7. Start the Development Server
 
 ```bash
 php artisan serve
 ```
 
-The API will be available at:
+The backend will be available at:
 
 ```text
 http://127.0.0.1:8000
@@ -201,7 +202,7 @@ admin
 
 The project uses **L5-Swagger** to generate OpenAPI documentation.
 
-Start the Laravel development server:
+Start the Laravel server:
 
 ```bash
 php artisan serve
@@ -213,7 +214,7 @@ Then open:
 http://127.0.0.1:8000/api/documentation
 ```
 
-Swagger UI can be used to:
+Swagger UI allows developers to:
 
 * View available API endpoints
 * View request parameters
@@ -222,7 +223,7 @@ Swagger UI can be used to:
 * Test endpoints using **Try it out**
 * Understand the API contract between frontend and backend
 
-After changing or adding API documentation, regenerate the Swagger specification:
+After adding or changing API documentation, regenerate Swagger:
 
 ```bash
 php artisan l5-swagger:generate
@@ -234,7 +235,7 @@ php artisan l5-swagger:generate
 
 The CMT backend can also be tested using **Postman**.
 
-Swagger is used for API documentation and browser-based testing, while Postman can be used for more detailed API testing and development.
+Swagger is used for API documentation and browser-based testing, while Postman can be used for detailed API testing and development.
 
 ## 1. Start the Laravel Backend
 
@@ -256,7 +257,7 @@ The backend should be available at:
 http://127.0.0.1:8000
 ```
 
-Keep this terminal running while testing the API.
+Keep this terminal running while testing.
 
 ---
 
@@ -344,8 +345,6 @@ A successful login should return:
 200 OK
 ```
 
-The response will contain the authentication information provided by the current implementation.
-
 ---
 
 ## 5. Test Logout
@@ -418,9 +417,9 @@ GET  http://127.0.0.1:8000/api/v1/auth/me
 
 ### Important
 
-When another developer is testing the API on their own computer, `127.0.0.1` refers to **their own machine**.
+When another developer tests the API on their own computer, `127.0.0.1` refers to **their own machine**.
 
-They must first clone the backend repository, install the dependencies, configure their `.env`, and run:
+They must clone the repository, install dependencies, configure their `.env`, and run:
 
 ```bash
 php artisan serve
@@ -428,7 +427,7 @@ php artisan serve
 
 before sending requests from Postman.
 
-The current authentication implementation is **mocked** while database integration is being finalized. The request structure and API routes can therefore be tested before PostgreSQL integration is complete.
+The current authentication implementation is **mocked** while database integration is being finalized. The API routes and request structures can therefore be tested before PostgreSQL integration is complete.
 
 ---
 
@@ -452,79 +451,258 @@ Future breaking changes should use a new API version rather than unexpectedly ch
 
 ---
 
-# Development Workflow
+# Git & Pull Request Workflow
 
-## Create a New Branch
+All backend development should be done through **feature branches and Pull Requests**.
 
-Developers should not work directly on `main`.
+Do not push development work directly to `main`.
 
-Create a feature branch:
+## 1. Get the Latest Code
+
+Before starting work:
 
 ```bash
 git checkout main
 git pull origin main
+```
+
+This ensures you are working with the latest version of the backend.
+
+---
+
+## 2. Create a Feature Branch
+
+Create a branch for your assigned task:
+
+```bash
 git checkout -b feature/your-feature-name
 ```
 
 Examples:
 
-```text
-feature/auth-login
-feature/conference-management
-feature/submission-management
-feature/review-system
-```
-
-## Make Your Changes
-
-Implement your assigned task within the appropriate module.
-
-Before committing, check:
-
 ```bash
-php artisan route:list
+git checkout -b feature/auth-login
+git checkout -b feature/conference-management
+git checkout -b feature/submission-api
 ```
 
-and, where applicable:
-
-```bash
-php artisan test
-```
-
-## Commit Your Changes
-
-Use clear commit messages:
-
-```bash
-git add .
-git commit -m "feat: add conference creation endpoint"
-```
-
-## Push Your Branch
-
-```bash
-git push origin feature/your-feature-name
-```
-
-## Create a Pull Request
-
-Open a Pull Request on GitHub.
-
-Every Pull Request should:
-
-* Clearly describe the changes
-* Reference the relevant GitHub Project work item or issue
-* Include testing information
-* Pass the required checks
-* Be reviewed before merging
-
-Do not merge directly into `main` without the required review.
+Use a clear branch name that describes the work.
 
 ---
 
-# Working With the Team
+## 3. Make Your Changes
 
-The backend is being developed collaboratively.
+Work only on the task assigned to you.
+
+After making your changes:
+
+```bash
+git status
+```
+
+Review the changed files before adding them.
+
+---
+
+## 4. Add Your Changes
+
+Add the files you want to include:
+
+```bash
+git add .
+```
+
+Or add a specific file:
+
+```bash
+git add app/Modules/Account/Controllers/AuthController.php
+```
+
+Check again:
+
+```bash
+git status
+```
+
+---
+
+## 5. Commit Your Changes
+
+Create a commit with a clear message:
+
+```bash
+git commit -m "feat: add login endpoint"
+```
+
+Examples:
+
+```bash
+git commit -m "feat: add conference creation endpoint"
+git commit -m "fix: validate submission request"
+git commit -m "docs: update API documentation"
+```
+
+---
+
+## 6. Push Your Branch
+
+Push your feature branch to GitHub:
+
+```bash
+git push -u origin feature/your-feature-name
+```
+
+For subsequent pushes:
+
+```bash
+git push
+```
+
+---
+
+# Creating a Pull Request
+
+After pushing your branch, go to the project's GitHub repository.
+
+GitHub should display an option such as:
+
+**Compare & pull request**
+
+Select it.
+
+Set:
+
+```text
+Base branch: main
+Compare branch: feature/your-feature-name
+```
+
+Add a clear title.
+
+Example:
+
+```text
+feat: add authentication login endpoint
+```
+
+In the description, explain:
+
+* What you changed
+* What endpoints or functionality were added
+* How you tested it
+* Any known issues or blockers
+
+Example:
+
+```text
+## Changes
+
+- Added login endpoint
+- Added LoginUserAction
+- Added Swagger documentation
+- Added API route
+
+## Testing
+
+- Tested using Swagger
+- Tested using Postman
+- Confirmed route appears in php artisan route:list
+
+## Notes
+
+Authentication is currently mocked while database integration is being finalized.
+```
+
+Then click:
+
+**Create pull request**
+
+---
+
+# Code Review
+
+After creating the Pull Request:
+
+1. Request a review from the appropriate backend reviewer.
+2. Wait for the review.
+3. Address any requested changes.
+4. Push the changes to the same branch.
+
+You do **not** need to create another Pull Request after making changes.
+
+For example:
+
+```bash
+git add .
+git commit -m "fix: address review comments"
+git push
+```
+
+The existing Pull Request will automatically update.
+
+---
+
+# Merging
+
+Once the Pull Request has been reviewed and approved, it can be merged into `main` according to the team's repository permissions and workflow.
+
+After the Pull Request is merged, update your local `main` branch:
+
+```bash
+git checkout main
+git pull origin main
+```
+
+Then create a new feature branch for your next task.
+
+---
+
+# Complete Git Workflow
+
+```text
+main
+  │
+  ├── git pull
+  │
+  └── feature/your-task
+          │
+          ├── Make changes
+          ├── git status
+          ├── git add .
+          ├── git commit
+          ├── git push
+          │
+          └── Pull Request
+                    │
+                    ├── Code Review
+                    ├── Fix requested changes
+                    └── Approval
+                           │
+                           ▼
+                          main
+```
+
+### Quick Command Reference
+
+```bash
+git checkout main
+git pull origin main
+
+git checkout -b feature/your-feature-name
+
+# Make your changes
+
+git status
+git add .
+git commit -m "feat: describe your change"
+git push -u origin feature/your-feature-name
+```
+
+Then create the **Pull Request on GitHub**.
+
+---
+
+# Development Workflow
 
 Before starting development:
 
@@ -534,10 +712,12 @@ Before starting development:
 4. Implement only your assigned task.
 5. Test your changes.
 6. Update Swagger documentation when adding or changing API endpoints.
-7. Push your branch.
-8. Open a Pull Request.
-9. Request a code review.
-10. Merge only after approval.
+7. Add and commit your changes.
+8. Push your branch.
+9. Open a Pull Request.
+10. Request a code review.
+11. Address review comments if required.
+12. Merge only after approval.
 
 ---
 
@@ -661,4 +841,4 @@ The API contract and endpoint structure should remain stable wherever possible s
 
 Backend development is managed through the project's GitHub repository and GitHub Projects board.
 
-All contributors should follow the team's branching, Pull Request, code review, and integration workflow.
+All contributors should follow the team's branching, Pull Request, code review, testing, and integration workflow.
