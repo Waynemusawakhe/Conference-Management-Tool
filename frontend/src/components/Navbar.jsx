@@ -8,6 +8,7 @@ const navItems = [
   { label: "Home", target: "/", section: "top" },
   { label: "Conferences", target: "/conferences" },
   { label: "About", target: "/about" },
+  { label: "Testimonials", target: "/testimonials" },
   { label: "Help & FAQ", target: "/help-faq" },
   { label: "Contact", target: "/contact" },
 ];

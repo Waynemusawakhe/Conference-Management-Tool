@@ -430,267 +430,213 @@ html.dark [class*="border-[#dfe4ed]"] { border-color: rgba(255,255,255,.12); }
 }
 .faq-contact-btn:hover { transform: translateY(-1px); }
 .faq-logo { width: 56px; height: 56px; object-fit: contain; margin: 0 auto 18px; display: block; }
-/* ===== Conferences page ===== */
-.conf-toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 14px;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 22px;
+
+
+/* ------------------------------
+   Testimonials Page Layout
+------------------------------ */
+.testimonials-page {
+  background: #f0f8ff; /* light blue background */
+  color: #1e293b;
+  font-family: Arial, sans-serif;
 }
 
-.conf-search {
-  flex: 1;
-  min-width: min(100%, 320px);
-}
-
-.conf-toolbar-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  align-items: center;
-}
-
-.conf-sort {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  color: var(--muted);
-}
-
-.conf-sort select {
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  padding: 8px 12px;
-  background: var(--white);
-  font: inherit;
-}
-
-.conf-view-toggle {
-  display: flex;
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  overflow: hidden;
-  background: var(--white);
-}
-
-.conf-view-toggle button {
-  border: 0;
-  background: transparent;
-  padding: 8px 12px;
-  color: var(--muted);
-}
-
-.conf-view-toggle button.active {
-  background: #f0eeff;
-  color: var(--purple);
-}
-
-.conf-layout {
-  display: grid;
-  grid-template-columns: 240px 1fr;
-  gap: 28px;
-  align-items: start;
-}
-
-.conf-filters {
-  background: var(--white);
-  border: 1px solid var(--line);
-  border-radius: 16px;
-  padding: 18px;
-  box-shadow: 0 8px 22px rgba(15, 28, 65, 0.04);
-}
-
-.conf-filters-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 14px;
-}
-
-.conf-filter-field {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-bottom: 14px;
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--muted);
-}
-
-.conf-filter-field select {
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  padding: 10px 12px;
-  font: inherit;
-  font-weight: 500;
-  color: var(--ink);
-  background: var(--white);
-}
-
-.conf-mobile-filter-btn {
-  display: none;
-}
-
-.conf-mobile-filters {
-  display: none;
-  margin-bottom: 18px;
-}
-
-.conference-card-top {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-
-.status-chip,
-.format-chip {
-  display: inline-flex;
-  align-items: center;
-  padding: 4px 10px;
-  border-radius: 999px;
-  font-size: 11px;
-  font-weight: 700;
-}
-
-.status-chip {
-  color: var(--purple);
-  background: #f0eeff;
-  border: 1px solid #e0dcff;
-}
-
-.format-chip {
-  color: #0d6e4f;
-  background: #e8f8f1;
-  border: 1px solid #c6eedc;
-}
-
-.conference-acronym {
-  display: block;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  color: var(--purple);
-  margin-bottom: 4px;
-}
-
-.conference-desc {
-  margin: 0 0 10px;
-  color: var(--muted);
-  font-size: 13px;
-  line-height: 1.55;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.conference-deadline {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin: 0 0 10px;
-  font-size: 13px;
-  color: var(--ink);
-}
-
-.topic-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-bottom: 12px;
-}
-
-.topic-chips span {
-  font-size: 11px;
-  font-weight: 600;
-  padding: 4px 8px;
-  border-radius: 999px;
-  background: #f4f6fb;
-  color: var(--muted);
-  border: 1px solid var(--line);
-}
-
-.conference-list {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.conference-card.is-list {
-  display: grid;
-  grid-template-columns: 220px 1fr;
-  gap: 0;
-}
-
-.conference-card.is-list .conference-image-wrap {
-  min-height: 100%;
-}
-
-.conference-card.is-list .conference-image {
-  height: 100%;
-  object-fit: cover;
-}
-
-.conferences-meta-bar {
-  margin-top: 28px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px 28px;
-  color: var(--muted);
-  font-size: 13px;
-}
-
-.conferences-meta-bar span {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.empty-state {
-  grid-column: 1 / -1;
+/* ------------------------------
+   Hero Section
+------------------------------ */
+.testimonials-hero {
   text-align: center;
-  padding: 48px 24px;
-  border: 1px dashed var(--line);
-  border-radius: 18px;
-  background: var(--white);
+  padding: 60px 20px;
 }
 
-.empty-state h3 {
-  margin: 12px 0 6px;
+.testimonials-hero h1 {
+  margin-top: 20px;
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #1e293b;
 }
 
-.empty-state p {
-  color: var(--muted);
-  margin: 0 0 18px;
+.testimonials-hero .highlight {
+  color: #064ff8;
 }
 
-@media (max-width: 900px) {
-  .conf-layout {
+.testimonials-hero p {
+  margin-top: 12px;
+  color: #475569;
+  font-size: 1rem;
+}
+
+/* ------------------------------
+   Stats Strip
+------------------------------ */
+.stats-strip {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin: 40px auto;
+  flex-wrap: wrap;
+}
+
+.stats-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #e6f0ff;
+  border: 1px solid #cbd5e1;
+  padding: 16px 20px;
+  border-radius: 10px;
+}
+
+.stats-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(185, 179, 255, 0.2);
+  border-radius: 8px;
+  width: 40px;
+  height: 40px;
+}
+
+.stats-value {
+  font-size: 18px;
+  font-weight: bold;
+  color: #b9b3ff;
+}
+
+.stats-label {
+  font-size: 12px;
+  color: #475569;
+}
+
+/* ------------------------------
+   Testimonial Cards
+------------------------------ */
+.testimonials-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+  padding: 40px 20px;
+}
+
+.testimonial-card {
+  background: #ffffff;
+  color: #1e293b;
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid #cbd5e1;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.testimonial-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.quote-icon {
+  color: #000; /* black quotes */
+  width: 24px;
+  height: 24px;
+}
+
+.testimonial-text {
+  margin-top: 12px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.testimonial-stars {
+  margin-top: 12px;
+  display: flex;
+  gap: 4px;
+}
+
+.star-filled {
+  color: #facc15; /* yellow stars */
+  fill: #facc15;
+  width: 16px;
+  height: 16px;
+}
+
+.star-empty {
+  color: #cbd5e1;
+  fill: #cbd5e1;
+  width: 16px;
+  height: 16px;
+}
+
+.testimonial-footer {
+  margin-top: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-top: 1px solid #e2e8f0;
+  padding-top: 12px;
+}
+
+.testimonial-initials {
+  background: #4b3bfa;
+  color: #fff;
+  font-weight: bold;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.testimonial-name {
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.testimonial-role {
+  font-size: 12px;
+  color: #475569;
+}
+
+/* ------------------------------
+   CTA Section
+------------------------------ */
+.cta-section {
+  background: #e6f0ff;
+  text-align: center;
+  padding: 40px 20px;
+  border-top: 1px solid #cbd5e1;
+}
+
+.cta-section h2 {
+  font-size: 1.5rem;
+  color: #1e293b;
+}
+
+.cta-section p {
+  color: #475569;
+  margin: 12px 0;
+}
+
+.cta-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #5d50f3;
+  color: #fff; /* white text */
+  border: none;
+  padding: 12px 24px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background 0.2s ease;
+}
+
+.cta-button:hover {
+  background: #a59eff;
+}
+.conference-card.is-list {
     grid-template-columns: 1fr;
   }
 
-  .conf-sidebar {
-    display: none;
-  }
-
-  .conf-mobile-filter-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-  }
-
-  .conf-mobile-filters {
-    display: block;
-  }
-
-  .conference-card.is-list {
-    grid-template-columns: 1fr;
-  }
-}
 /* Auth pages (Login/Register) — append to src/index.css */
 /* Reuses existing tokens (--navy, --purple, --ink, --muted, --line, --white)
    and the same gradient used by .hero / .page-header, so it matches the rest

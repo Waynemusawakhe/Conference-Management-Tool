@@ -9,6 +9,7 @@ import About from "./pages/About";
 import { Navigate } from "react-router-dom";
 import { ThemeProvider } from "./context/ThemeContext";
 import ForgotPassword from "./pages/ForgotPassword";
+import Testimonials from "./pages/Testimonials";
 
 export default function App() {
   return (
@@ -22,6 +23,7 @@ export default function App() {
       <Route path="/contact" element={<Contact />} />
       <Route path="/help-faq" element={<HelpFAQ />} />
       <Route path="/about" element={<About />} />
+      <Route path="/testimonials" element={<Testimonials />} />
       <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </ThemeProvider>
