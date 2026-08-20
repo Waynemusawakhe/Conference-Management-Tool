@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Logo from "./Logo";
 
-const navItems = ["Home","Login","Register", "Conferences", "About", "Help & FAQ", "Testimonials", "Contact"];
+const navItems = ["Home","Conferences", "About", "Help & FAQ", "Testimonials", "Contact"];
 
 // Items that live on their own page rather than as a section on Home.
 const routes = {
