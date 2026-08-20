@@ -1,4 +1,5 @@
 import { Routes, Route } from "react-router-dom";
+import Testimonials from "./pages/Testimonials";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -15,6 +16,7 @@ export default function App() {
       <Route path="/contact" element={<Contact />} />
       <Route path="/help-faq" element={<HelpFAQ />} />
       <Route path="/about" element={<About />} />
+      <Route path="/testimonials" element={<Testimonials />} />
     </Routes>
   );
 }

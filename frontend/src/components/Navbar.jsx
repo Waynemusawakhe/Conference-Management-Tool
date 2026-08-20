@@ -11,6 +11,7 @@ const routes = {
   Contact: "/contact",
   Conferences: "/conferences",
   "Help & FAQ": "/help-faq",
+  "Testimonials": "/testimonials",
 };
 
 export default function Navbar() {
