@@ -35,17 +35,18 @@ export default function SearchBar({
   const activeFilterCount = [filters.category, filters.country].filter(Boolean).length;
 
   return (
-    <div className="search-wrapper">
-      <form className="search-box" onSubmit={submit}>
-        <Search className="search-icon" size={22} />
+      <div className="relative w-full max-w-[680px]">
+        <form className="flex min-h-[62px] w-full items-center rounded-[14px] bg-white p-1.5 shadow-[0_20px_55px_rgba(0,0,0,.18)]" onSubmit={submit}>
+          <Search className="mx-[13px] shrink-0 text-[#71809a]" size={22} />
         <input
+          className="min-w-0 flex-1 border-0 bg-transparent text-[13px] text-[#0d1b3d] outline-none placeholder:text-[#8792a8]"
           value={value}
           onChange={(event) => onChange(event.target.value)}
           placeholder="Search conferences by title, topic or location..."
           aria-label="Search conferences"
         />
         <button
-          className={`search-filter ${activeFilterCount ? "has-filters" : ""}`}
+            className={`mr-1 flex items-center gap-1.5 border-0 bg-transparent p-2.5 text-xs font-bold text-[#68748b] ${activeFilterCount ? "text-[#5c50ec]" : ""}`}
           type="button"
           onClick={() => setShowFilters((open) => !open)}
           aria-label="Open conference filters"
@@ -54,24 +55,25 @@ export default function SearchBar({
           <SlidersHorizontal size={18} />
           <span>Filters{activeFilterCount ? ` (${activeFilterCount})` : ""}</span>
         </button>
-        <button className="btn btn-primary search-submit" type="submit">
+          <button className="min-h-[50px] min-w-[106px] rounded-[10px] border-0 bg-gradient-to-br from-[#6655f6] to-[#7869ff] px-[18px] text-[13px] font-bold text-white shadow-[0_10px_26px_rgba(103,87,245,.26)]" type="submit">
           Search
         </button>
       </form>
 
       {showFilters && (
-        <div className="filter-panel" role="region" aria-label="Conference filters">
-          <div className="filter-panel-header">
+          <div className="absolute right-0 top-[calc(100%+9px)] z-20 w-full max-w-[420px] rounded-[14px] border border-[#e4e8f0] bg-white p-[17px] text-[#0d1b3d] shadow-[0_18px_45px_rgba(15,28,65,.16)]" role="region" aria-label="Conference filters">
+            <div className="mb-[14px] flex items-center justify-between text-xs">
             <strong>Filter conferences</strong>
-            <button type="button" className="filter-close" onClick={() => setShowFilters(false)} aria-label="Close filters">
+              <button type="button" className="grid h-[30px] w-[30px] place-items-center rounded-lg border-0 bg-[#f4f6fa] text-[#68748b]" onClick={() => setShowFilters(false)} aria-label="Close filters">
               <X size={17} />
             </button>
           </div>
 
-          <div className="filter-fields">
-            <label>
-              <span>Research area</span>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <label className="grid gap-1.5 text-[10px] font-bold text-[#68748b]">
+                <span>Research area</span>
               <select
+                className="min-h-10 w-full rounded-[9px] border border-[#dfe4ed] bg-white px-2.5 text-[11px] text-[#0d1b3d] outline-none focus:border-[#7568f7] focus:ring-4 focus:ring-[#7568f7]/10"
                 value={filters.category}
                 onChange={(event) => updateFilter("category", event.target.value)}
               >
@@ -80,9 +82,10 @@ export default function SearchBar({
               </select>
             </label>
 
-            <label>
+              <label className="grid gap-1.5 text-[10px] font-bold text-[#68748b]">
               <span>Country</span>
               <select
+                className="min-h-10 w-full rounded-[9px] border border-[#dfe4ed] bg-white px-2.5 text-[11px] text-[#0d1b3d] outline-none focus:border-[#7568f7] focus:ring-4 focus:ring-[#7568f7]/10"
                 value={filters.country}
                 onChange={(event) => updateFilter("country", event.target.value)}
               >
@@ -92,11 +95,11 @@ export default function SearchBar({
             </label>
           </div>
 
-          <div className="filter-panel-actions">
-            <button type="button" className="filter-clear" onClick={clearFilters}>
+            <div className="mt-[15px] flex items-center justify-end gap-2.5">
+              <button type="button" className="border-0 bg-transparent text-[11px] font-bold text-[#68748b]" onClick={clearFilters}>
               Clear filters
             </button>
-            <button type="button" className="btn btn-primary filter-apply" onClick={submit}>
+              <button type="button" className="min-h-[38px] rounded-[10px] border-0 bg-gradient-to-br from-[#6655f6] to-[#7869ff] px-3.5 text-xs font-bold text-white" onClick={submit}>
               Apply filters
             </button>
           </div>

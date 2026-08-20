@@ -1,6 +1,5 @@
 import { useState } from "react";
 import Navbar from "../components/Navbar";
-import "./contact.css";
 
 // FR-020: Any visitor can view this page and submit a message via the
 // Contact Us form without logging in. Submission is accepted and
@@ -68,24 +67,24 @@ export default function Contact() {
   }
 
   return (
-    <div className="site">
+    <div className="min-h-screen bg-[#f7f9fc] text-[#0d1b3d]">
       <Navbar />
 
-      <section className="section contact-section">
-        <div className="container">
-          <div className="contact-heading">
-            <span className="eyebrow">Get in touch</span>
-            <h1>Contact Us</h1>
-            <p className="contact-lead">
+      <section className="px-5 py-20">
+        <div className="mx-auto max-w-[760px]">
+          <div className="mb-8 text-center">
+            <span className="mb-2 inline-block text-[10px] font-extrabold uppercase tracking-[.12em] text-[#5c50ec]">Get in touch</span>
+            <h1 className="text-4xl font-bold tracking-[-.05em]">Contact Us</h1>
+            <p className="mx-auto mt-3 max-w-xl text-sm leading-7 text-[#66728b]">
               Have a question about a conference, a submission, or the
               platform itself? Send us a message and we'll get back to you.
             </p>
           </div>
 
-          <div className="contact-card">
+          <div className="rounded-2xl border border-[#e4e8f0] bg-white p-6 shadow-[0_18px_55px_rgba(15,28,65,.08)] sm:p-9">
             {submitted ? (
-              <div className="contact-success" role="status">
-                <div className="contact-success-icon" aria-hidden="true">
+              <div className="py-8 text-center" role="status">
+                <div className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-[#e8faf2] text-[#19a56a]" aria-hidden="true">
                   <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
                     <path
                       d="M20 6 9 17l-5-5"
@@ -96,27 +95,27 @@ export default function Contact() {
                     />
                   </svg>
                 </div>
-                <h3>Message sent</h3>
-                <p>
+                <h3 className="mt-4 text-xl font-bold">Message sent</h3>
+                <p className="mx-auto mt-2 max-w-md text-sm leading-7 text-[#66728b]">
                   Thanks for reaching out — we've received your message and
                   will get back to you as soon as we can.
                 </p>
                 <button
                   type="button"
-                  className="btn btn-ghost-dark"
+                  className="mt-5 rounded-[11px] border border-[#dfe4ed] bg-white px-4 py-3 text-xs font-bold text-[#43506a]"
                   onClick={() => setSubmitted(false)}
                 >
                   Send another message
                 </button>
               </div>
             ) : (
-              <form className="contact-form" onSubmit={handleSubmit} noValidate>
+              <form className="grid gap-5" onSubmit={handleSubmit} noValidate>
                 {errors.form && (
-                  <p className="field-error form-error">{errors.form}</p>
+                  <p className="rounded-lg bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">{errors.form}</p>
                 )}
 
-                <label className="form-field">
-                  <span className="form-label">Name</span>
+                <label className="grid gap-2">
+                  <span className="text-xs font-bold text-[#43506a]">Name</span>
                   <input
                     type="text"
                     name="name"
@@ -125,16 +124,17 @@ export default function Contact() {
                     placeholder="Your full name"
                     aria-invalid={Boolean(errors.name)}
                     aria-describedby={errors.name ? "name-error" : undefined}
+                    className="min-h-11 rounded-[10px] border border-[#dfe4ed] px-3 text-sm outline-none focus:border-[#7568f7] focus:ring-4 focus:ring-[#7568f7]/10"
                   />
                   {errors.name && (
-                    <span className="field-error" id="name-error">
+                    <span className="text-xs font-semibold text-red-700" id="name-error">
                       {errors.name}
                     </span>
                   )}
                 </label>
 
-                <label className="form-field">
-                  <span className="form-label">Email</span>
+                <label className="grid gap-2">
+                  <span className="text-xs font-bold text-[#43506a]">Email</span>
                   <input
                     type="email"
                     name="email"
@@ -142,16 +142,17 @@ export default function Contact() {
                     onChange={handleChange}
                     aria-invalid={Boolean(errors.email)}
                     aria-describedby={errors.email ? "email-error" : undefined}
+                    className="min-h-11 rounded-[10px] border border-[#dfe4ed] px-3 text-sm outline-none focus:border-[#7568f7] focus:ring-4 focus:ring-[#7568f7]/10"
                   />
                   {errors.email && (
-                    <span className="field-error" id="email-error">
+                    <span className="text-xs font-semibold text-red-700" id="email-error">
                       {errors.email}
                     </span>
                   )}
                 </label>
 
-                <label className="form-field">
-                  <span className="form-label">Message</span>
+                <label className="grid gap-2">
+                  <span className="text-xs font-bold text-[#43506a]">Message</span>
                   <textarea
                     name="message"
                     value={form.message}
@@ -162,9 +163,10 @@ export default function Contact() {
                     aria-describedby={
                       errors.message ? "message-error" : undefined
                     }
+                    className="rounded-[10px] border border-[#dfe4ed] px-3 py-3 text-sm outline-none focus:border-[#7568f7] focus:ring-4 focus:ring-[#7568f7]/10"
                   />
                   {errors.message && (
-                    <span className="field-error" id="message-error">
+                    <span className="text-xs font-semibold text-red-700" id="message-error">
                       {errors.message}
                     </span>
                   )}
@@ -172,7 +174,7 @@ export default function Contact() {
 
                 <button
                   type="submit"
-                  className="btn btn-primary contact-submit"
+                  className="min-h-11 rounded-[11px] border-0 bg-gradient-to-br from-[#6655f6] to-[#7869ff] px-4 text-sm font-bold text-white shadow-[0_10px_26px_rgba(103,87,245,.26)] disabled:cursor-not-allowed disabled:opacity-60"
                   disabled={submitting}
                 >
                   {submitting ? "Sending…" : "Send Message"}
