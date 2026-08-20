@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import Logo from "../components/Logo";
+import SectionHeading from "../components/SectionHeading";
 
 function Login() {
   const [formData, setFormData] = useState({ email: "", password: "" });
@@ -26,12 +27,19 @@ function Login() {
   return (
     <div className="auth-page">
       <div className="auth-card">
-        {/* CMT Brand Header — shared Logo component */}
-        <div style={{ display: "flex", justifyContent: "center", marginBottom: "24px" }}>
+        {/* CMT Brand Header */}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            marginBottom: "24px",
+          }}
+        >
           <Logo />
         </div>
 
-        <h1 className="auth-title">Log In</h1>
+        {/* Shared team heading */}
+        <SectionHeading title="Log In" />
 
         <form onSubmit={handleSubmit} className="auth-form">
           <div className="form-group">
@@ -53,7 +61,6 @@ function Login() {
               type="password"
               value={formData.password}
               onChange={handleChange}
-              placeholder="******"
             />
             <Link to="/forgot-password" className="auth-link small">
               Forgot password?
@@ -67,7 +74,10 @@ function Login() {
           </button>
 
           <p className="auth-footer">
-            Don't have an account? <Link to="/register" className="auth-link">Register</Link>
+            Don't have an account?{" "}
+            <Link to="/register" className="auth-link">
+              Register
+            </Link>
           </p>
         </form>
       </div>
