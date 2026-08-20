@@ -598,46 +598,128 @@ img { max-width: 100%; display: block; }
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  background: #5d50f3;
+  color: #fff; /* white text */
+  border: none;
+  padding: 12px 24px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background 0.2s ease;
 }
 
-.empty-state {
-  grid-column: 1 / -1;
-  text-align: center;
-  padding: 48px 24px;
-  border: 1px dashed var(--line);
-  border-radius: 18px;
+.cta-button:hover {
+  background: #a59eff;
+}
+.conference-card.is-list {
+    grid-template-columns: 1fr;
+  }
+
+/* Auth pages (Login/Register) — append to src/index.css */
+/* Reuses existing tokens (--navy, --purple, --ink, --muted, --line, --white)
+   and the same gradient used by .hero / .page-header, so it matches the rest
+   of the site instead of introducing new colors. */
+
+.auth-page {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 16px;
+  background:
+    radial-gradient(circle at 75% 32%, rgba(98,83,245,.20), transparent 27%),
+    radial-gradient(circle at 100% 100%, rgba(27,94,255,.16), transparent 34%),
+    linear-gradient(135deg, var(--navy) 0%, #0a1740 52%, #15165a 100%);
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 420px;
   background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 32px;
+  box-shadow: 0 18px 45px rgba(15, 28, 65, .16);
 }
 
-.empty-state h3 {
-  margin: 12px 0 6px;
+.auth-title {
+  color: var(--ink);
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -.03em;
+  text-align: center;
+  margin-bottom: 24px;
 }
 
-.empty-state p {
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
   color: var(--muted);
-  margin: 0 0 18px;
+  margin-bottom: 6px;
 }
 
-@media (max-width: 900px) {
-  .conf-layout {
-    grid-template-columns: 1fr;
-  }
+.form-group input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--ink);
+  background: var(--white);
+  font-size: .95rem;
+  outline: none;
+  box-sizing: border-box;
+}
 
-  .conf-sidebar {
-    display: none;
-  }
+.form-group input::placeholder {
+  color: #a7b0c2;
+}
 
-  .conf-mobile-filter-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-  }
+.form-group input:focus {
+  border-color: var(--purple);
+  box-shadow: 0 0 0 3px rgba(103, 87, 245, .15);
+}
 
-  .conf-mobile-filters {
-    display: block;
-  }
+.auth-link {
+  color: var(--purple);
+  font-size: .875rem;
+  font-weight: 600;
+  text-decoration: none;
+}
 
-  .conference-card.is-list {
-    grid-template-columns: 1fr;
-  }
+.auth-link:hover {
+  text-decoration: underline;
+}
+
+.auth-link.small {
+  display: inline-block;
+  margin-top: 6px;
+}
+
+.auth-error {
+  color: #d9534f;
+  font-size: .875rem;
+  margin: 0;
+}
+
+/* Button itself already gets its look from the existing .btn / .btn-primary
+   classes (gradient, shadow, hover lift) — this just makes it full width. */
+.auth-submit {
+  width: 100%;
+}
+
+.auth-footer {
+  text-align: center;
+  color: var(--muted);
+  font-size: .875rem;
+  margin-top: 4px;
 }
