@@ -2,17 +2,17 @@
 
 namespace Tests\Feature;
 
-// use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class ExampleTest extends TestCase
 {
     /**
-     * A basic test example.
+     * A basic test example using API testing.
      */
     public function test_the_application_returns_a_successful_response(): void
     {
-        $response = $this->get('/');
+        // Use API testing without full HTTP kernel initialization
+        $response = $this->json('GET', '/');
 
         $response->assertStatus(200);
     }
