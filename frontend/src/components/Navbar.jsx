@@ -1,22 +1,48 @@
 import { Menu, X } from "lucide-react";
 import { useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import Logo from "./Logo";
 
 const navItems = ["Home", "Conferences", "About", "Help & FAQ", "Testimonials", "Contact"];
 
+// Items that live on their own page rather than as a section on Home.
+const routes = {
+  About: "/about",
+  Contact: "/contact",
+  Conferences: "/conferences",
+  "Help & FAQ": "/help-faq",
+};
+
 export default function Navbar() {
   const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
 
-  const scrollTo = (label) => {
+  const goTo = (label) => {
     setOpen(false);
+
+    if (routes[label]) {
+      navigate(routes[label]);
+      return;
+    }
+
     const target = label === "Home" ? "top" : label.toLowerCase().replace(/[^a-z0-9]+/g, "-");
-    document.getElementById(target)?.scrollIntoView({ behavior: "smooth" });
+
+    if (location.pathname !== "/") {
+      // Not on the home page — go there first, then scroll once it renders.
+      navigate("/");
+      setTimeout(() => {
+        document.getElementById(target)?.scrollIntoView({ behavior: "smooth" });
+      }, 100);
+    } else {
+      document.getElementById(target)?.scrollIntoView({ behavior: "smooth" });
+    }
   };
 
   return (
     <header className="site-header">
       <div className="container nav-inner">
-        <a href="#top" onClick={() => scrollTo("Home")} aria-label="CMT home">
+        <a href="/" onClick={(e) => { e.preventDefault(); goTo("Home"); }} aria-label="CMT home">
           <Logo />
         </a>
 
@@ -24,8 +50,8 @@ export default function Navbar() {
           {navItems.map((item) => (
             <button
               key={item}
-              className={`nav-link ${item === "Home" ? "active" : ""}`}
-              onClick={() => scrollTo(item)}
+              className={`nav-link ${item === "Home" && location.pathname === "/" ? "active" : ""}`}
+              onClick={() => goTo(item)}
             >
               {item}
             </button>
@@ -54,7 +80,7 @@ export default function Navbar() {
       {open && (
         <div className="mobile-nav">
           {navItems.map((item) => (
-            <button key={item} onClick={() => scrollTo(item)}>
+            <button key={item} onClick={() => goTo(item)}>
               {item}
             </button>
           ))}

@@ -1,0 +1,164 @@
+/* Contact page — reuses the site's existing tokens (--navy, --purple, --ink,
+   --muted, --line) and global classes (.section, .container, .eyebrow, .btn)
+   defined in index.css. Only Contact-specific pieces are added here. */
+
+.contact-section {
+  background: var(--bg);
+}
+
+.contact-heading {
+  max-width: 640px;
+  margin: 0 auto 36px;
+  text-align: center;
+}
+
+.contact-heading h1 {
+  margin: 12px 0 14px;
+  color: var(--ink);
+  font-size: clamp(32px, 4vw, 44px);
+  line-height: 1.08;
+  letter-spacing: -.045em;
+}
+
+.contact-lead {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.contact-card {
+  width: min(560px, 100%);
+  margin: 0 auto;
+  padding: 32px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 18px 45px rgba(15, 28, 65, .07);
+}
+
+.contact-form {
+  display: grid;
+  gap: 20px;
+}
+
+.form-field {
+  display: grid;
+  gap: 8px;
+}
+
+.form-label {
+  color: #68748b;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.form-field input,
+.form-field textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid #dfe4ed;
+  border-radius: 10px;
+  outline: 0;
+  color: var(--ink);
+  background: #fff;
+  font-size: 13px;
+  font-family: inherit;
+  transition: border-color .2s, box-shadow .2s;
+}
+
+.form-field input::placeholder,
+.form-field textarea::placeholder {
+  color: #a2aabc;
+}
+
+.form-field input:focus,
+.form-field textarea:focus {
+  border-color: #7568f7;
+  box-shadow: 0 0 0 3px rgba(117, 104, 247, .12);
+}
+
+.form-field textarea {
+  resize: vertical;
+  min-height: 130px;
+  line-height: 1.6;
+}
+
+.field-error {
+  color: #d9455f;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.form-error {
+  margin: -6px 0 -6px;
+  padding: 10px 12px;
+  border-radius: 9px;
+  background: #fdeef0;
+}
+
+.contact-submit {
+  justify-self: start;
+  min-width: 168px;
+  min-height: 46px;
+  margin-top: 4px;
+}
+
+.contact-submit:disabled {
+  opacity: .7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.contact-success {
+  padding: 20px 6px 8px;
+  text-align: center;
+}
+
+.contact-success-icon {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  margin: 0 auto 16px;
+  border-radius: 50%;
+  color: #159b64;
+  background: #e8faf2;
+}
+
+.contact-success h3 {
+  margin: 0 0 8px;
+  color: var(--ink);
+  font-size: 19px;
+  letter-spacing: -.03em;
+}
+
+.contact-success p {
+  max-width: 380px;
+  margin: 0 auto 22px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.btn-ghost-dark {
+  color: #43506a;
+  background: transparent;
+  border: 1px solid var(--line);
+}
+
+.btn-ghost-dark:hover {
+  background: #f4f6fa;
+}
+
+@media (max-width: 560px) {
+  .contact-card {
+    padding: 24px 18px;
+  }
+
+  .contact-submit {
+    justify-self: stretch;
+  }
+}
