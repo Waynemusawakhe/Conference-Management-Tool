@@ -1,13 +1,12 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import Navbar from "../components/Navbar";
 
-export default function Register() {
+function Register() {
   const [formData, setFormData] = useState({
-    name: "",
+    fullName: "",
     email: "",
     password: "",
-    confirmPassword: ""
+    confirmPassword: "",
   });
   const [error, setError] = useState("");
 
@@ -19,8 +18,13 @@ export default function Register() {
     e.preventDefault();
     setError("");
 
-    if (!formData.name || !formData.email || !formData.password) {
-      setError("Please fill in all required fields.");
+    if (
+      !formData.fullName ||
+      !formData.email ||
+      !formData.password ||
+      !formData.confirmPassword
+    ) {
+      setError("Please fill in every field.");
       return;
     }
 
@@ -29,146 +33,119 @@ export default function Register() {
       return;
     }
 
-    console.log("Registering user:", formData);
+    // TODO: replace with your actual register API call
+    console.log("Registering:", formData);
   };
 
   return (
-    <div className="site">
-      <Navbar />
+    <div className="min-h-screen bg-[#0A0A0D]">
+      <main className="flex items-center justify-center px-4 py-16">
+        <div className="w-full max-w-md rounded-lg border border-[#23252E] bg-[#121318] p-8 shadow-lg">
+          {/* CMT Brand Header */}
+          <div className="brand" style={{ justifyContent: "center", marginBottom: "24px" }}>
+            <img className="brand-mark" src="/cmt-logo.png" alt="CMT logo" />
+            <div className="brand-copy">
+              <strong>CMT</strong>
+              <span>Conference Management Tool</span>
+            </div>
+          </div>
 
-      <main className="hero">
-        <div className="hero-noise" />
-        <div className="container" style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "calc(100vh - 82px)", padding: "40px 0" }}>
-          <div style={{
-            width: "100%",
-            maxWidth: "460px",
-            background: "#0d1c44",
-            border: "1px solid rgba(255, 255, 255, 0.12)",
-            borderRadius: "16px",
-            padding: "36px",
-            boxShadow: "0 20px 50px rgba(0, 0, 0, 0.3)",
-            position: "relative",
-            zIndex: 2
-          }}>
-            
-            {/* CMT Brand Header */}
-            <div className="brand" style={{ justifyContent: "center", marginBottom: "24px" }}>
-              <img className="brand-mark" src="/cmt-mark.png" alt="CMT logo" />
-              <div className="brand-copy">
-                <strong>CMT</strong>
-                <span>Conference Management Tool</span>
-              </div>
+          <h1 className="mb-8 text-center text-2xl font-bold text-white">
+            Create an Account
+          </h1>
+
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div>
+              <label
+                htmlFor="fullName"
+                className="mb-1 block text-xs font-semibold uppercase tracking-wide text-[#9CA3AF]"
+              >
+                Full Name
+              </label>
+              <input
+                id="fullName"
+                name="fullName"
+                type="text"
+                value={formData.fullName}
+                onChange={handleChange}
+                className="w-full rounded-md border border-[#23252E] bg-[#0A0A0D] px-3 py-2.5 text-white placeholder-gray-600 outline-none focus:border-[#6D5DFC] focus:ring-2 focus:ring-[#6D5DFC]/30"
+                placeholder="Jane Dlamini"
+              />
             </div>
 
-            <h1 style={{ fontSize: "24px", fontWeight: "700", textAlign: "center", margin: "0 0 24px 0", color: "#fff" }}>
-              Create an Account
-            </h1>
+            <div>
+              <label
+                htmlFor="email"
+                className="mb-1 block text-xs font-semibold uppercase tracking-wide text-[#9CA3AF]"
+              >
+                Email
+              </label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                value={formData.email}
+                onChange={handleChange}
+                className="w-full rounded-md border border-[#23252E] bg-[#0A0A0D] px-3 py-2.5 text-white placeholder-gray-600 outline-none focus:border-[#6D5DFC] focus:ring-2 focus:ring-[#6D5DFC]/30"
+              />
+            </div>
 
-            <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-              <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                <label style={{ color: "rgba(255,255,255,0.72)", fontSize: "11px", fontWeight: "700", letterSpacing: "0.05em", textTransform: "uppercase" }}>
-                  Full Name
-                </label>
-                <input
-                  type="text"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  placeholder="Jane Doe"
-                  style={{
-                    width: "100%",
-                    padding: "12px 14px",
-                    borderRadius: "9px",
-                    border: "1px solid rgba(255, 255, 255, 0.15)",
-                    background: "rgba(7, 19, 47, 0.6)",
-                    color: "#fff",
-                    outline: "none"
-                  }}
-                />
-              </div>
+            <div>
+              <label
+                htmlFor="password"
+                className="mb-1 block text-xs font-semibold uppercase tracking-wide text-[#9CA3AF]"
+              >
+                Password
+              </label>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                value={formData.password}
+                onChange={handleChange}
+                className="w-full rounded-md border border-[#23252E] bg-[#0A0A0D] px-3 py-2.5 text-white placeholder-gray-600 outline-none focus:border-[#6D5DFC] focus:ring-2 focus:ring-[#6D5DFC]/30"
+                placeholder="********"
+              />
+            </div>
 
-              <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                <label style={{ color: "rgba(255,255,255,0.72)", fontSize: "11px", fontWeight: "700", letterSpacing: "0.05em", textTransform: "uppercase" }}>
-                  Email Address
-                </label>
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  placeholder="you@example.com"
-                  style={{
-                    width: "100%",
-                    padding: "12px 14px",
-                    borderRadius: "9px",
-                    border: "1px solid rgba(255, 255, 255, 0.15)",
-                    background: "rgba(7, 19, 47, 0.6)",
-                    color: "#fff",
-                    outline: "none"
-                  }}
-                />
-              </div>
+            <div>
+              <label
+                htmlFor="confirmPassword"
+                className="mb-1 block text-xs font-semibold uppercase tracking-wide text-[#9CA3AF]"
+              >
+                Confirm Password
+              </label>
+              <input
+                id="confirmPassword"
+                name="confirmPassword"
+                type="password"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                className="w-full rounded-md border border-[#23252E] bg-[#0A0A0D] px-3 py-2.5 text-white placeholder-gray-600 outline-none focus:border-[#6D5DFC] focus:ring-2 focus:ring-[#6D5DFC]/30"
+                placeholder="*******"
+              />
+            </div>
 
-              <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                <label style={{ color: "rgba(255,255,255,0.72)", fontSize: "11px", fontWeight: "700", letterSpacing: "0.05em", textTransform: "uppercase" }}>
-                  Password
-                </label>
-                <input
-                  type="password"
-                  name="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  placeholder="******"
-                  style={{
-                    width: "100%",
-                    padding: "12px 14px",
-                    borderRadius: "9px",
-                    border: "1px solid rgba(255, 255, 255, 0.15)",
-                    background: "rgba(7, 19, 47, 0.6)",
-                    color: "#fff",
-                    outline: "none"
-                  }}
-                />
-              </div>
+            {error && <p className="text-sm text-red-400">{error}</p>}
 
-              <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                <label style={{ color: "rgba(255,255,255,0.72)", fontSize: "11px", fontWeight: "700", letterSpacing: "0.05em", textTransform: "uppercase" }}>
-                  Confirm Password
-                </label>
-                <input
-                  type="password"
-                  name="confirmPassword"
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
-                  placeholder="*******"
-                  style={{
-                    width: "100%",
-                    padding: "12px 14px",
-                    borderRadius: "9px",
-                    border: "1px solid rgba(255, 255, 255, 0.15)",
-                    background: "rgba(7, 19, 47, 0.6)",
-                    color: "#fff",
-                    outline: "none"
-                  }}
-                />
-              </div>
+            <button
+              type="submit"
+              className="w-full rounded-md bg-[#6D5DFC] py-2.5 font-semibold text-white transition-colors hover:bg-[#9B8CFF]"
+            >
+              Create Account
+            </button>
 
-              {error && <p style={{ color: "#f59a43", fontSize: "12px", margin: "0" }}>{error}</p>}
-
-              <button type="submit" className="btn btn-primary" style={{ width: "100%", padding: "12px", marginTop: "8px" }}>
-                Register
-              </button>
-
-              <p style={{ textAlign: "center", fontSize: "13px", color: "rgba(255,255,255,0.65)", margin: "12px 0 0" }}>
-                Already have an account?{" "}
-                <Link to="/login" style={{ color: "#8c72ff", fontWeight: "600", textDecoration: "none" }}>
-                  Log In
-                </Link>
-              </p>
-            </form>
-          </div>
+            <p className="text-center text-sm text-[#9CA3AF]">
+              Already have an account?{" "}
+              <Link to="/login" className="text-[#9B8CFF] hover:underline">
+                Log in
+              </Link>
+            </p>
+          </form>
         </div>
       </main>
     </div>
   );
 }
+
+export default Register;
