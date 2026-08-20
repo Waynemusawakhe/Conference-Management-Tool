@@ -598,16 +598,46 @@ img { max-width: 100%; display: block; }
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background: #5d50f3;
-  color: #fff; /* white text */
-  border: none;
-  padding: 12px 24px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: bold;
-  transition: background 0.2s ease;
 }
 
-.cta-button:hover {
-  background: #a59eff;
+.empty-state {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 48px 24px;
+  border: 1px dashed var(--line);
+  border-radius: 18px;
+  background: var(--white);
+}
+
+.empty-state h3 {
+  margin: 12px 0 6px;
+}
+
+.empty-state p {
+  color: var(--muted);
+  margin: 0 0 18px;
+}
+
+@media (max-width: 900px) {
+  .conf-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .conf-sidebar {
+    display: none;
+  }
+
+  .conf-mobile-filter-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .conf-mobile-filters {
+    display: block;
+  }
+
+  .conference-card.is-list {
+    grid-template-columns: 1fr;
+  }
 }
