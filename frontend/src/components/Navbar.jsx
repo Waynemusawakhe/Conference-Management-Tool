@@ -3,11 +3,13 @@ import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Logo from "./Logo";
 
-const navItems = ["Home", "Conferences", "About", "Help & FAQ", "Testimonials", "Contact"];
+const navItems = ["Home","Login","Register", "Conferences", "About", "Help & FAQ", "Testimonials", "Contact"];
 
 // Items that live on their own page rather than as a section on Home.
 const routes = {
   About: "/about",
+  Register:"/register",
+  Login:"/login",
   Contact: "/contact",
   Conferences: "/conferences",
   "Help & FAQ": "/help-faq",
@@ -59,14 +61,14 @@ export default function Navbar() {
           ))}
         </nav>
 
-        <div className="nav-actions">
-          <button className="btn btn-ghost" onClick={() => alert("Login will be connected to the authentication backend.")}>
-            Login
-          </button>
-          <button className="btn btn-primary" onClick={() => alert("Registration will be connected to the authentication backend.")}>
-            Register
-          </button>
-        </div>
+  <div className="nav-actions">
+  <button className="btn btn-ghost" onClick={() => navigate("/login")}>
+    Login
+  </button>
+  <button className="btn btn-primary" onClick={() => navigate("/register")}>
+    Register
+  </button>
+</div>
 
         <button
           className="mobile-menu-btn"
@@ -86,9 +88,13 @@ export default function Navbar() {
             </button>
           ))}
           <div className="mobile-nav-actions">
-            <button className="btn btn-ghost">Login</button>
-            <button className="btn btn-primary">Register</button>
-          </div>
+  <button className="btn btn-ghost" onClick={() => { setOpen(false); navigate("/login"); }}>
+    Login
+  </button>
+  <button className="btn btn-primary" onClick={() => { setOpen(false); navigate("/register"); }}>
+    Register
+  </button>
+</div>
         </div>
       )}
     </header>
