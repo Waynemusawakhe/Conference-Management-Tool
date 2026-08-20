@@ -408,3 +408,264 @@ img { max-width: 100%; display: block; }
 }
 .faq-contact-btn:hover { transform: translateY(-1px); }
 .faq-logo { width: 56px; height: 56px; object-fit: contain; margin: 0 auto 18px; display: block; }
+/* ===== Conferences page ===== */
+.conf-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 22px;
+}
+
+.conf-search {
+  flex: 1;
+  min-width: min(100%, 320px);
+}
+
+.conf-toolbar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.conf-sort {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.conf-sort select {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 8px 12px;
+  background: var(--white);
+  font: inherit;
+}
+
+.conf-view-toggle {
+  display: flex;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--white);
+}
+
+.conf-view-toggle button {
+  border: 0;
+  background: transparent;
+  padding: 8px 12px;
+  color: var(--muted);
+}
+
+.conf-view-toggle button.active {
+  background: #f0eeff;
+  color: var(--purple);
+}
+
+.conf-layout {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 28px;
+  align-items: start;
+}
+
+.conf-filters {
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 18px;
+  box-shadow: 0 8px 22px rgba(15, 28, 65, 0.04);
+}
+
+.conf-filters-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.conf-filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.conf-filter-field select {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font: inherit;
+  font-weight: 500;
+  color: var(--ink);
+  background: var(--white);
+}
+
+.conf-mobile-filter-btn {
+  display: none;
+}
+
+.conf-mobile-filters {
+  display: none;
+  margin-bottom: 18px;
+}
+
+.conference-card-top {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.status-chip,
+.format-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.status-chip {
+  color: var(--purple);
+  background: #f0eeff;
+  border: 1px solid #e0dcff;
+}
+
+.format-chip {
+  color: #0d6e4f;
+  background: #e8f8f1;
+  border: 1px solid #c6eedc;
+}
+
+.conference-acronym {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--purple);
+  margin-bottom: 4px;
+}
+
+.conference-desc {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.55;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.conference-deadline {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 10px;
+  font-size: 13px;
+  color: var(--ink);
+}
+
+.topic-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.topic-chips span {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: #f4f6fb;
+  color: var(--muted);
+  border: 1px solid var(--line);
+}
+
+.conference-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.conference-card.is-list {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 0;
+}
+
+.conference-card.is-list .conference-image-wrap {
+  min-height: 100%;
+}
+
+.conference-card.is-list .conference-image {
+  height: 100%;
+  object-fit: cover;
+}
+
+.conferences-meta-bar {
+  margin-top: 28px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px 28px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.conferences-meta-bar span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.empty-state {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 48px 24px;
+  border: 1px dashed var(--line);
+  border-radius: 18px;
+  background: var(--white);
+}
+
+.empty-state h3 {
+  margin: 12px 0 6px;
+}
+
+.empty-state p {
+  color: var(--muted);
+  margin: 0 0 18px;
+}
+
+@media (max-width: 900px) {
+  .conf-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .conf-sidebar {
+    display: none;
+  }
+
+  .conf-mobile-filter-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .conf-mobile-filters {
+    display: block;
+  }
+
+  .conference-card.is-list {
+    grid-template-columns: 1fr;
+  }
+}
