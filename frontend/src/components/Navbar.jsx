@@ -9,6 +9,7 @@ const navItems = ["Home", "Conferences", "About", "Help & FAQ", "Testimonials", 
 const routes = {
   About: "/about",
   Contact: "/contact",
+  Conferences: "/conferences",
   "Help & FAQ": "/help-faq",
 };
 
