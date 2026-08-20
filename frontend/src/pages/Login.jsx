@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import Logo from "../components/Logo";
 
 function Login() {
   const [formData, setFormData] = useState({ email: "", password: "" });
@@ -23,82 +24,53 @@ function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0A0A0D]">
-      <main className="flex items-center justify-center px-4 py-16">
-        <div className="w-full max-w-md rounded-lg border border-[#23252E] bg-[#121318] p-8 shadow-lg">
-          {/* CMT Brand Header */}
-          <div className="brand" style={{ justifyContent: "center", marginBottom: "24px" }}>
-            <img className="brand-mark" src="/cmt-logo.png" alt="CMT logo" />
-            <div className="brand-copy">
-              <strong>CMT</strong>
-              <span>Conference Management Tool</span>
-            </div>
+    <div className="auth-page">
+      <div className="auth-card">
+        {/* CMT Brand Header — shared Logo component */}
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: "24px" }}>
+          <Logo />
+        </div>
+
+        <h1 className="auth-title">Log In</h1>
+
+        <form onSubmit={handleSubmit} className="auth-form">
+          <div className="form-group">
+            <label htmlFor="email">Email</label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              value={formData.email}
+              onChange={handleChange}
+            />
           </div>
 
-          <h1 className="mb-8 text-center text-2xl font-bold text-white">
+          <div className="form-group">
+            <label htmlFor="password">Password</label>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              value={formData.password}
+              onChange={handleChange}
+              placeholder="******"
+            />
+            <Link to="/forgot-password" className="auth-link small">
+              Forgot password?
+            </Link>
+          </div>
+
+          {error && <p className="auth-error">{error}</p>}
+
+          <button type="submit" className="btn btn-primary auth-submit">
             Log In
-          </h1>
+          </button>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div>
-              <label
-                htmlFor="email"
-                className="mb-1 block text-xs font-semibold uppercase tracking-wide text-[#9CA3AF]"
-              >
-                Email
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                value={formData.email}
-                onChange={handleChange}
-                className="w-full rounded-md border border-[#23252E] bg-[#0A0A0D] px-3 py-2.5 text-white placeholder-gray-600 outline-none focus:border-[#6D5DFC] focus:ring-2 focus:ring-[#6D5DFC]/30"
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="password"
-                className="mb-1 block text-xs font-semibold uppercase tracking-wide text-[#9CA3AF]"
-              >
-                Password
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                value={formData.password}
-                onChange={handleChange}
-                className="w-full rounded-md border border-[#23252E] bg-[#0A0A0D] px-3 py-2.5 text-white placeholder-gray-600 outline-none focus:border-[#6D5DFC] focus:ring-2 focus:ring-[#6D5DFC]/30"
-                placeholder="*******"
-              />
-              <Link
-                to="/forgot-password"
-                className="mt-2 inline-block text-sm text-[#9B8CFF] hover:underline"
-              >
-                Forgot password?
-              </Link>
-            </div>
-
-            {error && <p className="text-sm text-red-400">{error}</p>}
-
-            <button
-              type="submit"
-              className="w-full rounded-md bg-[#6D5DFC] py-2.5 font-semibold text-white transition-colors hover:bg-[#9B8CFF]"
-            >
-              Log In
-            </button>
-
-            <p className="text-center text-sm text-[#9CA3AF]">
-              Don't have an account?{" "}
-              <Link to="/register" className="text-[#9B8CFF] hover:underline">
-                Register
-              </Link>
-            </p>
-          </form>
-        </div>
-      </main>
+          <p className="auth-footer">
+            Don't have an account? <Link to="/register" className="auth-link">Register</Link>
+          </p>
+        </form>
+      </div>
     </div>
   );
 }

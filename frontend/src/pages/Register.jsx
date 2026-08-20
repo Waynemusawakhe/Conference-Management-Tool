@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import Logo from "../components/Logo";
 
 function Register() {
   const [formData, setFormData] = useState({
@@ -38,112 +39,75 @@ function Register() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0A0A0D]">
-      <main className="flex items-center justify-center px-4 py-16">
-        <div className="w-full max-w-md rounded-lg border border-[#23252E] bg-[#121318] p-8 shadow-lg">
-          {/* CMT Brand Header */}
-          <div className="brand" style={{ justifyContent: "center", marginBottom: "24px" }}>
-            <img className="brand-mark" src="/cmt-logo.png" alt="CMT logo" />
-            <div className="brand-copy">
-              <strong>CMT</strong>
-              <span>Conference Management Tool</span>
-            </div>
+    <div className="auth-page">
+      <div className="auth-card">
+        {/* CMT Brand Header — shared Logo component */}
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: "24px" }}>
+          <Logo />
+        </div>
+
+        <h1 className="auth-title">Create an Account</h1>
+
+        <form onSubmit={handleSubmit} className="auth-form">
+          <div className="form-group">
+            <label htmlFor="fullName">Full Name</label>
+            <input
+              id="fullName"
+              name="fullName"
+              type="text"
+              value={formData.fullName}
+              onChange={handleChange}
+          
+            />
           </div>
 
-          <h1 className="mb-8 text-center text-2xl font-bold text-white">
-            Create an Account
-          </h1>
+          <div className="form-group">
+            <label htmlFor="email">Email</label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              value={formData.email}
+              onChange={handleChange}
+  
+            />
+          </div>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div>
-              <label
-                htmlFor="fullName"
-                className="mb-1 block text-xs font-semibold uppercase tracking-wide text-[#9CA3AF]"
-              >
-                Full Name
-              </label>
-              <input
-                id="fullName"
-                name="fullName"
-                type="text"
-                value={formData.fullName}
-                onChange={handleChange}
-                className="w-full rounded-md border border-[#23252E] bg-[#0A0A0D] px-3 py-2.5 text-white placeholder-gray-600 outline-none focus:border-[#6D5DFC] focus:ring-2 focus:ring-[#6D5DFC]/30"
-                placeholder="Jane Dlamini"
-              />
-            </div>
+          <div className="form-group">
+            <label htmlFor="password">Password</label>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              value={formData.password}
+              onChange={handleChange}
+              placeholder="*******"
+            />
+          </div>
 
-            <div>
-              <label
-                htmlFor="email"
-                className="mb-1 block text-xs font-semibold uppercase tracking-wide text-[#9CA3AF]"
-              >
-                Email
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                value={formData.email}
-                onChange={handleChange}
-                className="w-full rounded-md border border-[#23252E] bg-[#0A0A0D] px-3 py-2.5 text-white placeholder-gray-600 outline-none focus:border-[#6D5DFC] focus:ring-2 focus:ring-[#6D5DFC]/30"
-              />
-            </div>
+          <div className="form-group">
+            <label htmlFor="confirmPassword">Confirm Password</label>
+            <input
+              id="confirmPassword"
+              name="confirmPassword"
+              type="password"
+              value={formData.confirmPassword}
+              onChange={handleChange}
+              placeholder="******"
+            />
+          </div>
 
-            <div>
-              <label
-                htmlFor="password"
-                className="mb-1 block text-xs font-semibold uppercase tracking-wide text-[#9CA3AF]"
-              >
-                Password
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                value={formData.password}
-                onChange={handleChange}
-                className="w-full rounded-md border border-[#23252E] bg-[#0A0A0D] px-3 py-2.5 text-white placeholder-gray-600 outline-none focus:border-[#6D5DFC] focus:ring-2 focus:ring-[#6D5DFC]/30"
-                placeholder="********"
-              />
-            </div>
+          {error && <p className="auth-error">{error}</p>}
 
-            <div>
-              <label
-                htmlFor="confirmPassword"
-                className="mb-1 block text-xs font-semibold uppercase tracking-wide text-[#9CA3AF]"
-              >
-                Confirm Password
-              </label>
-              <input
-                id="confirmPassword"
-                name="confirmPassword"
-                type="password"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                className="w-full rounded-md border border-[#23252E] bg-[#0A0A0D] px-3 py-2.5 text-white placeholder-gray-600 outline-none focus:border-[#6D5DFC] focus:ring-2 focus:ring-[#6D5DFC]/30"
-                placeholder="*******"
-              />
-            </div>
+          <button type="submit" className="btn btn-primary auth-submit">
+            Create Account
+          </button>
 
-            {error && <p className="text-sm text-red-400">{error}</p>}
-
-            <button
-              type="submit"
-              className="w-full rounded-md bg-[#6D5DFC] py-2.5 font-semibold text-white transition-colors hover:bg-[#9B8CFF]"
-            >
-              Create Account
-            </button>
-
-            <p className="text-center text-sm text-[#9CA3AF]">
-              Already have an account?{" "}
-              <Link to="/login" className="text-[#9B8CFF] hover:underline">
-                Log in
-              </Link>
-            </p>
-          </form>
-        </div>
-      </main>
+          <p className="auth-footer">
+            Already have an account? <Link to="/login" className="auth-link">Log in</Link>
+          </p>
+        </form>
+      </div>
     </div>
   );
 }
