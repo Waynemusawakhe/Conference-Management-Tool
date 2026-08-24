@@ -1,17 +1,16 @@
 # Dependencies
-node_modules/
+frontend/node_modules/
 
 # Build output
-dist/
-build/
+frontend/dist/
 
-# Vite
-.vite/
+# Vite cache
+frontend/.vite/
 
 # Environment files
-.env
-.env.local
-.env.*.local
+frontend/.env
+frontend/.env.local
+frontend/.env.*.local
 
 # Logs
 *.log
@@ -23,6 +22,6 @@ yarn-error.log*
 .vscode/
 .idea/
 
-# OS files
+# OS generated files
 .DS_Store
 Thumbs.db
