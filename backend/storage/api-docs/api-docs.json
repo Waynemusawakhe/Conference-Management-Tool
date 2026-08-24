@@ -127,12 +127,463 @@
                     }
                 }
             }
+        },
+        "/api/v1/auth/me": {
+            "get": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Get the current authenticated user",
+                "operationId": "3068bf0f8824153f82f51817983ae93a",
+                "responses": {
+                    "200": {
+                        "description": "Current user returned successfully"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                }
+            }
+        },
+        "/api/v1/conferences": {
+            "get": {
+                "tags": [
+                    "Conferences"
+                ],
+                "summary": "Get all conferences",
+                "operationId": "0367cf2dbc485312b0425c7bcda9ab65",
+                "responses": {
+                    "200": {
+                        "description": "List of conferences"
+                    },
+                    "401": {
+                        "description": "Unauthorised"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Conferences"
+                ],
+                "summary": "Create a conference",
+                "operationId": "4faf8a25680c3d69e83925788e68f4e3",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "organiser_id",
+                                    "code",
+                                    "name",
+                                    "format",
+                                    "start_date",
+                                    "end_date"
+                                ],
+                                "properties": {
+                                    "organiser_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "code": {
+                                        "type": "string",
+                                        "example": "CMT2026"
+                                    },
+                                    "name": {
+                                        "type": "string",
+                                        "example": "CMT Annual Conference"
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "Annual conference"
+                                    },
+                                    "category": {
+                                        "type": "string",
+                                        "example": "Technology"
+                                    },
+                                    "topics": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "example": [
+                                            "AI",
+                                            "Software Engineering"
+                                        ]
+                                    },
+                                    "format": {
+                                        "type": "string",
+                                        "example": "virtual",
+                                        "enum": [
+                                            "in_person",
+                                            "virtual",
+                                            "hybrid"
+                                        ]
+                                    },
+                                    "submission_status": {
+                                        "type": "string",
+                                        "example": "open",
+                                        "enum": [
+                                            "open",
+                                            "closed"
+                                        ]
+                                    },
+                                    "start_date": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2026-10-01"
+                                    },
+                                    "end_date": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2026-10-03"
+                                    },
+                                    "submission_deadline": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2026-09-01",
+                                        "nullable": true
+                                    },
+                                    "venue_name": {
+                                        "type": "string",
+                                        "example": "CMT Convention Centre",
+                                        "nullable": true
+                                    },
+                                    "city": {
+                                        "type": "string",
+                                        "example": "Johannesburg",
+                                        "nullable": true
+                                    },
+                                    "country": {
+                                        "type": "string",
+                                        "example": "South Africa",
+                                        "nullable": true
+                                    },
+                                    "website_link": {
+                                        "type": "string",
+                                        "example": "https://example.com",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Conference created successfully"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                }
+            }
+        },
+        "/api/v1/conferences/{conference}": {
+            "get": {
+                "tags": [
+                    "Conferences"
+                ],
+                "summary": "Get a conference by ID",
+                "operationId": "e82fb2844af618c3a2ed2667f2bfe010",
+                "parameters": [
+                    {
+                        "name": "conference",
+                        "in": "path",
+                        "description": "Conference ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 1
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Conference details"
+                    },
+                    "404": {
+                        "description": "Conference not found"
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Conferences"
+                ],
+                "summary": "Update a conference",
+                "operationId": "d987ff6d6fc7d1c11ee8f4427f9e9e9c",
+                "parameters": [
+                    {
+                        "name": "conference",
+                        "in": "path",
+                        "description": "Conference ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 1
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "code": {
+                                        "type": "string",
+                                        "example": "CMT2026"
+                                    },
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Updated Conference Name"
+                                    },
+                                    "description": {
+                                        "type": "string"
+                                    },
+                                    "category": {
+                                        "type": "string"
+                                    },
+                                    "format": {
+                                        "type": "string",
+                                        "enum": [
+                                            "in_person",
+                                            "virtual",
+                                            "hybrid"
+                                        ]
+                                    },
+                                    "submission_status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "open",
+                                            "closed"
+                                        ]
+                                    },
+                                    "start_date": {
+                                        "type": "string",
+                                        "format": "date"
+                                    },
+                                    "end_date": {
+                                        "type": "string",
+                                        "format": "date"
+                                    },
+                                    "submission_deadline": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "nullable": true
+                                    },
+                                    "venue_name": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "city": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "country": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "website_link": {
+                                        "type": "string",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Conference updated successfully"
+                    },
+                    "404": {
+                        "description": "Conference not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Conferences"
+                ],
+                "summary": "Delete a conference",
+                "operationId": "51691c0d397c6d6645c8b3e54ef32c1c",
+                "parameters": [
+                    {
+                        "name": "conference",
+                        "in": "path",
+                        "description": "Conference ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 1
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Conference deleted successfully"
+                    },
+                    "404": {
+                        "description": "Conference not found"
+                    }
+                }
+            }
+        },
+        "/api/v1/conferences/{conference}/status": {
+            "patch": {
+                "tags": [
+                    "Conferences"
+                ],
+                "summary": "Update conference submission status",
+                "operationId": "834cd1a61df61a91276ba9b2ca94dc0e",
+                "parameters": [
+                    {
+                        "name": "conference",
+                        "in": "path",
+                        "description": "Conference ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 1
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "status"
+                                ],
+                                "properties": {
+                                    "status": {
+                                        "type": "string",
+                                        "example": "closed",
+                                        "enum": [
+                                            "open",
+                                            "closed"
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Status updated successfully"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                }
+            }
+        },
+        "/api/v1/conferences/{conference}/submissions": {
+            "get": {
+                "tags": [
+                    "Conferences"
+                ],
+                "summary": "Get all submissions for a conference",
+                "operationId": "7cae6eaf4a51cb28444273567a56ca0e",
+                "parameters": [
+                    {
+                        "name": "conference",
+                        "in": "path",
+                        "description": "Conference ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 1
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Conference submissions"
+                    },
+                    "404": {
+                        "description": "Conference not found"
+                    }
+                }
+            }
+        },
+        "/api/v1/conferences/{conference}/registrations": {
+            "get": {
+                "tags": [
+                    "Conferences"
+                ],
+                "summary": "Get all registrations for a conference",
+                "operationId": "5df5b486d6e1654354d878e00ef142ff",
+                "parameters": [
+                    {
+                        "name": "conference",
+                        "in": "path",
+                        "description": "Conference ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 1
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Conference registrations"
+                    },
+                    "404": {
+                        "description": "Conference not found"
+                    }
+                }
+            }
+        },
+        "/api/v1/conferences/{conference}/sessions": {
+            "get": {
+                "tags": [
+                    "Conferences"
+                ],
+                "summary": "Get all sessions for a conference",
+                "operationId": "d3ef9286ef0dc76d69740cc8b32ce629",
+                "parameters": [
+                    {
+                        "name": "conference",
+                        "in": "path",
+                        "description": "Conference ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 1
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Conference sessions"
+                    },
+                    "404": {
+                        "description": "Conference not found"
+                    }
+                }
+            }
         }
     },
     "tags": [
         {
             "name": "Authentication",
             "description": "Authentication"
+        },
+        {
+            "name": "Conferences",
+            "description": "Conferences"
         }
     ]
 }
