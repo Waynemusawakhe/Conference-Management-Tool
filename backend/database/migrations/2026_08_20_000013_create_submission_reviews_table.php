@@ -16,7 +16,7 @@ return new class extends Migration
             $table->unsignedTinyInteger('score')->nullable();
             $table->text('comments')->nullable();
             // accept | reject | revise
-            $table->string('recommendation')->nullable();
+            $table->enum('recommendation', ['accept', 'reject', 'revise'])->nullable();
             $table->boolean('locked')->default(false);
             $table->timestamp('assigned_at')->useCurrent();
             $table->timestamp('submitted_at')->nullable();
@@ -26,8 +26,6 @@ return new class extends Migration
             // only review a given submission once.
             $table->unique(['submission_id', 'reviewer_id']);
         });
-
-        DB::statement('ALTER TABLE submission_reviews ADD CONSTRAINT submission_reviews_score_check CHECK (score IS NULL OR score BETWEEN 0 AND 10)');
 
         // A locked review can't be edited — enforced at the DB level so a
         // direct API call can't bypass it. An organiser can still explicitly
