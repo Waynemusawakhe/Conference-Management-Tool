@@ -27,33 +27,33 @@
                                 "required": [
                                     "name",
                                     "email",
-                                    "password"
+                                    "password",
+                                    "password_confirmation",
+                                    "role"
                                 ],
                                 "properties": {
                                     "name": {
                                         "type": "string",
-                                        "example": "Test User"
+                                        "example": "John Doe"
                                     },
                                     "email": {
                                         "type": "string",
                                         "format": "email",
-                                        "example": "test@example.com"
+                                        "example": "john@example.com"
                                     },
                                     "password": {
                                         "type": "string",
                                         "format": "password",
                                         "example": "password123"
                                     },
+                                    "password_confirmation": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "password123"
+                                    },
                                     "role": {
                                         "type": "string",
-                                        "example": "author",
-                                        "enum": [
-                                            "author",
-                                            "reviewer",
-                                            "organiser",
-                                            "attendee",
-                                            "admin"
-                                        ]
+                                        "example": "author"
                                     }
                                 },
                                 "type": "object"
@@ -76,7 +76,7 @@
                 "tags": [
                     "Authentication"
                 ],
-                "summary": "Authenticate a user",
+                "summary": "Log in and receive an API token",
                 "operationId": "23bb956fc5871b97f2e58eb57a13aa9c",
                 "requestBody": {
                     "required": true,
@@ -91,7 +91,7 @@
                                     "email": {
                                         "type": "string",
                                         "format": "email",
-                                        "example": "test@example.com"
+                                        "example": "john@example.com"
                                     },
                                     "password": {
                                         "type": "string",
@@ -110,6 +110,9 @@
                     },
                     "401": {
                         "description": "Invalid credentials"
+                    },
+                    "422": {
+                        "description": "Validation error"
                     }
                 }
             }
@@ -119,13 +122,102 @@
                 "tags": [
                     "Authentication"
                 ],
-                "summary": "Log out the current user",
+                "summary": "Revoke the current API token",
                 "operationId": "7b5c7cc659253df8f82c4e88e260076f",
                 "responses": {
                     "200": {
-                        "description": "Logout successful"
+                        "description": "Logged out successfully"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
                     }
-                }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/auth/me": {
+            "get": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Get the currently authenticated user",
+                "operationId": "3068bf0f8824153f82f51817983ae93a",
+                "responses": {
+                    "200": {
+                        "description": "Authenticated user returned"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/users": {
+            "get": {
+                "tags": [
+                    "User Management"
+                ],
+                "summary": "Get all users",
+                "description": "Returns a list of all users. Admin only.",
+                "operationId": "29a02dfa41f8708d45019a2c2080c11a",
+                "responses": {
+                    "200": {
+                        "description": "Users retrieved successfully"
+                    },
+                    "403": {
+                        "description": "Forbidden — admin role required"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/users/{id}": {
+            "get": {
+                "tags": [
+                    "User Management"
+                ],
+                "summary": "Get user by ID",
+                "operationId": "0d6e0229470be0d5a595dbf8641fe287",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "User ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User retrieved successfully"
+                    },
+                    "404": {
+                        "description": "User not found"
+                    },
+                    "403": {
+                        "description": "Forbidden — admin role required"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
             }
         },
         "/api/v1/auth/me": {
@@ -582,8 +674,28 @@
             "description": "Authentication"
         },
         {
+<<<<<<< HEAD
             "name": "Conferences",
             "description": "Conferences"
+=======
+            "name": "User Management",
+            "description": "User Management"
+        }
+    ],
+    "components": {
+        "securitySchemes": {
+            "sanctum": {
+                "type": "apiKey",
+                "description": "Enter token in format: Bearer {token}",
+                "name": "Authorization",
+                "in": "header"
+            }
+        }
+    },
+    "security": [
+        {
+            "sanctum": []
+>>>>>>> ee6113fc708c41ead39720b413bd763ee92afe87
         }
     ]
 }

@@ -12,6 +12,12 @@ return new class extends Migration
      * App\Modules\Account\Controllers\AuthController: author, reviewer,
      * organiser, attendee, admin. Default 'author' matches
      * RegisterUserAction's existing fallback.
+     *
+     * The CHECK constraint is PostgreSQL-only syntax (SQLite doesn't
+     * support adding named CHECK constraints via ALTER TABLE), so it's
+     * skipped on other drivers — e.g. the SQLite in-memory DB used by
+     * the test suite. Role validity is still enforced at the application
+     * layer via Rule::in(UserRole::values()) in the Form Requests.
      */
     public function up(): void
     {
@@ -19,11 +25,17 @@ return new class extends Migration
             $table->string('role')->default('author')->after('password');
         });
 
-        DB::statement("ALTER TABLE users ADD CONSTRAINT users_role_check CHECK (role IN ('author','reviewer','organiser','attendee','admin'))");
+        if (DB::connection()->getDriverName() === 'pgsql') {
+            DB::statement("ALTER TABLE users ADD CONSTRAINT users_role_check CHECK (role IN ('author','reviewer','organiser','attendee','admin'))");
+        }
     }
 
     public function down(): void
     {
+        if (DB::connection()->getDriverName() === 'pgsql') {
+            DB::statement('ALTER TABLE users DROP CONSTRAINT users_role_check');
+        }
+
         Schema::table('users', function (Blueprint $table) {
             $table->dropColumn('role');
         });

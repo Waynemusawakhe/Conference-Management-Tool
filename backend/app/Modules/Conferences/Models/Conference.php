@@ -8,6 +8,17 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Conference extends Model
 {
+use App\Modules\Submissions\Models\ConferenceSession;
+use App\Modules\Submissions\Models\Submission;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+
+class Conference extends Model
+{
+    use HasFactory;
+
     protected $fillable = [
         'organiser_id',
         'code',
@@ -39,5 +50,33 @@ class Conference extends Model
     public function organiser(): BelongsTo
     {
         return $this->belongsTo(User::class, 'organiser_id');
+    }
+}
+
+    public function submissions(): HasMany
+    {
+        return $this->hasMany(Submission::class);
+    }
+
+    public function sessions(): HasMany
+    {
+        return $this->hasMany(ConferenceSession::class);
+    }
+
+    public function registrations(): HasMany
+    {
+        return $this->hasMany(ConferenceRegistration::class);
+    }
+
+    public function attendees(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'conference_registrations')
+            ->withPivot(['status', 'registered_at', 'cancelled_at'])
+            ->withTimestamps();
+    }
+
+    public function testimonials(): HasMany
+    {
+        return $this->hasMany(Testimonial::class);
     }
 }
