@@ -127,12 +127,133 @@
                     }
                 }
             }
+        },
+        "/api/v1/auth/me": {
+            "get": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Get the current authenticated user",
+                "operationId": "3068bf0f8824153f82f51817983ae93a",
+                "responses": {
+                    "200": {
+                        "description": "Current user returned successfully"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                }
+            }
+        },
+        "/api/v1/users": {
+            "get": {
+                "tags": [
+                    "User Management"
+                ],
+                "summary": "Get all users",
+                "description": "Returns a list of all users.",
+                "operationId": "29a02dfa41f8708d45019a2c2080c11a",
+                "responses": {
+                    "200": {
+                        "description": "Users retrieved successfully"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "User Management"
+                ],
+                "summary": "Create a user",
+                "operationId": "9f88d6ceda975ec282a7d9ddabe1cd4c",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "email",
+                                    "password",
+                                    "password_confirmation",
+                                    "role"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "John Doe"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "john@example.com"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "password123"
+                                    },
+                                    "password_confirmation": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "password123"
+                                    },
+                                    "role": {
+                                        "type": "string",
+                                        "example": "author"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "User created successfully"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                }
+            }
+        },
+        "/api/v1/users/{id}": {
+            "get": {
+                "tags": [
+                    "User Management"
+                ],
+                "summary": "Get user by ID",
+                "operationId": "0d6e0229470be0d5a595dbf8641fe287",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "User ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User retrieved successfully"
+                    },
+                    "404": {
+                        "description": "User not found"
+                    }
+                }
+            }
         }
     },
     "tags": [
         {
             "name": "Authentication",
             "description": "Authentication"
+        },
+        {
+            "name": "User Management",
+            "description": "User Management"
         }
     ]
 }
