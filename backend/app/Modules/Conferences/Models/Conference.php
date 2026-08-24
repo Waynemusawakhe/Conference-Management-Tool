@@ -8,6 +8,7 @@ use App\Modules\Submissions\Models\Submission;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Conference extends Model
@@ -62,7 +63,7 @@ class Conference extends Model
         return $this->hasMany(ConferenceRegistration::class);
     }
 
-    public function attendees(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    public function attendees(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'conference_registrations')
             ->withPivot(['status', 'registered_at', 'cancelled_at'])

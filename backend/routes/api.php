@@ -3,9 +3,29 @@
 use App\Models\User;
 use App\Modules\Account\Controllers\AuthController;
 use App\Modules\Account\Controllers\UserController;
+use App\Modules\Conferences\Controllers\ConferenceController;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+
+Route::prefix('v1/conferences')->group(function () {
+
+    // Public
+    Route::get('/', [ConferenceController::class, 'index']);
+    Route::get('/{conference}', [ConferenceController::class, 'show']);
+
+    // Authenticated
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::post('/', [ConferenceController::class, 'store']);
+        Route::put('/{conference}', [ConferenceController::class, 'update']);
+        Route::delete('/{conference}', [ConferenceController::class, 'destroy']);
+
+        Route::patch('/{conference}/status', [ConferenceController::class, 'updateStatus']);
+        Route::get('/{conference}/submissions', [ConferenceController::class, 'submissions']);
+        Route::get('/{conference}/registrations', [ConferenceController::class, 'registrations']);
+        Route::get('/{conference}/sessions', [ConferenceController::class, 'sessions']);
+    });
+}); // ✅ closes the conference group properly
 
 Route::prefix('v1/auth')->group(function () {
     Route::post('/register', [AuthController::class, 'register']);
