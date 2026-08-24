@@ -10,22 +10,20 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('submission_reviews', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('submission_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('reviewer_id')->constrained('users')->cascadeOnDelete();
-            $table->unsignedTinyInteger('score')->nullable();
-            $table->text('comments')->nullable();
-            // accept | reject | revise
-            $table->enum('recommendation', ['accept', 'reject', 'revise'])->nullable();
-            $table->boolean('locked')->default(false);
-            $table->timestamp('assigned_at')->useCurrent();
-            $table->timestamp('submitted_at')->nullable();
-            $table->timestamps();
+    $table->id();
+    $table->foreignId('submission_id')->constrained()->cascadeOnDelete();
+    $table->foreignId('reviewer_id')->constrained('users')->cascadeOnDelete();
+    $table->unsignedTinyInteger('score')->nullable();
+    $table->text('comments')->nullable();
+    $table->enum('recommendation', ['accept', 'reject', 'revise'])->nullable();
+    $table->boolean('locked')->default(false);
+    $table->timestamp('assigned_at')->useCurrent();
+    $table->timestamp('submitted_at')->nullable();
+    $table->timestamps();
 
-            // A submission can have multiple reviews, but each reviewer can
-            // only review a given submission once.
-            $table->unique(['submission_id', 'reviewer_id']);
-        });
+    $table->unique(['submission_id', 'reviewer_id']);
+});
+
 
         // A locked review can't be edited — enforced at the DB level so a
         // direct API call can't bypass it. An organiser can still explicitly
