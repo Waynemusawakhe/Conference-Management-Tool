@@ -7,7 +7,6 @@
     "license": "MIT",
     "require": {
         "php": "^8.2",
-        "laravel/framework": "12.66.0",
         "darkaonline/l5-swagger": "^11.1",
         "laravel/framework": "^12.0",
         "laravel/sanctum": "^4.0",
@@ -82,6 +81,9 @@
         "allow-plugins": {
             "pestphp/pest-plugin": true,
             "php-http/discovery": true
+        },
+        "platform": {
+            "lib-curl-schannel": "8.17.0"
         }
     },
     "minimum-stability": "stable",
