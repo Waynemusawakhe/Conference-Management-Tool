@@ -10,29 +10,27 @@ use App\Modules\Conferences\Models\Conference;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\Rule;
 use OpenApi\Attributes as OA;
 
 class ConferenceController
 {
     #[OA\Get(
-    path: '/api/v1/conferences',
-    summary: 'Get all conferences',
-    tags: ['Conferences'],
-    responses: [
-        new OA\Response(
-            response: 200,
-            description: 'List of conferences'
-        ),
-        new OA\Response(
-            response: 401,
-            description: 'Unauthorised'
-        )
-    ]
-)]
-
-
+        path: '/api/v1/conferences',
+        summary: 'Get all conferences',
+        tags: ['Conferences'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'List of conferences'
+            ),
+            new OA\Response(
+                response: 401,
+                description: 'Unauthorised'
+            ),
+        ]
+    )]
     public function index(): JsonResponse
     {
         $conferences = Conference::query()
@@ -43,44 +41,43 @@ class ConferenceController
         return response()->json($conferences);
     }
 
-#[OA\Post(
-    path: '/api/v1/conferences',
-    summary: 'Create a conference',
-    tags: ['Conferences'],
-    requestBody: new OA\RequestBody(
-        required: true,
-        content: new OA\JsonContent(
-            required: ['organiser_id', 'code', 'name', 'format', 'start_date', 'end_date'],
-            properties: [
-                new OA\Property(property: 'organiser_id', type: 'integer', example: 1),
-                new OA\Property(property: 'code', type: 'string', example: 'CMT2026'),
-                new OA\Property(property: 'name', type: 'string', example: 'CMT Annual Conference'),
-                new OA\Property(property: 'description', type: 'string', example: 'Annual conference'),
-                new OA\Property(property: 'category', type: 'string', example: 'Technology'),
-                new OA\Property(
-                    property: 'topics',
-                    type: 'array',
-                    items: new OA\Items(type: 'string'),
-                    example: ['AI', 'Software Engineering']
-                ),
-                new OA\Property(property: 'format', type: 'string', enum: ['in_person', 'virtual', 'hybrid'], example: 'virtual'),
-                new OA\Property(property: 'submission_status', type: 'string', enum: ['open', 'closed'], example: 'open'),
-                new OA\Property(property: 'start_date', type: 'string', format: 'date', example: '2026-10-01'),
-                new OA\Property(property: 'end_date', type: 'string', format: 'date', example: '2026-10-03'),
-                new OA\Property(property: 'submission_deadline', type: 'string', format: 'date', nullable: true, example: '2026-09-01'),
-                new OA\Property(property: 'venue_name', type: 'string', nullable: true, example: 'CMT Convention Centre'),
-                new OA\Property(property: 'city', type: 'string', nullable: true, example: 'Johannesburg'),
-                new OA\Property(property: 'country', type: 'string', nullable: true, example: 'South Africa'),
-                new OA\Property(property: 'website_link', type: 'string', nullable: true, example: 'https://example.com')
-            ]
-        )
-    ),
-    responses: [
-        new OA\Response(response: 201, description: 'Conference created successfully'),
-        new OA\Response(response: 422, description: 'Validation error')
-    ]
-               )]
-
+    #[OA\Post(
+        path: '/api/v1/conferences',
+        summary: 'Create a conference',
+        tags: ['Conferences'],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['organiser_id', 'code', 'name', 'format', 'start_date', 'end_date'],
+                properties: [
+                    new OA\Property(property: 'organiser_id', type: 'integer', example: 1),
+                    new OA\Property(property: 'code', type: 'string', example: 'CMT2026'),
+                    new OA\Property(property: 'name', type: 'string', example: 'CMT Annual Conference'),
+                    new OA\Property(property: 'description', type: 'string', example: 'Annual conference'),
+                    new OA\Property(property: 'category', type: 'string', example: 'Technology'),
+                    new OA\Property(
+                        property: 'topics',
+                        type: 'array',
+                        items: new OA\Items(type: 'string'),
+                        example: ['AI', 'Software Engineering']
+                    ),
+                    new OA\Property(property: 'format', type: 'string', enum: ['in_person', 'virtual', 'hybrid'], example: 'virtual'),
+                    new OA\Property(property: 'submission_status', type: 'string', enum: ['open', 'closed'], example: 'open'),
+                    new OA\Property(property: 'start_date', type: 'string', format: 'date', example: '2026-10-01'),
+                    new OA\Property(property: 'end_date', type: 'string', format: 'date', example: '2026-10-03'),
+                    new OA\Property(property: 'submission_deadline', type: 'string', format: 'date', nullable: true, example: '2026-09-01'),
+                    new OA\Property(property: 'venue_name', type: 'string', nullable: true, example: 'CMT Convention Centre'),
+                    new OA\Property(property: 'city', type: 'string', nullable: true, example: 'Johannesburg'),
+                    new OA\Property(property: 'country', type: 'string', nullable: true, example: 'South Africa'),
+                    new OA\Property(property: 'website_link', type: 'string', nullable: true, example: 'https://example.com'),
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(response: 201, description: 'Conference created successfully'),
+            new OA\Response(response: 422, description: 'Validation error'),
+        ]
+    )]
     public function store(
 
         Request $request,
@@ -118,27 +115,25 @@ class ConferenceController
         ], 201);
     }
 
-         #[OA\Get(
-    path: '/api/v1/conferences/{conference}',
-    summary: 'Get a conference by ID',
-    tags: ['Conferences'],
-    parameters: [
-        new OA\Parameter(
-            name: 'conference',
-            description: 'Conference ID',
-            in: 'path',
-            required: true,
-            schema: new OA\Schema(type: 'integer'),
-            example: 1
-        )
-    ],
-    responses: [
-        new OA\Response(response: 200, description: 'Conference details'),
-        new OA\Response(response: 404, description: 'Conference not found')
-    ]
-)]
-
-
+    #[OA\Get(
+        path: '/api/v1/conferences/{conference}',
+        summary: 'Get a conference by ID',
+        tags: ['Conferences'],
+        parameters: [
+            new OA\Parameter(
+                name: 'conference',
+                description: 'Conference ID',
+                in: 'path',
+                required: true,
+                schema: new OA\Schema(type: 'integer'),
+                example: 1
+            ),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Conference details'),
+            new OA\Response(response: 404, description: 'Conference not found'),
+        ]
+    )]
     public function show(Conference $conference): JsonResponse
     {
         $conference->load('organiser:id,name,email');
@@ -148,48 +143,46 @@ class ConferenceController
         ]);
     }
 
-
-        #[OA\Put(
-    path: '/api/v1/conferences/{conference}',
-    summary: 'Update a conference',
-    tags: ['Conferences'],
-    parameters: [
-        new OA\Parameter(
-            name: 'conference',
-            description: 'Conference ID',
-            in: 'path',
+    #[OA\Put(
+        path: '/api/v1/conferences/{conference}',
+        summary: 'Update a conference',
+        tags: ['Conferences'],
+        parameters: [
+            new OA\Parameter(
+                name: 'conference',
+                description: 'Conference ID',
+                in: 'path',
+                required: true,
+                schema: new OA\Schema(type: 'integer'),
+                example: 1
+            ),
+        ],
+        requestBody: new OA\RequestBody(
             required: true,
-            schema: new OA\Schema(type: 'integer'),
-            example: 1
-        )
-    ],
-    requestBody: new OA\RequestBody(
-        required: true,
-        content: new OA\JsonContent(
-            properties: [
-                new OA\Property(property: 'code', type: 'string', example: 'CMT2026'),
-                new OA\Property(property: 'name', type: 'string', example: 'Updated Conference Name'),
-                new OA\Property(property: 'description', type: 'string'),
-                new OA\Property(property: 'category', type: 'string'),
-                new OA\Property(property: 'format', type: 'string', enum: ['in_person', 'virtual', 'hybrid']),
-                new OA\Property(property: 'submission_status', type: 'string', enum: ['open', 'closed']),
-                new OA\Property(property: 'start_date', type: 'string', format: 'date'),
-                new OA\Property(property: 'end_date', type: 'string', format: 'date'),
-                new OA\Property(property: 'submission_deadline', type: 'string', format: 'date', nullable: true),
-                new OA\Property(property: 'venue_name', type: 'string', nullable: true),
-                new OA\Property(property: 'city', type: 'string', nullable: true),
-                new OA\Property(property: 'country', type: 'string', nullable: true),
-                new OA\Property(property: 'website_link', type: 'string', nullable: true)
-            ]
-        )
-    ),
-    responses: [
-        new OA\Response(response: 200, description: 'Conference updated successfully'),
-        new OA\Response(response: 404, description: 'Conference not found'),
-        new OA\Response(response: 422, description: 'Validation error')
-    ]
-)]
-
+            content: new OA\JsonContent(
+                properties: [
+                    new OA\Property(property: 'code', type: 'string', example: 'CMT2026'),
+                    new OA\Property(property: 'name', type: 'string', example: 'Updated Conference Name'),
+                    new OA\Property(property: 'description', type: 'string'),
+                    new OA\Property(property: 'category', type: 'string'),
+                    new OA\Property(property: 'format', type: 'string', enum: ['in_person', 'virtual', 'hybrid']),
+                    new OA\Property(property: 'submission_status', type: 'string', enum: ['open', 'closed']),
+                    new OA\Property(property: 'start_date', type: 'string', format: 'date'),
+                    new OA\Property(property: 'end_date', type: 'string', format: 'date'),
+                    new OA\Property(property: 'submission_deadline', type: 'string', format: 'date', nullable: true),
+                    new OA\Property(property: 'venue_name', type: 'string', nullable: true),
+                    new OA\Property(property: 'city', type: 'string', nullable: true),
+                    new OA\Property(property: 'country', type: 'string', nullable: true),
+                    new OA\Property(property: 'website_link', type: 'string', nullable: true),
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: 'Conference updated successfully'),
+            new OA\Response(response: 404, description: 'Conference not found'),
+            new OA\Response(response: 422, description: 'Validation error'),
+        ]
+    )]
     public function update(
         Request $request,
         Conference $conference,
@@ -227,29 +220,25 @@ class ConferenceController
         ]);
     }
 
-
-      #[OA\Delete(
-    path: '/api/v1/conferences/{conference}',
-    summary: 'Delete a conference',
-    tags: ['Conferences'],
-    parameters: [
-        new OA\Parameter(
-            name: 'conference',
-            description: 'Conference ID',
-            in: 'path',
-            required: true,
-            schema: new OA\Schema(type: 'integer'),
-            example: 1
-        )
-    ],
-    responses: [
-        new OA\Response(response: 200, description: 'Conference deleted successfully'),
-        new OA\Response(response: 404, description: 'Conference not found')
-    ]
-)]
-
-
-
+    #[OA\Delete(
+        path: '/api/v1/conferences/{conference}',
+        summary: 'Delete a conference',
+        tags: ['Conferences'],
+        parameters: [
+            new OA\Parameter(
+                name: 'conference',
+                description: 'Conference ID',
+                in: 'path',
+                required: true,
+                schema: new OA\Schema(type: 'integer'),
+                example: 1
+            ),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Conference deleted successfully'),
+            new OA\Response(response: 404, description: 'Conference not found'),
+        ]
+    )]
     public function destroy(
         Conference $conference,
         DeleteConference $action
@@ -262,43 +251,39 @@ class ConferenceController
         ]);
     }
 
-
-      #[OA\Patch(
-    path: '/api/v1/conferences/{conference}/status',
-    summary: 'Update conference submission status',
-    tags: ['Conferences'],
-    parameters: [
-        new OA\Parameter(
-            name: 'conference',
-            description: 'Conference ID',
-            in: 'path',
+    #[OA\Patch(
+        path: '/api/v1/conferences/{conference}/status',
+        summary: 'Update conference submission status',
+        tags: ['Conferences'],
+        parameters: [
+            new OA\Parameter(
+                name: 'conference',
+                description: 'Conference ID',
+                in: 'path',
+                required: true,
+                schema: new OA\Schema(type: 'integer'),
+                example: 1
+            ),
+        ],
+        requestBody: new OA\RequestBody(
             required: true,
-            schema: new OA\Schema(type: 'integer'),
-            example: 1
-        )
-    ],
-    requestBody: new OA\RequestBody(
-        required: true,
-        content: new OA\JsonContent(
-            required: ['status'],
-            properties: [
-                new OA\Property(
-                    property: 'status',
-                    type: 'string',
-                    enum: ['open', 'closed'],
-                    example: 'closed'
-                )
-            ]
-        )
-    ),
-    responses: [
-        new OA\Response(response: 200, description: 'Status updated successfully'),
-        new OA\Response(response: 422, description: 'Validation error')
-    ]
-)]
-
-
-
+            content: new OA\JsonContent(
+                required: ['status'],
+                properties: [
+                    new OA\Property(
+                        property: 'status',
+                        type: 'string',
+                        enum: ['open', 'closed'],
+                        example: 'closed'
+                    ),
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: 'Status updated successfully'),
+            new OA\Response(response: 422, description: 'Validation error'),
+        ]
+    )]
     public function updateStatus(
         Request $request,
         Conference $conference,
@@ -317,30 +302,25 @@ class ConferenceController
         ]);
     }
 
-
-     #[OA\Get(
-    path: '/api/v1/conferences/{conference}/submissions',
-    summary: 'Get all submissions for a conference',
-    tags: ['Conferences'],
-    parameters: [
-        new OA\Parameter(
-            name: 'conference',
-            description: 'Conference ID',
-            in: 'path',
-            required: true,
-            schema: new OA\Schema(type: 'integer'),
-            example: 1
-        )
-    ],
-    responses: [
-        new OA\Response(response: 200, description: 'Conference submissions'),
-        new OA\Response(response: 404, description: 'Conference not found')
-    ]
-)]
-
-
-
-
+    #[OA\Get(
+        path: '/api/v1/conferences/{conference}/submissions',
+        summary: 'Get all submissions for a conference',
+        tags: ['Conferences'],
+        parameters: [
+            new OA\Parameter(
+                name: 'conference',
+                description: 'Conference ID',
+                in: 'path',
+                required: true,
+                schema: new OA\Schema(type: 'integer'),
+                example: 1
+            ),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Conference submissions'),
+            new OA\Response(response: 404, description: 'Conference not found'),
+        ]
+    )]
     public function submissions(Conference $conference): JsonResponse
     {
         $submissions = DB::table('submissions')
@@ -351,28 +331,25 @@ class ConferenceController
         return response()->json($submissions);
     }
 
-     #[OA\Get(
-    path: '/api/v1/conferences/{conference}/registrations',
-    summary: 'Get all registrations for a conference',
-    tags: ['Conferences'],
-    parameters: [
-        new OA\Parameter(
-            name: 'conference',
-            description: 'Conference ID',
-            in: 'path',
-            required: true,
-            schema: new OA\Schema(type: 'integer'),
-            example: 1
-        )
-    ],
-    responses: [
-        new OA\Response(response: 200, description: 'Conference registrations'),
-        new OA\Response(response: 404, description: 'Conference not found')
-    ]
-)]
-
-
-
+    #[OA\Get(
+        path: '/api/v1/conferences/{conference}/registrations',
+        summary: 'Get all registrations for a conference',
+        tags: ['Conferences'],
+        parameters: [
+            new OA\Parameter(
+                name: 'conference',
+                description: 'Conference ID',
+                in: 'path',
+                required: true,
+                schema: new OA\Schema(type: 'integer'),
+                example: 1
+            ),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Conference registrations'),
+            new OA\Response(response: 404, description: 'Conference not found'),
+        ]
+    )]
     public function registrations(Conference $conference): JsonResponse
     {
         $registrations = DB::table('conference_registrations')
@@ -383,30 +360,25 @@ class ConferenceController
         return response()->json($registrations);
     }
 
-
-      #[OA\Get(
-    path: '/api/v1/conferences/{conference}/sessions',
-    summary: 'Get all sessions for a conference',
-    tags: ['Conferences'],
-    parameters: [
-        new OA\Parameter(
-            name: 'conference',
-            description: 'Conference ID',
-            in: 'path',
-            required: true,
-            schema: new OA\Schema(type: 'integer'),
-            example: 1
-        )
-    ],
-    responses: [
-        new OA\Response(response: 200, description: 'Conference sessions'),
-        new OA\Response(response: 404, description: 'Conference not found')
-    ]
-)]
-
-
-
-
+    #[OA\Get(
+        path: '/api/v1/conferences/{conference}/sessions',
+        summary: 'Get all sessions for a conference',
+        tags: ['Conferences'],
+        parameters: [
+            new OA\Parameter(
+                name: 'conference',
+                description: 'Conference ID',
+                in: 'path',
+                required: true,
+                schema: new OA\Schema(type: 'integer'),
+                example: 1
+            ),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Conference sessions'),
+            new OA\Response(response: 404, description: 'Conference not found'),
+        ]
+    )]
     public function sessions(Conference $conference): JsonResponse
     {
         $sessions = DB::table('conference_sessions')

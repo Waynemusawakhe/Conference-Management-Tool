@@ -3,10 +3,10 @@
 use App\Models\User;
 use App\Modules\Account\Controllers\AuthController;
 use App\Modules\Account\Controllers\UserController;
+use App\Modules\Conferences\Controllers\ConferenceController;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Modules\Conferences\Controllers\ConferenceController;
 
 Route::prefix('v1/conferences')->group(function () {
 

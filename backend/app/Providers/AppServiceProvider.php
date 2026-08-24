@@ -2,11 +2,10 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\ServiceProvider;
-use App\Models\User;
 use App\Modules\Conferences\Models\Conference;
 use App\Modules\Conferences\Policies\ConferencePolicy;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
