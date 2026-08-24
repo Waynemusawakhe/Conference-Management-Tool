@@ -27,152 +27,6 @@
                                 "required": [
                                     "name",
                                     "email",
-                                    "password"
-                                ],
-                                "properties": {
-                                    "name": {
-                                        "type": "string",
-                                        "example": "Test User"
-                                    },
-                                    "email": {
-                                        "type": "string",
-                                        "format": "email",
-                                        "example": "test@example.com"
-                                    },
-                                    "password": {
-                                        "type": "string",
-                                        "format": "password",
-                                        "example": "password123"
-                                    },
-                                    "role": {
-                                        "type": "string",
-                                        "example": "author",
-                                        "enum": [
-                                            "author",
-                                            "reviewer",
-                                            "organiser",
-                                            "attendee",
-                                            "admin"
-                                        ]
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "201": {
-                        "description": "User registered successfully"
-                    },
-                    "422": {
-                        "description": "Validation error"
-                    }
-                }
-            }
-        },
-        "/api/v1/auth/login": {
-            "post": {
-                "tags": [
-                    "Authentication"
-                ],
-                "summary": "Authenticate a user",
-                "operationId": "23bb956fc5871b97f2e58eb57a13aa9c",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "required": [
-                                    "email",
-                                    "password"
-                                ],
-                                "properties": {
-                                    "email": {
-                                        "type": "string",
-                                        "format": "email",
-                                        "example": "test@example.com"
-                                    },
-                                    "password": {
-                                        "type": "string",
-                                        "format": "password",
-                                        "example": "password123"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Login successful"
-                    },
-                    "401": {
-                        "description": "Invalid credentials"
-                    }
-                }
-            }
-        },
-        "/api/v1/auth/logout": {
-            "post": {
-                "tags": [
-                    "Authentication"
-                ],
-                "summary": "Log out the current user",
-                "operationId": "7b5c7cc659253df8f82c4e88e260076f",
-                "responses": {
-                    "200": {
-                        "description": "Logout successful"
-                    }
-                }
-            }
-        },
-        "/api/v1/auth/me": {
-            "get": {
-                "tags": [
-                    "Authentication"
-                ],
-                "summary": "Get the current authenticated user",
-                "operationId": "3068bf0f8824153f82f51817983ae93a",
-                "responses": {
-                    "200": {
-                        "description": "Current user returned successfully"
-                    },
-                    "401": {
-                        "description": "Unauthenticated"
-                    }
-                }
-            }
-        },
-        "/api/v1/users": {
-            "get": {
-                "tags": [
-                    "User Management"
-                ],
-                "summary": "Get all users",
-                "description": "Returns a list of all users.",
-                "operationId": "29a02dfa41f8708d45019a2c2080c11a",
-                "responses": {
-                    "200": {
-                        "description": "Users retrieved successfully"
-                    }
-                }
-            },
-            "post": {
-                "tags": [
-                    "User Management"
-                ],
-                "summary": "Create a user",
-                "operationId": "9f88d6ceda975ec282a7d9ddabe1cd4c",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "required": [
-                                    "name",
-                                    "email",
                                     "password",
                                     "password_confirmation",
                                     "role"
@@ -209,12 +63,125 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "User created successfully"
+                        "description": "User registered successfully"
                     },
                     "422": {
                         "description": "Validation error"
                     }
                 }
+            }
+        },
+        "/api/v1/auth/login": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Log in and receive an API token",
+                "operationId": "23bb956fc5871b97f2e58eb57a13aa9c",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "john@example.com"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "password123"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Login successful"
+                    },
+                    "401": {
+                        "description": "Invalid credentials"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/logout": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Revoke the current API token",
+                "operationId": "7b5c7cc659253df8f82c4e88e260076f",
+                "responses": {
+                    "200": {
+                        "description": "Logged out successfully"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/auth/me": {
+            "get": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Get the currently authenticated user",
+                "operationId": "3068bf0f8824153f82f51817983ae93a",
+                "responses": {
+                    "200": {
+                        "description": "Authenticated user returned"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/users": {
+            "get": {
+                "tags": [
+                    "User Management"
+                ],
+                "summary": "Get all users",
+                "description": "Returns a list of all users. Admin only.",
+                "operationId": "29a02dfa41f8708d45019a2c2080c11a",
+                "responses": {
+                    "200": {
+                        "description": "Users retrieved successfully"
+                    },
+                    "403": {
+                        "description": "Forbidden — admin role required"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
             }
         },
         "/api/v1/users/{id}": {
@@ -241,8 +208,16 @@
                     },
                     "404": {
                         "description": "User not found"
+                    },
+                    "403": {
+                        "description": "Forbidden — admin role required"
                     }
-                }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
             }
         }
     },
@@ -254,6 +229,21 @@
         {
             "name": "User Management",
             "description": "User Management"
+        }
+    ],
+    "components": {
+        "securitySchemes": {
+            "sanctum": {
+                "type": "apiKey",
+                "description": "Enter token in format: Bearer {token}",
+                "name": "Authorization",
+                "in": "header"
+            }
+        }
+    },
+    "security": [
+        {
+            "sanctum": []
         }
     ]
 }

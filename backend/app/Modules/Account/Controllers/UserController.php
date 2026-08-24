@@ -3,10 +3,8 @@
 namespace App\Modules\Account\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Modules\Account\Actions\GetUsersAction;
 use App\Modules\Account\Actions\GetUserAction;
-use App\Modules\Account\Actions\CreateUserAction;
-use App\Modules\Account\Requests\CreateUserRequest;
+use App\Modules\Account\Actions\GetUsersAction;
 use Illuminate\Http\JsonResponse;
 use OpenApi\Attributes as OA;
 
@@ -16,12 +14,11 @@ class UserController extends Controller
         path: '/api/v1/users',
         tags: ['User Management'],
         summary: 'Get all users',
-        description: 'Returns a list of all users.',
+        description: 'Returns a list of all users. Admin only.',
+        security: [['sanctum' => []]],
         responses: [
-            new OA\Response(
-                response: 200,
-                description: 'Users retrieved successfully'
-            )
+            new OA\Response(response: 200, description: 'Users retrieved successfully'),
+            new OA\Response(response: 403, description: 'Forbidden — admin role required'),
         ]
     )]
     public function index(GetUsersAction $getUsersAction): JsonResponse
@@ -38,6 +35,7 @@ class UserController extends Controller
         path: '/api/v1/users/{id}',
         tags: ['User Management'],
         summary: 'Get user by ID',
+        security: [['sanctum' => []]],
         parameters: [
             new OA\Parameter(
                 name: 'id',
@@ -48,14 +46,9 @@ class UserController extends Controller
             )
         ],
         responses: [
-            new OA\Response(
-                response: 200,
-                description: 'User retrieved successfully'
-            ),
-            new OA\Response(
-                response: 404,
-                description: 'User not found'
-            )
+            new OA\Response(response: 200, description: 'User retrieved successfully'),
+            new OA\Response(response: 404, description: 'User not found'),
+            new OA\Response(response: 403, description: 'Forbidden — admin role required'),
         ]
     )]
     public function show(int $id, GetUserAction $getUserAction): JsonResponse
@@ -66,38 +59,5 @@ class UserController extends Controller
             'success' => true,
             'data' => $user,
         ]);
-    }
-
-    #[OA\Post(
-        path: '/api/v1/users',
-        tags: ['User Management'],
-        summary: 'Create a user',
-        requestBody: new OA\RequestBody(
-            required: true,
-            content: new OA\JsonContent(
-                required: ['name', 'email', 'password', 'password_confirmation', 'role'],
-                properties: [
-                    new OA\Property(property: 'name', type: 'string', example: 'John Doe'),
-                    new OA\Property(property: 'email', type: 'string', format: 'email', example: 'john@example.com'),
-                    new OA\Property(property: 'password', type: 'string', format: 'password', example: 'password123'),
-                    new OA\Property(property: 'password_confirmation', type: 'string', format: 'password', example: 'password123'),
-                    new OA\Property(property: 'role', type: 'string', example: 'author'),
-                ]
-            )
-        ),
-        responses: [
-            new OA\Response(response: 201, description: 'User created successfully'),
-            new OA\Response(response: 422, description: 'Validation error'),
-        ]
-    )]
-    public function store(CreateUserRequest $request, CreateUserAction $createUserAction): JsonResponse
-    {
-        $user = $createUserAction->execute($request->validated());
-
-        return response()->json([
-            'success' => true,
-            'message' => 'User created successfully.',
-            'data' => $user,
-        ], 201);
     }
 }

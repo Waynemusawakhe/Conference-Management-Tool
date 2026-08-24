@@ -185,6 +185,12 @@ return [
         */
         'securityDefinitions' => [
             'securitySchemes' => [
+                'sanctum' => [ // Unique name of security
+                    'type' => 'apiKey',
+                     'description' => 'Enter token in format: Bearer {token}',
+                     'name' => 'Authorization',
+                     'in' => 'header'
+                     ] // Valid values are
                 /*
                  * Examples of Security schemes
                  */
@@ -236,6 +242,7 @@ return [
                  * Examples of Securities
                  */
                 [
+                    'sanctum' => [],
                     /*
                     'oauth2_security_example' => [
                         'read',
