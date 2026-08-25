@@ -6,6 +6,7 @@ use App\Modules\Account\Controllers\UserController;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Modules\Reporting\Controllers\ReportingController;
 
 Route::prefix('v1/auth')->group(function () {
     Route::post('/register', [AuthController::class, 'register']);
@@ -41,6 +42,7 @@ Route::prefix('v1/auth')->group(function () {
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('/logout', [AuthController::class, 'logout']);
         Route::get('/me', [AuthController::class, 'me']);
+        
 
         Route::post('/email/verification-notification', function (Request $request) {
             $request->user()->sendEmailVerificationNotification();
@@ -52,6 +54,15 @@ Route::prefix('v1/auth')->group(function () {
         })->middleware('throttle:6,1')->name('verification.send');
     });
 });
+
+/*----------------------------Reporting---------------------------------------*/ 
+
+Route::prefix('v1/reports')
+    ->middleware(['auth:sanctum', 'role:admin'])
+    ->group(function () {
+        Route::get('/dashboard', [ReportingController::class, 'dashboard']);
+    });
+/*--------------------------------------------------------------------------- */
 
 Route::prefix('v1/users')->middleware('auth:sanctum')->group(function () {
     Route::middleware('role:admin')->group(function () {
