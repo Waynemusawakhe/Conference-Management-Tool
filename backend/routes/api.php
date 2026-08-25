@@ -4,7 +4,6 @@ use App\Models\User;
 use App\Modules\Account\Controllers\AuthController;
 use App\Modules\Account\Controllers\UserController;
 use App\Modules\Conferences\Controllers\ConferenceController;
-use App\Modules\Registrations\Controllers\RegistrationController;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -81,7 +80,9 @@ Route::prefix('v1/users')->middleware('auth:sanctum')->group(function () {
     });
 });
 
+
 // Registrations API Routes
 Route::prefix('v1')->group(function () {
-    Route::apiResource('registrations', RegistrationController::class);
+    Route::apiResource('registrations', \App\Modules\Registrations\Controllers\RegistrationController::class);
 });
+
