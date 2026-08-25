@@ -59,3 +59,8 @@ Route::prefix('v1/users')->middleware('auth:sanctum')->group(function () {
         Route::get('/{id}', [UserController::class, 'show']);
     });
 });
+
+// Registrations API Routes
+Route::prefix('v1')->group(function () {
+    Route::apiResource('registrations', \App\Modules\Registrations\Controllers\RegistrationController::class);
+});
