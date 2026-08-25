@@ -189,11 +189,11 @@ return [
         */
         'securityDefinitions' => [
             'securitySchemes' => [
-                'sanctum' => [ // Unique name of security
-                    'type' => 'apiKey',
-                    'description' => 'Enter token in format: Bearer {token}',
-                    'name' => 'Authorization',
-                    'in' => 'header',
+                'sanctum' => [
+                    'type' => 'http',
+                    'scheme' => 'bearer',
+                    'bearerFormat' => 'Sanctum',
+                    'description' => 'Enter your Sanctum token.',
                 ], // Valid values are
                 /*
                  * Examples of Security schemes

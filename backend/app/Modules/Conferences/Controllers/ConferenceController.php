@@ -79,41 +79,116 @@ class ConferenceController
         ]
     )]
     public function store(
+    Request $request,
+    CreateConference $action
+): JsonResponse {
+    Gate::authorize('create', Conference::class);
 
-        Request $request,
-        CreateConference $action
-    ): JsonResponse {
-        Gate::authorize('create', Conference::class);
-        $data = $request->validate([
-            'organiser_id' => ['required', 'integer', 'exists:users,id'],
-            'code' => ['required', 'string', 'max:255', 'unique:conferences,code'],
-            'name' => ['required', 'string', 'max:255'],
-            'description' => ['nullable', 'string'],
-            'category' => ['nullable', 'string', 'max:255'],
-            'topics' => ['nullable', 'array'],
-            'topics.*' => ['string'],
-            'format' => ['required', Rule::in(['in_person', 'virtual', 'hybrid'])],
-            'submission_status' => ['nullable', Rule::in(['open', 'closed'])],
-            'start_date' => ['required', 'date'],
-            'end_date' => ['required', 'date', 'after_or_equal:start_date'],
-            'submission_deadline' => [
-                'nullable',
-                'date',
-                'before_or_equal:start_date',
-            ],
-            'venue_name' => ['nullable', 'string', 'max:255'],
-            'city' => ['nullable', 'string', 'max:255'],
-            'country' => ['nullable', 'string', 'max:255'],
-            'website_link' => ['nullable', 'url', 'max:255'],
-        ]);
+    $data = $request->validate([
+        'code' => [
+            'required',
+            'string',
+            'max:255',
+            'unique:conferences,code',
+        ],
 
-        $conference = $action->execute($data);
+        'name' => [
+            'required',
+            'string',
+            'max:255',
+        ],
 
-        return response()->json([
-            'message' => 'Conference created successfully.',
-            'data' => $conference,
-        ], 201);
-    }
+        'description' => [
+            'nullable',
+            'string',
+        ],
+
+        'category' => [
+            'nullable',
+            'string',
+            'max:255',
+        ],
+
+        'topics' => [
+            'nullable',
+            'array',
+        ],
+
+        'topics.*' => [
+            'string',
+            'max:255',
+        ],
+
+        'format' => [
+            'required',
+            Rule::in([
+                'in_person',
+                'virtual',
+                'hybrid',
+            ]),
+        ],
+
+        'submission_status' => [
+            'nullable',
+            Rule::in([
+                'open',
+                'closed',
+            ]),
+        ],
+
+        'start_date' => [
+            'required',
+            'date',
+        ],
+
+        'end_date' => [
+            'required',
+            'date',
+            'after_or_equal:start_date',
+        ],
+
+        'submission_deadline' => [
+            'nullable',
+            'date',
+            'before_or_equal:start_date',
+        ],
+
+        'venue_name' => [
+            'nullable',
+            'string',
+            'max:255',
+        ],
+
+        'city' => [
+            'nullable',
+            'string',
+            'max:255',
+        ],
+
+        'country' => [
+            'nullable',
+            'string',
+            'max:255',
+        ],
+
+        'website_link' => [
+            'nullable',
+            'url',
+            'max:255',
+        ],
+    ]);
+
+    // The authenticated user is the organiser
+    $data['organiser_id'] = $request->user()->id;
+
+    $conference = $action->execute($data);
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Conference created successfully.',
+        'data' => $conference,
+    ], 201);
+}
 
     #[OA\Get(
         path: '/api/v1/conferences/{conference}',
