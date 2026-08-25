@@ -8,6 +8,9 @@ use App\Modules\Account\Actions\LoginAction;
 use App\Modules\Account\Actions\LogoutAction;
 use App\Modules\Account\Requests\CreateUserRequest;
 use App\Modules\Account\Requests\LoginRequest;
+use App\Modules\Account\Requests\ForgotPasswordRequest;
+use App\Module\Account\Requests\ResetPasswordRequest;
+
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use OpenApi\Attributes as OA;
