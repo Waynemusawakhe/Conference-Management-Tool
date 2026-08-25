@@ -220,23 +220,6 @@
                 ]
             }
         },
-        "/api/v1/auth/me": {
-            "get": {
-                "tags": [
-                    "Authentication"
-                ],
-                "summary": "Get the current authenticated user",
-                "operationId": "3068bf0f8824153f82f51817983ae93a",
-                "responses": {
-                    "200": {
-                        "description": "Current user returned successfully"
-                    },
-                    "401": {
-                        "description": "Unauthenticated"
-                    }
-                }
-            }
-        },
         "/api/v1/conferences": {
             "get": {
                 "tags": [
@@ -674,12 +657,12 @@
             "description": "Authentication"
         },
         {
-<<<<<<< HEAD
-            "name": "Conferences",
-            "description": "Conferences"
-=======
             "name": "User Management",
             "description": "User Management"
+        },
+        {
+            "name": "Conferences",
+            "description": "Conferences"
         }
     ],
     "components": {
@@ -695,7 +678,6 @@
     "security": [
         {
             "sanctum": []
->>>>>>> ee6113fc708c41ead39720b413bd763ee92afe87
         }
     ]
 }

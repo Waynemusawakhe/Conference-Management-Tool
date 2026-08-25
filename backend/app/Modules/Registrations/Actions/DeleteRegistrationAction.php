@@ -3,6 +3,7 @@
 namespace App\Modules\Registrations\Actions;
 
 use App\Modules\Registrations\Models\Registration;
+use App\Modules\Registrations\Notifications\RegistrationCancelledNotification;  // ← THIS LINE MUST EXIST
 
 class DeleteRegistrationAction
 {
@@ -15,6 +16,9 @@ class DeleteRegistrationAction
         }
 
         $registration->cancel();
+
+        // Send cancellation email
+        $registration->user->notify(new RegistrationCancelledNotification($registration));
 
         return true;
     }
