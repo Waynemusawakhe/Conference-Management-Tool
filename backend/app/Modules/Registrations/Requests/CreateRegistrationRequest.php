@@ -49,7 +49,7 @@ class CreateRegistrationRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-        if (Auth::check() && !$this->has('user_id')) {
+        if (Auth::check() && ! $this->has('user_id')) {
             $this->merge([
                 'user_id' => Auth::id(),
             ]);

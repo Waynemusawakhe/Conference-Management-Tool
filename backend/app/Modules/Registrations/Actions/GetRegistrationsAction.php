@@ -11,23 +11,23 @@ class GetRegistrationsAction
     {
         $query = Registration::with(['conference', 'user']);
 
-        if (!empty($filters['conference_id'])) {
+        if (! empty($filters['conference_id'])) {
             $query->where('conference_id', $filters['conference_id']);
         }
 
-        if (!empty($filters['user_id'])) {
+        if (! empty($filters['user_id'])) {
             $query->where('user_id', $filters['user_id']);
         }
 
-        if (!empty($filters['status'])) {
+        if (! empty($filters['status'])) {
             $query->where('status', $filters['status']);
         }
 
-        if (!empty($filters['registered_from'])) {
+        if (! empty($filters['registered_from'])) {
             $query->whereDate('registered_at', '>=', $filters['registered_from']);
         }
 
-        if (!empty($filters['registered_to'])) {
+        if (! empty($filters['registered_to'])) {
             $query->whereDate('registered_at', '<=', $filters['registered_to']);
         }
 

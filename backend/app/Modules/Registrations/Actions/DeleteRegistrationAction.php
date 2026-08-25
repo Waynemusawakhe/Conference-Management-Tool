@@ -3,7 +3,6 @@
 namespace App\Modules\Registrations\Actions;
 
 use App\Modules\Registrations\Models\Registration;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class DeleteRegistrationAction
 {
@@ -16,6 +15,7 @@ class DeleteRegistrationAction
         }
 
         $registration->cancel();
+
         return true;
     }
 }

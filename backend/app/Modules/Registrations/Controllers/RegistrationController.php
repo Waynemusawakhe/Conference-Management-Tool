@@ -31,42 +31,56 @@ class RegistrationController extends Controller
      *     summary="Get all registrations",
      *     tags={"Registrations"},
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(
      *         name="conference_id",
      *         in="query",
      *         description="Filter by conference ID",
+     *
      *         @OA\Schema(type="integer")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="user_id",
      *         in="query",
      *         description="Filter by user ID",
+     *
      *         @OA\Schema(type="integer")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="status",
      *         in="query",
      *         description="Filter by status (registered/cancelled)",
+     *
      *         @OA\Schema(type="string", enum={"registered", "cancelled"})
      *     ),
+     *
      *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
      *         description="Items per page",
+     *
      *         @OA\Schema(type="integer", default=15)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Successful operation",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="data", type="array",
+     *
      *                 @OA\Items(ref="#/components/schemas/Registration")
      *             ),
+     *
      *             @OA\Property(property="meta", type="object")
      *         )
      *     ),
+     *
      *     @OA\Response(response=401, description="Unauthenticated")
      * )
      */
@@ -95,22 +109,28 @@ class RegistrationController extends Controller
      *     summary="Get a specific registration",
      *     tags={"Registrations"},
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         required=true,
      *         description="Registration ID",
+     *
      *         @OA\Schema(type="integer")
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Successful operation",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="data", ref="#/components/schemas/Registration")
      *         )
      *     ),
+     *
      *     @OA\Response(response=401, description="Unauthenticated"),
      *     @OA\Response(response=404, description="Registration not found")
      * )
@@ -132,25 +152,32 @@ class RegistrationController extends Controller
      *     summary="Create a new registration",
      *     tags={"Registrations"},
      *     security={{"sanctum":{}}},
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
      *             required={"conference_id", "user_id"},
+     *
      *             @OA\Property(property="conference_id", type="integer", example=1),
      *             @OA\Property(property="user_id", type="integer", example=1),
      *             @OA\Property(property="status", type="string", enum={"registered", "cancelled"}, example="registered")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=201,
      *         description="Registration created successfully",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Registration created successfully."),
      *             @OA\Property(property="data", ref="#/components/schemas/Registration")
      *         )
      *     ),
+     *
      *     @OA\Response(response=401, description="Unauthenticated"),
      *     @OA\Response(response=422, description="Validation error"),
      *     @OA\Response(response=409, description="Already registered")
@@ -185,31 +212,40 @@ class RegistrationController extends Controller
      *     summary="Update a registration",
      *     tags={"Registrations"},
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         required=true,
      *         description="Registration ID",
+     *
      *         @OA\Schema(type="integer")
      *     ),
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="conference_id", type="integer", example=1),
      *             @OA\Property(property="user_id", type="integer", example=1),
      *             @OA\Property(property="status", type="string", enum={"registered", "cancelled"}, example="cancelled")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Registration updated successfully",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Registration updated successfully."),
      *             @OA\Property(property="data", ref="#/components/schemas/Registration")
      *         )
      *     ),
+     *
      *     @OA\Response(response=401, description="Unauthenticated"),
      *     @OA\Response(response=404, description="Registration not found"),
      *     @OA\Response(response=422, description="Validation error")
@@ -217,7 +253,7 @@ class RegistrationController extends Controller
      */
     public function update(UpdateRegistrationRequest $request, int $id, UpdateRegistrationAction $action): JsonResponse
     {
-        $registration = (new GetRegistrationAction())->execute($id);
+        $registration = (new GetRegistrationAction)->execute($id);
         $this->authorize('update', $registration);
 
         $data = $request->validated();
@@ -245,29 +281,35 @@ class RegistrationController extends Controller
      *     summary="Cancel/delete a registration",
      *     tags={"Registrations"},
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         required=true,
      *         description="Registration ID",
+     *
      *         @OA\Schema(type="integer")
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Registration cancelled successfully",
+     *
      *         @OA\JsonContent(
      *             type="object",
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Registration cancelled successfully.")
      *         )
      *     ),
+     *
      *     @OA\Response(response=401, description="Unauthenticated"),
      *     @OA\Response(response=404, description="Registration not found")
      * )
      */
     public function destroy(int $id, DeleteRegistrationAction $action): JsonResponse
     {
-        $registration = (new GetRegistrationAction())->execute($id);
+        $registration = (new GetRegistrationAction)->execute($id);
         $this->authorize('delete', $registration);
 
         try {
