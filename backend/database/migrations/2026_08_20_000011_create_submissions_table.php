@@ -2,7 +2,6 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -24,16 +23,10 @@ return new class extends Migration
             $table->string('file_path')->nullable();
             $table->unsignedBigInteger('file_size_bytes')->nullable();
             // pending | under_review | accepted | rejected | revision_requested
-            $table->string('status')->default('pending');
+            $table->enum('status', ['pending', 'under_review', 'accepted', 'rejected', 'revision_requested'])->default('pending');
             $table->timestamp('final_decision_at')->nullable();
             $table->timestamps();
         });
-
-        DB::statement("ALTER TABLE submissions ADD CONSTRAINT submissions_title_not_blank CHECK (btrim(title) <> '')");
-        DB::statement("ALTER TABLE submissions ADD CONSTRAINT submissions_abstract_not_blank CHECK (btrim(abstract) <> '')");
-        DB::statement("ALTER TABLE submissions ADD CONSTRAINT submissions_status_check CHECK (status IN ('pending','under_review','accepted','rejected','revision_requested'))");
-        DB::statement("ALTER TABLE submissions ADD CONSTRAINT submissions_file_ext_check CHECK (file_path IS NULL OR file_path ~* '\\.(pdf|doc|docx)$')");
-        DB::statement('ALTER TABLE submissions ADD CONSTRAINT submissions_file_size_check CHECK (file_size_bytes IS NULL OR file_size_bytes <= 10485760)');
     }
 
     public function down(): void

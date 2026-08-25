@@ -19,7 +19,7 @@ The backend provides RESTful API endpoints for authentication, user management, 
 
 ---
 
-## Requirements
+# Requirements
 
 Before setting up the project, make sure you have installed:
 
@@ -47,7 +47,8 @@ app/
 └── Modules/
     ├── Account/
     │   ├── Actions/
-    │   └── Controllers/
+    │   ├── Controllers/
+    │   └── Requests/
     │
     ├── Users/
     │   ├── Actions/
@@ -65,15 +66,15 @@ app/
 
 ### Backend Modules
 
-| Module      | Responsibility                                |
-| ----------- | --------------------------------------------- |
-| Account     | Authentication and account access             |
-| Users       | User management and permissions               |
-| Conferences | Conference creation and management            |
-| Submissions | Paper/submission management                   |
-| Reviews     | Reviewing and reviewer assignments            |
-| Decisions   | Submission decisions and programme management |
-| Reporting   | Reports and system statistics                 |
+| Module      | Responsibility                                                      |
+| ----------- | ------------------------------------------------------------------- |
+| Account     | Authentication, registration, login, logout, and email verification |
+| Users       | User management and permissions                                     |
+| Conferences | Conference creation and management                                  |
+| Submissions | Paper/submission management                                         |
+| Reviews     | Reviewing and reviewer assignments                                  |
+| Decisions   | Submission decisions and programme management                       |
+| Reporting   | Reports and system statistics                                       |
 
 ---
 
@@ -127,7 +128,7 @@ Example:
 DB_CONNECTION=pgsql
 DB_HOST=127.0.0.1
 DB_PORT=5432
-DB_DATABASE=cmt
+DB_DATABASE=conference_management
 DB_USERNAME=postgres
 DB_PASSWORD=your_password
 ```
@@ -164,29 +165,55 @@ http://127.0.0.1:8000
 
 All application API endpoints use the `/api/v1` prefix.
 
-## Authentication
+## Authentication & Account Management
 
-Current authentication endpoints:
+The Account module provides the authentication and user-account functionality required by the CMT backend.
 
-| Method | Endpoint                | Description                |
-| ------ | ----------------------- | -------------------------- |
-| POST   | `/api/v1/auth/register` | Register a user            |
-| POST   | `/api/v1/auth/login`    | Authenticate a user        |
-| POST   | `/api/v1/auth/logout`   | Log out                    |
-| GET    | `/api/v1/auth/me`       | Get the authenticated user |
+Implemented functionality includes:
 
-### Example Registration Request
+* User registration
+* User login
+* User logout
+* Authenticated-user information
+* Email verification
+* Request validation
+* Role-based account handling
+* Laravel Sanctum authentication
+* Swagger/OpenAPI documentation
 
-```json
-{
-    "name": "Test User",
-    "email": "test@example.com",
-    "password": "password123",
-    "role": "author"
-}
-```
+### Authentication Flow
 
-Available roles:
+1. A user registers using the registration endpoint.
+2. The user's account is created and an email verification process is initiated.
+3. The user verifies their email address.
+4. The verified user can authenticate through the login endpoint.
+5. Laravel Sanctum provides authentication for protected API endpoints.
+6. The authenticated user can access authorized resources.
+7. The user can log out and invalidate their authentication session/token.
+
+### Authentication Endpoints
+
+| Method | Endpoint                                | Description                              |
+| ------ | --------------------------------------- | ---------------------------------------- |
+| POST   | `/api/v1/auth/register`                 | Register a new user                      |
+| POST   | `/api/v1/auth/login`                    | Authenticate a user                      |
+| POST   | `/api/v1/auth/logout`                   | Log out the authenticated user           |
+| GET    | `/api/v1/auth/me`                       | Get the authenticated user's information |
+| GET    | `/api/v1/auth/verify-email/{id}/{hash}` | Verify a user's email address            |
+
+---
+
+## User Management
+
+User management endpoints are responsible for managing registered users and their roles.
+
+| Method | Endpoint             | Description      |
+| ------ | -------------------- | ---------------- |
+| GET    | `/api/v1/users`      | Get all users    |
+| GET    | `/api/v1/users/{id}` | Get a user by ID |
+| POST   | `/api/v1/users`      | Create a user    |
+
+### Available Roles
 
 ```text
 author
@@ -194,6 +221,39 @@ reviewer
 organiser
 attendee
 admin
+```
+
+---
+
+# Example Registration Request
+
+```json
+{
+    "name": "Test User",
+    "email": "test@example.com",
+    "password": "password123",
+    "password_confirmation": "password123",
+    "role": "author"
+}
+```
+
+A successful registration returns a `201 Created` response.
+
+Example:
+
+```json
+{
+    "success": true,
+    "message": "User created successfully.",
+    "data": {
+        "name": "Test User",
+        "email": "test@example.com",
+        "role": "author",
+        "created_at": "2026-08-24T10:13:14.000000Z",
+        "updated_at": "2026-08-24T10:13:14.000000Z",
+        "id": 1
+    }
+}
 ```
 
 ---
@@ -239,15 +299,8 @@ Swagger is used for API documentation and browser-based testing, while Postman c
 
 ## 1. Start the Laravel Backend
 
-Open a terminal in the backend directory:
-
 ```bash
 cd Conference-Management-Tool/backend
-```
-
-Start the server:
-
-```bash
 php artisan serve
 ```
 
@@ -257,13 +310,11 @@ The backend should be available at:
 http://127.0.0.1:8000
 ```
 
-Keep this terminal running while testing.
+Keep the terminal running while testing.
 
 ---
 
-## 2. Open Postman
-
-Open Postman and create a new **HTTP Request**.
+## 2. API Base URL
 
 The API base URL is:
 
@@ -300,6 +351,7 @@ Use:
     "name": "Test User",
     "email": "test@example.com",
     "password": "password123",
+    "password_confirmation": "password123",
     "role": "author"
 }
 ```
@@ -337,8 +389,6 @@ Body:
 }
 ```
 
-Click **Send**.
-
 A successful login should return:
 
 ```text
@@ -347,31 +397,7 @@ A successful login should return:
 
 ---
 
-## 5. Test Logout
-
-**Method:**
-
-```text
-POST
-```
-
-**URL:**
-
-```text
-http://127.0.0.1:8000/api/v1/auth/logout
-```
-
-Click **Send**.
-
-A successful request should return:
-
-```text
-200 OK
-```
-
----
-
-## 6. Test Current User
+## 5. Test Current User
 
 **Method:**
 
@@ -385,7 +411,29 @@ GET
 http://127.0.0.1:8000/api/v1/auth/me
 ```
 
-Click **Send**.
+A successful request should return:
+
+```text
+200 OK
+```
+
+and return the authenticated user's information.
+
+---
+
+## 6. Test Logout
+
+**Method:**
+
+```text
+POST
+```
+
+**URL:**
+
+```text
+http://127.0.0.1:8000/api/v1/auth/logout
+```
 
 A successful request should return:
 
@@ -393,41 +441,20 @@ A successful request should return:
 200 OK
 ```
 
-and return the current user's information.
-
 ---
 
-## Postman Request Summary
+# Postman Request Summary
 
-| Method | Endpoint                | Purpose          |
-| ------ | ----------------------- | ---------------- |
-| POST   | `/api/v1/auth/register` | Register a user  |
-| POST   | `/api/v1/auth/login`    | Log in           |
-| POST   | `/api/v1/auth/logout`   | Log out          |
-| GET    | `/api/v1/auth/me`       | Get current user |
-
-Full local URLs:
-
-```text
-POST http://127.0.0.1:8000/api/v1/auth/register
-POST http://127.0.0.1:8000/api/v1/auth/login
-POST http://127.0.0.1:8000/api/v1/auth/logout
-GET  http://127.0.0.1:8000/api/v1/auth/me
-```
-
-### Important
-
-When another developer tests the API on their own computer, `127.0.0.1` refers to **their own machine**.
-
-They must clone the repository, install dependencies, configure their `.env`, and run:
-
-```bash
-php artisan serve
-```
-
-before sending requests from Postman.
-
-The current authentication implementation is **mocked** while database integration is being finalized. The API routes and request structures can therefore be tested before PostgreSQL integration is complete.
+| Method | Endpoint                                | Purpose          |
+| ------ | --------------------------------------- | ---------------- |
+| POST   | `/api/v1/auth/register`                 | Register a user  |
+| POST   | `/api/v1/auth/login`                    | Log in           |
+| POST   | `/api/v1/auth/logout`                   | Log out          |
+| GET    | `/api/v1/auth/me`                       | Get current user |
+| GET    | `/api/v1/auth/verify-email/{id}/{hash}` | Verify email     |
+| GET    | `/api/v1/users`                         | Get users        |
+| GET    | `/api/v1/users/{id}`                    | Get user         |
+| POST   | `/api/v1/users`                         | Create user      |
 
 ---
 
@@ -459,20 +486,12 @@ Do not push development work directly to `main`.
 
 ## 1. Get the Latest Code
 
-Before starting work:
-
 ```bash
 git checkout main
 git pull origin main
 ```
 
-This ensures you are working with the latest version of the backend.
-
----
-
 ## 2. Create a Feature Branch
-
-Create a branch for your assigned task:
 
 ```bash
 git checkout -b feature/your-feature-name
@@ -486,27 +505,17 @@ git checkout -b feature/conference-management
 git checkout -b feature/submission-api
 ```
 
-Use a clear branch name that describes the work.
-
----
-
 ## 3. Make Your Changes
 
 Work only on the task assigned to you.
 
-After making your changes:
+Check your changes:
 
 ```bash
 git status
 ```
 
-Review the changed files before adding them.
-
----
-
 ## 4. Add Your Changes
-
-Add the files you want to include:
 
 ```bash
 git add .
@@ -518,17 +527,7 @@ Or add a specific file:
 git add app/Modules/Account/Controllers/AuthController.php
 ```
 
-Check again:
-
-```bash
-git status
-```
-
----
-
 ## 5. Commit Your Changes
-
-Create a commit with a clear message:
 
 ```bash
 git commit -m "feat: add login endpoint"
@@ -542,11 +541,7 @@ git commit -m "fix: validate submission request"
 git commit -m "docs: update API documentation"
 ```
 
----
-
 ## 6. Push Your Branch
-
-Push your feature branch to GitHub:
 
 ```bash
 git push -u origin feature/your-feature-name
@@ -562,13 +557,7 @@ git push
 
 # Creating a Pull Request
 
-After pushing your branch, go to the project's GitHub repository.
-
-GitHub should display an option such as:
-
-**Compare & pull request**
-
-Select it.
+After pushing your branch, open the project's GitHub repository.
 
 Set:
 
@@ -577,7 +566,7 @@ Base branch: main
 Compare branch: feature/your-feature-name
 ```
 
-Add a clear title.
+Add a clear title describing the work.
 
 Example:
 
@@ -585,37 +574,14 @@ Example:
 feat: add authentication login endpoint
 ```
 
-In the description, explain:
+Include:
 
 * What you changed
 * What endpoints or functionality were added
 * How you tested it
 * Any known issues or blockers
 
-Example:
-
-```text
-## Changes
-
-- Added login endpoint
-- Added LoginUserAction
-- Added Swagger documentation
-- Added API route
-
-## Testing
-
-- Tested using Swagger
-- Tested using Postman
-- Confirmed route appears in php artisan route:list
-
-## Notes
-
-Authentication is currently mocked while database integration is being finalized.
-```
-
-Then click:
-
-**Create pull request**
+Then create the Pull Request.
 
 ---
 
@@ -625,10 +591,8 @@ After creating the Pull Request:
 
 1. Request a review from the appropriate backend reviewer.
 2. Wait for the review.
-3. Address any requested changes.
+3. Address requested changes.
 4. Push the changes to the same branch.
-
-You do **not** need to create another Pull Request after making changes.
 
 For example:
 
@@ -646,14 +610,14 @@ The existing Pull Request will automatically update.
 
 Once the Pull Request has been reviewed and approved, it can be merged into `main` according to the team's repository permissions and workflow.
 
-After the Pull Request is merged, update your local `main` branch:
+After the Pull Request is merged:
 
 ```bash
 git checkout main
 git pull origin main
 ```
 
-Then create a new feature branch for your next task.
+Then create a new feature branch for the next task.
 
 ---
 
@@ -777,18 +741,24 @@ Use `.env.example` to document the required environment variables.
 
 # Current Development Status
 
-## Authentication
+## Authentication & Account Management
 
-* [x] Registration endpoint
-* [x] Login endpoint
-* [x] Logout endpoint
+* [x] User registration
+* [x] User login
+* [x] User logout
 * [x] Current-user endpoint
-* [x] Swagger documentation
-* [x] Postman testing support
+* [x] Email verification
+* [x] Request validation
+* [x] Laravel Sanctum authentication
+* [x] Role-based account handling
+* [x] Swagger/OpenAPI documentation
+* [x] API testing support
 
 ## User Management
 
-* [ ] User listing
+* [x] User creation
+* [x] User listing
+* [x] User retrieval by ID
 * [ ] User profile management
 * [ ] Role management
 * [ ] User activation/deactivation
@@ -825,13 +795,53 @@ Use `.env.example` to document the required environment variables.
 
 ---
 
+# Backend Architecture
+
+The backend uses a **modular monolith with a feature-driven architecture**.
+
+Business logic is separated from controllers through dedicated **Actions**, while validation is handled through dedicated **Request** classes.
+
+This structure improves:
+
+* Maintainability
+* Separation of concerns
+* Testability
+* Code organization
+* Feature scalability
+* Collaboration between backend developers
+
+The Account module is structured around components such as:
+
+```text
+Account/
+├── Actions/
+│   ├── LoginAction.php
+│   ├── LogoutAction.php
+│   └── ...
+├── Controllers/
+│   ├── AuthController.php
+│   └── UserController.php
+└── Requests/
+    └── LoginRequest.php
+```
+
+Shared functionality such as middleware is maintained separately under:
+
+```text
+Modules/Shared/
+```
+
+---
+
 # Important Notes
 
-The authentication API currently contains **mock functionality** while the database integration is being finalized.
+The authentication and user-management functionality is implemented using the project's Laravel backend architecture and PostgreSQL database configuration.
 
-Once the PostgreSQL database structure is available, the mock implementations will be replaced with the proper database-backed implementation.
+API endpoints are documented using Swagger/OpenAPI and can be tested through Swagger UI or Postman.
 
-The API contract and endpoint structure should remain stable wherever possible so that frontend development can continue independently.
+When another developer tests the API on their own computer, `127.0.0.1` refers to **their own machine**.
+
+They must clone the repository, install dependencies, configure their `.env`, configure PostgreSQL, run migrations, and start the Laravel development server before testing the API.
 
 ---
 
@@ -842,5 +852,3 @@ The API contract and endpoint structure should remain stable wherever possible s
 Backend development is managed through the project's GitHub repository and GitHub Projects board.
 
 All contributors should follow the team's branching, Pull Request, code review, testing, and integration workflow.
-#   T r i g g e r   C I   r e r u n  
- // Testing CI/CD
