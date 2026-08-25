@@ -4,6 +4,7 @@ use App\Models\User;
 use App\Modules\Account\Controllers\AuthController;
 use App\Modules\Account\Controllers\UserController;
 use App\Modules\Conferences\Controllers\ConferenceController;
+use App\Modules\Registrations\Controllers\RegistrationController;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -136,11 +137,11 @@ Route::prefix('v1/users')
         });
     });
 
-
 // Registrations API Routes
 Route::prefix('v1')->group(function () {
-    Route::apiResource('registrations', \App\Modules\Registrations\Controllers\RegistrationController::class);
+    Route::apiResource('registrations', RegistrationController::class);
 });
+<<<<<<< HEAD
 
 /*
 |--------------------------------------------------------------------------
@@ -152,3 +153,5 @@ Route::prefix('v1')
     ->group(function () {
         Route::apiResource('registrations', RegistrationController::class);
     });
+=======
+>>>>>>> 44b3975 (style: fix code style issues with Laravel Pint)
