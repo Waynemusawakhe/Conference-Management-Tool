@@ -3,7 +3,6 @@
 namespace App\Modules\Account\Actions;
 
 use App\Models\User;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class GetUserAction
 {
