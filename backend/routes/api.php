@@ -3,6 +3,7 @@
 use App\Models\User;
 use App\Modules\Account\Controllers\AuthController;
 use App\Modules\Account\Controllers\UserController;
+use App\Modules\Reviews\Controllers\TestimonialController;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -58,4 +59,12 @@ Route::prefix('v1/users')->middleware('auth:sanctum')->group(function () {
         Route::get('/', [UserController::class, 'index']);
         Route::get('/{id}', [UserController::class, 'show']);
     });
+});
+
+Route::prefix('v1/testimonials')->middleware('auth:sanctum')->group(function () {
+    Route::get('/', [TestimonialController::class, 'index']);
+    Route::post('/', [TestimonialController::class, 'store']);
+    Route::get('/{id}', [TestimonialController::class, 'show']);
+    Route::put('/{id}', [TestimonialController::class, 'update']);
+    Route::delete('/{id}', [TestimonialController::class, 'destroy']);
 });
