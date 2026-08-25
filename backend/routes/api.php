@@ -72,6 +72,12 @@ Route::prefix('v1/auth')->group(function () {
             ]);
         })->middleware('throttle:6,1')->name('verification.send');
     });
+    Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
+    Route::post('/reset-password', [AuthController::class, 'resetPassword']);
+    Route::get('/password-reset-placeholder/{token}', function () {
+    // TODO: Placeholder only — real reset happens via POST /reset-password.
+    // Update this once frontend URL is known.
+    })->name('password.reset');
 });
 
 Route::prefix('v1/users')->middleware('auth:sanctum')->group(function () {
