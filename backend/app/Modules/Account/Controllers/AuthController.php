@@ -10,6 +10,9 @@ use App\Modules\Account\Requests\CreateUserRequest;
 use App\Modules\Account\Requests\LoginRequest;
 use App\Modules\Account\Requests\ForgotPasswordRequest;
 use App\Module\Account\Requests\ResetPasswordRequest;
+use App\Modules\Account\Actions\ForgotPasswordAction;
+use App\Modules\Account\Actions\ResetPasswordAction;
+
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
