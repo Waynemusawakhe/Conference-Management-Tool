@@ -13,7 +13,7 @@ use App\Module\Account\Requests\ResetPasswordRequest;
 use App\Modules\Account\Actions\ForgotPasswordAction;
 use App\Modules\Account\Actions\ResetPasswordAction;
 
-
+use Illuminate\Support\Facades\Password;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use OpenApi\Attributes as OA;
