@@ -10,7 +10,6 @@ use Illuminate\Auth\Events\Verified;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-
 /*
 |--------------------------------------------------------------------------
 | Conference Routes
@@ -38,7 +37,6 @@ Route::prefix('v1/conferences')->group(function () {
     });
 });
 
-
 /*
 |--------------------------------------------------------------------------
 | Authentication Routes
@@ -57,7 +55,7 @@ Route::prefix('v1/auth')->group(function () {
     ) {
         $user = User::findOrFail($id);
 
-        if (!hash_equals(
+        if (! hash_equals(
             (string) $hash,
             sha1($user->getEmailForVerification())
         )) {
@@ -83,9 +81,8 @@ Route::prefix('v1/auth')->group(function () {
             'message' => 'Email verified successfully.',
         ]);
     })
-    ->middleware('signed')
-    ->name('verification.verify');
-
+        ->middleware('signed')
+        ->name('verification.verify');
 
     Route::middleware('auth:sanctum')->group(function () {
 
@@ -103,10 +100,9 @@ Route::prefix('v1/auth')->group(function () {
             ]);
 
         })
-        ->middleware('throttle:6,1')
-        ->name('verification.send');
+            ->middleware('throttle:6,1')
+            ->name('verification.send');
     });
-
 
     Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
 
@@ -116,9 +112,8 @@ Route::prefix('v1/auth')->group(function () {
         // TODO: Placeholder only — real reset happens via POST /reset-password.
         // Update this once frontend URL is known.
     })
-    ->name('password.reset');
+        ->name('password.reset');
 });
-
 
 /*
 |--------------------------------------------------------------------------
@@ -138,7 +133,6 @@ Route::prefix('v1/users')
         });
     });
 
-
 /*
 |--------------------------------------------------------------------------
 | Registration Routes
@@ -149,7 +143,6 @@ Route::prefix('v1')
     ->group(function () {
         Route::apiResource('registrations', RegistrationController::class);
     });
-
 
 /*
 |--------------------------------------------------------------------------
