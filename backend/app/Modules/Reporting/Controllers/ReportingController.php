@@ -8,6 +8,8 @@ use App\Http\Controllers\Controller;
 use App\Modules\Reporting\Actions\GetDashboardSummaryAction;
 use Illuminate\Http\JsonResponse;
 use OpenApi\Attributes as OA;
+use App\Modules\Reporting\Actions\GetReviewStatisticsAction;
+
 
 class ReportingController extends Controller
 {
@@ -107,16 +109,79 @@ class ReportingController extends Controller
             description: 'Validation error'
         ),
     ]
-)]
-public function submissions(
-    ReportingFilterRequest $request,
-    GetSubmissionStatisticsAction $getSubmissionStatisticsAction
-): JsonResponse {
-    $statistics = $getSubmissionStatisticsAction->execute($request);
+    )]
+    public function submissions(
+        ReportingFilterRequest $request,
+        GetSubmissionStatisticsAction $getSubmissionStatisticsAction
+    ): JsonResponse {
+        $statistics = $getSubmissionStatisticsAction->execute($request);
 
-    return response()->json([
-        'success' => true,
-        'data' => $statistics,
-    ]);
-}
+        return response()->json([
+            'success' => true,
+            'data' => $statistics,
+        ]);
+    }
+    
+    #[OA\Get(
+    path: '/api/v1/reports/reviews',
+    tags: ['Reporting'],
+    summary: 'Get review statistics',
+    description: 'Returns review progress and statistics including total, submitted, pending and locked reviews, average score and recommendation distribution.',
+    security: [['sanctum' => []]],
+    parameters: [
+        new OA\Parameter(
+            name: 'conference_id',
+            in: 'query',
+            required: false,
+            description: 'Filter reviews by conference ID',
+            schema: new OA\Schema(type: 'integer', minimum: 1)
+        ),
+        new OA\Parameter(
+            name: 'date_from',
+            in: 'query',
+            required: false,
+            description: 'Include reviews created on or after this date',
+            schema: new OA\Schema(type: 'string', format: 'date')
+        ),
+        new OA\Parameter(
+            name: 'date_to',
+            in: 'query',
+            required: false,
+            description: 'Include reviews created on or before this date',
+            schema: new OA\Schema(type: 'string', format: 'date')
+        ),
+    ],
+    responses: [
+        new OA\Response(
+            response: 200,
+            description: 'Review statistics retrieved successfully'
+        ),
+        new OA\Response(
+            response: 401,
+            description: 'Unauthenticated'
+        ),
+        new OA\Response(
+            response: 403,
+            description: 'Forbidden'
+        ),
+        new OA\Response(
+            response: 422,
+            description: 'Validation error'
+        ),
+    ]
+    )]
+    public function reviews(
+        ReportingFilterRequest $request,
+        GetReviewStatisticsAction $getReviewStatisticsAction
+    ): JsonResponse {
+        $statistics = $getReviewStatisticsAction->execute($request);
+
+        return response()->json([
+            'success' => true,
+            'data' => $statistics,
+        ]);
+    }
+
+    
+
 }

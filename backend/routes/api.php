@@ -63,6 +63,7 @@ Route::prefix('v1/reports')
     ->group(function () {
         Route::get('/dashboard', [ReportingController::class, 'dashboard']);
         Route::get('/submissions', [ReportingController::class, 'submissions']);
+        Route::get('/reviews', [ReportingController::class, 'reviews']);
     });
 /*--------------------------------------------------------------------------- */
 
