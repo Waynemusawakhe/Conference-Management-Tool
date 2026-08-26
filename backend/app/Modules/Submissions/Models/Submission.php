@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Database\Factories\SubmissionFactory;
 
 class Submission extends Model
 {
@@ -76,5 +77,10 @@ class Submission extends Model
             'final_decision_by' => $decisionMaker->id,
             'final_decision_at' => now(),
         ]);
+    }
+
+    protected static function newFactory(): SubmissionFactory
+    {
+        return SubmissionFactory::new();
     }
 }

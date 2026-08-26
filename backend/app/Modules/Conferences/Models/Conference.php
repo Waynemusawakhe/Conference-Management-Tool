@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Database\Factories\ConferenceFactory;
 
 class Conference extends Model
 {
@@ -73,5 +74,10 @@ class Conference extends Model
     public function testimonials(): HasMany
     {
         return $this->hasMany(Testimonial::class);
+    }
+
+    protected static function newFactory(): ConferenceFactory
+    {
+        return ConferenceFactory::new();
     }
 }

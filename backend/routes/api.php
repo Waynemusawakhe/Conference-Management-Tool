@@ -8,6 +8,7 @@ use App\Modules\Registrations\Controllers\RegistrationController;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Modules\Submissions\Controllers\SubmissionController;
 
 
 /*
@@ -147,4 +148,13 @@ Route::prefix('v1')
     ->middleware('auth:sanctum')
     ->group(function () {
         Route::apiResource('registrations', RegistrationController::class);
+    });
+
+
+
+Route::prefix('v1')
+    ->middleware('auth:sanctum')
+    ->group(function () {
+        Route::apiResource('submissions', SubmissionController::class)
+            ->except(['edit', 'create']);
     });
