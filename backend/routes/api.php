@@ -137,6 +137,11 @@ Route::prefix('v1/users')
         });
     });
 
+// Registrations API Routes
+Route::prefix('v1')->group(function () {
+    Route::apiResource('registrations', RegistrationController::class);
+});
+<<<<<<< HEAD
 
 /*
 |--------------------------------------------------------------------------
@@ -148,3 +153,5 @@ Route::prefix('v1')
     ->group(function () {
         Route::apiResource('registrations', RegistrationController::class);
     });
+=======
+>>>>>>> 44b3975 (style: fix code style issues with Laravel Pint)
