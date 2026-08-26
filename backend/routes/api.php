@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Modules\Reporting\Controllers\ReportingController;
 
+
 Route::prefix('v1/auth')->group(function () {
     Route::post('/register', [AuthController::class, 'register']);
     Route::post('/login', [AuthController::class, 'login']);
@@ -61,6 +62,7 @@ Route::prefix('v1/reports')
     ->middleware(['auth:sanctum', 'role:admin'])
     ->group(function () {
         Route::get('/dashboard', [ReportingController::class, 'dashboard']);
+        Route::get('/submissions', [ReportingController::class, 'submissions']);
     });
 /*--------------------------------------------------------------------------- */
 

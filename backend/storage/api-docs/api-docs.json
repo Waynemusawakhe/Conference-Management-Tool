@@ -219,6 +219,105 @@
                     }
                 ]
             }
+        },
+        "/api/v1/reports/dashboard": {
+            "get": {
+                "tags": [
+                    "Reporting"
+                ],
+                "summary": "Get dashboard summary",
+                "description": "Returns summary statistics for users, conferences, submissions, reviews and registrations.",
+                "operationId": "67c2d516c6890651d0c1ee6b7738ccf6",
+                "responses": {
+                    "200": {
+                        "description": "Dashboard statistics retrieved successfully"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "500": {
+                        "description": "Server error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/reports/submissions": {
+            "get": {
+                "tags": [
+                    "Reporting"
+                ],
+                "summary": "Get submission statistics",
+                "description": "Returns submission statistics grouped by status with optional conference, status and date range filters.",
+                "operationId": "5c03bc8c4e8ff1bd55149241b8b25835",
+                "parameters": [
+                    {
+                        "name": "conference_id",
+                        "in": "query",
+                        "description": "Filter submissions by conference ID",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "description": "Filter submissions by status",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "pending",
+                                "under_review",
+                                "accepted",
+                                "rejected",
+                                "revision_requested"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "date_from",
+                        "in": "query",
+                        "description": "Return submissions created on or after this date",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "date_to",
+                        "in": "query",
+                        "description": "Return submissions created on or before this date",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Submission statistics retrieved successfully"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
         }
     },
     "tags": [
@@ -229,6 +328,10 @@
         {
             "name": "User Management",
             "description": "User Management"
+        },
+        {
+            "name": "Reporting",
+            "description": "Reporting"
         }
     ],
     "components": {
