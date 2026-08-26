@@ -5,6 +5,7 @@ use App\Modules\Account\Controllers\AuthController;
 use App\Modules\Account\Controllers\UserController;
 use App\Modules\Conferences\Controllers\ConferenceController;
 use App\Modules\Registrations\Controllers\RegistrationController;
+use App\Modules\Reviews\Controllers\ReviewController;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -84,4 +85,11 @@ Route::prefix('v1/users')->middleware('auth:sanctum')->group(function () {
 // Registrations API Routes
 Route::prefix('v1')->group(function () {
     Route::apiResource('registrations', RegistrationController::class);
+});
+
+// Reviews API Routes
+Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
+    Route::apiResource('reviews', ReviewController::class)->except(['update']);
+    Route::post('reviews/{id}/submit', [ReviewController::class, 'submit']);
+    Route::post('reviews/{id}/lock', [ReviewController::class, 'lock']);
 });
