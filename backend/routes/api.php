@@ -126,6 +126,7 @@ Route::prefix('v1/auth')->group(function () {
 |--------------------------------------------------------------------------
 */
 
+
 Route::prefix('v1/users')
     ->middleware('auth:sanctum')
     ->group(function () {
@@ -137,7 +138,6 @@ Route::prefix('v1/users')
             Route::get('/{id}', [UserController::class, 'show']);
         });
     });
-});
 
 Route::prefix('v1/testimonials')->middleware('auth:sanctum')->group(function () {
     Route::get('/', [TestimonialController::class, 'index']);
@@ -147,12 +147,12 @@ Route::prefix('v1/testimonials')->middleware('auth:sanctum')->group(function () 
     Route::delete('/{id}', [TestimonialController::class, 'destroy']);
 });
 
-
 /*
 |--------------------------------------------------------------------------
 | Registration Routes
 |--------------------------------------------------------------------------
 */
+
 Route::prefix('v1')
     ->middleware('auth:sanctum')
     ->group(function () {
