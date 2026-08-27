@@ -11,6 +11,7 @@ use Illuminate\Auth\Events\Verified;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Modules\Submissions\Controllers\SubmissionController;
+use App\Modules\Sessions\Controllers\SessionController;
 
 /*
 |--------------------------------------------------------------------------
@@ -191,3 +192,17 @@ Route::prefix('v1')
         Route::apiResource('submissions', SubmissionController::class)
             ->except(['edit', 'create']);
     });
+
+/*
+|--------------------------------------------------------------------------
+| Sessions API Routes
+|--------------------------------------------------------------------------
+*/
+
+Route::prefix('v1/sessions')->group(function () {
+    Route::get('/', [SessionController::class, 'index']);
+    Route::get('/{id}', [SessionController::class, 'show']);
+    Route::post('/', [SessionController::class, 'store']);
+    Route::put('/{id}', [SessionController::class, 'update']);
+    Route::delete('/{id}', [SessionController::class, 'destroy']);
+});
