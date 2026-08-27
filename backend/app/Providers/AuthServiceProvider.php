@@ -20,13 +20,8 @@ class AuthServiceProvider extends ServiceProvider
         Submission::class => SubmissionPolicy::class,
     ];
 
-    /**
-     * Register any authentication / authorization services.
-     */
     public function boot(): void
     {
         $this->registerPolicies();
     }
-
-
 }

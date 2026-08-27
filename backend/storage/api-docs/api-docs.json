@@ -220,6 +220,16 @@
                 ]
             }
         },
+        "/api/v1/testimonials": {
+            "get": {
+                "tags": [
+                    "Testimonials"
+                ],
+                "summary": "Get all testimonials",
+                "operationId": "21bbd0a5cc6a1f1f60d40f437f1f408d",
+                "responses": {
+                    "200": {
+                        "description": "Testimonials retrieved successfully"
         "/api/v1/conferences": {
             "get": {
                 "tags": [
@@ -716,6 +726,10 @@
             },
             "post": {
                 "tags": [
+                    "Testimonials"
+                ],
+                "summary": "Create a testimonial",
+                "operationId": "280a0d496e6d8ff5fc34fc76e57ea5f6",
                     "Registrations"
                 ],
                 "summary": "Create a new registration",
@@ -727,6 +741,8 @@
                             "schema": {
                                 "required": [
                                     "conference_id",
+                                    "rating",
+                                    "content"
                                     "user_id"
                                 ],
                                 "properties": {
@@ -734,6 +750,15 @@
                                         "type": "integer",
                                         "example": 1
                                     },
+                                    "rating": {
+                                        "type": "integer",
+                                        "example": 5,
+                                        "maximum": 5,
+                                        "minimum": 1
+                                    },
+                                    "content": {
+                                        "type": "string",
+                                        "example": "Excellent conference."
                                     "user_id": {
                                         "type": "integer",
                                         "example": 1
@@ -754,6 +779,7 @@
                 },
                 "responses": {
                     "201": {
+                        "description": "Testimonial created successfully"
                         "description": "Registration created successfully"
                     },
                     "401": {
@@ -773,6 +799,13 @@
                 ]
             }
         },
+        "/api/v1/testimonials/{id}": {
+            "get": {
+                "tags": [
+                    "Testimonials"
+                ],
+                "summary": "Get testimonial by ID",
+                "operationId": "7e1c12330c65629a7f80532686719950",
         "/api/v1/registrations/{id}": {
             "get": {
                 "tags": [
@@ -784,6 +817,7 @@
                     {
                         "name": "id",
                         "in": "path",
+                        "description": "Testimonial ID",
                         "required": true,
                         "schema": {
                             "type": "integer"
@@ -792,6 +826,13 @@
                 ],
                 "responses": {
                     "200": {
+                        "description": "Testimonial retrieved successfully"
+                    },
+                    "404": {
+                        "description": "Testimonial not found"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
                         "description": "Successful operation"
                     },
                     "401": {
@@ -809,6 +850,10 @@
             },
             "put": {
                 "tags": [
+                    "Testimonials"
+                ],
+                "summary": "Update a testimonial",
+                "operationId": "7f2ecc91796a1d75ab80e0e31116304d",
                     "Registrations"
                 ],
                 "summary": "Update a registration",
@@ -817,6 +862,7 @@
                     {
                         "name": "id",
                         "in": "path",
+                        "description": "Testimonial ID",
                         "required": true,
                         "schema": {
                             "type": "integer"
@@ -828,6 +874,20 @@
                     "content": {
                         "application/json": {
                             "schema": {
+                                "required": [
+                                    "rating",
+                                    "content"
+                                ],
+                                "properties": {
+                                    "rating": {
+                                        "type": "integer",
+                                        "example": 4,
+                                        "maximum": 5,
+                                        "minimum": 1
+                                    },
+                                    "content": {
+                                        "type": "string",
+                                        "example": "Very good conference."
                                 "properties": {
                                     "conference_id": {
                                         "type": "integer",
@@ -853,12 +913,14 @@
                 },
                 "responses": {
                     "200": {
+                        "description": "Testimonial updated successfully"
                         "description": "Registration updated successfully"
                     },
                     "401": {
                         "description": "Unauthenticated"
                     },
                     "404": {
+                        "description": "Testimonial not found"
                         "description": "Registration not found"
                     },
                     "422": {
@@ -873,10 +935,160 @@
             },
             "delete": {
                 "tags": [
+                    "Testimonials"
+                ],
+                "summary": "Delete a testimonial",
+                "operationId": "f708d2c9adda09874ffb50e69182845d",
                     "Registrations"
                 ],
                 "summary": "Cancel/delete a registration",
                 "operationId": "b28a3f5b6c4c8eff031a9893137aca3b",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Testimonial ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Testimonial deleted successfully"
+                        "description": "Registration cancelled successfully"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "404": {
+                        "description": "Testimonial not found"
+                        "description": "Registration not found"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/reviews": {
+            "get": {
+                "tags": [
+                    "Reviews"
+                ],
+                "summary": "Get all reviews",
+                "operationId": "5469f7cea05f9e86423254c2c778312c",
+                "parameters": [
+                    {
+                        "name": "submission_id",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "reviewer_id",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "recommendation",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "accept",
+                                "reject",
+                                "revise"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "locked",
+                        "in": "query",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 15
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of reviews"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Reviews"
+                ],
+                "summary": "Assign a reviewer to a submission",
+                "operationId": "0ad7ed23b5c70e30e785412798d06d18",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "submission_id",
+                                    "reviewer_id"
+                                ],
+                                "properties": {
+                                    "submission_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "reviewer_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Reviewer assigned successfully"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "409": {
+                        "description": "Reviewer already assigned to this submission"
+                    }
+                }
+            }
+        },
+        "/api/v1/reviews/{id}": {
+            "get": {
+                "tags": [
+                    "Reviews"
+                ],
+                "summary": "Get a specific review",
+                "operationId": "79bd9113a90f4125cf9bacf1a268c4b4",
                 "parameters": [
                     {
                         "name": "id",
@@ -889,54 +1101,27 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Registration cancelled successfully"
+                        "description": "Review details"
                     },
                     "401": {
                         "description": "Unauthenticated"
                     },
                     "404": {
-                        "description": "Registration not found"
+                        "description": "Review not found"
                     }
-                },
-                "security": [
-                    {
-                        "sanctum": []
-                    }
-                ]
-            }
-        },
-        "/api/v1/submissions": {
-            "get": {
+                }
+            },
+            "delete": {
                 "tags": [
-                    "Submissions"
+                    "Reviews"
                 ],
-                "summary": "List submissions",
-                "operationId": "f71983aae2d9b5a8fab352d71142fdf9",
+                "summary": "Remove a review assignment",
+                "operationId": "ffbdb4f3dac8b1ba4a86d976fc23209b",
                 "parameters": [
                     {
-                        "name": "conference_id",
-                        "in": "query",
-                        "schema": {
-                            "type": "integer"
-                        }
-                    },
-                    {
-                        "name": "status",
-                        "in": "query",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "track",
-                        "in": "query",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "per_page",
-                        "in": "query",
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
                         "schema": {
                             "type": "integer"
                         }
@@ -944,53 +1129,67 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Paginated list of submissions"
+                        "description": "Review assignment removed"
                     },
                     "401": {
                         "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "Review not found"
+                    },
+                    "422": {
+                        "description": "Cannot delete a submitted review"
                     }
-                },
-                "security": [
-                    {
-                        "sanctum": []
-                    }
-                ]
-            },
+                }
+            }
+        },
+        "/api/v1/reviews/{id}/submit": {
             "post": {
                 "tags": [
-                    "Submissions"
+                    "Reviews"
                 ],
-                "summary": "Create a submission",
-                "operationId": "2243850f1b74c2d5de0906469e414dd0",
+                "summary": "Submit a review (score, comments, recommendation)",
+                "operationId": "c20812742f14b30a6b9be365797817d0",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
                 "requestBody": {
                     "required": true,
                     "content": {
-                        "multipart/form-data": {
+                        "application/json": {
                             "schema": {
                                 "required": [
-                                    "conference_id",
-                                    "title",
-                                    "abstract"
+                                    "score",
+                                    "comments",
+                                    "recommendation"
                                 ],
                                 "properties": {
-                                    "conference_id": {
-                                        "type": "integer"
+                                    "score": {
+                                        "type": "integer",
+                                        "example": 8
                                     },
-                                    "title": {
+                                    "comments": {
                                         "type": "string",
-                                        "maxLength": 255
+                                        "example": "Solid methodology, needs more related work."
                                     },
-                                    "track": {
+                                    "recommendation": {
                                         "type": "string",
-                                        "maxLength": 255
-                                    },
-                                    "abstract": {
-                                        "type": "string",
-                                        "maxLength": 5000
-                                    },
-                                    "file": {
-                                        "type": "string",
-                                        "format": "binary"
+                                        "example": "revise",
+                                        "enum": [
+                                            "accept",
+                                            "reject",
+                                            "revise"
+                                        ]
                                     }
                                 },
                                 "type": "object"
@@ -999,66 +1198,34 @@
                     }
                 },
                 "responses": {
-                    "201": {
-                        "description": "Submission created"
-                    },
-                    "422": {
-                        "description": "Validation error"
+                    "200": {
+                        "description": "Review submitted successfully"
                     },
                     "401": {
                         "description": "Unauthenticated"
-                    }
-                },
-                "security": [
-                    {
-                        "sanctum": []
-                    }
-                ]
-            }
-        },
-        "/api/v1/submissions/{submission}": {
-            "get": {
-                "tags": [
-                    "Submissions"
-                ],
-                "summary": "Get a single submission",
-                "operationId": "afbc3f3694f9ab505567aa06c6963aac",
-                "parameters": [
-                    {
-                        "name": "submission",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Submission detail"
                     },
                     "403": {
                         "description": "Forbidden"
                     },
                     "404": {
-                        "description": "Not found"
+                        "description": "Review not found"
+                    },
+                    "422": {
+                        "description": "Validation error or review already locked"
                     }
-                },
-                "security": [
-                    {
-                        "sanctum": []
-                    }
-                ]
-            },
-            "put": {
+                }
+            }
+        },
+        "/api/v1/reviews/{id}/lock": {
+            "post": {
                 "tags": [
-                    "Submissions"
+                    "Reviews"
                 ],
-                "summary": "Update a submission (author only, while pending)",
-                "operationId": "b03e08cc3023d739a8f1626dc51842db",
+                "summary": "Lock a submitted review to prevent further edits",
+                "operationId": "9842d3ae302b9fa76bba9390c62b3b8a",
                 "parameters": [
                     {
-                        "name": "submission",
+                        "name": "id",
                         "in": "path",
                         "required": true,
                         "schema": {
@@ -1068,50 +1235,21 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Submission updated"
+                        "description": "Review locked successfully"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
                     },
                     "403": {
                         "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "Review not found"
                     },
                     "422": {
-                        "description": "Validation error"
+                        "description": "Review already locked or not yet submitted"
                     }
-                },
-                "security": [
-                    {
-                        "sanctum": []
-                    }
-                ]
-            },
-            "delete": {
-                "tags": [
-                    "Submissions"
-                ],
-                "summary": "Delete a submission (author only, while pending — permanent)",
-                "operationId": "80dd33be43f282855d1faba4f3eb44b3",
-                "parameters": [
-                    {
-                        "name": "submission",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "responses": {
-                    "204": {
-                        "description": "Submission deleted"
-                    },
-                    "403": {
-                        "description": "Forbidden"
-                    }
-                },
-                "security": [
-                    {
-                        "sanctum": []
-                    }
-                ]
+                }
             }
         }
     },
@@ -1125,6 +1263,8 @@
             "description": "User Management"
         },
         {
+            "name": "Testimonials",
+            "description": "Testimonials"
             "name": "Conferences",
             "description": "Conferences"
         },
@@ -1133,8 +1273,8 @@
             "description": "Registrations"
         },
         {
-            "name": "Submissions",
-            "description": "Submissions"
+            "name": "Reviews",
+            "description": "Reviews"
         }
     ],
     "components": {
