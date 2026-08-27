@@ -3,6 +3,7 @@
 use App\Models\User;
 use App\Modules\Account\Controllers\AuthController;
 use App\Modules\Account\Controllers\UserController;
+use App\Modules\Reviews\Controllers\TestimonialController;
 use App\Modules\Conferences\Controllers\ConferenceController;
 use App\Modules\Registrations\Controllers\RegistrationController;
 use Illuminate\Auth\Events\Verified;
@@ -125,6 +126,7 @@ Route::prefix('v1/auth')->group(function () {
 |--------------------------------------------------------------------------
 */
 
+
 Route::prefix('v1/users')
     ->middleware('auth:sanctum')
     ->group(function () {
@@ -137,21 +139,22 @@ Route::prefix('v1/users')
         });
     });
 
-// Registrations API Routes
-Route::prefix('v1')->group(function () {
-    Route::apiResource('registrations', RegistrationController::class);
+Route::prefix('v1/testimonials')->middleware('auth:sanctum')->group(function () {
+    Route::get('/', [TestimonialController::class, 'index']);
+    Route::post('/', [TestimonialController::class, 'store']);
+    Route::get('/{id}', [TestimonialController::class, 'show']);
+    Route::put('/{id}', [TestimonialController::class, 'update']);
+    Route::delete('/{id}', [TestimonialController::class, 'destroy']);
 });
-<<<<<<< HEAD
 
 /*
 |--------------------------------------------------------------------------
 | Registration Routes
 |--------------------------------------------------------------------------
 */
+
 Route::prefix('v1')
     ->middleware('auth:sanctum')
     ->group(function () {
         Route::apiResource('registrations', RegistrationController::class);
     });
-=======
->>>>>>> 44b3975 (style: fix code style issues with Laravel Pint)
