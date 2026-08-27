@@ -18,10 +18,10 @@ return new class extends Migration
             return;
         }
 
-        DB::statement("
+        DB::statement('
             ALTER TABLE submissions
             DROP CONSTRAINT IF EXISTS submissions_status_check
-        ");
+        ');
 
         DB::statement("
             ALTER TABLE submissions
@@ -54,10 +54,10 @@ return new class extends Migration
             WHERE status = 'withdrawn'
         ");
 
-        DB::statement("
+        DB::statement('
             ALTER TABLE submissions
             DROP CONSTRAINT IF EXISTS submissions_status_check
-        ");
+        ');
 
         DB::statement("
             ALTER TABLE submissions

@@ -3,15 +3,15 @@
 use App\Models\User;
 use App\Modules\Account\Controllers\AuthController;
 use App\Modules\Account\Controllers\UserController;
-use App\Modules\Reviews\Controllers\TestimonialController;
 use App\Modules\Conferences\Controllers\ConferenceController;
 use App\Modules\Registrations\Controllers\RegistrationController;
 use App\Modules\Reviews\Controllers\ReviewController;
+use App\Modules\Reviews\Controllers\TestimonialController;
+use App\Modules\Sessions\Controllers\SessionController;
+use App\Modules\Submissions\Controllers\SubmissionController;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Modules\Submissions\Controllers\SubmissionController;
-use App\Modules\Sessions\Controllers\SessionController;
 
 /*
 |--------------------------------------------------------------------------
