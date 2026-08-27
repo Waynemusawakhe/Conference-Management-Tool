@@ -161,6 +161,97 @@
                 ]
             }
         },
+        "/api/v1/auth/forgot-password": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Send a password reset link",
+                "operationId": "d856dad99f23a418015be39f054aa2c4",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "john@example.com"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Password reset link sent"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/reset-password": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Reset the user password",
+                "operationId": "d99102d692d768a868f9a86a37d60fb6",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "token",
+                                    "email",
+                                    "password",
+                                    "password_confirmation"
+                                ],
+                                "properties": {
+                                    "token": {
+                                        "type": "string",
+                                        "example": "reset-token-here"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "john@example.com"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "NewPassword123"
+                                    },
+                                    "password_confirmation": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "NewPassword123"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Password reset successfully"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                }
+            }
+        },
         "/api/v1/users": {
             "get": {
                 "tags": [
@@ -220,16 +311,6 @@
                 ]
             }
         },
-        "/api/v1/testimonials": {
-            "get": {
-                "tags": [
-                    "Testimonials"
-                ],
-                "summary": "Get all testimonials",
-                "operationId": "21bbd0a5cc6a1f1f60d40f437f1f408d",
-                "responses": {
-                    "200": {
-                        "description": "Testimonials retrieved successfully"
         "/api/v1/conferences": {
             "get": {
                 "tags": [
@@ -726,10 +807,6 @@
             },
             "post": {
                 "tags": [
-                    "Testimonials"
-                ],
-                "summary": "Create a testimonial",
-                "operationId": "280a0d496e6d8ff5fc34fc76e57ea5f6",
                     "Registrations"
                 ],
                 "summary": "Create a new registration",
@@ -741,8 +818,6 @@
                             "schema": {
                                 "required": [
                                     "conference_id",
-                                    "rating",
-                                    "content"
                                     "user_id"
                                 ],
                                 "properties": {
@@ -750,15 +825,6 @@
                                         "type": "integer",
                                         "example": 1
                                     },
-                                    "rating": {
-                                        "type": "integer",
-                                        "example": 5,
-                                        "maximum": 5,
-                                        "minimum": 1
-                                    },
-                                    "content": {
-                                        "type": "string",
-                                        "example": "Excellent conference."
                                     "user_id": {
                                         "type": "integer",
                                         "example": 1
@@ -779,7 +845,6 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "Testimonial created successfully"
                         "description": "Registration created successfully"
                     },
                     "401": {
@@ -799,13 +864,6 @@
                 ]
             }
         },
-        "/api/v1/testimonials/{id}": {
-            "get": {
-                "tags": [
-                    "Testimonials"
-                ],
-                "summary": "Get testimonial by ID",
-                "operationId": "7e1c12330c65629a7f80532686719950",
         "/api/v1/registrations/{id}": {
             "get": {
                 "tags": [
@@ -817,7 +875,6 @@
                     {
                         "name": "id",
                         "in": "path",
-                        "description": "Testimonial ID",
                         "required": true,
                         "schema": {
                             "type": "integer"
@@ -826,13 +883,6 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Testimonial retrieved successfully"
-                    },
-                    "404": {
-                        "description": "Testimonial not found"
-                    },
-                    "401": {
-                        "description": "Unauthenticated"
                         "description": "Successful operation"
                     },
                     "401": {
@@ -850,10 +900,6 @@
             },
             "put": {
                 "tags": [
-                    "Testimonials"
-                ],
-                "summary": "Update a testimonial",
-                "operationId": "7f2ecc91796a1d75ab80e0e31116304d",
                     "Registrations"
                 ],
                 "summary": "Update a registration",
@@ -862,7 +908,6 @@
                     {
                         "name": "id",
                         "in": "path",
-                        "description": "Testimonial ID",
                         "required": true,
                         "schema": {
                             "type": "integer"
@@ -874,20 +919,6 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "required": [
-                                    "rating",
-                                    "content"
-                                ],
-                                "properties": {
-                                    "rating": {
-                                        "type": "integer",
-                                        "example": 4,
-                                        "maximum": 5,
-                                        "minimum": 1
-                                    },
-                                    "content": {
-                                        "type": "string",
-                                        "example": "Very good conference."
                                 "properties": {
                                     "conference_id": {
                                         "type": "integer",
@@ -913,14 +944,12 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Testimonial updated successfully"
                         "description": "Registration updated successfully"
                     },
                     "401": {
                         "description": "Unauthenticated"
                     },
                     "404": {
-                        "description": "Testimonial not found"
                         "description": "Registration not found"
                     },
                     "422": {
@@ -935,10 +964,6 @@
             },
             "delete": {
                 "tags": [
-                    "Testimonials"
-                ],
-                "summary": "Delete a testimonial",
-                "operationId": "f708d2c9adda09874ffb50e69182845d",
                     "Registrations"
                 ],
                 "summary": "Cancel/delete a registration",
@@ -947,7 +972,6 @@
                     {
                         "name": "id",
                         "in": "path",
-                        "description": "Testimonial ID",
                         "required": true,
                         "schema": {
                             "type": "integer"
@@ -956,14 +980,12 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Testimonial deleted successfully"
                         "description": "Registration cancelled successfully"
                     },
                     "401": {
                         "description": "Unauthenticated"
                     },
                     "404": {
-                        "description": "Testimonial not found"
                         "description": "Registration not found"
                     }
                 },
@@ -1251,6 +1273,424 @@
                     }
                 }
             }
+        },
+        "/api/v1/testimonials": {
+            "get": {
+                "tags": [
+                    "Testimonials"
+                ],
+                "summary": "Get all testimonials",
+                "operationId": "21bbd0a5cc6a1f1f60d40f437f1f408d",
+                "responses": {
+                    "200": {
+                        "description": "Testimonials retrieved successfully"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Testimonials"
+                ],
+                "summary": "Create a testimonial",
+                "operationId": "280a0d496e6d8ff5fc34fc76e57ea5f6",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "conference_id",
+                                    "rating",
+                                    "content"
+                                ],
+                                "properties": {
+                                    "conference_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "rating": {
+                                        "type": "integer",
+                                        "example": 5,
+                                        "maximum": 5,
+                                        "minimum": 1
+                                    },
+                                    "content": {
+                                        "type": "string",
+                                        "example": "Excellent conference."
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Testimonial created successfully"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/testimonials/{id}": {
+            "get": {
+                "tags": [
+                    "Testimonials"
+                ],
+                "summary": "Get testimonial by ID",
+                "operationId": "7e1c12330c65629a7f80532686719950",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Testimonial ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Testimonial retrieved successfully"
+                    },
+                    "404": {
+                        "description": "Testimonial not found"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Testimonials"
+                ],
+                "summary": "Update a testimonial",
+                "operationId": "7f2ecc91796a1d75ab80e0e31116304d",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Testimonial ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "rating",
+                                    "content"
+                                ],
+                                "properties": {
+                                    "rating": {
+                                        "type": "integer",
+                                        "example": 4,
+                                        "maximum": 5,
+                                        "minimum": 1
+                                    },
+                                    "content": {
+                                        "type": "string",
+                                        "example": "Very good conference."
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Testimonial updated successfully"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "404": {
+                        "description": "Testimonial not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Testimonials"
+                ],
+                "summary": "Delete a testimonial",
+                "operationId": "f708d2c9adda09874ffb50e69182845d",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Testimonial ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Testimonial deleted successfully"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "404": {
+                        "description": "Testimonial not found"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/submissions": {
+            "get": {
+                "tags": [
+                    "Submissions"
+                ],
+                "summary": "List submissions",
+                "operationId": "f71983aae2d9b5a8fab352d71142fdf9",
+                "parameters": [
+                    {
+                        "name": "conference_id",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "track",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paginated list of submissions"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Submissions"
+                ],
+                "summary": "Create a submission",
+                "operationId": "2243850f1b74c2d5de0906469e414dd0",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "conference_id",
+                                    "title",
+                                    "abstract"
+                                ],
+                                "properties": {
+                                    "conference_id": {
+                                        "type": "integer"
+                                    },
+                                    "title": {
+                                        "type": "string",
+                                        "maxLength": 255
+                                    },
+                                    "track": {
+                                        "type": "string",
+                                        "maxLength": 255
+                                    },
+                                    "abstract": {
+                                        "type": "string",
+                                        "maxLength": 5000
+                                    },
+                                    "file": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Submission created"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/submissions/{submission}": {
+            "get": {
+                "tags": [
+                    "Submissions"
+                ],
+                "summary": "Get a single submission",
+                "operationId": "afbc3f3694f9ab505567aa06c6963aac",
+                "parameters": [
+                    {
+                        "name": "submission",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Submission detail"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "Not found"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Submissions"
+                ],
+                "summary": "Update a submission (author only, while pending)",
+                "operationId": "b03e08cc3023d739a8f1626dc51842db",
+                "parameters": [
+                    {
+                        "name": "submission",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Submission updated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Submissions"
+                ],
+                "summary": "Delete a submission (author only, while pending — permanent)",
+                "operationId": "80dd33be43f282855d1faba4f3eb44b3",
+                "parameters": [
+                    {
+                        "name": "submission",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Submission deleted"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
         }
     },
     "tags": [
@@ -1263,8 +1703,6 @@
             "description": "User Management"
         },
         {
-            "name": "Testimonials",
-            "description": "Testimonials"
             "name": "Conferences",
             "description": "Conferences"
         },
@@ -1275,6 +1713,14 @@
         {
             "name": "Reviews",
             "description": "Reviews"
+        },
+        {
+            "name": "Testimonials",
+            "description": "Testimonials"
+        },
+        {
+            "name": "Submissions",
+            "description": "Submissions"
         }
     ],
     "components": {
