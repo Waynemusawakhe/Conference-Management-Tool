@@ -3,6 +3,7 @@
 namespace App\Modules\Registrations\Actions;
 
 use App\Modules\Registrations\Models\Registration;
+use App\Modules\Registrations\Notifications\RegistrationConfirmationNotification;
 use Illuminate\Database\QueryException;
 use Illuminate\Validation\ValidationException;
 
@@ -21,6 +22,9 @@ class CreateRegistrationAction
 
             $registration = Registration::create($data);
             $registration->load(['conference', 'user']);
+
+            // 📧 Send confirmation email
+            $registration->user->notify(new RegistrationConfirmationNotification($registration));
 
             return $registration;
         } catch (QueryException $e) {

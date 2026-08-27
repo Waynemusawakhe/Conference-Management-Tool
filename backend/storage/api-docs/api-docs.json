@@ -220,6 +220,16 @@
                 ]
             }
         },
+        "/api/v1/testimonials": {
+            "get": {
+                "tags": [
+                    "Testimonials"
+                ],
+                "summary": "Get all testimonials",
+                "operationId": "21bbd0a5cc6a1f1f60d40f437f1f408d",
+                "responses": {
+                    "200": {
+                        "description": "Testimonials retrieved successfully"
         "/api/v1/conferences": {
             "get": {
                 "tags": [
@@ -716,6 +726,10 @@
             },
             "post": {
                 "tags": [
+                    "Testimonials"
+                ],
+                "summary": "Create a testimonial",
+                "operationId": "280a0d496e6d8ff5fc34fc76e57ea5f6",
                     "Registrations"
                 ],
                 "summary": "Create a new registration",
@@ -727,6 +741,8 @@
                             "schema": {
                                 "required": [
                                     "conference_id",
+                                    "rating",
+                                    "content"
                                     "user_id"
                                 ],
                                 "properties": {
@@ -734,6 +750,15 @@
                                         "type": "integer",
                                         "example": 1
                                     },
+                                    "rating": {
+                                        "type": "integer",
+                                        "example": 5,
+                                        "maximum": 5,
+                                        "minimum": 1
+                                    },
+                                    "content": {
+                                        "type": "string",
+                                        "example": "Excellent conference."
                                     "user_id": {
                                         "type": "integer",
                                         "example": 1
@@ -754,6 +779,7 @@
                 },
                 "responses": {
                     "201": {
+                        "description": "Testimonial created successfully"
                         "description": "Registration created successfully"
                     },
                     "401": {
@@ -773,6 +799,13 @@
                 ]
             }
         },
+        "/api/v1/testimonials/{id}": {
+            "get": {
+                "tags": [
+                    "Testimonials"
+                ],
+                "summary": "Get testimonial by ID",
+                "operationId": "7e1c12330c65629a7f80532686719950",
         "/api/v1/registrations/{id}": {
             "get": {
                 "tags": [
@@ -784,6 +817,7 @@
                     {
                         "name": "id",
                         "in": "path",
+                        "description": "Testimonial ID",
                         "required": true,
                         "schema": {
                             "type": "integer"
@@ -792,6 +826,13 @@
                 ],
                 "responses": {
                     "200": {
+                        "description": "Testimonial retrieved successfully"
+                    },
+                    "404": {
+                        "description": "Testimonial not found"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
                         "description": "Successful operation"
                     },
                     "401": {
@@ -809,6 +850,10 @@
             },
             "put": {
                 "tags": [
+                    "Testimonials"
+                ],
+                "summary": "Update a testimonial",
+                "operationId": "7f2ecc91796a1d75ab80e0e31116304d",
                     "Registrations"
                 ],
                 "summary": "Update a registration",
@@ -817,6 +862,7 @@
                     {
                         "name": "id",
                         "in": "path",
+                        "description": "Testimonial ID",
                         "required": true,
                         "schema": {
                             "type": "integer"
@@ -828,6 +874,20 @@
                     "content": {
                         "application/json": {
                             "schema": {
+                                "required": [
+                                    "rating",
+                                    "content"
+                                ],
+                                "properties": {
+                                    "rating": {
+                                        "type": "integer",
+                                        "example": 4,
+                                        "maximum": 5,
+                                        "minimum": 1
+                                    },
+                                    "content": {
+                                        "type": "string",
+                                        "example": "Very good conference."
                                 "properties": {
                                     "conference_id": {
                                         "type": "integer",
@@ -853,12 +913,14 @@
                 },
                 "responses": {
                     "200": {
+                        "description": "Testimonial updated successfully"
                         "description": "Registration updated successfully"
                     },
                     "401": {
                         "description": "Unauthenticated"
                     },
                     "404": {
+                        "description": "Testimonial not found"
                         "description": "Registration not found"
                     },
                     "422": {
@@ -873,6 +935,10 @@
             },
             "delete": {
                 "tags": [
+                    "Testimonials"
+                ],
+                "summary": "Delete a testimonial",
+                "operationId": "f708d2c9adda09874ffb50e69182845d",
                     "Registrations"
                 ],
                 "summary": "Cancel/delete a registration",
@@ -881,6 +947,7 @@
                     {
                         "name": "id",
                         "in": "path",
+                        "description": "Testimonial ID",
                         "required": true,
                         "schema": {
                             "type": "integer"
@@ -889,12 +956,14 @@
                 ],
                 "responses": {
                     "200": {
+                        "description": "Testimonial deleted successfully"
                         "description": "Registration cancelled successfully"
                     },
                     "401": {
                         "description": "Unauthenticated"
                     },
                     "404": {
+                        "description": "Testimonial not found"
                         "description": "Registration not found"
                     }
                 },
@@ -1194,6 +1263,8 @@
             "description": "User Management"
         },
         {
+            "name": "Testimonials",
+            "description": "Testimonials"
             "name": "Conferences",
             "description": "Conferences"
         },

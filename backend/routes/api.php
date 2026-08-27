@@ -3,6 +3,7 @@
 use App\Models\User;
 use App\Modules\Account\Controllers\AuthController;
 use App\Modules\Account\Controllers\UserController;
+use App\Modules\Reviews\Controllers\TestimonialController;
 use App\Modules\Conferences\Controllers\ConferenceController;
 use App\Modules\Registrations\Controllers\RegistrationController;
 use App\Modules\Reviews\Controllers\ReviewController;
@@ -121,6 +122,7 @@ Route::prefix('v1/auth')->group(function () {
 |--------------------------------------------------------------------------
 */
 
+
 Route::prefix('v1/users')
     ->middleware('auth:sanctum')
     ->group(function () {
@@ -135,9 +137,26 @@ Route::prefix('v1/users')
 
 /*
 |--------------------------------------------------------------------------
+| Testimonial Routes
+|--------------------------------------------------------------------------
+*/
+
+Route::prefix('v1/testimonials')
+    ->middleware('auth:sanctum')
+    ->group(function () {
+        Route::get('/', [TestimonialController::class, 'index']);
+        Route::post('/', [TestimonialController::class, 'store']);
+        Route::get('/{id}', [TestimonialController::class, 'show']);
+        Route::put('/{id}', [TestimonialController::class, 'update']);
+        Route::delete('/{id}', [TestimonialController::class, 'destroy']);
+    });
+
+/*
+|--------------------------------------------------------------------------
 | Registration Routes
 |--------------------------------------------------------------------------
 */
+
 Route::prefix('v1')
     ->middleware('auth:sanctum')
     ->group(function () {
@@ -149,10 +168,13 @@ Route::prefix('v1')
 | Reviews API Routes
 |--------------------------------------------------------------------------
 */
+
 Route::prefix('v1')
     ->middleware('auth:sanctum')
     ->group(function () {
         Route::apiResource('reviews', ReviewController::class)->except(['update']);
+
         Route::post('reviews/{id}/submit', [ReviewController::class, 'submit']);
+
         Route::post('reviews/{id}/lock', [ReviewController::class, 'lock']);
     });
