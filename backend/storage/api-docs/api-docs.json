@@ -973,6 +973,284 @@
                     }
                 ]
             }
+        },
+        "/api/v1/reviews": {
+            "get": {
+                "tags": [
+                    "Reviews"
+                ],
+                "summary": "Get all reviews",
+                "operationId": "5469f7cea05f9e86423254c2c778312c",
+                "parameters": [
+                    {
+                        "name": "submission_id",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "reviewer_id",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "recommendation",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "accept",
+                                "reject",
+                                "revise"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "locked",
+                        "in": "query",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 15
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of reviews"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Reviews"
+                ],
+                "summary": "Assign a reviewer to a submission",
+                "operationId": "0ad7ed23b5c70e30e785412798d06d18",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "submission_id",
+                                    "reviewer_id"
+                                ],
+                                "properties": {
+                                    "submission_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "reviewer_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Reviewer assigned successfully"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "409": {
+                        "description": "Reviewer already assigned to this submission"
+                    }
+                }
+            }
+        },
+        "/api/v1/reviews/{id}": {
+            "get": {
+                "tags": [
+                    "Reviews"
+                ],
+                "summary": "Get a specific review",
+                "operationId": "79bd9113a90f4125cf9bacf1a268c4b4",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Review details"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "404": {
+                        "description": "Review not found"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Reviews"
+                ],
+                "summary": "Remove a review assignment",
+                "operationId": "ffbdb4f3dac8b1ba4a86d976fc23209b",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Review assignment removed"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "Review not found"
+                    },
+                    "422": {
+                        "description": "Cannot delete a submitted review"
+                    }
+                }
+            }
+        },
+        "/api/v1/reviews/{id}/submit": {
+            "post": {
+                "tags": [
+                    "Reviews"
+                ],
+                "summary": "Submit a review (score, comments, recommendation)",
+                "operationId": "c20812742f14b30a6b9be365797817d0",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "score",
+                                    "comments",
+                                    "recommendation"
+                                ],
+                                "properties": {
+                                    "score": {
+                                        "type": "integer",
+                                        "example": 8
+                                    },
+                                    "comments": {
+                                        "type": "string",
+                                        "example": "Solid methodology, needs more related work."
+                                    },
+                                    "recommendation": {
+                                        "type": "string",
+                                        "example": "revise",
+                                        "enum": [
+                                            "accept",
+                                            "reject",
+                                            "revise"
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Review submitted successfully"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "Review not found"
+                    },
+                    "422": {
+                        "description": "Validation error or review already locked"
+                    }
+                }
+            }
+        },
+        "/api/v1/reviews/{id}/lock": {
+            "post": {
+                "tags": [
+                    "Reviews"
+                ],
+                "summary": "Lock a submitted review to prevent further edits",
+                "operationId": "9842d3ae302b9fa76bba9390c62b3b8a",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Review locked successfully"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "Review not found"
+                    },
+                    "422": {
+                        "description": "Review already locked or not yet submitted"
+                    }
+                }
+            }
         }
     },
     "tags": [
@@ -993,6 +1271,10 @@
         {
             "name": "Registrations",
             "description": "Registrations"
+        },
+        {
+            "name": "Reviews",
+            "description": "Reviews"
         }
     ],
     "components": {
