@@ -124,7 +124,6 @@ Route::prefix('v1/auth')->group(function () {
 |--------------------------------------------------------------------------
 */
 
-
 Route::prefix('v1/users')
     ->middleware('auth:sanctum')
     ->group(function () {
@@ -189,8 +188,21 @@ Route::prefix('v1')
 Route::prefix('v1')
     ->middleware('auth:sanctum')
     ->group(function () {
+
         Route::apiResource('submissions', SubmissionController::class)
             ->except(['edit', 'create']);
+
+        /*
+        |--------------------------------------------------------------------------
+        | Submission Workflow
+        |--------------------------------------------------------------------------
+        */
+
+        // Withdraw a submission
+        Route::post(
+            'submissions/{submission}/withdraw',
+            [SubmissionController::class, 'withdraw']
+        );
     });
 
 /*
