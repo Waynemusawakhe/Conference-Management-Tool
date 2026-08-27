@@ -10,6 +10,7 @@ use App\Modules\Reviews\Controllers\ReviewController;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Modules\Submissions\Controllers\SubmissionController;
 
 /*
 |--------------------------------------------------------------------------
@@ -175,6 +176,18 @@ Route::prefix('v1')
         Route::apiResource('reviews', ReviewController::class)->except(['update']);
 
         Route::post('reviews/{id}/submit', [ReviewController::class, 'submit']);
-
         Route::post('reviews/{id}/lock', [ReviewController::class, 'lock']);
+    });
+
+/*
+|--------------------------------------------------------------------------
+| Submissions API Routes
+|--------------------------------------------------------------------------
+*/
+
+Route::prefix('v1')
+    ->middleware('auth:sanctum')
+    ->group(function () {
+        Route::apiResource('submissions', SubmissionController::class)
+            ->except(['edit', 'create']);
     });
