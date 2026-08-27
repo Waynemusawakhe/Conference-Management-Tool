@@ -1,3 +1,4 @@
+```php
 <?php
 
 use Illuminate\Database\Migrations\Migration;
@@ -10,6 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // SQLite does not support PostgreSQL-style DROP CONSTRAINT.
+        // The GitHub Actions test suite uses SQLite, so skip this
+        // migration's constraint changes when running on SQLite.
+        if (DB::getDriverName() === 'sqlite') {
+            return;
+        }
+
         DB::statement("
             ALTER TABLE submissions
             DROP CONSTRAINT IF EXISTS submissions_status_check
@@ -36,6 +44,10 @@ return new class extends Migration
      */
     public function down(): void
     {
+        if (DB::getDriverName() === 'sqlite') {
+            return;
+        }
+
         DB::statement("
             UPDATE submissions
             SET status = 'pending'
@@ -62,3 +74,4 @@ return new class extends Migration
         ");
     }
 };
+```
