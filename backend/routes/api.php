@@ -3,15 +3,15 @@
 use App\Models\User;
 use App\Modules\Account\Controllers\AuthController;
 use App\Modules\Account\Controllers\UserController;
-use App\Modules\Reviews\Controllers\TestimonialController;
 use App\Modules\Conferences\Controllers\ConferenceController;
 use App\Modules\Registrations\Controllers\RegistrationController;
 use App\Modules\Reviews\Controllers\ReviewController;
+use App\Modules\Reviews\Controllers\TestimonialController;
+use App\Modules\Sessions\Controllers\SessionController;
+use App\Modules\Submissions\Controllers\SubmissionController;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Modules\Submissions\Controllers\SubmissionController;
-use App\Modules\Sessions\Controllers\SessionController;
 
 /*
 |--------------------------------------------------------------------------
@@ -124,7 +124,6 @@ Route::prefix('v1/auth')->group(function () {
 |--------------------------------------------------------------------------
 */
 
-
 Route::prefix('v1/users')
     ->middleware('auth:sanctum')
     ->group(function () {
@@ -189,8 +188,21 @@ Route::prefix('v1')
 Route::prefix('v1')
     ->middleware('auth:sanctum')
     ->group(function () {
+
         Route::apiResource('submissions', SubmissionController::class)
             ->except(['edit', 'create']);
+
+        /*
+        |--------------------------------------------------------------------------
+        | Submission Workflow
+        |--------------------------------------------------------------------------
+        */
+
+        // Withdraw a submission
+        Route::post(
+            'submissions/{submission}/withdraw',
+            [SubmissionController::class, 'withdraw']
+        );
     });
 
 /*

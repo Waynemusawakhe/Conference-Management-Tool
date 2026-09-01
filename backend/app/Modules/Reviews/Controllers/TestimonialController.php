@@ -46,7 +46,7 @@ class TestimonialController extends Controller
                 required: true,
                 description: 'Testimonial ID',
                 schema: new OA\Schema(type: 'integer')
-            )
+            ),
         ],
         responses: [
             new OA\Response(response: 200, description: 'Testimonial retrieved successfully'),
@@ -126,7 +126,7 @@ class TestimonialController extends Controller
                 required: true,
                 description: 'Testimonial ID',
                 schema: new OA\Schema(type: 'integer')
-            )
+            ),
         ],
         requestBody: new OA\RequestBody(
             required: true,
@@ -194,7 +194,7 @@ class TestimonialController extends Controller
                 required: true,
                 description: 'Testimonial ID',
                 schema: new OA\Schema(type: 'integer')
-            )
+            ),
         ],
         responses: [
             new OA\Response(response: 200, description: 'Testimonial deleted successfully'),
@@ -202,8 +202,6 @@ class TestimonialController extends Controller
             new OA\Response(response: 404, description: 'Testimonial not found'),
         ]
     )]
-
-
     public function destroy(
         int $id,
         Request $request,

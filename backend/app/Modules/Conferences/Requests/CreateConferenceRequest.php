@@ -113,20 +113,15 @@ class CreateConferenceRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'code.unique' =>
-                'A conference with this code already exists.',
+            'code.unique' => 'A conference with this code already exists.',
 
-            'end_date.after_or_equal' =>
-                'The conference end date must be on or after the start date.',
+            'end_date.after_or_equal' => 'The conference end date must be on or after the start date.',
 
-            'submission_deadline.before_or_equal' =>
-                'The submission deadline must be on or before the conference start date.',
+            'submission_deadline.before_or_equal' => 'The submission deadline must be on or before the conference start date.',
 
-            'venue_name.required_if' =>
-                'A venue name is required for in-person or hybrid conferences.',
+            'venue_name.required_if' => 'A venue name is required for in-person or hybrid conferences.',
 
-            'website_link.url' =>
-                'The website link must be a valid URL.',
+            'website_link.url' => 'The website link must be a valid URL.',
         ];
     }
 }

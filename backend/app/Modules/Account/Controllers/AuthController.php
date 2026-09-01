@@ -3,17 +3,16 @@
 namespace App\Modules\Account\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Module\Account\Requests\ResetPasswordRequest;
 use App\Modules\Account\Actions\CreateUserAction;
+use App\Modules\Account\Actions\ForgotPasswordAction;
 use App\Modules\Account\Actions\LoginAction;
 use App\Modules\Account\Actions\LogoutAction;
-use App\Modules\Account\Requests\CreateUserRequest;
-use App\Modules\Account\Requests\LoginRequest;
-use App\Modules\Account\Requests\ForgotPasswordRequest;
-use App\Module\Account\Requests\ResetPasswordRequest;
-use App\Modules\Account\Actions\ForgotPasswordAction;
 use App\Modules\Account\Actions\ResetPasswordAction;
-
-//use Illuminate\Support\Facades\Password;
+use App\Modules\Account\Requests\CreateUserRequest;
+use App\Modules\Account\Requests\ForgotPasswordRequest;
+use App\Modules\Account\Requests\LoginRequest;
+// use Illuminate\Support\Facades\Password;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use OpenApi\Attributes as OA;
@@ -127,22 +126,22 @@ class AuthController extends Controller
     }
 
     #[OA\Post(
-    path: '/api/v1/auth/forgot-password',
-    tags: ['Authentication'],
-    summary: 'Send a password reset link',
-    requestBody: new OA\RequestBody(
-        required: true,
-        content: new OA\JsonContent(
-            required: ['email'],
-            properties: [
-                new OA\Property(
-                    property: 'email',
-                    type: 'string',
-                    format: 'email',
-                    example: 'john@example.com'
-                ),
-            ]
-        )
+        path: '/api/v1/auth/forgot-password',
+        tags: ['Authentication'],
+        summary: 'Send a password reset link',
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['email'],
+                properties: [
+                    new OA\Property(
+                        property: 'email',
+                        type: 'string',
+                        format: 'email',
+                        example: 'john@example.com'
+                    ),
+                ]
+            )
         ),
         responses: [
             new OA\Response(response: 200, description: 'Password reset link sent'),
