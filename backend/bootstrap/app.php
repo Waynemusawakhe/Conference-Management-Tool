@@ -15,10 +15,18 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->alias([
-            'role' => EnsureUserHasRole::class,
-        ]);
-    })
+    $middleware->alias([
+        'role' => EnsureUserHasRole::class,
+    ]);
+
+    $middleware->redirectGuestsTo(function ($request) {
+        if ($request->is('api/*')) {
+            return null;
+        }
+
+        return '/login';
+    });
+})
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->render(function (AuthenticationException $e, $request) {
             if ($request->is('api/*')) {

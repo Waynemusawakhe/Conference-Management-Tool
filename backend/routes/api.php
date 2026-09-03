@@ -58,15 +58,13 @@ Route::prefix('v1/auth')->group(function () {
 
 /*----------------------------Reporting---------------------------------------*/ 
 
-Route::prefix('v1/reports')
-    ->middleware(['auth:sanctum', 'role:admin'])
-    ->group(function () {
-        Route::get('/dashboard', [ReportingController::class, 'dashboard']);
-        Route::get('/submissions', [ReportingController::class, 'submissions']);
-        Route::get('/reviews', [ReportingController::class, 'reviews']);
-        Route::get('/registrations', [ReportingController::class, 'registrations']);
-        Route::get('/conferences', [ReportingController::class, 'conferences']);
-    });
+Route::prefix('v1/reports')->middleware(['auth:sanctum', 'role:admin'])->group(function () {
+    Route::get('/dashboard', [ReportingController::class, 'dashboard']);
+    Route::get('/submissions', [ReportingController::class, 'submissions']);
+    Route::get('/reviews', [ReportingController::class, 'reviews']);
+    Route::get('/registrations', [ReportingController::class, 'registrations']);
+    Route::get('/conferences', [ReportingController::class, 'conferences']);
+});
 /*--------------------------------------------------------------------------- */
 
 Route::prefix('v1/users')->middleware('auth:sanctum')->group(function () {
