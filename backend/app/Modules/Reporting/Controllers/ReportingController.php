@@ -9,6 +9,9 @@ use App\Modules\Reporting\Actions\GetDashboardSummaryAction;
 use Illuminate\Http\JsonResponse;
 use OpenApi\Attributes as OA;
 use App\Modules\Reporting\Actions\GetReviewStatisticsAction;
+use App\Modules\Reporting\Actions\GetRegistrationStatisticsAction;
+use App\Modules\Reporting\Requests\RegistrationStatisticsRequest;
+use App\Modules\Reporting\Actions\GetConferenceStatisticsAction;
 
 
 class ReportingController extends Controller
@@ -182,6 +185,137 @@ class ReportingController extends Controller
         ]);
     }
 
-    
+        #[OA\Get(
+        path: '/api/v1/reports/registrations',
+        tags: ['Reporting'],
+        summary: 'Get registration statistics',
+        description: 'Returns registration statistics with optional conference, status and date filters.',
+        security: [['sanctum' => []]],
+        parameters: [
+            new OA\Parameter(
+                name: 'conference_id',
+                in: 'query',
+                required: false,
+                description: 'Filter registrations by conference ID',
+                schema: new OA\Schema(type: 'integer')
+            ),
+            new OA\Parameter(
+                name: 'status',
+                in: 'query',
+                required: false,
+                description: 'Filter registrations by status',
+                schema: new OA\Schema(
+                    type: 'string',
+                    enum: ['registered', 'cancelled']
+                )
+            ),
+            new OA\Parameter(
+                name: 'date_from',
+                in: 'query',
+                required: false,
+                description: 'Return registrations created on or after this date',
+                schema: new OA\Schema(
+                    type: 'string',
+                    format: 'date'
+                )
+            ),
+            new OA\Parameter(
+                name: 'date_to',
+                in: 'query',
+                required: false,
+                description: 'Return registrations created on or before this date',
+                schema: new OA\Schema(
+                    type: 'string',
+                    format: 'date'
+                )
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Registration statistics retrieved successfully'
+            ),
+            new OA\Response(
+                response: 401,
+                description: 'Unauthenticated'
+            ),
+            new OA\Response(
+                response: 403,
+                description: 'Forbidden'
+            ),
+            new OA\Response(
+                response: 422,
+                description: 'Validation error'
+            ),
+            new OA\Response(
+                response: 500,
+                description: 'Server error'
+            ),
+        ]
+    )]
+    public function registrations(
+        RegistrationStatisticsRequest $request,
+        GetRegistrationStatisticsAction $getRegistrationStatisticsAction
+    ): JsonResponse {
+        $statistics = $getRegistrationStatisticsAction->execute($request);
+
+        return response()->json([
+            'success' => true,
+            'data' => $statistics,
+        ]);
+    }
+
+    #[OA\Get(
+    path: '/api/v1/reports/conferences',
+    tags: ['Reporting'],
+    summary: 'Get conference statistics',
+    description: 'Returns statistics for conferences, including submission status, format and category.',
+    security: [['sanctum' => []]],
+    parameters: [
+        new OA\Parameter(
+            name: 'date_from',
+            in: 'query',
+            required: false,
+            description: 'Filter conferences starting on or after this date.',
+            schema: new OA\Schema(type: 'string', format: 'date')
+        ),
+        new OA\Parameter(
+            name: 'date_to',
+            in: 'query',
+            required: false,
+            description: 'Filter conferences starting on or before this date.',
+            schema: new OA\Schema(type: 'string', format: 'date')
+        ),
+    ],
+    responses: [
+        new OA\Response(
+            response: 200,
+            description: 'Conference statistics retrieved successfully'
+        ),
+        new OA\Response(
+            response: 401,
+            description: 'Unauthenticated'
+        ),
+        new OA\Response(
+            response: 422,
+            description: 'Validation failed'
+        ),
+        new OA\Response(
+            response: 500,
+            description: 'Server error'
+        ),
+    ]
+)]
+public function conferences(
+    ReportingFilterRequest $request,
+    GetConferenceStatisticsAction $getConferenceStatisticsAction
+): JsonResponse {
+    $statistics = $getConferenceStatisticsAction->execute($request);
+
+    return response()->json([
+        'success' => true,
+        'data' => $statistics,
+    ]);
+}
 
 }
