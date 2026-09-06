@@ -3,20 +3,69 @@
 use App\Models\User;
 use App\Modules\Account\Controllers\AuthController;
 use App\Modules\Account\Controllers\UserController;
+use App\Modules\Conferences\Controllers\ConferenceController;
+use App\Modules\Registrations\Controllers\RegistrationController;
+use App\Modules\Reviews\Controllers\ReviewController;
+use App\Modules\Reviews\Controllers\TestimonialController;
+use App\Modules\Sessions\Controllers\SessionController;
+use App\Modules\Submissions\Controllers\SubmissionController;
+use App\Modules\Faq\Controllers\FaqController;
+use App\Modules\ContactMessages\Controllers\ContactMessageController;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Modules\Reporting\Controllers\ReportingController;
 
 
+/*
+|--------------------------------------------------------------------------
+| Conference Routes
+|--------------------------------------------------------------------------
+*/
+
+Route::prefix('v1/conferences')->group(function () {
+
+    // Public
+    Route::get('/', [ConferenceController::class, 'index']);
+    Route::get('/{conference}', [ConferenceController::class, 'show']);
+
+    // Authenticated
+    Route::middleware('auth:sanctum')->group(function () {
+
+        Route::post('/', [ConferenceController::class, 'store']);
+        Route::put('/{conference}', [ConferenceController::class, 'update']);
+        Route::delete('/{conference}', [ConferenceController::class, 'destroy']);
+
+        Route::patch('/{conference}/status', [ConferenceController::class, 'updateStatus']);
+
+        Route::get('/{conference}/submissions', [ConferenceController::class, 'submissions']);
+        Route::get('/{conference}/registrations', [ConferenceController::class, 'registrations']);
+        Route::get('/{conference}/sessions', [ConferenceController::class, 'sessions']);
+    });
+});
+
+/*
+|--------------------------------------------------------------------------
+| Authentication Routes
+|--------------------------------------------------------------------------
+*/
+
 Route::prefix('v1/auth')->group(function () {
+
     Route::post('/register', [AuthController::class, 'register']);
     Route::post('/login', [AuthController::class, 'login']);
 
-    Route::get('/email/verify/{id}/{hash}', function (Request $request, int $id, string $hash) {
+    Route::get('/email/verify/{id}/{hash}', function (
+        Request $request,
+        int $id,
+        string $hash
+    ) {
         $user = User::findOrFail($id);
 
-        if (! hash_equals((string) $hash, sha1($user->getEmailForVerification()))) {
+        if (! hash_equals(
+            (string) $hash,
+            sha1($user->getEmailForVerification())
+        )) {
             return response()->json([
                 'success' => false,
                 'message' => 'Invalid verification link.',
@@ -38,22 +87,141 @@ Route::prefix('v1/auth')->group(function () {
             'success' => true,
             'message' => 'Email verified successfully.',
         ]);
-    })->middleware('signed')->name('verification.verify');
+    })
+        ->middleware('signed')
+        ->name('verification.verify');
 
     Route::middleware('auth:sanctum')->group(function () {
+
         Route::post('/logout', [AuthController::class, 'logout']);
+
         Route::get('/me', [AuthController::class, 'me']);
         
 
         Route::post('/email/verification-notification', function (Request $request) {
+
             $request->user()->sendEmailVerificationNotification();
 
             return response()->json([
                 'success' => true,
                 'message' => 'Verification link sent.',
             ]);
-        })->middleware('throttle:6,1')->name('verification.send');
+
+        })
+            ->middleware('throttle:6,1')
+            ->name('verification.send');
     });
+
+    Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
+
+    Route::post('/reset-password', [AuthController::class, 'resetPassword']);
+
+    Route::get('/password-reset-placeholder/{token}', function () {
+        // TODO: Placeholder only — real reset happens via POST /reset-password.
+        // Update this once frontend URL is known.
+    })
+        ->name('password.reset');
+});
+
+/*
+|--------------------------------------------------------------------------
+| User Routes
+|--------------------------------------------------------------------------
+*/
+
+Route::prefix('v1/users')
+    ->middleware('auth:sanctum')
+    ->group(function () {
+
+        Route::middleware('role:admin')->group(function () {
+
+            Route::get('/', [UserController::class, 'index']);
+
+            Route::get('/{id}', [UserController::class, 'show']);
+        });
+    });
+
+/*
+|--------------------------------------------------------------------------
+| Testimonial Routes
+|--------------------------------------------------------------------------
+*/
+
+Route::prefix('v1/testimonials')
+    ->middleware('auth:sanctum')
+    ->group(function () {
+        Route::get('/', [TestimonialController::class, 'index']);
+        Route::post('/', [TestimonialController::class, 'store']);
+        Route::get('/{id}', [TestimonialController::class, 'show']);
+        Route::put('/{id}', [TestimonialController::class, 'update']);
+        Route::delete('/{id}', [TestimonialController::class, 'destroy']);
+    });
+
+/*
+|--------------------------------------------------------------------------
+| Registration Routes
+|--------------------------------------------------------------------------
+*/
+
+Route::prefix('v1')
+    ->middleware('auth:sanctum')
+    ->group(function () {
+        Route::apiResource('registrations', RegistrationController::class);
+    });
+
+/*
+|--------------------------------------------------------------------------
+| Reviews API Routes
+|--------------------------------------------------------------------------
+*/
+
+Route::prefix('v1')
+    ->middleware('auth:sanctum')
+    ->group(function () {
+        Route::apiResource('reviews', ReviewController::class)->except(['update']);
+
+        Route::post('reviews/{id}/submit', [ReviewController::class, 'submit']);
+        Route::post('reviews/{id}/lock', [ReviewController::class, 'lock']);
+    });
+
+/*
+|--------------------------------------------------------------------------
+| Submissions API Routes
+|--------------------------------------------------------------------------
+*/
+
+Route::prefix('v1')
+    ->middleware('auth:sanctum')
+    ->group(function () {
+
+        Route::apiResource('submissions', SubmissionController::class)
+            ->except(['edit', 'create']);
+
+        /*
+        |--------------------------------------------------------------------------
+        | Submission Workflow
+        |--------------------------------------------------------------------------
+        */
+
+        // Withdraw a submission
+        Route::post(
+            'submissions/{submission}/withdraw',
+            [SubmissionController::class, 'withdraw']
+        );
+    });
+
+/*
+|--------------------------------------------------------------------------
+| Sessions API Routes
+|--------------------------------------------------------------------------
+*/
+
+Route::prefix('v1/sessions')->group(function () {
+    Route::get('/', [SessionController::class, 'index']);
+    Route::get('/{id}', [SessionController::class, 'show']);
+    Route::post('/', [SessionController::class, 'store']);
+    Route::put('/{id}', [SessionController::class, 'update']);
+    Route::delete('/{id}', [SessionController::class, 'destroy']);
 });
 
 /*----------------------------Reporting---------------------------------------*/ 
@@ -71,5 +239,42 @@ Route::prefix('v1/users')->middleware('auth:sanctum')->group(function () {
     Route::middleware('role:admin')->group(function () {
         Route::get('/', [UserController::class, 'index']);
         Route::get('/{id}', [UserController::class, 'show']);
+/*
+|--------------------------------------------------------------------------
+| FAQ API Routes
+|--------------------------------------------------------------------------
+*/
+
+Route::prefix('v1/faqs')->group(function () {
+
+    // Public
+    Route::get('/', [FaqController::class, 'index']);
+    Route::get('/{id}', [FaqController::class, 'show']);
+
+    // Admin only
+    Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
+        Route::post('/', [FaqController::class, 'store']);
+        Route::put('/{id}', [FaqController::class, 'update']);
+        Route::delete('/{id}', [FaqController::class, 'destroy']);
+    });
+});
+/*
+|--------------------------------------------------------------------------
+| Contact Message API Routes
+|--------------------------------------------------------------------------
+*/
+
+Route::prefix('v1/contact-messages')->group(function () {
+
+    // Public — anyone can submit, throttled to prevent spam
+    Route::post('/', [ContactMessageController::class, 'store'])
+        ->middleware('throttle:6,1');
+
+    // Admin only
+    Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
+        Route::get('/', [ContactMessageController::class, 'index']);
+        Route::get('/{id}', [ContactMessageController::class, 'show']);
+        Route::patch('/{id}/status', [ContactMessageController::class, 'updateStatus']);
+        Route::delete('/{id}', [ContactMessageController::class, 'destroy']);
     });
 });

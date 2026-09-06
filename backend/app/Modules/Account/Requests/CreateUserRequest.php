@@ -2,8 +2,8 @@
 
 namespace App\Modules\Account\Requests;
 
-use App\Modules\Shared\Requests\BaseApiRequest;
 use App\Modules\Shared\Enums\UserRole;
+use App\Modules\Shared\Requests\BaseApiRequest;
 use Illuminate\Validation\Rule;
 
 class CreateUserRequest extends BaseApiRequest

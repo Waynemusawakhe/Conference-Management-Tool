@@ -43,7 +43,7 @@ class UserController extends Controller
                 required: true,
                 description: 'User ID',
                 schema: new OA\Schema(type: 'integer')
-            )
+            ),
         ],
         responses: [
             new OA\Response(response: 200, description: 'User retrieved successfully'),

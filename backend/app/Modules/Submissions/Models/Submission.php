@@ -5,6 +5,7 @@ namespace App\Modules\Submissions\Models;
 use App\Models\User;
 use App\Modules\Conferences\Models\Conference;
 use App\Modules\Reviews\Models\SubmissionReview;
+use Database\Factories\SubmissionFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -76,5 +77,10 @@ class Submission extends Model
             'final_decision_by' => $decisionMaker->id,
             'final_decision_at' => now(),
         ]);
+    }
+
+    protected static function newFactory(): SubmissionFactory
+    {
+        return SubmissionFactory::new();
     }
 }
