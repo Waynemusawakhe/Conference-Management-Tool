@@ -140,7 +140,6 @@ export default function Contact() {
                     name="email"
                     value={form.email}
                     onChange={handleChange}
-                    placeholder="you@example.com"
                     aria-invalid={Boolean(errors.email)}
                     aria-describedby={errors.email ? "email-error" : undefined}
                   />

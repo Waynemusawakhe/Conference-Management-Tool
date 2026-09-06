@@ -1,0 +1,52 @@
+name: Laravel CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  laravel-ci:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, pdo, sqlite, pdo_sqlite
+          coverage: none
+
+      - name: Check PHP version
+        run: php --version
+
+      - name: Validate Composer configuration
+        run: composer validate --no-check-publish
+
+      - name: Install Composer dependencies
+        run: composer install --prefer-dist --no-interaction --no-progress
+
+      - name: Prepare Laravel environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      - name: Validate Laravel configuration
+        run: php artisan config:cache
+
+      - name: Run Laravel tests
+        run: php artisan test
+
+      - name: Run Laravel Pint
+        run: ./vendor/bin/pint --test
