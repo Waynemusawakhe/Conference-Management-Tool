@@ -96,7 +96,7 @@ Route::prefix('v1/auth')->group(function () {
         Route::post('/logout', [AuthController::class, 'logout']);
 
         Route::get('/me', [AuthController::class, 'me']);
-        
+
 
         Route::post('/email/verification-notification', function (Request $request) {
 
@@ -224,7 +224,7 @@ Route::prefix('v1/sessions')->group(function () {
     Route::delete('/{id}', [SessionController::class, 'destroy']);
 });
 
-/*----------------------------Reporting---------------------------------------*/ 
+/*----------------------------Reporting---------------------------------------*/
 
 Route::prefix('v1/reports')->middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::get('/dashboard', [ReportingController::class, 'dashboard']);
@@ -235,10 +235,6 @@ Route::prefix('v1/reports')->middleware(['auth:sanctum', 'role:admin'])->group(f
 });
 /*--------------------------------------------------------------------------- */
 
-Route::prefix('v1/users')->middleware('auth:sanctum')->group(function () {
-    Route::middleware('role:admin')->group(function () {
-        Route::get('/', [UserController::class, 'index']);
-        Route::get('/{id}', [UserController::class, 'show']);
 /*
 |--------------------------------------------------------------------------
 | FAQ API Routes
@@ -258,6 +254,7 @@ Route::prefix('v1/faqs')->group(function () {
         Route::delete('/{id}', [FaqController::class, 'destroy']);
     });
 });
+
 /*
 |--------------------------------------------------------------------------
 | Contact Message API Routes
