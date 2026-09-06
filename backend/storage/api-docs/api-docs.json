@@ -27,33 +27,33 @@
                                 "required": [
                                     "name",
                                     "email",
-                                    "password"
+                                    "password",
+                                    "password_confirmation",
+                                    "role"
                                 ],
                                 "properties": {
                                     "name": {
                                         "type": "string",
-                                        "example": "Test User"
+                                        "example": "John Doe"
                                     },
                                     "email": {
                                         "type": "string",
                                         "format": "email",
-                                        "example": "test@example.com"
+                                        "example": "john@example.com"
                                     },
                                     "password": {
                                         "type": "string",
                                         "format": "password",
                                         "example": "password123"
                                     },
+                                    "password_confirmation": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "password123"
+                                    },
                                     "role": {
                                         "type": "string",
-                                        "example": "author",
-                                        "enum": [
-                                            "author",
-                                            "reviewer",
-                                            "organiser",
-                                            "attendee",
-                                            "admin"
-                                        ]
+                                        "example": "author"
                                     }
                                 },
                                 "type": "object"
@@ -76,7 +76,7 @@
                 "tags": [
                     "Authentication"
                 ],
-                "summary": "Authenticate a user",
+                "summary": "Log in and receive an API token",
                 "operationId": "23bb956fc5871b97f2e58eb57a13aa9c",
                 "requestBody": {
                     "required": true,
@@ -91,7 +91,7 @@
                                     "email": {
                                         "type": "string",
                                         "format": "email",
-                                        "example": "test@example.com"
+                                        "example": "john@example.com"
                                     },
                                     "password": {
                                         "type": "string",
@@ -110,6 +110,9 @@
                     },
                     "401": {
                         "description": "Invalid credentials"
+                    },
+                    "422": {
+                        "description": "Validation error"
                     }
                 }
             }
@@ -119,13 +122,1574 @@
                 "tags": [
                     "Authentication"
                 ],
-                "summary": "Log out the current user",
+                "summary": "Revoke the current API token",
                 "operationId": "7b5c7cc659253df8f82c4e88e260076f",
                 "responses": {
                     "200": {
-                        "description": "Logout successful"
+                        "description": "Logged out successfully"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/auth/me": {
+            "get": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Get the currently authenticated user",
+                "operationId": "3068bf0f8824153f82f51817983ae93a",
+                "responses": {
+                    "200": {
+                        "description": "Authenticated user returned"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/auth/forgot-password": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Send a password reset link",
+                "operationId": "d856dad99f23a418015be39f054aa2c4",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "john@example.com"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Password reset link sent"
+                    },
+                    "422": {
+                        "description": "Validation error"
                     }
                 }
+            }
+        },
+        "/api/v1/auth/reset-password": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Reset the user password",
+                "operationId": "d99102d692d768a868f9a86a37d60fb6",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "token",
+                                    "email",
+                                    "password",
+                                    "password_confirmation"
+                                ],
+                                "properties": {
+                                    "token": {
+                                        "type": "string",
+                                        "example": "reset-token-here"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "john@example.com"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "NewPassword123"
+                                    },
+                                    "password_confirmation": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "NewPassword123"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Password reset successfully"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                }
+            }
+        },
+        "/api/v1/users": {
+            "get": {
+                "tags": [
+                    "User Management"
+                ],
+                "summary": "Get all users",
+                "description": "Returns a list of all users. Admin only.",
+                "operationId": "29a02dfa41f8708d45019a2c2080c11a",
+                "responses": {
+                    "200": {
+                        "description": "Users retrieved successfully"
+                    },
+                    "403": {
+                        "description": "Forbidden — admin role required"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/users/{id}": {
+            "get": {
+                "tags": [
+                    "User Management"
+                ],
+                "summary": "Get user by ID",
+                "operationId": "0d6e0229470be0d5a595dbf8641fe287",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "User ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User retrieved successfully"
+                    },
+                    "404": {
+                        "description": "User not found"
+                    },
+                    "403": {
+                        "description": "Forbidden — admin role required"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/conferences": {
+            "get": {
+                "tags": [
+                    "Conferences"
+                ],
+                "summary": "Get all conferences",
+                "operationId": "0367cf2dbc485312b0425c7bcda9ab65",
+                "responses": {
+                    "200": {
+                        "description": "List of conferences"
+                    },
+                    "401": {
+                        "description": "Unauthorised"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Conferences"
+                ],
+                "summary": "Create a conference",
+                "operationId": "4faf8a25680c3d69e83925788e68f4e3",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "organiser_id",
+                                    "code",
+                                    "name",
+                                    "format",
+                                    "start_date",
+                                    "end_date"
+                                ],
+                                "properties": {
+                                    "organiser_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "code": {
+                                        "type": "string",
+                                        "example": "CMT2026"
+                                    },
+                                    "name": {
+                                        "type": "string",
+                                        "example": "CMT Annual Conference"
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "Annual conference"
+                                    },
+                                    "category": {
+                                        "type": "string",
+                                        "example": "Technology"
+                                    },
+                                    "topics": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "example": [
+                                            "AI",
+                                            "Software Engineering"
+                                        ]
+                                    },
+                                    "format": {
+                                        "type": "string",
+                                        "example": "virtual",
+                                        "enum": [
+                                            "in_person",
+                                            "virtual",
+                                            "hybrid"
+                                        ]
+                                    },
+                                    "submission_status": {
+                                        "type": "string",
+                                        "example": "open",
+                                        "enum": [
+                                            "open",
+                                            "closed"
+                                        ]
+                                    },
+                                    "start_date": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2026-10-01"
+                                    },
+                                    "end_date": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2026-10-03"
+                                    },
+                                    "submission_deadline": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2026-09-01",
+                                        "nullable": true
+                                    },
+                                    "venue_name": {
+                                        "type": "string",
+                                        "example": "CMT Convention Centre",
+                                        "nullable": true
+                                    },
+                                    "city": {
+                                        "type": "string",
+                                        "example": "Johannesburg",
+                                        "nullable": true
+                                    },
+                                    "country": {
+                                        "type": "string",
+                                        "example": "South Africa",
+                                        "nullable": true
+                                    },
+                                    "website_link": {
+                                        "type": "string",
+                                        "example": "https://example.com",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Conference created successfully"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                }
+            }
+        },
+        "/api/v1/conferences/{conference}": {
+            "get": {
+                "tags": [
+                    "Conferences"
+                ],
+                "summary": "Get a conference by ID",
+                "operationId": "e82fb2844af618c3a2ed2667f2bfe010",
+                "parameters": [
+                    {
+                        "name": "conference",
+                        "in": "path",
+                        "description": "Conference ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 1
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Conference details"
+                    },
+                    "404": {
+                        "description": "Conference not found"
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Conferences"
+                ],
+                "summary": "Update a conference",
+                "operationId": "d987ff6d6fc7d1c11ee8f4427f9e9e9c",
+                "parameters": [
+                    {
+                        "name": "conference",
+                        "in": "path",
+                        "description": "Conference ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 1
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "code": {
+                                        "type": "string",
+                                        "example": "CMT2026"
+                                    },
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Updated Conference Name"
+                                    },
+                                    "description": {
+                                        "type": "string"
+                                    },
+                                    "category": {
+                                        "type": "string"
+                                    },
+                                    "format": {
+                                        "type": "string",
+                                        "enum": [
+                                            "in_person",
+                                            "virtual",
+                                            "hybrid"
+                                        ]
+                                    },
+                                    "submission_status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "open",
+                                            "closed"
+                                        ]
+                                    },
+                                    "start_date": {
+                                        "type": "string",
+                                        "format": "date"
+                                    },
+                                    "end_date": {
+                                        "type": "string",
+                                        "format": "date"
+                                    },
+                                    "submission_deadline": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "nullable": true
+                                    },
+                                    "venue_name": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "city": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "country": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "website_link": {
+                                        "type": "string",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Conference updated successfully"
+                    },
+                    "404": {
+                        "description": "Conference not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Conferences"
+                ],
+                "summary": "Delete a conference",
+                "operationId": "51691c0d397c6d6645c8b3e54ef32c1c",
+                "parameters": [
+                    {
+                        "name": "conference",
+                        "in": "path",
+                        "description": "Conference ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 1
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Conference deleted successfully"
+                    },
+                    "404": {
+                        "description": "Conference not found"
+                    }
+                }
+            }
+        },
+        "/api/v1/conferences/{conference}/status": {
+            "patch": {
+                "tags": [
+                    "Conferences"
+                ],
+                "summary": "Update conference submission status",
+                "operationId": "834cd1a61df61a91276ba9b2ca94dc0e",
+                "parameters": [
+                    {
+                        "name": "conference",
+                        "in": "path",
+                        "description": "Conference ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 1
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "status"
+                                ],
+                                "properties": {
+                                    "status": {
+                                        "type": "string",
+                                        "example": "closed",
+                                        "enum": [
+                                            "open",
+                                            "closed"
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Status updated successfully"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                }
+            }
+        },
+        "/api/v1/conferences/{conference}/submissions": {
+            "get": {
+                "tags": [
+                    "Conferences"
+                ],
+                "summary": "Get all submissions for a conference",
+                "operationId": "7cae6eaf4a51cb28444273567a56ca0e",
+                "parameters": [
+                    {
+                        "name": "conference",
+                        "in": "path",
+                        "description": "Conference ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 1
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Conference submissions"
+                    },
+                    "404": {
+                        "description": "Conference not found"
+                    }
+                }
+            }
+        },
+        "/api/v1/conferences/{conference}/registrations": {
+            "get": {
+                "tags": [
+                    "Conferences"
+                ],
+                "summary": "Get all registrations for a conference",
+                "operationId": "5df5b486d6e1654354d878e00ef142ff",
+                "parameters": [
+                    {
+                        "name": "conference",
+                        "in": "path",
+                        "description": "Conference ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 1
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Conference registrations"
+                    },
+                    "404": {
+                        "description": "Conference not found"
+                    }
+                }
+            }
+        },
+        "/api/v1/conferences/{conference}/sessions": {
+            "get": {
+                "tags": [
+                    "Conferences"
+                ],
+                "summary": "Get all sessions for a conference",
+                "operationId": "d3ef9286ef0dc76d69740cc8b32ce629",
+                "parameters": [
+                    {
+                        "name": "conference",
+                        "in": "path",
+                        "description": "Conference ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "example": 1
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Conference sessions"
+                    },
+                    "404": {
+                        "description": "Conference not found"
+                    }
+                }
+            }
+        },
+        "/api/v1/registrations": {
+            "get": {
+                "tags": [
+                    "Registrations"
+                ],
+                "summary": "Get all registrations",
+                "operationId": "51ae8b9ebfa73c5bd3552b6a9c182bdf",
+                "parameters": [
+                    {
+                        "name": "conference_id",
+                        "in": "query",
+                        "description": "Filter by conference ID",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "user_id",
+                        "in": "query",
+                        "description": "Filter by user ID",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "description": "Filter by status",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "registered",
+                                "cancelled"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Items per page",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 15
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Registrations"
+                ],
+                "summary": "Create a new registration",
+                "operationId": "864ae9d9923810dc5fce908a14ca9d7d",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "conference_id",
+                                    "user_id"
+                                ],
+                                "properties": {
+                                    "conference_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "user_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "status": {
+                                        "type": "string",
+                                        "example": "registered",
+                                        "enum": [
+                                            "registered",
+                                            "cancelled"
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Registration created successfully"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "409": {
+                        "description": "Already registered"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/registrations/{id}": {
+            "get": {
+                "tags": [
+                    "Registrations"
+                ],
+                "summary": "Get a specific registration",
+                "operationId": "dc978a140cea0f34ab75899f9b619983",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "404": {
+                        "description": "Registration not found"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Registrations"
+                ],
+                "summary": "Update a registration",
+                "operationId": "d63ab5bfa89a9a6acc4adc210c9108c4",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "conference_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "user_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "status": {
+                                        "type": "string",
+                                        "example": "cancelled",
+                                        "enum": [
+                                            "registered",
+                                            "cancelled"
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Registration updated successfully"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "404": {
+                        "description": "Registration not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Registrations"
+                ],
+                "summary": "Cancel/delete a registration",
+                "operationId": "b28a3f5b6c4c8eff031a9893137aca3b",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Registration cancelled successfully"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "404": {
+                        "description": "Registration not found"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/reviews": {
+            "get": {
+                "tags": [
+                    "Reviews"
+                ],
+                "summary": "Get all reviews",
+                "operationId": "5469f7cea05f9e86423254c2c778312c",
+                "parameters": [
+                    {
+                        "name": "submission_id",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "reviewer_id",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "recommendation",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "accept",
+                                "reject",
+                                "revise"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "locked",
+                        "in": "query",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 15
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of reviews"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Reviews"
+                ],
+                "summary": "Assign a reviewer to a submission",
+                "operationId": "0ad7ed23b5c70e30e785412798d06d18",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "submission_id",
+                                    "reviewer_id"
+                                ],
+                                "properties": {
+                                    "submission_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "reviewer_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Reviewer assigned successfully"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "409": {
+                        "description": "Reviewer already assigned to this submission"
+                    }
+                }
+            }
+        },
+        "/api/v1/reviews/{id}": {
+            "get": {
+                "tags": [
+                    "Reviews"
+                ],
+                "summary": "Get a specific review",
+                "operationId": "79bd9113a90f4125cf9bacf1a268c4b4",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Review details"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "404": {
+                        "description": "Review not found"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Reviews"
+                ],
+                "summary": "Remove a review assignment",
+                "operationId": "ffbdb4f3dac8b1ba4a86d976fc23209b",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Review assignment removed"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "Review not found"
+                    },
+                    "422": {
+                        "description": "Cannot delete a submitted review"
+                    }
+                }
+            }
+        },
+        "/api/v1/reviews/{id}/submit": {
+            "post": {
+                "tags": [
+                    "Reviews"
+                ],
+                "summary": "Submit a review (score, comments, recommendation)",
+                "operationId": "c20812742f14b30a6b9be365797817d0",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "score",
+                                    "comments",
+                                    "recommendation"
+                                ],
+                                "properties": {
+                                    "score": {
+                                        "type": "integer",
+                                        "example": 8
+                                    },
+                                    "comments": {
+                                        "type": "string",
+                                        "example": "Solid methodology, needs more related work."
+                                    },
+                                    "recommendation": {
+                                        "type": "string",
+                                        "example": "revise",
+                                        "enum": [
+                                            "accept",
+                                            "reject",
+                                            "revise"
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Review submitted successfully"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "Review not found"
+                    },
+                    "422": {
+                        "description": "Validation error or review already locked"
+                    }
+                }
+            }
+        },
+        "/api/v1/reviews/{id}/lock": {
+            "post": {
+                "tags": [
+                    "Reviews"
+                ],
+                "summary": "Lock a submitted review to prevent further edits",
+                "operationId": "9842d3ae302b9fa76bba9390c62b3b8a",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Review locked successfully"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "Review not found"
+                    },
+                    "422": {
+                        "description": "Review already locked or not yet submitted"
+                    }
+                }
+            }
+        },
+        "/api/v1/testimonials": {
+            "get": {
+                "tags": [
+                    "Testimonials"
+                ],
+                "summary": "Get all testimonials",
+                "operationId": "21bbd0a5cc6a1f1f60d40f437f1f408d",
+                "responses": {
+                    "200": {
+                        "description": "Testimonials retrieved successfully"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Testimonials"
+                ],
+                "summary": "Create a testimonial",
+                "operationId": "280a0d496e6d8ff5fc34fc76e57ea5f6",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "conference_id",
+                                    "rating",
+                                    "content"
+                                ],
+                                "properties": {
+                                    "conference_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "rating": {
+                                        "type": "integer",
+                                        "example": 5,
+                                        "maximum": 5,
+                                        "minimum": 1
+                                    },
+                                    "content": {
+                                        "type": "string",
+                                        "example": "Excellent conference."
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Testimonial created successfully"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/testimonials/{id}": {
+            "get": {
+                "tags": [
+                    "Testimonials"
+                ],
+                "summary": "Get testimonial by ID",
+                "operationId": "7e1c12330c65629a7f80532686719950",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Testimonial ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Testimonial retrieved successfully"
+                    },
+                    "404": {
+                        "description": "Testimonial not found"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Testimonials"
+                ],
+                "summary": "Update a testimonial",
+                "operationId": "7f2ecc91796a1d75ab80e0e31116304d",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Testimonial ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "rating",
+                                    "content"
+                                ],
+                                "properties": {
+                                    "rating": {
+                                        "type": "integer",
+                                        "example": 4,
+                                        "maximum": 5,
+                                        "minimum": 1
+                                    },
+                                    "content": {
+                                        "type": "string",
+                                        "example": "Very good conference."
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Testimonial updated successfully"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "404": {
+                        "description": "Testimonial not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Testimonials"
+                ],
+                "summary": "Delete a testimonial",
+                "operationId": "f708d2c9adda09874ffb50e69182845d",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Testimonial ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Testimonial deleted successfully"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "404": {
+                        "description": "Testimonial not found"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/submissions": {
+            "get": {
+                "tags": [
+                    "Submissions"
+                ],
+                "summary": "List submissions",
+                "operationId": "f71983aae2d9b5a8fab352d71142fdf9",
+                "parameters": [
+                    {
+                        "name": "conference_id",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "track",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paginated list of submissions"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Submissions"
+                ],
+                "summary": "Create a submission",
+                "operationId": "2243850f1b74c2d5de0906469e414dd0",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "conference_id",
+                                    "title",
+                                    "abstract"
+                                ],
+                                "properties": {
+                                    "conference_id": {
+                                        "type": "integer"
+                                    },
+                                    "title": {
+                                        "type": "string",
+                                        "maxLength": 255
+                                    },
+                                    "track": {
+                                        "type": "string",
+                                        "maxLength": 255
+                                    },
+                                    "abstract": {
+                                        "type": "string",
+                                        "maxLength": 5000
+                                    },
+                                    "file": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Submission created"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/submissions/{submission}": {
+            "get": {
+                "tags": [
+                    "Submissions"
+                ],
+                "summary": "Get a single submission",
+                "operationId": "afbc3f3694f9ab505567aa06c6963aac",
+                "parameters": [
+                    {
+                        "name": "submission",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Submission detail"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "Not found"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Submissions"
+                ],
+                "summary": "Update a submission (author only, while pending)",
+                "operationId": "b03e08cc3023d739a8f1626dc51842db",
+                "parameters": [
+                    {
+                        "name": "submission",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Submission updated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Submissions"
+                ],
+                "summary": "Delete a submission (author only, while pending — permanent)",
+                "operationId": "80dd33be43f282855d1faba4f3eb44b3",
+                "parameters": [
+                    {
+                        "name": "submission",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Submission deleted"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
             }
         }
     },
@@ -133,6 +1697,45 @@
         {
             "name": "Authentication",
             "description": "Authentication"
+        },
+        {
+            "name": "User Management",
+            "description": "User Management"
+        },
+        {
+            "name": "Conferences",
+            "description": "Conferences"
+        },
+        {
+            "name": "Registrations",
+            "description": "Registrations"
+        },
+        {
+            "name": "Reviews",
+            "description": "Reviews"
+        },
+        {
+            "name": "Testimonials",
+            "description": "Testimonials"
+        },
+        {
+            "name": "Submissions",
+            "description": "Submissions"
+        }
+    ],
+    "components": {
+        "securitySchemes": {
+            "sanctum": {
+                "type": "http",
+                "scheme": "bearer",
+                "bearerFormat": "Sanctum",
+                "description": "Enter your Sanctum token."
+            }
+        }
+    },
+    "security": [
+        {
+            "sanctum": []
         }
     ]
 }

@@ -82,7 +82,7 @@ The initial structure was based on the requirements and workflows provided by **
 
 # 🖥️ Current Frontend
 
-The frontend is now **more than a landing page**.
+The frontend is now more than a landing page.
 
 The current application includes or is being developed to include areas such as:
 
