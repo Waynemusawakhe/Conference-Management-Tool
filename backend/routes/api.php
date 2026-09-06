@@ -9,6 +9,7 @@ use App\Modules\Reviews\Controllers\ReviewController;
 use App\Modules\Reviews\Controllers\TestimonialController;
 use App\Modules\Sessions\Controllers\SessionController;
 use App\Modules\Submissions\Controllers\SubmissionController;
+use App\Modules\Faq\Controllers\FaqController;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -217,4 +218,24 @@ Route::prefix('v1/sessions')->group(function () {
     Route::post('/', [SessionController::class, 'store']);
     Route::put('/{id}', [SessionController::class, 'update']);
     Route::delete('/{id}', [SessionController::class, 'destroy']);
+});
+
+/*
+|--------------------------------------------------------------------------
+| FAQ API Routes
+|--------------------------------------------------------------------------
+*/
+
+Route::prefix('v1/faqs')->group(function () {
+
+    // Public
+    Route::get('/', [FaqController::class, 'index']);
+    Route::get('/{id}', [FaqController::class, 'show']);
+
+    // Admin only
+    Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
+        Route::post('/', [FaqController::class, 'store']);
+        Route::put('/{id}', [FaqController::class, 'update']);
+        Route::delete('/{id}', [FaqController::class, 'destroy']);
+    });
 });

@@ -741,6 +741,202 @@
                 }
             }
         },
+        "/api/v1/faqs": {
+            "get": {
+                "tags": [
+                    "FAQs"
+                ],
+                "summary": "Get all FAQs",
+                "operationId": "f3c3abdcad55892ca69435f7cb0f39a9",
+                "parameters": [
+                    {
+                        "name": "category",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 15
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of FAQs"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "FAQs"
+                ],
+                "summary": "Create a new FAQ",
+                "operationId": "ec47c4188a01f6c601501c79903f9a2e",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "question",
+                                    "answer"
+                                ],
+                                "properties": {
+                                    "question": {
+                                        "type": "string",
+                                        "example": "How do I register?"
+                                    },
+                                    "answer": {
+                                        "type": "string",
+                                        "example": "Go to the Registration tab and follow the steps."
+                                    },
+                                    "category": {
+                                        "type": "string",
+                                        "example": "Registration"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "FAQ created successfully"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                }
+            }
+        },
+        "/api/v1/faqs/{id}": {
+            "get": {
+                "tags": [
+                    "FAQs"
+                ],
+                "summary": "Get a specific FAQ",
+                "operationId": "893325600906205eb6a4622dd8fe2f09",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "FAQ details"
+                    },
+                    "404": {
+                        "description": "FAQ not found"
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "FAQs"
+                ],
+                "summary": "Update an FAQ",
+                "operationId": "5e7df28b0641ce401040defda91e24c7",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "question": {
+                                        "type": "string",
+                                        "example": "How do I register?"
+                                    },
+                                    "answer": {
+                                        "type": "string",
+                                        "example": "Go to the Registration tab and follow the steps."
+                                    },
+                                    "category": {
+                                        "type": "string",
+                                        "example": "Registration"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "FAQ updated successfully"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "FAQ not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "FAQs"
+                ],
+                "summary": "Delete an FAQ",
+                "operationId": "61fb8c22325be0419b0a8074800c09e7",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "FAQ deleted successfully"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "FAQ not found"
+                    }
+                }
+            }
+        },
         "/api/v1/registrations": {
             "get": {
                 "tags": [
@@ -1483,6 +1679,157 @@
                 ]
             }
         },
+        "/api/v1/sessions": {
+            "get": {
+                "tags": [
+                    "Sessions"
+                ],
+                "summary": "Get all sessions",
+                "operationId": "0b6dffa611c72785075b849a1b9b0f22",
+                "responses": {
+                    "200": {
+                        "description": "Sessions retrieved successfully"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Sessions"
+                ],
+                "summary": "Create a session",
+                "operationId": "5bfcd97ce67e48118993961df6040dfc",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "title",
+                                    "start_time",
+                                    "end_time"
+                                ],
+                                "properties": {
+                                    "title": {
+                                        "type": "string",
+                                        "example": "Opening Keynote"
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "Opening presentation for the conference."
+                                    },
+                                    "start_time": {
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "example": "2026-09-01T09:00:00"
+                                    },
+                                    "end_time": {
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "example": "2026-09-01T10:00:00"
+                                    },
+                                    "location": {
+                                        "type": "string",
+                                        "example": "Main Auditorium"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Session created successfully"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                }
+            }
+        },
+        "/api/v1/sessions/{id}": {
+            "get": {
+                "tags": [
+                    "Sessions"
+                ],
+                "summary": "Get a session by ID",
+                "operationId": "54de6074f81c9d7891219d23e723e40d",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Session ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Session retrieved successfully"
+                    },
+                    "404": {
+                        "description": "Session not found"
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Sessions"
+                ],
+                "summary": "Update a session",
+                "operationId": "70c46d865c83fb8552c4fe9f5188e713",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Session ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Session updated successfully"
+                    },
+                    "404": {
+                        "description": "Session not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Sessions"
+                ],
+                "summary": "Delete a session",
+                "operationId": "c87c0619578cba18b2de2d625b9a4cfd",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Session ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Session deleted successfully"
+                    },
+                    "404": {
+                        "description": "Session not found"
+                    }
+                }
+            }
+        },
         "/api/v1/submissions": {
             "get": {
                 "tags": [
@@ -1665,7 +2012,7 @@
                 "tags": [
                     "Submissions"
                 ],
-                "summary": "Delete a submission (author only, while pending — permanent)",
+                "summary": "Delete a submission (author only, while pending)",
                 "operationId": "80dd33be43f282855d1faba4f3eb44b3",
                 "parameters": [
                     {
@@ -1691,6 +2038,105 @@
                     }
                 ]
             }
+        },
+        "/api/v1/submissions/{submission}/withdraw": {
+            "post": {
+                "tags": [
+                    "Submissions"
+                ],
+                "summary": "Withdraw a submission",
+                "operationId": "cc7f1b810f25b89619ad1c46564b3f66",
+                "parameters": [
+                    {
+                        "name": "submission",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Submission withdrawn successfully"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "Submission not found"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/submissions/{submission}/status": {
+            "patch": {
+                "tags": [
+                    "Submissions"
+                ],
+                "summary": "Update submission status",
+                "operationId": "803c95e1b7b17c5161a3dbd36c1d0319",
+                "parameters": [
+                    {
+                        "name": "submission",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "status"
+                                ],
+                                "properties": {
+                                    "status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "pending",
+                                            "under_review",
+                                            "accepted",
+                                            "rejected",
+                                            "revision_requested",
+                                            "withdrawn"
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Submission status updated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "Submission not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
         }
     },
     "tags": [
@@ -1707,6 +2153,10 @@
             "description": "Conferences"
         },
         {
+            "name": "FAQs",
+            "description": "FAQs"
+        },
+        {
             "name": "Registrations",
             "description": "Registrations"
         },
@@ -1717,6 +2167,10 @@
         {
             "name": "Testimonials",
             "description": "Testimonials"
+        },
+        {
+            "name": "Sessions",
+            "description": "Sessions"
         },
         {
             "name": "Submissions",

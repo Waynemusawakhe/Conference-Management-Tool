@@ -18,6 +18,7 @@ class AuthServiceProvider extends ServiceProvider
     protected $policies = [
         Registration::class => RegistrationPolicy::class,
         Submission::class => SubmissionPolicy::class,
+        Faq::class => FaqPolicy::class,
     ];
 
     public function boot(): void
