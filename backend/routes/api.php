@@ -10,6 +10,7 @@ use App\Modules\Reviews\Controllers\TestimonialController;
 use App\Modules\Sessions\Controllers\SessionController;
 use App\Modules\Submissions\Controllers\SubmissionController;
 use App\Modules\Faq\Controllers\FaqController;
+use App\Modules\ContactMessages\Controllers\ContactMessageController;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -237,5 +238,25 @@ Route::prefix('v1/faqs')->group(function () {
         Route::post('/', [FaqController::class, 'store']);
         Route::put('/{id}', [FaqController::class, 'update']);
         Route::delete('/{id}', [FaqController::class, 'destroy']);
+    });
+});
+/*
+|--------------------------------------------------------------------------
+| Contact Message API Routes
+|--------------------------------------------------------------------------
+*/
+
+Route::prefix('v1/contact-messages')->group(function () {
+
+    // Public — anyone can submit, throttled to prevent spam
+    Route::post('/', [ContactMessageController::class, 'store'])
+        ->middleware('throttle:6,1');
+
+    // Admin only
+    Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
+        Route::get('/', [ContactMessageController::class, 'index']);
+        Route::get('/{id}', [ContactMessageController::class, 'show']);
+        Route::patch('/{id}/status', [ContactMessageController::class, 'updateStatus']);
+        Route::delete('/{id}', [ContactMessageController::class, 'destroy']);
     });
 });

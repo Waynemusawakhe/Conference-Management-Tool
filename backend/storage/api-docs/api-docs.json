@@ -741,6 +741,219 @@
                 }
             }
         },
+        "/api/v1/contact-messages": {
+            "get": {
+                "tags": [
+                    "Contact Messages"
+                ],
+                "summary": "Get all contact messages (admin only)",
+                "operationId": "7eee958180b1aa15723fe2556c846d98",
+                "parameters": [
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "new",
+                                "in_progress",
+                                "resolved"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 15
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of contact messages"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Contact Messages"
+                ],
+                "summary": "Submit a contact message",
+                "operationId": "a4118afaaaba4661a36d3e2afa6cdbdb",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "email",
+                                    "message"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Jane Doe"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "example": "jane@example.com"
+                                    },
+                                    "message": {
+                                        "type": "string",
+                                        "example": "How do I register for the conference?"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Message submitted successfully"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "429": {
+                        "description": "Too many requests"
+                    }
+                }
+            }
+        },
+        "/api/v1/contact-messages/{id}": {
+            "get": {
+                "tags": [
+                    "Contact Messages"
+                ],
+                "summary": "Get a specific contact message (admin only)",
+                "operationId": "e20b561b491c54ebecb952416aef391d",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Contact message details"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "Contact message not found"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Contact Messages"
+                ],
+                "summary": "Delete a contact message (admin only)",
+                "operationId": "c55d21188d8cf74d9e0ba6d3d4b65242",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Contact message deleted successfully"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "Contact message not found"
+                    }
+                }
+            }
+        },
+        "/api/v1/contact-messages/{id}/status": {
+            "patch": {
+                "tags": [
+                    "Contact Messages"
+                ],
+                "summary": "Update a contact message status (admin only)",
+                "operationId": "d421a473e6cbcf496692666a009fef79",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "status"
+                                ],
+                                "properties": {
+                                    "status": {
+                                        "type": "string",
+                                        "example": "resolved",
+                                        "enum": [
+                                            "new",
+                                            "in_progress",
+                                            "resolved"
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Status updated successfully"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "Contact message not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                }
+            }
+        },
         "/api/v1/faqs": {
             "get": {
                 "tags": [
@@ -2151,6 +2364,10 @@
         {
             "name": "Conferences",
             "description": "Conferences"
+        },
+        {
+            "name": "Contact Messages",
+            "description": "Contact Messages"
         },
         {
             "name": "FAQs",

@@ -19,6 +19,7 @@ class AuthServiceProvider extends ServiceProvider
         Registration::class => RegistrationPolicy::class,
         Submission::class => SubmissionPolicy::class,
         Faq::class => FaqPolicy::class,
+        ContactMessage::class => ContactMessagePolicy::class
     ];
 
     public function boot(): void
