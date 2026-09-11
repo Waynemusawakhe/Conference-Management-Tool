@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Conferences from "./pages/Conferences";
@@ -6,12 +6,13 @@ import Register from "./pages/Register";
 import Contact from "./pages/Contact";
 import HelpFAQ from "./pages/HelpFAQ";
 import About from "./pages/About";
-import { Navigate } from "react-router-dom";
 import { ThemeProvider } from "./context/ThemeContext";
 import ForgotPassword from "./pages/ForgotPassword";
 import Testimonials from "./pages/Testimonials";
 import AuthorDashboard from "./pages/AuthorDashboard";
 import AccountSettings from "./pages/AccountSettings";
+import AdminDashboard from "./pages/AdminDashboard";
+
 
 export default function App() {
   return (
@@ -28,6 +29,8 @@ export default function App() {
       <Route path="/testimonials" element={<Testimonials />} />
       <Route path="/author-dashboard" element={<AuthorDashboard />} />
       <Route path="/account-settings" element={<AccountSettings />} />
+      <Route path="/AdminDashboard" element={<AdminDashboard />} />
+
       <Route path="*" element={<Navigate to="/" replace />} />
       
       </Routes>
