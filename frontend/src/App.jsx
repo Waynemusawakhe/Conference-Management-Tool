@@ -11,6 +11,8 @@ import { ThemeProvider } from "./context/ThemeContext";
 import ForgotPassword from "./pages/ForgotPassword";
 import Testimonials from "./pages/Testimonials";
 import AuthorDashboard from "./pages/AuthorDashboard";
+import ReviewerDashboard from './pages/ReviewerDashboard';
+
 
 export default function App() {
   return (
@@ -27,6 +29,7 @@ export default function App() {
       <Route path="/testimonials" element={<Testimonials />} />
       <Route path="/author-dashboard" element={<AuthorDashboard />} />
       <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="/reviewer" element={<ReviewerDashboard />} />
       </Routes>
     </ThemeProvider>
   );

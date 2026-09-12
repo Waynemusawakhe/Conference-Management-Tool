@@ -164,20 +164,7 @@ Route::prefix('v1')
         Route::apiResource('registrations', RegistrationController::class);
     });
 
-/*
-|--------------------------------------------------------------------------
-| Reviews API Routes
-|--------------------------------------------------------------------------
-*/
 
-Route::prefix('v1')
-    ->middleware('auth:sanctum')
-    ->group(function () {
-        Route::apiResource('reviews', ReviewController::class)->except(['update']);
-
-        Route::post('reviews/{id}/submit', [ReviewController::class, 'submit']);
-        Route::post('reviews/{id}/lock', [ReviewController::class, 'lock']);
-    });
 
 /*
 |--------------------------------------------------------------------------
@@ -218,3 +205,18 @@ Route::prefix('v1/sessions')->group(function () {
     Route::put('/{id}', [SessionController::class, 'update']);
     Route::delete('/{id}', [SessionController::class, 'destroy']);
 });
+
+
+/*
+|--------------------------------------------------------------------------
+| Reviewer Routes
+|--------------------------------------------------------------------------
+*/
+
+Route::prefix('v1/reviewer')
+    ->middleware('auth:sanctum')
+    ->group(function () {
+        Route::get('/pending', [ReviewController::class, 'index']);
+        Route::post('/items/{id}/approve', [ReviewController::class, 'submit']);
+        Route::post('/items/{id}/reject', [ReviewController::class, 'submit']);
+    });
