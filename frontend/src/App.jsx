@@ -12,6 +12,10 @@ import Testimonials from "./pages/Testimonials";
 import AuthorDashboard from "./pages/AuthorDashboard";
 import AccountSettings from "./pages/AccountSettings";
 import AdminDashboard from "./pages/AdminDashboard";
+import ConferenceFormPage from "./pages/ConferenceFormPage";
+import EditSubmissionPage from "./pages/EditSubmissionPage";
+import AssignReviewersPage from "./pages/AssignReviewersPage";
+import UsersPage from "./pages/UsersPage"
 
 
 export default function App() {
@@ -30,6 +34,11 @@ export default function App() {
       <Route path="/author-dashboard" element={<AuthorDashboard />} />
       <Route path="/account-settings" element={<AccountSettings />} />
       <Route path="/AdminDashboard" element={<AdminDashboard />} />
+      <Route path="/create-conference" element={<ConferenceFormPage />} />
+      <Route path="/edit-conference/:id" element={<ConferenceFormPage />} />
+      <Route path="/edit-submission/:id" element={<EditSubmissionPage />} />
+      <Route path="/assign-reviewers/:id" element={<AssignReviewersPage />} />
+      <Route path="/users" element={<UsersPage />} />
 
       <Route path="*" element={<Navigate to="/" replace />} />
       
