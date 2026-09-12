@@ -9,9 +9,13 @@ use App\Modules\Reviews\Controllers\ReviewController;
 use App\Modules\Reviews\Controllers\TestimonialController;
 use App\Modules\Sessions\Controllers\SessionController;
 use App\Modules\Submissions\Controllers\SubmissionController;
+use App\Modules\Faq\Controllers\FaqController;
+use App\Modules\ContactMessages\Controllers\ContactMessageController;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Modules\Reporting\Controllers\ReportingController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -92,6 +96,7 @@ Route::prefix('v1/auth')->group(function () {
         Route::post('/logout', [AuthController::class, 'logout']);
 
         Route::get('/me', [AuthController::class, 'me']);
+
 
         Route::post('/email/verification-notification', function (Request $request) {
 
@@ -205,18 +210,3 @@ Route::prefix('v1/sessions')->group(function () {
     Route::put('/{id}', [SessionController::class, 'update']);
     Route::delete('/{id}', [SessionController::class, 'destroy']);
 });
-
-
-/*
-|--------------------------------------------------------------------------
-| Reviewer Routes
-|--------------------------------------------------------------------------
-*/
-
-Route::prefix('v1/reviewer')
-    ->middleware('auth:sanctum')
-    ->group(function () {
-        Route::get('/pending', [ReviewController::class, 'index']);
-        Route::post('/items/{id}/approve', [ReviewController::class, 'submit']);
-        Route::post('/items/{id}/reject', [ReviewController::class, 'submit']);
-    });
