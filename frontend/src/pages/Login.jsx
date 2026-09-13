@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import Logo from "../components/Logo";
 import Navbar from "../components/Navbar";
 import { ArrowRight, LockKeyhole, Mail, ShieldCheck, Sparkles } from "lucide-react";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../hooks/useAuth";
 
 function Login() {
   const navigate = useNavigate();
@@ -29,9 +29,22 @@ function Login() {
     setLoading(true);
 
     try {
-      await login(formData);
-      navigate("/AdminDashboard", { replace: true });
+      const response = await login(formData);
+      console.log("Full login response object:", response);
+
+      const user = response?.user || response?.data?.user || response;
+      const role = user?.role;
+      console.log("Extracted user:", user, "Extracted role:", role);
+
+      if (role?.toLowerCase() === "reviewer") {
+        navigate("/ReviewerDashboard", { replace: true });
+      } else if (role?.toLowerCase() === "admin") {
+        navigate("/AdminDashboard", { replace: true });
+      } else {
+        navigate("/AuthorDashboard", { replace: true });
+      }
     } catch (err) {
+      console.error("Login caught error:", err);
       if (err.status === 422 && err.errors) {
         const details = Object.values(err.errors).flat().join(" ");
         setError(details || err.message);

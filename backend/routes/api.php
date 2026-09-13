@@ -210,3 +210,14 @@ Route::prefix('v1/sessions')->group(function () {
     Route::put('/{id}', [SessionController::class, 'update']);
     Route::delete('/{id}', [SessionController::class, 'destroy']);
 });
+/*
+|--------------------------------------------------------------------------
+| Review Routes
+|--------------------------------------------------------------------------
+*/
+
+Route::prefix('v1/reviewer')
+    ->middleware('auth:sanctum')
+    ->group(function () {
+        Route::get('/pending', [ReviewController::class, 'pending']);
+    });

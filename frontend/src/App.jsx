@@ -10,30 +10,38 @@ import { ThemeProvider } from "./context/ThemeContext";
 import ForgotPassword from "./pages/ForgotPassword";
 import Testimonials from "./pages/Testimonials";
 import AuthorDashboard from "./pages/AuthorDashboard";
+import ReviewerDashboard from "./pages/ReviewerDashboard"; // <-- Import it here
+import AccountSettings from "./pages/AccountSettings";
+import AdminDashboard from "./pages/AdminDashboard";
+import ConferenceFormPage from "./pages/ConferenceFormPage";
+import EditSubmissionPage from "./pages/EditSubmissionPage";
+import AssignReviewersPage from "./pages/AssignReviewersPage";
+import UsersPage from "./pages/UsersPage";
 
 export default function App() {
   return (
     <ThemeProvider>
       <Routes>
-      <Route path="/" element={<Home />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
-      <Route path="/forgot-password" element={<ForgotPassword />} />
-      <Route path="/conferences" element={<Conferences />} />
-      <Route path="/contact" element={<Contact />} />
-      <Route path="/help-faq" element={<HelpFAQ />} />
-      <Route path="/about" element={<About />} />
-      <Route path="/testimonials" element={<Testimonials />} />
-      <Route path="/author-dashboard" element={<AuthorDashboard />} />
-      <Route path="/account-settings" element={<AccountSettings />} />
-      <Route path="/AdminDashboard" element={<AdminDashboard />} />
-      <Route path="/create-conference" element={<ConferenceFormPage />} />
-      <Route path="/edit-conference/:id" element={<ConferenceFormPage />} />
-      <Route path="/edit-submission/:id" element={<EditSubmissionPage />} />
-      <Route path="/assign-reviewers/:id" element={<AssignReviewersPage />} />
-      <Route path="/users" element={<UsersPage />} />
+        <Route path="/" element={<Home />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/conferences" element={<Conferences />} />
+        <Route path="/contact" element={<Contact />} />
+        <Route path="/help-faq" element={<HelpFAQ />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/testimonials" element={<Testimonials />} />
+        <Route path="/author-dashboard" element={<AuthorDashboard />} />
+        <Route path="/ReviewerDashboard" element={<ReviewerDashboard />} /> {/* <-- Add route here */}
+        <Route path="/account-settings" element={<AccountSettings />} />
+        <Route path="/AdminDashboard" element={<AdminDashboard />} />
+        <Route path="/create-conference" element={<ConferenceFormPage />} />
+        <Route path="/edit-conference/:id" element={<ConferenceFormPage />} />
+        <Route path="/edit-submission/:id" element={<EditSubmissionPage />} />
+        <Route path="/assign-reviewers/:id" element={<AssignReviewersPage />} />
+        <Route path="/users" element={<UsersPage />} />
 
-      <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </ThemeProvider>
   );

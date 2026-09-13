@@ -1,8 +1,7 @@
-import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { authApi } from "../api/authApi";
 import { tokenStore } from "../api/client";
-
-const AuthContext = createContext(null);
+import { AuthContext } from "./authContextInstance";
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -11,13 +10,7 @@ export function AuthProvider({ children }) {
   const refreshUser = useCallback(async () => {
     try {
       const response = await authApi.me();
-
-      // CHANGE THIS LINE after checking Swagger:
-      // If /auth/me returns { data: {...user} }, use response.data
-      // If it returns { user: {...} }, use response.user
-      // If it returns the user directly, use response
       const currentUser = response.data ?? response.user ?? response;
-
       setUser(currentUser);
       setStatus("authenticated");
       return currentUser;
@@ -30,19 +23,19 @@ export function AuthProvider({ children }) {
   }, []);
 
   useEffect(() => {
-    // No token in memory on first load, so user starts unauthenticated.
-    // (In-memory tokens do not survive a page refresh.)
-    setStatus("unauthenticated");
-  }, []);
+    const token = localStorage.getItem('token') || (tokenStore.get ? tokenStore.get() : null);
+    if (token) {
+      refreshUser().catch(() => {
+        setStatus("unauthenticated");
+      });
+    } else {
+      setStatus("unauthenticated");
+    }
+  }, [refreshUser]);
 
   const login = useCallback(
     async (credentials) => {
       const response = await authApi.login(credentials);
-
-      // CHANGE THIS LINE after checking Swagger:
-      // If login returns { token: "..." }, keep response.token
-      // If it returns { access_token: "..." }, use response.access_token
-      // If it returns { data: { token: "..." } }, use response.data.token
       const token = response.token ?? response.access_token ?? response.data?.token;
 
       if (!token) {
@@ -50,7 +43,15 @@ export function AuthProvider({ children }) {
       }
 
       tokenStore.set(token);
-      await refreshUser();
+
+      const loggedInUser = response.user ?? response.data?.user;
+      if (loggedInUser) {
+        setUser(loggedInUser);
+        setStatus("authenticated");
+        return loggedInUser;
+      }
+
+      return await refreshUser();
     },
     [refreshUser]
   );
@@ -59,7 +60,7 @@ export function AuthProvider({ children }) {
     try {
       await authApi.logout();
     } catch (error) {
-      // Ignore network errors, still clear local state.
+      // Ignore network errors
     } finally {
       tokenStore.clear();
       setUser(null);
@@ -72,10 +73,4 @@ export function AuthProvider({ children }) {
       {children}
     </AuthContext.Provider>
   );
-}
-
-export function useAuth() {
-  const context = useContext(AuthContext);
-  if (!context) throw new Error("useAuth must be used inside AuthProvider");
-  return context;
 }
