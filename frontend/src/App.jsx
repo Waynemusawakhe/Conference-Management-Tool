@@ -13,6 +13,8 @@ import Testimonials from "./pages/Testimonials";
 const AuthorDashboard = lazy(() => import("./pages/AuthorDashboard"));
 import ReviewerDashboard from "./pages/ReviewerDashboard";
 import AccountSettings from "./pages/AccountSettings";
+import Profile from "./pages/Profile";
+import Settings from "./pages/Settings";
 import AdminDashboard from "./pages/AdminDashboard";
 import CreateEditConference from "./pages/create_edit_conference";
 import EditSubmissionPage from "./pages/EditSubmissionPage";
@@ -36,6 +38,8 @@ export default function App() {
         <Route path="/author-dashboard" element={<AuthorDashboard />} />
         <Route path="/ReviewerDashboard" element={<ReviewerDashboard />} />
         <Route path="/account-settings" element={<AccountSettings />} />
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/settings" element={<Settings />} />
         <Route path="/AdminDashboard" element={<AdminDashboard />} />
         <Route path="/create-conference" element={<CreateEditConference />} />
         <Route path="/edit-conference/:id" element={<CreateEditConference />} />
@@ -49,3 +53,5 @@ export default function App() {
     </ThemeProvider>
   );
 }
+
+

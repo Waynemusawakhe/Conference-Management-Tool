@@ -3,7 +3,7 @@ import { ArrowLeft, Bell, Check, LockKeyhole, Moon, Palette, Shield, Sun } from 
 import { useNavigate } from "react-router-dom";
 import Logo from "../components/Logo";
 import { useTheme } from "../context/ThemeContext";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../hooks/useAuth";
 import { authApi } from "../api/authApi";
 
 export default function Settings() {
@@ -36,3 +36,4 @@ export default function Settings() {
     </main>
   </div>;
 }
+

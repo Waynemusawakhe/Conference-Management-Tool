@@ -41,7 +41,7 @@ function Login() {
       } else if (role?.toLowerCase() === "admin") {
         navigate("/AdminDashboard", { replace: true });
       } else {
-        navigate("/AuthorDashboard", { replace: true });
+        navigate("/author-dashboard", { replace: true });
       }
     } catch (err) {
       console.error("Login caught error:", err);
