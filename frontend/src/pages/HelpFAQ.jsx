@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Navbar from "../components/Navbar";
 import { Link } from "react-router-dom";
 import { FileText, HelpCircle, MessagesSquare, Search, Ticket, UserRound } from "lucide-react";
-
+import { faqsApi } from '../api/faqsApi';
 const categoryIcons = {
   "Account": UserRound,
   "Authors & Submissions": FileText,
@@ -12,57 +12,27 @@ const categoryIcons = {
 };
 
 // All FAQ content lives here — grouped by category.
-const faqData = [
-  {
-    category: "Account",
-    question: "Do I need an account to browse conferences?",
-    answer: "No, anyone can browse and filter conferences by name and location without logging in."
-  },
-  {
-    category: "Account",
-    question: "How do I register an account?",
-    answer: "Click 'Register' and fill in your details. You'll get an email to verify your account."
-  },
-  {
-    category: "Account",
-    question: "How do I reset my password?",
-    answer: "Use the forgot password link on the login page and a reset link will be sent to you."
-  },
-  {
-    category: "Authors & Submissions",
-    question: "How do I submit a proposal as an Author?",
-    answer: "Log in as an Author, choose a conference, and click 'Submit Proposal'."
-  },
-  {
-    category: "Authors & Submissions",
-    question: "How do I check my submission status?",
-    answer: "Go to 'My Proposals' to see each submission's status."
-  },
-  {
-    category: "Attending Conferences",
-    question: "How do I register for a conference?",
-    answer: "Log in and click 'Register' on the conference page."
-  },
-  {
-    category: "Attending Conferences",
-    question: "Can I cancel my registration?",
-    answer: "Yes, go to 'My Conferences' and cancel it."
-  },
-  {
-    category: "Community",
-    question: "Can I leave a testimonial?",
-    answer: "Yes, any logged-in user can post a testimonial about their experience using CMT."
-  },
-  {
-    category: "Getting Help",
-    question: "Who do I contact for help?",
-    answer: "Use the Contact Us page to send a message, no login required."
-  },
-];
+
 
 function HelpFAQ() {
+  const [faqData, setFaqData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [openIndex, setOpenIndex] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+
+  useEffect(() => {
+    faqsApi.getAll()
+    .then((response) => {
+      setFaqData(response.data || []);
+    })
+    .catch((err) => {
+      setError(err.message || "Loading FAQs went wrong");
+    })
+    .finally(() => {
+      setLoading(false);
+    });
+  }, []);
 
   const toggleFAQ = (index) => {
     setOpenIndex(openIndex === index ? null : index);
@@ -78,11 +48,12 @@ function HelpFAQ() {
   );
 
   const groupedFAQs = filteredFAQs.reduce((groups, item) => {
+    const category = item.category || "General";
     const existing = groups.find((g) => g.category === item.category);
     if (existing) {
       existing.items.push(item);
     } else {
-      groups.push({ category: item.category, items: [item] });
+      groups.push({ category,  items: [item] });
     }
     return groups;
   }, []);
@@ -127,6 +98,9 @@ function HelpFAQ() {
             <button className="rounded-lg border border-[#dfe4ed] bg-white px-3 py-2 text-xs font-bold text-[#5c50ec] dark:border-white/10 dark:bg-white/10 dark:text-[#b9b3ff]" onClick={collapseAll}>Collapse All</button>
           </div>
 
+          {loading && <p className="mt-8 text-center text-sm text-[#66728b]">Loading FAQs...</p>}
+          {error && <p className="mt-8 text-center text-sm text-red-500">Couldn't load FAQs: {error}</p>}
+
           {groupedFAQs.length === 0 && (
             <p className="mt-8 rounded-xl border border-dashed border-[#ccd3df] bg-white p-8 text-center text-sm text-[#66728b]">No questions match your search.</p>
           )}
@@ -169,7 +143,9 @@ function HelpFAQ() {
             <p className="m-0 text-sm font-bold">Still need help?</p>
             <Link to="/contact" className="rounded-[11px] bg-white px-4 py-3 text-xs font-bold text-[#192354]">Contact Support</Link>
           </div>
-
+          < p style={{ textAlign: "center", fontSize: "11px", color: "#9aa4b8", marginTop: "24px"}}>
+               VT Marumo 
+               </p>
         </div>
         </section>
       </main>

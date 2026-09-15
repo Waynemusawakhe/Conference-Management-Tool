@@ -147,6 +147,9 @@ function AccountSettings()
                 </div>
                 )}
             </div>
+             <p style={{ textAlign: "center", fontSize: "11px", color: "#9aa4b8", marginTop: "24px"}}>
+               VT Marumo 
+               </p>
             </div>
         </main>
         </div>
