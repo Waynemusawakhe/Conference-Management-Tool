@@ -18,7 +18,7 @@ class SessionController extends Controller
             new OA\Response(
                 response: 200,
                 description: 'Sessions retrieved successfully'
-            )
+            ),
         ]
     )]
     public function index(): JsonResponse
@@ -42,7 +42,7 @@ class SessionController extends Controller
                 in: 'path',
                 required: true,
                 schema: new OA\Schema(type: 'integer')
-            )
+            ),
         ],
         responses: [
             new OA\Response(
@@ -52,14 +52,14 @@ class SessionController extends Controller
             new OA\Response(
                 response: 404,
                 description: 'Session not found'
-            )
+            ),
         ]
     )]
     public function show(int $id): JsonResponse
     {
         $session = Session::find($id);
 
-        if (!$session) {
+        if (! $session) {
             return response()->json([
                 'success' => false,
                 'message' => 'Session not found.',
@@ -119,7 +119,7 @@ class SessionController extends Controller
             new OA\Response(
                 response: 422,
                 description: 'Validation error'
-            )
+            ),
         ]
     )]
     public function store(Request $request): JsonResponse
@@ -152,7 +152,7 @@ class SessionController extends Controller
                 in: 'path',
                 required: true,
                 schema: new OA\Schema(type: 'integer')
-            )
+            ),
         ],
         responses: [
             new OA\Response(
@@ -166,14 +166,14 @@ class SessionController extends Controller
             new OA\Response(
                 response: 422,
                 description: 'Validation error'
-            )
+            ),
         ]
     )]
     public function update(Request $request, int $id): JsonResponse
     {
         $session = Session::find($id);
 
-        if (!$session) {
+        if (! $session) {
             return response()->json([
                 'success' => false,
                 'message' => 'Session not found.',
@@ -208,7 +208,7 @@ class SessionController extends Controller
                 in: 'path',
                 required: true,
                 schema: new OA\Schema(type: 'integer')
-            )
+            ),
         ],
         responses: [
             new OA\Response(
@@ -218,14 +218,14 @@ class SessionController extends Controller
             new OA\Response(
                 response: 404,
                 description: 'Session not found'
-            )
+            ),
         ]
     )]
     public function destroy(int $id): JsonResponse
     {
         $session = Session::find($id);
 
-        if (!$session) {
+        if (! $session) {
             return response()->json([
                 'success' => false,
                 'message' => 'Session not found.',

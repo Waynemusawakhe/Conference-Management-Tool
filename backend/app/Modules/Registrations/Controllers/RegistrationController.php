@@ -81,7 +81,7 @@ class RegistrationController extends Controller
             'user_id',
             'status',
             'registered_from',
-            'registered_to'
+            'registered_to',
         ]);
 
         $perPage = $request->input('per_page', 15);

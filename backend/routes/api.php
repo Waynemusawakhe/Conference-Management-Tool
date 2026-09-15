@@ -3,15 +3,19 @@
 use App\Models\User;
 use App\Modules\Account\Controllers\AuthController;
 use App\Modules\Account\Controllers\UserController;
-use App\Modules\Reviews\Controllers\TestimonialController;
 use App\Modules\Conferences\Controllers\ConferenceController;
 use App\Modules\Registrations\Controllers\RegistrationController;
 use App\Modules\Reviews\Controllers\ReviewController;
+use App\Modules\Reviews\Controllers\TestimonialController;
+use App\Modules\Sessions\Controllers\SessionController;
+use App\Modules\Submissions\Controllers\SubmissionController;
+use App\Modules\Faq\Controllers\FaqController;
+use App\Modules\ContactMessages\Controllers\ContactMessageController;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Modules\Submissions\Controllers\SubmissionController;
-use App\Modules\Sessions\Controllers\SessionController;
+use App\Modules\Reporting\Controllers\ReportingController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -93,6 +97,7 @@ Route::prefix('v1/auth')->group(function () {
 
         Route::get('/me', [AuthController::class, 'me']);
 
+
         Route::post('/email/verification-notification', function (Request $request) {
 
             $request->user()->sendEmailVerificationNotification();
@@ -123,7 +128,6 @@ Route::prefix('v1/auth')->group(function () {
 | User Routes
 |--------------------------------------------------------------------------
 */
-
 
 Route::prefix('v1/users')
     ->middleware('auth:sanctum')
@@ -165,20 +169,7 @@ Route::prefix('v1')
         Route::apiResource('registrations', RegistrationController::class);
     });
 
-/*
-|--------------------------------------------------------------------------
-| Reviews API Routes
-|--------------------------------------------------------------------------
-*/
 
-Route::prefix('v1')
-    ->middleware('auth:sanctum')
-    ->group(function () {
-        Route::apiResource('reviews', ReviewController::class)->except(['update']);
-
-        Route::post('reviews/{id}/submit', [ReviewController::class, 'submit']);
-        Route::post('reviews/{id}/lock', [ReviewController::class, 'lock']);
-    });
 
 /*
 |--------------------------------------------------------------------------
@@ -189,8 +180,21 @@ Route::prefix('v1')
 Route::prefix('v1')
     ->middleware('auth:sanctum')
     ->group(function () {
+
         Route::apiResource('submissions', SubmissionController::class)
             ->except(['edit', 'create']);
+
+        /*
+        |--------------------------------------------------------------------------
+        | Submission Workflow
+        |--------------------------------------------------------------------------
+        */
+
+        // Withdraw a submission
+        Route::post(
+            'submissions/{submission}/withdraw',
+            [SubmissionController::class, 'withdraw']
+        );
     });
 
 /*
@@ -206,3 +210,14 @@ Route::prefix('v1/sessions')->group(function () {
     Route::put('/{id}', [SessionController::class, 'update']);
     Route::delete('/{id}', [SessionController::class, 'destroy']);
 });
+/*
+|--------------------------------------------------------------------------
+| Review Routes
+|--------------------------------------------------------------------------
+*/
+
+Route::prefix('v1/reviewer')
+    ->middleware('auth:sanctum')
+    ->group(function () {
+        Route::get('/pending', [ReviewController::class, 'pending']);
+    });
