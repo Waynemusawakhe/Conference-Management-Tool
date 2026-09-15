@@ -1,10 +1,39 @@
-import { http } from './client';
+import { http } from "./client";
 
 export const conferencesApi = {
-  getAll: () => http.get('/conferences'),
-  getById: (id) => http.get(`/conferences/${id}`),
-  create: (body) => http.post('/conferences', body),
-  update: (id, body) => http.put(`/conferences/${id}`, body),
-  remove: (id) => http.delete(`/conferences/${id}`),
-  updateStatus: (id, body) => http.patch(`/conferences/${id}/status`, body),
+  getAll: (params = {}) =>
+    http.get("/conferences", { params }),
+
+  getById: (id) =>
+    http.get(`/conferences/${encodeURIComponent(id)}`),
+
+  create: (body) =>
+    http.post("/conferences", body),
+
+  update: (id, body) =>
+    http.put(`/conferences/${encodeURIComponent(id)}`, body),
+
+  remove: (id) =>
+    http.delete(`/conferences/${encodeURIComponent(id)}`),
+
+  updateStatus: (id, status) =>
+    http.patch(
+      `/conferences/${encodeURIComponent(id)}/status`,
+      { status }
+    ),
+
+  getSubmissions: (id) =>
+    http.get(
+      `/conferences/${encodeURIComponent(id)}/submissions`
+    ),
+
+  getRegistrations: (id) =>
+    http.get(
+      `/conferences/${encodeURIComponent(id)}/registrations`
+    ),
+
+  getSessions: (id) =>
+    http.get(
+      `/conferences/${encodeURIComponent(id)}/sessions`
+    ),
 };
