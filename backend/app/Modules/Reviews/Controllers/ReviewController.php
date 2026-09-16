@@ -15,7 +15,6 @@ use App\Modules\Reviews\Requests\SubmitReviewRequest;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route;
 use OpenApi\Attributes as OA;
 
 class ReviewController extends Controller
@@ -56,21 +55,6 @@ class ReviewController extends Controller
                 'total' => $reviews->total(),
                 'last_page' => $reviews->lastPage(),
             ],
-        ]);
-    }
-
-    public function pending(Request $request, GetReviewsAction $action): JsonResponse
-    {
-        $this->authorize('viewAny', SubmissionReview::class);
-
-        $filters = array_merge($request->only(['submission_id', 'reviewer_id']), ['status' => 'pending']);
-        $perPage = $request->input('per_page', 15);
-
-        $reviews = $action->execute($filters, $perPage);
-
-        return response()->json([
-            'success' => true,
-            'data' => $reviews->items(),
         ]);
     }
 
@@ -266,15 +250,3 @@ class ReviewController extends Controller
         }
     }
 }
-
-Route::prefix('v1/reviews')
-    ->middleware('auth:sanctum')
-    ->group(function () {
-        Route::get('/pending', [ReviewController::class, 'pending']); 
-        Route::get('/', [ReviewController::class, 'index']);
-        Route::get('/{id}', [ReviewController::class, 'show']);
-        Route::post('/', [ReviewController::class, 'store']);
-        Route::post('/{id}/submit', [ReviewController::class, 'submit']);
-        Route::post('/{id}/lock', [ReviewController::class, 'lock']);
-        Route::delete('/{id}', [ReviewController::class, 'destroy']);
-    });

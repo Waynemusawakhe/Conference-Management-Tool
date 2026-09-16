@@ -119,7 +119,7 @@ export default function CreateEditConference() {
     try {
       if (isEdit) await conferencesApi.update(id, payload);
       else await conferencesApi.create(payload);
-      navigate("/AdminDashboard");
+      navigate("/admin-dashboard");
     } catch (requestError) {
       setError(requestError.status === 422 ? "Please review the highlighted fields." : requestError.message || "Unable to save the conference.");
       setFieldErrors(requestError.errors || {});
@@ -143,9 +143,9 @@ export default function CreateEditConference() {
     <div className="min-h-screen bg-[#f7f9fc] text-[#0d1b3d] dark:bg-[#07132f] dark:text-white">
       <header className="sticky top-0 z-20 border-b border-white/10 bg-[#07132f]/95 text-white shadow-[0_8px_30px_rgba(7,19,47,.12)] backdrop-blur-xl">
         <div className="mx-auto flex min-h-[76px] w-[min(1400px,calc(100%-32px))] items-center justify-between gap-4">
-          <button onClick={() => navigate("/AdminDashboard")} className="inline-flex items-center gap-2 text-[12px] font-bold text-white/75 transition hover:text-white" type="button"><ArrowLeft size={16} /> Admin workspace</button>
+          <button onClick={() => navigate("/admin-dashboard")} className="inline-flex items-center gap-2 text-[12px] font-bold text-white/75 transition hover:text-white" type="button"><ArrowLeft size={16} /> Admin workspace</button>
           <div className="flex items-center gap-2">
-            <button onClick={() => navigate("/AdminDashboard#conferences-table")} type="button" className="inline-flex min-h-9 items-center gap-2 rounded-lg border border-white/15 px-3 text-[11px] font-bold text-white/80 transition hover:bg-white/10 hover:text-white"><Edit3 size={14} /> <span className="hidden sm:inline">Edit existing conference</span><span className="sm:hidden">Edit</span></button>
+            <button onClick={() => navigate("/admin-dashboard#conferences-table")} type="button" className="inline-flex min-h-9 items-center gap-2 rounded-lg border border-white/15 px-3 text-[11px] font-bold text-white/80 transition hover:bg-white/10 hover:text-white"><Edit3 size={14} /> <span className="hidden sm:inline">Edit existing conference</span><span className="sm:hidden">Edit</span></button>
             <button onClick={toggleTheme} type="button" aria-label="Toggle theme" className="grid h-9 w-9 place-items-center rounded-lg border border-white/15 text-white/75 transition hover:bg-white/10 hover:text-white">{dark ? <Sun size={16} /> : <Moon size={16} />}</button>
             <span className="hidden text-[11px] font-bold text-white/55 sm:inline">{dark ? "Dark theme" : "Light theme"}</span>
           </div>
@@ -205,10 +205,12 @@ export default function CreateEditConference() {
           <aside className="space-y-5 lg:sticky lg:top-[100px] lg:self-start">
             <div className="overflow-hidden rounded-2xl border border-[#e4e8f0] bg-[#07132f] text-white shadow-[0_18px_45px_rgba(7,19,47,.16)]"><div className="p-6"><div className="mb-8 flex items-center justify-between"><span className="rounded-full bg-[#6757f5]/20 px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-[.1em] text-[#b9b3ff]">Live preview</span><Sparkles className="text-[#f59a43]" size={18} /></div><p className="text-[10px] font-extrabold uppercase tracking-[.13em] text-white/45">{form.code || "YOUR CODE"}</p><h2 className="mt-3 min-h-[66px] text-[24px] font-extrabold leading-[1.08] tracking-[-.04em]">{form.name || "Your conference name"}</h2><p className="mt-4 min-h-[40px] text-[11px] leading-5 text-white/55">{form.description || "A clear event story will appear here."}</p></div><div className="grid grid-cols-2 border-t border-white/10"><div className="border-r border-white/10 p-4"><CalendarDays size={15} className="mb-2 text-[#8c72ff]" /><p className="text-[10px] text-white/45">Dates</p><p className="mt-1 text-[11px] font-bold">{form.start_date || "TBD"}</p></div><div className="p-4"><MapPin size={15} className="mb-2 text-[#f59a43]" /><p className="text-[10px] text-white/45">Location</p><p className="mt-1 truncate text-[11px] font-bold">{form.city || "TBD"}</p></div></div></div>
             <div className="rounded-2xl border border-[#e4e8f0] bg-white p-5 dark:border-white/10 dark:bg-[#0d1c44]"><div className="flex items-center gap-3"><div className="grid h-9 w-9 place-items-center rounded-xl bg-[#eaf9f2] text-[#19a56a]"><Users size={17} /></div><div><p className="text-[11px] font-extrabold">Ready for your community?</p><p className="mt-1 text-[10px] leading-4 text-[#8993a6]">A complete profile helps attendees trust the event.</p></div></div></div>
-            <div className="flex flex-col gap-3"><button type="submit" disabled={saving} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-[#6655f6] to-[#7869ff] px-5 text-[12px] font-extrabold text-white shadow-[0_12px_28px_rgba(103,87,245,.28)] transition hover:-translate-y-0.5 disabled:cursor-wait disabled:opacity-60">{saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}{saving ? "Saving..." : isEdit ? "Save changes" : "Create conference"}</button><button type="button" onClick={() => navigate("/AdminDashboard")} className="min-h-11 rounded-xl border border-[#e2e6ee] bg-white text-[12px] font-bold text-[#59657d] transition hover:bg-[#f0f2f6] dark:border-white/10 dark:bg-[#0d1c44] dark:text-white/70 dark:hover:bg-white/10">Cancel</button>{form.website_link && <a href={form.website_link} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center gap-2 text-[11px] font-bold text-[#6757f5] hover:underline">Preview website <ExternalLink size={13} /></a>}</div>
+            <div className="flex flex-col gap-3"><button type="submit" disabled={saving} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-[#6655f6] to-[#7869ff] px-5 text-[12px] font-extrabold text-white shadow-[0_12px_28px_rgba(103,87,245,.28)] transition hover:-translate-y-0.5 disabled:cursor-wait disabled:opacity-60">{saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}{saving ? "Saving..." : isEdit ? "Save changes" : "Create conference"}</button><button type="button" onClick={() => navigate("/admin-dashboard")} className="min-h-11 rounded-xl border border-[#e2e6ee] bg-white text-[12px] font-bold text-[#59657d] transition hover:bg-[#f0f2f6] dark:border-white/10 dark:bg-[#0d1c44] dark:text-white/70 dark:hover:bg-white/10">Cancel</button>{form.website_link && <a href={form.website_link} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center gap-2 text-[11px] font-bold text-[#6757f5] hover:underline">Preview website <ExternalLink size={13} /></a>}</div>
           </aside>
         </form>
       </main>
     </div>
   );
 }
+
+
