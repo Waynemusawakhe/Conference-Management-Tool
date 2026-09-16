@@ -1,18 +1,18 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 
-import { ThemeProvider } from "./context/ThemeContext";
-import ProtectedRoute from "./components/ProtectedRoute";
+import { ThemeProvider } from "../context/ThemeContext";
+import ProtectedRoute from "../components/ProtectedRoute";
 
-import Home from "./pages/Home";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import ForgotPassword from "./pages/ForgotPassword";
-import Conferences from "./pages/Conferences";
-import Contact from "./pages/Contact";
-import HelpFAQ from "./pages/HelpFAQ";
-import About from "./pages/About";
-import Testimonials from "./pages/Testimonials";
-import AuthorDashboard from "./pages/AuthorDashboard";
+import Home from "./Home";
+import Login from "./Login";
+import Register from "./Register";
+import ForgotPassword from "./ForgotPassword";
+import Conferences from "./Conferences";
+import Contact from "./Contact";
+import HelpFAQ from "./HelpFAQ";
+import About from "./About";
+import Testimonials from "./Testimonials";
+import AuthorDashboard from "./AuthorDashboard";
 
 export default function App() {
   return (
