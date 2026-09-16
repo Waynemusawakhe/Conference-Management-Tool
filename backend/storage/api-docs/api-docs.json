@@ -422,9 +422,6 @@
                 "responses": {
                     "200": {
                         "description": "List of conferences"
-                    },
-                    "401": {
-                        "description": "Unauthorised"
                     }
                 }
             },
@@ -433,6 +430,7 @@
                     "Conferences"
                 ],
                 "summary": "Create a conference",
+                "description": "The authenticated organiser or admin becomes the conference organiser.",
                 "operationId": "4faf8a25680c3d69e83925788e68f4e3",
                 "requestBody": {
                     "required": true,
@@ -440,7 +438,6 @@
                         "application/json": {
                             "schema": {
                                 "required": [
-                                    "organiser_id",
                                     "code",
                                     "name",
                                     "format",
@@ -448,10 +445,6 @@
                                     "end_date"
                                 ],
                                 "properties": {
-                                    "organiser_id": {
-                                        "type": "integer",
-                                        "example": 1
-                                    },
                                     "code": {
                                         "type": "string",
                                         "example": "CMT2026"
@@ -462,11 +455,13 @@
                                     },
                                     "description": {
                                         "type": "string",
-                                        "example": "Annual conference"
+                                        "example": "Annual conference",
+                                        "nullable": true
                                     },
                                     "category": {
                                         "type": "string",
-                                        "example": "Technology"
+                                        "example": "Technology",
+                                        "nullable": true
                                     },
                                     "topics": {
                                         "type": "array",
@@ -528,6 +523,7 @@
                                     },
                                     "website_link": {
                                         "type": "string",
+                                        "format": "uri",
                                         "example": "https://example.com",
                                         "nullable": true
                                     }
@@ -541,10 +537,21 @@
                     "201": {
                         "description": "Conference created successfully"
                     },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Organiser or admin role required"
+                    },
                     "422": {
                         "description": "Validation error"
                     }
-                }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
             }
         },
         "/api/v1/conferences/{conference}": {
@@ -608,10 +615,18 @@
                                         "example": "Updated Conference Name"
                                     },
                                     "description": {
-                                        "type": "string"
+                                        "type": "string",
+                                        "nullable": true
                                     },
                                     "category": {
-                                        "type": "string"
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "topics": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        }
                                     },
                                     "format": {
                                         "type": "string",
@@ -655,6 +670,7 @@
                                     },
                                     "website_link": {
                                         "type": "string",
+                                        "format": "uri",
                                         "nullable": true
                                     }
                                 },
@@ -667,13 +683,24 @@
                     "200": {
                         "description": "Conference updated successfully"
                     },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
                     "404": {
                         "description": "Conference not found"
                     },
                     "422": {
                         "description": "Validation error"
                     }
-                }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
             },
             "delete": {
                 "tags": [
@@ -697,10 +724,21 @@
                     "200": {
                         "description": "Conference deleted successfully"
                     },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
                     "404": {
                         "description": "Conference not found"
                     }
-                }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
             }
         },
         "/api/v1/conferences/{conference}/status": {
@@ -749,10 +787,24 @@
                     "200": {
                         "description": "Status updated successfully"
                     },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "Conference not found"
+                    },
                     "422": {
                         "description": "Validation error"
                     }
-                }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
             }
         },
         "/api/v1/conferences/{conference}/submissions": {
@@ -760,7 +812,8 @@
                 "tags": [
                     "Conferences"
                 ],
-                "summary": "Get all submissions for a conference",
+                "summary": "Get submissions belonging to a conference",
+                "description": "Only an admin or the organiser who owns the conference may access these submissions.",
                 "operationId": "7cae6eaf4a51cb28444273567a56ca0e",
                 "parameters": [
                     {
@@ -778,10 +831,21 @@
                     "200": {
                         "description": "Conference submissions"
                     },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
                     "404": {
                         "description": "Conference not found"
                     }
-                }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
             }
         },
         "/api/v1/conferences/{conference}/registrations": {
@@ -789,7 +853,8 @@
                 "tags": [
                     "Conferences"
                 ],
-                "summary": "Get all registrations for a conference",
+                "summary": "Get registrations belonging to a conference",
+                "description": "Only an admin or the organiser who owns the conference may access these registrations.",
                 "operationId": "5df5b486d6e1654354d878e00ef142ff",
                 "parameters": [
                     {
@@ -807,10 +872,21 @@
                     "200": {
                         "description": "Conference registrations"
                     },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
                     "404": {
                         "description": "Conference not found"
                     }
-                }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
             }
         },
         "/api/v1/conferences/{conference}/sessions": {
@@ -818,7 +894,8 @@
                 "tags": [
                     "Conferences"
                 ],
-                "summary": "Get all sessions for a conference",
+                "summary": "Get sessions belonging to a conference",
+                "description": "Only an admin or the organiser who owns the conference may access these sessions.",
                 "operationId": "d3ef9286ef0dc76d69740cc8b32ce629",
                 "parameters": [
                     {
@@ -836,10 +913,21 @@
                     "200": {
                         "description": "Conference sessions"
                     },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
                     "404": {
                         "description": "Conference not found"
                     }
-                }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
             }
         },
         "/api/v1/contact-messages": {
@@ -1256,7 +1344,8 @@
                 "tags": [
                     "Registrations"
                 ],
-                "summary": "Get all registrations",
+                "summary": "Get registrations visible to the authenticated user",
+                "description": "Admins see all registrations, organisers see registrations for their conferences, and regular users see only their own registrations.",
                 "operationId": "51ae8b9ebfa73c5bd3552b6a9c182bdf",
                 "parameters": [
                     {
@@ -1280,7 +1369,7 @@
                     {
                         "name": "status",
                         "in": "query",
-                        "description": "Filter by status",
+                        "description": "Filter by registration status",
                         "required": false,
                         "schema": {
                             "type": "string",
@@ -1291,22 +1380,47 @@
                         }
                     },
                     {
+                        "name": "registered_from",
+                        "in": "query",
+                        "description": "Filter registrations from this date",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "registered_to",
+                        "in": "query",
+                        "description": "Filter registrations up to this date",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
                         "name": "per_page",
                         "in": "query",
-                        "description": "Items per page",
+                        "description": "Number of registrations per page",
                         "required": false,
                         "schema": {
                             "type": "integer",
-                            "default": 15
+                            "default": 15,
+                            "maximum": 100,
+                            "minimum": 1
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Successful operation"
+                        "description": "Registrations retrieved successfully"
                     },
                     "401": {
                         "description": "Unauthenticated"
+                    },
+                    "422": {
+                        "description": "Invalid query parameter"
                     }
                 },
                 "security": [
@@ -1319,7 +1433,8 @@
                 "tags": [
                     "Registrations"
                 ],
-                "summary": "Create a new registration",
+                "summary": "Register the authenticated user for a conference",
+                "description": "The user ID and registration status are derived by the backend and cannot be selected by the client.",
                 "operationId": "864ae9d9923810dc5fce908a14ca9d7d",
                 "requestBody": {
                     "required": true,
@@ -1327,25 +1442,12 @@
                         "application/json": {
                             "schema": {
                                 "required": [
-                                    "conference_id",
-                                    "user_id"
+                                    "conference_id"
                                 ],
                                 "properties": {
                                     "conference_id": {
                                         "type": "integer",
                                         "example": 1
-                                    },
-                                    "user_id": {
-                                        "type": "integer",
-                                        "example": 1
-                                    },
-                                    "status": {
-                                        "type": "string",
-                                        "example": "registered",
-                                        "enum": [
-                                            "registered",
-                                            "cancelled"
-                                        ]
                                     }
                                 },
                                 "type": "object"
@@ -1361,10 +1463,7 @@
                         "description": "Unauthenticated"
                     },
                     "422": {
-                        "description": "Validation error"
-                    },
-                    "409": {
-                        "description": "Already registered"
+                        "description": "Validation error or duplicate registration"
                     }
                 },
                 "security": [
@@ -1380,11 +1479,13 @@
                     "Registrations"
                 ],
                 "summary": "Get a specific registration",
+                "description": "Admins may view any registration, organisers may view registrations for their conferences, and users may view their own registrations.",
                 "operationId": "dc978a140cea0f34ab75899f9b619983",
                 "parameters": [
                     {
                         "name": "id",
                         "in": "path",
+                        "description": "Registration ID",
                         "required": true,
                         "schema": {
                             "type": "integer"
@@ -1393,10 +1494,13 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Successful operation"
+                        "description": "Registration retrieved successfully"
                     },
                     "401": {
                         "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
                     },
                     "404": {
                         "description": "Registration not found"
@@ -1412,12 +1516,13 @@
                 "tags": [
                     "Registrations"
                 ],
-                "summary": "Update a registration",
+                "summary": "Update a registration status",
                 "operationId": "d63ab5bfa89a9a6acc4adc210c9108c4",
                 "parameters": [
                     {
                         "name": "id",
                         "in": "path",
+                        "description": "Registration ID",
                         "required": true,
                         "schema": {
                             "type": "integer"
@@ -1430,14 +1535,6 @@
                         "application/json": {
                             "schema": {
                                 "properties": {
-                                    "conference_id": {
-                                        "type": "integer",
-                                        "example": 1
-                                    },
-                                    "user_id": {
-                                        "type": "integer",
-                                        "example": 1
-                                    },
                                     "status": {
                                         "type": "string",
                                         "example": "cancelled",
@@ -1459,6 +1556,9 @@
                     "401": {
                         "description": "Unauthenticated"
                     },
+                    "403": {
+                        "description": "Forbidden"
+                    },
                     "404": {
                         "description": "Registration not found"
                     },
@@ -1476,12 +1576,14 @@
                 "tags": [
                     "Registrations"
                 ],
-                "summary": "Cancel/delete a registration",
+                "summary": "Cancel a registration",
+                "description": "The registration is retained for reporting and its status is changed to cancelled.",
                 "operationId": "b28a3f5b6c4c8eff031a9893137aca3b",
                 "parameters": [
                     {
                         "name": "id",
                         "in": "path",
+                        "description": "Registration ID",
                         "required": true,
                         "schema": {
                             "type": "integer"
@@ -1494,6 +1596,9 @@
                     },
                     "401": {
                         "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
                     },
                     "404": {
                         "description": "Registration not found"
@@ -2302,11 +2407,35 @@
                 "tags": [
                     "Sessions"
                 ],
-                "summary": "Get all sessions",
+                "summary": "Get conference programme sessions",
                 "operationId": "0b6dffa611c72785075b849a1b9b0f22",
+                "parameters": [
+                    {
+                        "name": "conference_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 15,
+                            "maximum": 100,
+                            "minimum": 1
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Sessions retrieved successfully"
+                    },
+                    "422": {
+                        "description": "Invalid query parameter"
                     }
                 }
             },
@@ -2314,7 +2443,8 @@
                 "tags": [
                     "Sessions"
                 ],
-                "summary": "Create a session",
+                "summary": "Create a programme session",
+                "description": "Only an admin or the organiser who owns the conference may create a session.",
                 "operationId": "5bfcd97ce67e48118993961df6040dfc",
                 "requestBody": {
                     "required": true,
@@ -2322,32 +2452,37 @@
                         "application/json": {
                             "schema": {
                                 "required": [
-                                    "title",
-                                    "start_time",
-                                    "end_time"
+                                    "conference_id",
+                                    "scheduled_time"
                                 ],
                                 "properties": {
+                                    "conference_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "submission_id": {
+                                        "type": "integer",
+                                        "example": 1,
+                                        "nullable": true
+                                    },
                                     "title": {
                                         "type": "string",
-                                        "example": "Opening Keynote"
+                                        "example": "Opening Keynote",
+                                        "nullable": true
                                     },
-                                    "description": {
+                                    "track": {
                                         "type": "string",
-                                        "example": "Opening presentation for the conference."
+                                        "example": "General",
+                                        "nullable": true
                                     },
-                                    "start_time": {
+                                    "room": {
                                         "type": "string",
-                                        "format": "date-time",
-                                        "example": "2026-09-01T09:00:00"
+                                        "example": "Main Hall",
+                                        "nullable": true
                                     },
-                                    "end_time": {
+                                    "scheduled_time": {
                                         "type": "string",
-                                        "format": "date-time",
-                                        "example": "2026-09-01T10:00:00"
-                                    },
-                                    "location": {
-                                        "type": "string",
-                                        "example": "Main Auditorium"
+                                        "format": "date-time"
                                     }
                                 },
                                 "type": "object"
@@ -2359,24 +2494,34 @@
                     "201": {
                         "description": "Session created successfully"
                     },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
                     "422": {
                         "description": "Validation error"
                     }
-                }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
             }
         },
-        "/api/v1/sessions/{id}": {
+        "/api/v1/sessions/{session}": {
             "get": {
                 "tags": [
                     "Sessions"
                 ],
-                "summary": "Get a session by ID",
-                "operationId": "54de6074f81c9d7891219d23e723e40d",
+                "summary": "Get a programme session",
+                "operationId": "f056ca3592027d5eb71cafee70b25ccf",
                 "parameters": [
                     {
-                        "name": "id",
+                        "name": "session",
                         "in": "path",
-                        "description": "Session ID",
                         "required": true,
                         "schema": {
                             "type": "integer"
@@ -2396,13 +2541,13 @@
                 "tags": [
                     "Sessions"
                 ],
-                "summary": "Update a session",
-                "operationId": "70c46d865c83fb8552c4fe9f5188e713",
+                "summary": "Update a programme session",
+                "description": "Only an admin or the organiser who owns the conference may update a session.",
+                "operationId": "2106c0978943f1ebaaf4225b638d173d",
                 "parameters": [
                     {
-                        "name": "id",
+                        "name": "session",
                         "in": "path",
-                        "description": "Session ID",
                         "required": true,
                         "schema": {
                             "type": "integer"
@@ -2413,25 +2558,36 @@
                     "200": {
                         "description": "Session updated successfully"
                     },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
                     "404": {
                         "description": "Session not found"
                     },
                     "422": {
                         "description": "Validation error"
                     }
-                }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
             },
             "delete": {
                 "tags": [
                     "Sessions"
                 ],
-                "summary": "Delete a session",
-                "operationId": "c87c0619578cba18b2de2d625b9a4cfd",
+                "summary": "Delete a programme session",
+                "description": "Only an admin or the organiser who owns the conference may delete a session.",
+                "operationId": "1f3f26a51373d2a6cbb45ed73c1aee89",
                 "parameters": [
                     {
-                        "name": "id",
+                        "name": "session",
                         "in": "path",
-                        "description": "Session ID",
                         "required": true,
                         "schema": {
                             "type": "integer"
@@ -2439,13 +2595,24 @@
                     }
                 ],
                 "responses": {
-                    "200": {
+                    "204": {
                         "description": "Session deleted successfully"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
                     },
                     "404": {
                         "description": "Session not found"
                     }
-                }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
             }
         },
         "/api/v1/submissions": {
