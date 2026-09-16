@@ -1,31 +1,27 @@
 import { Navigate, useLocation } from "react-router-dom";
-import {
-  getStoredUser,
-  isAuthenticated,
-} from "../services/authService";
+import { useAuth } from "../context/AuthContext";
 
-export default function ProtectedRoute({
-  children,
-  allowedRoles = [],
-}) {
+export default function ProtectedRoute({ children, roles }) {
+  const { status, role } = useAuth();
   const location = useLocation();
-  const user = getStoredUser();
 
-  if (!isAuthenticated() || !user) {
+  if (status === "initializing") {
     return (
-      <Navigate
-        to="/login"
-        replace
-        state={{ from: location.pathname }}
-      />
+      <div className="grid min-h-screen place-items-center bg-[#f7f9fc] px-5 text-[#66728b]">
+        <div className="rounded-2xl border border-[#e4e8f0] bg-white px-6 py-5 text-sm font-semibold shadow-sm">
+          Loading your workspace…
+        </div>
+      </div>
     );
   }
 
-  if (
-    allowedRoles.length > 0 &&
-    !allowedRoles.includes(user.role)
-  ) {
-    return <Navigate to="/" replace />;
+  if (status !== "authenticated") {
+    return <Navigate to="/login" replace state={{ from: location.pathname }} />;
+  }
+
+  if (roles?.length && !roles.includes(role)) {
+    const fallback = role === "organiser" ? "/organiser-dashboard" : role === "author" ? "/author-dashboard" : "/";
+    return <Navigate to={fallback} replace />;
   }
 
   return children;
