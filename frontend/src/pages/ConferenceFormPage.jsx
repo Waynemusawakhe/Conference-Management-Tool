@@ -64,7 +64,7 @@ export default function ConferenceFormPage() {
       } else {
         await conferencesApi.create(formData);
       }
-      navigate("/AdminDashboard");
+      navigate("/admin-dashboard");
     } catch (err) {
       if (err.status === 422 && err.errors) {
         setFieldErrors(err.errors);
@@ -96,7 +96,7 @@ export default function ConferenceFormPage() {
   return (
     <div className="rounded-[20px] border border-[#e4e8f0] bg-white p-6 shadow-[0_10px_30px_rgba(15,28,65,.035)]">
       <button
-        onClick={() => navigate("/AdminDashboard")}
+        onClick={() => navigate("/admin-dashboard")}
         className="mb-6 flex items-center gap-2 text-[11px] font-bold text-[#6655f6] hover:underline"
       >
         <ArrowLeft size={14} /> Back to Dashboard
@@ -227,7 +227,7 @@ export default function ConferenceFormPage() {
           </button>
           <button
             type="button"
-            onClick={() => navigate("/AdminDashboard")}
+            onClick={() => navigate("/admin-dashboard")}
             className="rounded-xl border border-[#e2e6ee] bg-white px-5 py-3 text-[12px] font-bold text-[#59657d] hover:bg-[#f0f2f6]"
           >
             Cancel
@@ -237,4 +237,5 @@ export default function ConferenceFormPage() {
     </div>
   );
 }
+
 

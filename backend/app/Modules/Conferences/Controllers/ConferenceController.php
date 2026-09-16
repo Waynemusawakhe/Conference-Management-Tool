@@ -26,64 +26,28 @@ class ConferenceController
             ),
         ]
     )]
-    public function index(Request $request,GetRegistrationsAction $action): JsonResponse {
-    $validated = $request->validate([
-        'conference_id' => [
-            'nullable',
-            'integer',
-            'exists:conferences,id',
-        ],
-        'user_id' => [
-            'nullable',
-            'integer',
-            'exists:users,id',
-        ],
-        'status' => [
-            'nullable',
-            'in:registered,cancelled',
-        ],
-        'registered_from' => [
-            'nullable',
-            'date',
-        ],
-        'registered_to' => [
-            'nullable',
-            'date',
-            'after_or_equal:registered_from',
-        ],
-        'per_page' => [
-            'nullable',
-            'integer',
-            'min:1',
-            'max:100',
-        ],
-    ]);
+    public function index(Request $request): JsonResponse
+{
+    $perPage = (int) $request->input('per_page', 15);
 
-    $filters = $request->only([
-        'conference_id',
-        'user_id',
-        'status',
-        'registered_from',
-        'registered_to',
-    ]);
+    $perPage = max(1, min($perPage, 100));
 
-    $registrations = $action->execute(
-        $request->user(),
-        $filters,
-        (int) ($validated['per_page'] ?? 15)
-    );
+    $conferences = Conference::query()
+        ->with('organiser:id,name,email')
+        ->orderByDesc('created_at')
+        ->paginate($perPage);
 
     return response()->json([
         'success' => true,
-        'data' => $registrations->items(),
+        'data' => $conferences->items(),
         'meta' => [
-            'current_page' => $registrations->currentPage(),
-            'per_page' => $registrations->perPage(),
-            'total' => $registrations->total(),
-            'last_page' => $registrations->lastPage(),
+            'current_page' => $conferences->currentPage(),
+            'per_page' => $conferences->perPage(),
+            'total' => $conferences->total(),
+            'last_page' => $conferences->lastPage(),
         ],
     ]);
-    }
+}
 
     #[OA\Post(
         path: '/api/v1/conferences',
