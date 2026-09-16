@@ -5,6 +5,7 @@ namespace App\Modules\Reviews\Controllers;
 use App\Http\Controllers\Controller;
 use App\Modules\Reviews\Actions\CreateReviewAction;
 use App\Modules\Reviews\Actions\DeleteReviewAction;
+use App\Modules\Reviews\Actions\GetPendingReviewsAction;
 use App\Modules\Reviews\Actions\GetReviewAction;
 use App\Modules\Reviews\Actions\GetReviewsAction;
 use App\Modules\Reviews\Actions\LockReviewAction;
@@ -15,7 +16,6 @@ use App\Modules\Reviews\Requests\SubmitReviewRequest;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route;
 use OpenApi\Attributes as OA;
 
 class ReviewController extends Controller
@@ -59,18 +59,34 @@ class ReviewController extends Controller
         ]);
     }
 
-    public function pending(Request $request, GetReviewsAction $action): JsonResponse
+    #[OA\Get(
+        path: '/api/v1/reviews/pending',
+        summary: "Get the authenticated reviewer's pending review assignments",
+        description: 'Returns review assignments belonging to the current user that have not been submitted yet.',
+        tags: ['Reviews'],
+        parameters: [
+            new OA\Parameter(name: 'per_page', in: 'query', schema: new OA\Schema(type: 'integer', default: 15)),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'List of pending reviews'),
+            new OA\Response(response: 401, description: 'Unauthenticated'),
+        ]
+    )]
+    public function pending(Request $request, GetPendingReviewsAction $action): JsonResponse
     {
-        $this->authorize('viewAny', SubmissionReview::class);
-
-        $filters = array_merge($request->only(['submission_id', 'reviewer_id']), ['status' => 'pending']);
-        $perPage = $request->input('per_page', 15);
-
-        $reviews = $action->execute($filters, $perPage);
+        // Scoped to the caller by definition — no policy check needed beyond
+        // auth:sanctum, since a reviewer can only ever see their own queue.
+        $reviews = $action->execute($request->user(), (int) $request->input('per_page', 15));
 
         return response()->json([
             'success' => true,
             'data' => $reviews->items(),
+            'meta' => [
+                'current_page' => $reviews->currentPage(),
+                'per_page' => $reviews->perPage(),
+                'total' => $reviews->total(),
+                'last_page' => $reviews->lastPage(),
+            ],
         ]);
     }
 
@@ -266,15 +282,3 @@ class ReviewController extends Controller
         }
     }
 }
-
-Route::prefix('v1/reviews')
-    ->middleware('auth:sanctum')
-    ->group(function () {
-        Route::get('/pending', [ReviewController::class, 'pending']); 
-        Route::get('/', [ReviewController::class, 'index']);
-        Route::get('/{id}', [ReviewController::class, 'show']);
-        Route::post('/', [ReviewController::class, 'store']);
-        Route::post('/{id}/submit', [ReviewController::class, 'submit']);
-        Route::post('/{id}/lock', [ReviewController::class, 'lock']);
-        Route::delete('/{id}', [ReviewController::class, 'destroy']);
-    });
