@@ -3,7 +3,7 @@
 namespace App\Modules\Account\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Module\Account\Requests\ResetPasswordRequest;
+use App\Modules\Account\Requests\ResetPasswordRequest;
 use App\Modules\Account\Actions\CreateUserAction;
 use App\Modules\Account\Actions\ForgotPasswordAction;
 use App\Modules\Account\Actions\LoginAction;
@@ -12,6 +12,10 @@ use App\Modules\Account\Actions\ResetPasswordAction;
 use App\Modules\Account\Requests\CreateUserRequest;
 use App\Modules\Account\Requests\ForgotPasswordRequest;
 use App\Modules\Account\Requests\LoginRequest;
+use App\Modules\Account\Actions\ChangePasswordAction;
+use App\Modules\Account\Actions\UpdateProfileAction;
+use App\Modules\Account\Requests\ChangePasswordRequest;
+use App\Modules\Account\Requests\UpdateProfileRequest;
 // use Illuminate\Support\Facades\Password;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -209,6 +213,36 @@ class AuthController extends Controller
         return response()->json([
             'success' => true,
             'message' => $result['message'] ?? 'Password reset successfully.',
+        ]);
+    }
+    public function updateProfile(
+    UpdateProfileRequest $request,
+    UpdateProfileAction $action
+): JsonResponse {
+    $user = $action->execute(
+        $request->user(),
+        $request->validated()
+    );
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Profile updated successfully.',
+        'data' => $user,
+    ]);
+}
+
+    public function changePassword(
+        ChangePasswordRequest $request,
+        ChangePasswordAction $action
+    ): JsonResponse {
+        $action->execute(
+            $request->user(),
+            $request->validated()
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Password changed successfully.',
         ]);
     }
 }
