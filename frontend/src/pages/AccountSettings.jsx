@@ -75,8 +75,16 @@ export default function AccountSettings() {
   const roleLabel = getRoleLabel(role);
 
   const dashboardPath =
-    role === "organiser" ? "/organiser-dashboard" : "/author-dashboard";
-
+  role === "author"
+    ? "/author-dashboard"
+    : role === "reviewer"
+      ? "/reviewer-dashboard"
+      : role === "organiser"
+        ? "/organiser-dashboard"
+        : role === "admin"
+          ? "/admin-dashboard"
+          : "/";
+          
   useEffect(() => {
     setProfileName(user?.name || "");
   }, [user?.name]);

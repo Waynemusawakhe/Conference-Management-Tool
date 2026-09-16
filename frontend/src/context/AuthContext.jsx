@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { authApi } from "../api/authApi";
 import { tokenStore } from "../api/client";
 import { AuthContext } from "./authContextInstance";
@@ -140,5 +140,11 @@ export function AuthProvider({ children }) {
     <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
+    
+    
   );
+  
+}
+export function useAuth() {
+  return useContext(AuthContext);
 }

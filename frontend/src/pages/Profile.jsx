@@ -73,14 +73,16 @@ export default function Profile() {
   const roleLabel = getRoleLabel(role);
 
   const dashboardPath =
-    role === "organiser"
-      ? "/organiser-dashboard"
-      : role === "reviewer"
-        ? "/ReviewerDashboard"
-        : role === "admin"
-          ? "/AdminDashboard"
+  role === "organiser"
+    ? "/organiser-dashboard"
+    : role === "reviewer"
+      ? "/reviewer-dashboard"
+      : role === "admin"
+        ? "/admin-dashboard"
+        : role === "attendee"
+          ? "/my-conferences"
           : "/author-dashboard";
-
+        
   const startEditing = () => {
     setName(user?.name || "");
     setError("");

@@ -36,13 +36,32 @@ function Login() {
       const role = user?.role;
       console.log("Extracted user:", user, "Extracted role:", role);
 
-      if (role?.toLowerCase() === "reviewer") {
-        navigate("/ReviewerDashboard", { replace: true });
-      } else if (role?.toLowerCase() === "admin") {
-        navigate("/AdminDashboard", { replace: true });
-      } else {
-        navigate("/author-dashboard", { replace: true });
-      }
+      const normalizedRole = role?.toLowerCase();
+
+switch (normalizedRole) {
+  case "author":
+    navigate("/author-dashboard", { replace: true });
+    break;
+
+  case "reviewer":
+    navigate("/reviewer-dashboard", { replace: true });
+    break;
+
+  case "organiser":
+    navigate("/organiser-dashboard", { replace: true });
+    break;
+
+  case "admin":
+    navigate("/admin-dashboard", { replace: true });
+    break;
+
+  case "attendee":
+    navigate("/my-conferences", { replace: true });
+    break;
+
+  default:
+    throw new Error(`Unsupported user role: ${role || "unknown"}`);
+}
     } catch (err) {
       console.error("Login caught error:", err);
       if (err.status === 422 && err.errors) {
@@ -163,3 +182,4 @@ function Login() {
 }
 
 export default Login;
+
