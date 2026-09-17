@@ -3,42 +3,99 @@
 namespace App\Modules\Sessions\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Modules\Sessions\Models\Session;
+use App\Modules\Conferences\Models\Conference;
+use App\Modules\Sessions\Actions\CreateSessionAction;
+use App\Modules\Sessions\Actions\DeleteSessionAction;
+use App\Modules\Sessions\Actions\GetSessionsAction;
+use App\Modules\Sessions\Actions\UpdateSessionAction;
+use App\Modules\Sessions\Requests\StoreSessionRequest;
+use App\Modules\Sessions\Requests\UpdateSessionRequest;
+use App\Modules\Submissions\Models\ConferenceSession;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use OpenApi\Attributes as OA;
 
 class SessionController extends Controller
 {
     #[OA\Get(
         path: '/api/v1/sessions',
-        summary: 'Get all sessions',
+        summary: 'Get conference programme sessions',
         tags: ['Sessions'],
+        parameters: [
+            new OA\Parameter(
+                name: 'conference_id',
+                in: 'query',
+                required: false,
+                schema: new OA\Schema(type: 'integer')
+            ),
+            new OA\Parameter(
+                name: 'per_page',
+                in: 'query',
+                required: false,
+                schema: new OA\Schema(
+                    type: 'integer',
+                    minimum: 1,
+                    maximum: 100,
+                    default: 15
+                )
+            ),
+        ],
         responses: [
             new OA\Response(
                 response: 200,
                 description: 'Sessions retrieved successfully'
             ),
+            new OA\Response(
+                response: 422,
+                description: 'Invalid query parameter'
+            ),
         ]
     )]
-    public function index(): JsonResponse
-    {
-        $sessions = Session::all();
+    public function index(
+        Request $request,
+        GetSessionsAction $action
+    ): JsonResponse {
+        $validated = $request->validate([
+            'conference_id' => [
+                'nullable',
+                'integer',
+                'exists:conferences,id',
+            ],
+            'per_page' => [
+                'nullable',
+                'integer',
+                'min:1',
+                'max:100',
+            ],
+        ]);
+
+        $sessions = $action->execute(
+            isset($validated['conference_id'])
+                ? (int) $validated['conference_id']
+                : null,
+            (int) ($validated['per_page'] ?? 15)
+        );
 
         return response()->json([
             'success' => true,
-            'data' => $sessions,
+            'data' => $sessions->items(),
+            'meta' => [
+                'current_page' => $sessions->currentPage(),
+                'per_page' => $sessions->perPage(),
+                'total' => $sessions->total(),
+                'last_page' => $sessions->lastPage(),
+            ],
         ]);
     }
 
     #[OA\Get(
-        path: '/api/v1/sessions/{id}',
-        summary: 'Get a session by ID',
+        path: '/api/v1/sessions/{session}',
+        summary: 'Get a programme session',
         tags: ['Sessions'],
         parameters: [
             new OA\Parameter(
-                name: 'id',
-                description: 'Session ID',
+                name: 'session',
                 in: 'path',
                 required: true,
                 schema: new OA\Schema(type: 'integer')
@@ -55,58 +112,65 @@ class SessionController extends Controller
             ),
         ]
     )]
-    public function show(int $id): JsonResponse
-    {
-        $session = Session::find($id);
-
-        if (! $session) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Session not found.',
-            ], 404);
-        }
-
+    public function show(
+        ConferenceSession $session
+    ): JsonResponse {
         return response()->json([
             'success' => true,
-            'data' => $session,
+            'data' => $session->load([
+                'conference',
+                'submission',
+            ]),
         ]);
     }
 
     #[OA\Post(
         path: '/api/v1/sessions',
-        summary: 'Create a session',
+        summary: 'Create a programme session',
+        description: 'Only an admin or the organiser who owns the conference may create a session.',
         tags: ['Sessions'],
+        security: [['sanctum' => []]],
         requestBody: new OA\RequestBody(
             required: true,
             content: new OA\JsonContent(
-                required: ['title', 'start_time', 'end_time'],
+                required: [
+                    'conference_id',
+                    'scheduled_time',
+                ],
                 properties: [
+                    new OA\Property(
+                        property: 'conference_id',
+                        type: 'integer',
+                        example: 1
+                    ),
+                    new OA\Property(
+                        property: 'submission_id',
+                        type: 'integer',
+                        nullable: true,
+                        example: 1
+                    ),
                     new OA\Property(
                         property: 'title',
                         type: 'string',
+                        nullable: true,
                         example: 'Opening Keynote'
                     ),
                     new OA\Property(
-                        property: 'description',
+                        property: 'track',
                         type: 'string',
-                        example: 'Opening presentation for the conference.'
+                        nullable: true,
+                        example: 'General'
                     ),
                     new OA\Property(
-                        property: 'start_time',
+                        property: 'room',
                         type: 'string',
-                        format: 'date-time',
-                        example: '2026-09-01T09:00:00'
+                        nullable: true,
+                        example: 'Main Hall'
                     ),
                     new OA\Property(
-                        property: 'end_time',
+                        property: 'scheduled_time',
                         type: 'string',
-                        format: 'date-time',
-                        example: '2026-09-01T10:00:00'
-                    ),
-                    new OA\Property(
-                        property: 'location',
-                        type: 'string',
-                        example: 'Main Auditorium'
+                        format: 'date-time'
                     ),
                 ]
             )
@@ -117,22 +181,35 @@ class SessionController extends Controller
                 description: 'Session created successfully'
             ),
             new OA\Response(
+                response: 401,
+                description: 'Unauthenticated'
+            ),
+            new OA\Response(
+                response: 403,
+                description: 'Forbidden'
+            ),
+            new OA\Response(
                 response: 422,
                 description: 'Validation error'
             ),
         ]
     )]
-    public function store(Request $request): JsonResponse
-    {
-        $data = $request->validate([
-            'title' => ['required', 'string', 'max:255'],
-            'description' => ['nullable', 'string'],
-            'start_time' => ['required', 'date'],
-            'end_time' => ['required', 'date', 'after:start_time'],
-            'location' => ['nullable', 'string', 'max:255'],
-        ]);
+    public function store(
+        StoreSessionRequest $request,
+        CreateSessionAction $action
+    ): JsonResponse {
+        $conference = Conference::findOrFail(
+            $request->integer('conference_id')
+        );
 
-        $session = Session::create($data);
+        Gate::authorize(
+            'create',
+            [ConferenceSession::class, $conference]
+        );
+
+        $session = $action->execute(
+            $request->validated()
+        );
 
         return response()->json([
             'success' => true,
@@ -142,13 +219,14 @@ class SessionController extends Controller
     }
 
     #[OA\Put(
-        path: '/api/v1/sessions/{id}',
-        summary: 'Update a session',
+        path: '/api/v1/sessions/{session}',
+        summary: 'Update a programme session',
+        description: 'Only an admin or the organiser who owns the conference may update a session.',
         tags: ['Sessions'],
+        security: [['sanctum' => []]],
         parameters: [
             new OA\Parameter(
-                name: 'id',
-                description: 'Session ID',
+                name: 'session',
                 in: 'path',
                 required: true,
                 schema: new OA\Schema(type: 'integer')
@@ -160,6 +238,14 @@ class SessionController extends Controller
                 description: 'Session updated successfully'
             ),
             new OA\Response(
+                response: 401,
+                description: 'Unauthenticated'
+            ),
+            new OA\Response(
+                response: 403,
+                description: 'Forbidden'
+            ),
+            new OA\Response(
                 response: 404,
                 description: 'Session not found'
             ),
@@ -169,42 +255,34 @@ class SessionController extends Controller
             ),
         ]
     )]
-    public function update(Request $request, int $id): JsonResponse
-    {
-        $session = Session::find($id);
+    public function update(
+        UpdateSessionRequest $request,
+        ConferenceSession $session,
+        UpdateSessionAction $action
+    ): JsonResponse {
+        Gate::authorize('update', $session);
 
-        if (! $session) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Session not found.',
-            ], 404);
-        }
-
-        $data = $request->validate([
-            'title' => ['sometimes', 'string', 'max:255'],
-            'description' => ['sometimes', 'nullable', 'string'],
-            'start_time' => ['sometimes', 'date'],
-            'end_time' => ['sometimes', 'date', 'after:start_time'],
-            'location' => ['sometimes', 'nullable', 'string', 'max:255'],
-        ]);
-
-        $session->update($data);
+        $updated = $action->execute(
+            $session,
+            $request->validated()
+        );
 
         return response()->json([
             'success' => true,
             'message' => 'Session updated successfully.',
-            'data' => $session->fresh(),
+            'data' => $updated,
         ]);
     }
 
     #[OA\Delete(
-        path: '/api/v1/sessions/{id}',
-        summary: 'Delete a session',
+        path: '/api/v1/sessions/{session}',
+        summary: 'Delete a programme session',
+        description: 'Only an admin or the organiser who owns the conference may delete a session.',
         tags: ['Sessions'],
+        security: [['sanctum' => []]],
         parameters: [
             new OA\Parameter(
-                name: 'id',
-                description: 'Session ID',
+                name: 'session',
                 in: 'path',
                 required: true,
                 schema: new OA\Schema(type: 'integer')
@@ -212,8 +290,16 @@ class SessionController extends Controller
         ],
         responses: [
             new OA\Response(
-                response: 200,
+                response: 204,
                 description: 'Session deleted successfully'
+            ),
+            new OA\Response(
+                response: 401,
+                description: 'Unauthenticated'
+            ),
+            new OA\Response(
+                response: 403,
+                description: 'Forbidden'
             ),
             new OA\Response(
                 response: 404,
@@ -221,22 +307,14 @@ class SessionController extends Controller
             ),
         ]
     )]
-    public function destroy(int $id): JsonResponse
-    {
-        $session = Session::find($id);
+    public function destroy(
+        ConferenceSession $session,
+        DeleteSessionAction $action
+    ): JsonResponse {
+        Gate::authorize('delete', $session);
 
-        if (! $session) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Session not found.',
-            ], 404);
-        }
+        $action->execute($session);
 
-        $session->delete();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Session deleted successfully.',
-        ]);
+        return response()->json(null, 204);
     }
 }

@@ -111,7 +111,7 @@ export default function UsersPage() {
     <div className="mx-auto w-[min(1100px,calc(100%-32px))] py-6">
       <div className="rounded-[20px] border border-[#e4e8f0] bg-white p-6 shadow-[0_10px_30px_rgba(15,28,65,.035)]">
         <button
-          onClick={() => navigate("/AdminDashboard")}
+          onClick={() => navigate("/admin-dashboard")}
           className="mb-6 flex items-center gap-2 text-[11px] font-bold text-[#6655f6] hover:underline"
         >
           <ArrowLeft size={14} /> Back to Dashboard

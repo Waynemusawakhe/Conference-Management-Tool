@@ -1,4 +1,6 @@
+import { lazy, Suspense } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
+
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Conferences from "./pages/Conferences";
@@ -6,43 +8,187 @@ import Register from "./pages/Register";
 import Contact from "./pages/Contact";
 import HelpFAQ from "./pages/HelpFAQ";
 import About from "./pages/About";
-import { ThemeProvider } from "./context/ThemeContext";
 import ForgotPassword from "./pages/ForgotPassword";
 import Testimonials from "./pages/Testimonials";
-import AuthorDashboard from "./pages/AuthorDashboard";
-import ReviewerDashboard from "./pages/ReviewerDashboard"; // <-- Import it here
-import AccountSettings from "./pages/AccountSettings";
+
+import ReviewerDashboard from "./pages/ReviewerDashboard";
+import OrganiserDashboard from "./pages/OrganiserDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
-import ConferenceFormPage from "./pages/ConferenceFormPage";
+
+import AccountSettings from "./pages/AccountSettings";
+import Profile from "./pages/Profile";
+import Settings from "./pages/Settings";
+import SubmitProposal from "./pages/SubmitProposal";
+
+import CreateEditConference from "./pages/create_edit_conference";
 import EditSubmissionPage from "./pages/EditSubmissionPage";
 import AssignReviewersPage from "./pages/AssignReviewersPage";
 import UsersPage from "./pages/UsersPage";
 
+import { ThemeProvider } from "./context/ThemeContext";
+import ProtectedRoute from "./components/ProtectedRoute";
+
+const AuthorDashboard = lazy(() => import("./pages/AuthorDashboard"));
+
 export default function App() {
   return (
     <ThemeProvider>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/conferences" element={<Conferences />} />
-        <Route path="/contact" element={<Contact />} />
-        <Route path="/help-faq" element={<HelpFAQ />} />
-        <Route path="/about" element={<About />} />
-        <Route path="/testimonials" element={<Testimonials />} />
-        <Route path="/author-dashboard" element={<AuthorDashboard />} />
-        <Route path="/ReviewerDashboard" element={<ReviewerDashboard />} /> {/* <-- Add route here */}
-        <Route path="/account-settings" element={<AccountSettings />} />
-        <Route path="/AdminDashboard" element={<AdminDashboard />} />
-        <Route path="/create-conference" element={<ConferenceFormPage />} />
-        <Route path="/edit-conference/:id" element={<ConferenceFormPage />} />
-        <Route path="/edit-submission/:id" element={<EditSubmissionPage />} />
-        <Route path="/assign-reviewers/:id" element={<AssignReviewersPage />} />
-        <Route path="/users" element={<UsersPage />} />
+      <Suspense
+        fallback={
+          <div className="grid min-h-screen place-items-center text-sm text-[#66728b]">
+            Loading workspace...
+          </div>
+        }
+      >
+        <Routes>
+          {/* ==================== PUBLIC ROUTES ==================== */}
 
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/conferences" element={<Conferences />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/help-faq" element={<HelpFAQ />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/testimonials" element={<Testimonials />} />
+
+          {/* ==================== AUTHOR ==================== */}
+
+          <Route
+            path="/author-dashboard"
+            element={
+              <ProtectedRoute roles={["author"]}>
+                <AuthorDashboard />
+              </ProtectedRoute>
+            }
+          />
+           <Route
+               path="/submit-proposal/:conferenceId"
+               element={
+                 <ProtectedRoute roles={["author"]}>
+               <SubmitProposal />
+              </ProtectedRoute>
+  }
+/>
+          <Route
+            path="/edit-submission/:id"
+            element={
+              <ProtectedRoute roles={["author", "organiser", "admin"]}>
+                <EditSubmissionPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* ==================== REVIEWER ==================== */}
+
+          <Route
+            path="/reviewer-dashboard"
+            element={
+              <ProtectedRoute roles={["reviewer"]}>
+                <ReviewerDashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* ==================== ORGANISER ==================== */}
+
+          <Route
+            path="/organiser-dashboard"
+            element={
+              <ProtectedRoute roles={["organiser"]}>
+                <OrganiserDashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/create-conference"
+            element={
+              <ProtectedRoute roles={["organiser", "admin"]}>
+                <CreateEditConference />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/edit-conference/:id"
+            element={
+              <ProtectedRoute roles={["organiser", "admin"]}>
+                <CreateEditConference />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/assign-reviewers/:id"
+            element={
+              <ProtectedRoute roles={["organiser", "admin"]}>
+                <AssignReviewersPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* ==================== ADMIN ==================== */}
+
+          <Route
+            path="/admin-dashboard"
+            element={
+              <ProtectedRoute roles={["admin"]}>
+                <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/users"
+            element={
+              <ProtectedRoute roles={["admin"]}>
+                <UsersPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* ==================== SHARED AUTH ROUTES ==================== */}
+
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute
+                roles={["author", "reviewer", "organiser", "attendee", "admin"]}
+              >
+                <Profile />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute
+                roles={["author", "reviewer", "organiser", "attendee", "admin"]}
+              >
+                <Settings />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/account-settings"
+            element={
+              <ProtectedRoute
+                roles={["author", "reviewer", "organiser", "attendee", "admin"]}
+              >
+                <AccountSettings />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* ==================== FALLBACK ==================== */}
+
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Suspense>
     </ThemeProvider>
   );
 }
