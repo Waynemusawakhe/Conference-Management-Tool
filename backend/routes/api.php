@@ -33,34 +33,38 @@ Route::prefix('v1/auth')->group(function () {
         int $id,
         string $hash
     ) {
+        $frontendUrl = rtrim(
+            config('app.frontend_url', 'http://localhost:5173'),
+            '/'
+        );
+
         $user = User::findOrFail($id);
 
         if (! hash_equals(
             (string) $hash,
             sha1($user->getEmailForVerification())
         )) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Invalid verification link.',
-            ], 403);
+            return redirect()->away(
+                $frontendUrl . '/email-verified?status=invalid'
+            );
         }
 
         if ($user->hasVerifiedEmail()) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Email already verified.',
-            ]);
+            return redirect()->away(
+                $frontendUrl . '/email-verified?status=success'
+            );
         }
 
         if ($user->markEmailAsVerified()) {
             event(new Verified($user));
         }
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Email verified successfully.',
-        ]);
-    })->middleware('signed')->name('verification.verify');
+        return redirect()->away(
+            $frontendUrl . '/email-verified?status=success'
+        );
+    })
+        ->middleware('signed')
+        ->name('verification.verify');
 
     Route::middleware('auth:sanctum')->group(function () {
         Route::get('/me', [AuthController::class, 'me']);

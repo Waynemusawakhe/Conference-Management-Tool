@@ -5,6 +5,8 @@ import Logo from "../components/Logo";
 import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../hooks/useAuth";
 import { authApi } from "../api/authApi";
+
+
 function getDashboardPath(role) {
   switch (role) {
     case "author":

@@ -24,6 +24,7 @@ import { conferencesApi } from "../api/conferencesApi";
 import { submissionsApi } from "../api/submissionsApi";
 import { usersApi } from "../api/usersApi";
 import { reportsApi } from "../api/reportsApi";
+import { useAuth } from "../context/AuthContext";
 
 /* ------------------------------------------------------------------ *
  * Display helpers
@@ -120,10 +121,19 @@ function NavItem({ icon, label, active, onClick }) {
   );
 }
 
+const handleLogout = async () => {
+  await logout();
+
+  navigate("/login", {
+    replace: true,
+  });
+};
+
 /* ------------------------------------------------------------------ */
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
+  const { logout, user } = useAuth();
   const { dark, toggleTheme } = useTheme();
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -281,7 +291,7 @@ export default function AdminDashboard() {
             <div className="ml-1 hidden items-center gap-2.5 border-l border-white/10 pl-3 sm:flex">
               <div className="grid h-9 w-9 place-items-center rounded-full bg-[#e8e6ff] text-[10px] font-extrabold text-[#4f46c7]">AD</div>
               <div className="leading-tight">
-                <strong className="block text-[11px] text-white">Admin User</strong>
+                <strong className="block text-[11px] text-white">{user?.name || "Admin"}.</strong>
                 <span className="block text-[9px] text-white/45">Administrator</span>
               </div>
             </div>
@@ -353,7 +363,7 @@ export default function AdminDashboard() {
           <div className="my-4 border-t border-[#edf0f5]" />
           <button
             className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] font-semibold text-[#9a6470] hover:bg-[#fff4f5]"
-            onClick={() => navigate("/login")}
+            onClick={handleLogout}
           >
             <LogOut size={16} /> Sign out
           </button>
@@ -383,7 +393,7 @@ export default function AdminDashboard() {
             <div className="relative flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-end">
               <div>
                 <span className="inline-flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-[.12em] text-[#b9b3ff]"><Sparkles size={14} /> Admin dashboard</span>
-                <h1 className="mb-2 mt-3 text-[clamp(28px,4vw,44px)] font-bold leading-tight tracking-[-.045em]">Welcome, Organiser.</h1>
+                <h1 className="mb-2 mt-3 text-[clamp(28px,4vw,44px)] font-bold leading-tight tracking-[-.045em]">Welcome, {user?.name || "Admin"}.</h1>
                 <p className="m-0 max-w-[600px] text-[12px] leading-6 text-white/65">Monitor all conferences, submissions, and users from a single central hub.</p>
               </div>
               <button className="mt-5 w-full shrink-0 inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-[#6655f6] to-[#7869ff] px-4 py-3 text-[12px] font-extrabold text-white shadow-[0_12px_28px_rgba(103,87,245,.28)] transition hover:-translate-y-px sm:w-auto" onClick={handleCreateConference}>

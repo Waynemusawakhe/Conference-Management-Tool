@@ -205,7 +205,14 @@ export default function AttendeeDashboard() {
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      if (location.pathname === "/my-conferences") {
+      if (location.pathname === "/attendee/registrations") {
+        document.getElementById("my-registrations")?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      }
+
+      if (location.pathname === "/attendee-dashboard") {
         window.scrollTo({
           top: 0,
           behavior: "smooth",
@@ -447,40 +454,32 @@ export default function AttendeeDashboard() {
             </span>
 
             <strong className="block text-[13px]">
-              My Conferences
+              Your conference hub
             </strong>
 
             <p className="mt-1 text-[10px] leading-5 text-white/60">
-              See what you are attending and manage your conference registrations.
+              Track your registrations and discover upcoming conferences.
             </p>
           </div>
 
           <nav className="space-y-1" aria-label="Attendee dashboard navigation">
             <NavItem
               icon={<LayoutDashboard size={16} />}
-              label="My Conferences"
-              active={location.pathname === "/my-conferences"}
+              label="Overview"
+              active={location.pathname === "/attendee-dashboard"}
               onClick={() => {
                 setSidebarOpen(false);
-                navigate("/my-conferences");
+                navigate("/attendee-dashboard");
               }}
             />
 
             <NavItem
               icon={<TicketCheck size={16} />}
-              label="Attending"
-              active={location.pathname === "/my-conferences"}
+              label="My registrations"
+              active={location.pathname === "/attendee/registrations"}
               onClick={() => {
                 setSidebarOpen(false);
-                navigate("/my-conferences");
-                window.setTimeout(() => {
-                  document
-                    .getElementById("my-registrations")
-                    ?.scrollIntoView({
-                      behavior: "smooth",
-                      block: "start",
-                    });
-                }, 100);
+                navigate("/attendee/registrations");
               }}
             />
 
@@ -532,7 +531,7 @@ export default function AttendeeDashboard() {
               <div>
                 <span className="inline-flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-[.12em] text-[#b9b3ff]">
                   <Sparkles size={14} />
-                  My Conferences
+                  Attendee dashboard
                 </span>
 
                 <h1 className="mb-2 mt-3 text-[clamp(28px,4vw,44px)] font-bold leading-tight tracking-[-.045em]">
@@ -540,8 +539,8 @@ export default function AttendeeDashboard() {
                 </h1>
 
                 <p className="m-0 max-w-[620px] text-[12px] leading-6 text-white/65">
-                  View the conferences you are attending, manage your registrations,
-                  and discover your next event from one workspace.
+                  Keep track of the conferences you are attending and discover
+                  your next event from one workspace.
                 </p>
               </div>
 
@@ -740,7 +739,7 @@ export default function AttendeeDashboard() {
                 </span>
 
                 <h2 className="mb-0 mt-1 text-[20px] font-bold tracking-[-.03em]">
-                  Attending
+                  My registrations
                 </h2>
               </div>
 
@@ -995,7 +994,7 @@ export default function AttendeeDashboard() {
 
           <footer className="flex flex-wrap items-center justify-between gap-3 px-1 py-8 text-[9px] text-[#8c96a9]">
             <span>
-              CMT Attendee Workspace · API connected
+              CMT Attendee Workspace
             </span>
 
             <span>

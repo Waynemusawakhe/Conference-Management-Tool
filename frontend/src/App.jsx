@@ -9,6 +9,7 @@ import Contact from "./pages/Contact";
 import HelpFAQ from "./pages/HelpFAQ";
 import About from "./pages/About";
 import ForgotPassword from "./pages/ForgotPassword";
+import EmailVerified from "./pages/EmailVerified";
 import Testimonials from "./pages/Testimonials";
 
 import ReviewerDashboard from "./pages/ReviewerDashboard";
@@ -29,6 +30,7 @@ import { ThemeProvider } from "./context/ThemeContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 const AuthorDashboard = lazy(() => import("./pages/AuthorDashboard"));
+const AttendeeDashboard = lazy(() => import("./pages/AttendeeDashboard"));
 
 export default function App() {
   return (
@@ -44,14 +46,51 @@ export default function App() {
           {/* ==================== PUBLIC ROUTES ==================== */}
 
           <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/conferences" element={<Conferences />} />
-          <Route path="/contact" element={<Contact />} />
-          <Route path="/help-faq" element={<HelpFAQ />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/testimonials" element={<Testimonials />} />
+
+          <Route
+            path="/login"
+            element={<Login />}
+          />
+
+          <Route
+            path="/register"
+            element={<Register />}
+          />
+
+          <Route
+            path="/forgot-password"
+            element={<ForgotPassword />}
+          />
+
+          <Route
+            path="/email-verified"
+            element={<EmailVerified />}
+          />
+
+          <Route
+            path="/conferences"
+            element={<Conferences />}
+          />
+
+          <Route
+            path="/contact"
+            element={<Contact />}
+          />
+
+          <Route
+            path="/help-faq"
+            element={<HelpFAQ />}
+          />
+
+          <Route
+            path="/about"
+            element={<About />}
+          />
+
+          <Route
+            path="/testimonials"
+            element={<Testimonials />}
+          />
 
           {/* ==================== AUTHOR ==================== */}
 
@@ -63,14 +102,34 @@ export default function App() {
               </ProtectedRoute>
             }
           />
-           <Route
-               path="/submit-proposal/:conferenceId"
-               element={
-                 <ProtectedRoute roles={["author"]}>
-               <SubmitProposal />
+
+          <Route
+            path="/author/proposals"
+            element={
+              <ProtectedRoute roles={["author"]}>
+                <AuthorDashboard />
               </ProtectedRoute>
-  }
-/>
+            }
+          />
+
+          <Route
+            path="/author/deadlines"
+            element={
+              <ProtectedRoute roles={["author"]}>
+                <AuthorDashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/submit-proposal/:conferenceId"
+            element={
+              <ProtectedRoute roles={["author"]}>
+                <SubmitProposal />
+              </ProtectedRoute>
+            }
+          />
+
           <Route
             path="/edit-submission/:id"
             element={
@@ -129,6 +188,27 @@ export default function App() {
             }
           />
 
+          {/* ==================== ATTENDEE ==================== */}
+
+          <Route
+            path="/my-conferences"
+            element={
+              <ProtectedRoute roles={["attendee"]}>
+                <AttendeeDashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/attendee-dashboard"
+            element={<Navigate to="/my-conferences" replace />}
+          />
+
+          <Route
+            path="/attendee/registrations"
+            element={<Navigate to="/my-conferences" replace />}
+          />
+
           {/* ==================== ADMIN ==================== */}
 
           <Route
@@ -151,11 +231,19 @@ export default function App() {
 
           {/* ==================== SHARED AUTH ROUTES ==================== */}
 
+          
+
           <Route
             path="/profile"
             element={
               <ProtectedRoute
-                roles={["author", "reviewer", "organiser", "attendee", "admin"]}
+                roles={[
+                  "author",
+                  "reviewer",
+                  "organiser",
+                  "attendee",
+                  "admin",
+                ]}
               >
                 <Profile />
               </ProtectedRoute>
@@ -166,7 +254,13 @@ export default function App() {
             path="/settings"
             element={
               <ProtectedRoute
-                roles={["author", "reviewer", "organiser", "attendee", "admin"]}
+                roles={[
+                  "author",
+                  "reviewer",
+                  "organiser",
+                  "attendee",
+                  "admin",
+                ]}
               >
                 <Settings />
               </ProtectedRoute>
@@ -177,7 +271,13 @@ export default function App() {
             path="/account-settings"
             element={
               <ProtectedRoute
-                roles={["author", "reviewer", "organiser", "attendee", "admin"]}
+                roles={[
+                  "author",
+                  "reviewer",
+                  "organiser",
+                  "attendee",
+                  "admin",
+                ]}
               >
                 <AccountSettings />
               </ProtectedRoute>
@@ -186,7 +286,10 @@ export default function App() {
 
           {/* ==================== FALLBACK ==================== */}
 
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route
+            path="*"
+            element={<Navigate to="/" replace />}
+          />
         </Routes>
       </Suspense>
     </ThemeProvider>

@@ -6,11 +6,17 @@ import {
   Search,
   SlidersHorizontal,
   Sparkles,
+  TicketCheck,
+  CheckCircle2,
+  LoaderCircle,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import ConferenceCard from "../components/ConferenceCard";
 import SectionHeading from "../components/SectionHeading";
 import { conferencesApi } from "../api/conferencesApi";
+import { registrationsApi } from "../api/registrationsApi";
+import { useAuth } from "../hooks/useAuth";
 
 const CATEGORIES = [
   "AI & Machine Learning",
@@ -221,6 +227,15 @@ function matchesFilters(conference, filters) {
   return true;
 }
 
+function getRegistrationConferenceId(registration) {
+  return (
+    registration?.conference_id ??
+    registration?.conferenceId ??
+    registration?.conference?.id ??
+    null
+  );
+}
+
 function sortConferences(conferences, sortBy) {
   const sorted = [...conferences];
 
@@ -260,6 +275,9 @@ function sortConferences(conferences, sortBy) {
 }
 
 export default function Conferences() {
+  const navigate = useNavigate();
+  const { user, status: authStatus } = useAuth();
+
   const [query, setQuery] = useState("");
 
   const [filters, setFilters] = useState({
@@ -276,6 +294,14 @@ export default function Conferences() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  const [registeredConferenceIds, setRegisteredConferenceIds] = useState(
+    new Set()
+  );
+  const [registeringConferenceId, setRegisteringConferenceId] =
+    useState(null);
+  const [registrationMessage, setRegistrationMessage] = useState("");
+  const [registrationError, setRegistrationError] = useState("");
 
   const [showMobileFilters, setShowMobileFilters] =
     useState(false);
@@ -310,6 +336,106 @@ export default function Conferences() {
   useEffect(() => {
     loadConferences();
   }, [loadConferences]);
+
+  const loadMyRegistrations = useCallback(async () => {
+    if (authStatus !== "authenticated" || !user?.id) {
+      setRegisteredConferenceIds(new Set());
+      return;
+    }
+
+    try {
+      const response = await registrationsApi.getAll({
+        per_page: 100,
+      });
+
+      const registrationList = unwrapList(response);
+
+      const ownRegistrations = registrationList.filter((registration) => {
+        if (
+          registration?.user_id === undefined ||
+          registration?.user_id === null
+        ) {
+          return true;
+        }
+
+        return String(registration.user_id) === String(user.id);
+      });
+
+      const ids = new Set(
+        ownRegistrations
+          .map(getRegistrationConferenceId)
+          .filter((id) => id !== null && id !== undefined)
+          .map(String)
+      );
+
+      setRegisteredConferenceIds(ids);
+    } catch (err) {
+      console.warn("Unable to load current registrations:", err);
+    }
+  }, [authStatus, user?.id]);
+
+  useEffect(() => {
+    loadMyRegistrations();
+  }, [loadMyRegistrations]);
+
+  const handleRegister = async (conference) => {
+    setRegistrationMessage("");
+    setRegistrationError("");
+
+    if (authStatus !== "authenticated") {
+      navigate("/login", {
+        state: {
+          from: "/conferences",
+        },
+      });
+      return;
+    }
+
+    const conferenceId = conference?.id;
+
+    if (!conferenceId) {
+      setRegistrationError(
+        "This conference does not have a valid identifier."
+      );
+      return;
+    }
+
+    if (registeredConferenceIds.has(String(conferenceId))) {
+      navigate("/my-conferences");
+      return;
+    }
+
+    setRegisteringConferenceId(conferenceId);
+
+    try {
+      await registrationsApi.create({
+        conference_id: conferenceId,
+      });
+
+      setRegisteredConferenceIds((current) => {
+        const next = new Set(current);
+        next.add(String(conferenceId));
+        return next;
+      });
+
+      setRegistrationMessage(
+        `You are now registered for ${conference.name || "this conference"}.`
+      );
+    } catch (err) {
+      const validationMessage = Object.values(err?.errors || {})
+        .flat()
+        .filter(Boolean)
+        .join(" ");
+
+      setRegistrationError(
+        validationMessage ||
+          err?.message ||
+          "Unable to register for this conference."
+      );
+    } finally {
+      setRegisteringConferenceId(null);
+    }
+  };
 
   const filteredConferences = useMemo(() => {
     const filtered = conferences.filter((conference) => {
@@ -593,6 +719,35 @@ export default function Conferences() {
               </div>
             )}
 
+            {registrationMessage && (
+              <div
+                role="status"
+                className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-[14px] border border-[#bfe5d1] bg-[#effaf4] px-4 py-3 text-xs font-semibold text-[#18794e]"
+              >
+                <span className="flex items-center gap-2">
+                  <CheckCircle2 size={16} />
+                  {registrationMessage}
+                </span>
+
+                <button
+                  type="button"
+                  onClick={() => navigate("/my-conferences")}
+                  className="rounded-lg bg-white px-3 py-2 text-[10px] font-extrabold text-[#18794e] shadow-sm"
+                >
+                  View My Conferences
+                </button>
+              </div>
+            )}
+
+            {registrationError && (
+              <div
+                role="alert"
+                className="mb-6 rounded-[14px] border border-red-200 bg-red-50 px-4 py-3 text-xs font-semibold text-red-700"
+              >
+                {registrationError}
+              </div>
+            )}
+
             <div className="grid grid-cols-[220px_1fr] gap-8 max-[900px]:grid-cols-1">
               <div className="hidden lg:block">
                 <FilterPanel />
@@ -661,15 +816,62 @@ export default function Conferences() {
                           : "grid gap-5"
                       }
                     >
-                      {displayConferences.map(
-                        (conference) => (
-                          <ConferenceCard
+                      {displayConferences.map((conference) => {
+                        const isRegistered =
+                          registeredConferenceIds.has(
+                            String(conference.id)
+                          );
+
+                        const isRegistering =
+                          registeringConferenceId === conference.id;
+
+                        return (
+                          <div
                             key={conference.id}
-                            conference={conference}
-                            layout={view}
-                          />
-                        )
-                      )}
+                            className="min-w-0"
+                          >
+                            <ConferenceCard
+                              conference={conference}
+                              layout={view}
+                            />
+
+                            <div className="mt-3 flex justify-end">
+                              <button
+                                type="button"
+                                disabled={isRegistering}
+                                onClick={() =>
+                                  handleRegister(conference)
+                                }
+                                className={`inline-flex min-h-10 items-center justify-center gap-2 rounded-[10px] px-4 text-[11px] font-extrabold transition disabled:cursor-not-allowed disabled:opacity-60 ${
+                                  isRegistered
+                                    ? "border border-[#bfe5d1] bg-[#effaf4] text-[#18794e] hover:bg-[#e6f7ee]"
+                                    : "border border-transparent bg-gradient-to-br from-[#6655f6] to-[#7869ff] text-white shadow-[0_8px_20px_rgba(103,87,245,.18)] hover:-translate-y-px"
+                                }`}
+                              >
+                                {isRegistering ? (
+                                  <>
+                                    <LoaderCircle
+                                      size={15}
+                                      className="animate-spin"
+                                    />
+                                    Registering...
+                                  </>
+                                ) : isRegistered ? (
+                                  <>
+                                    <CheckCircle2 size={15} />
+                                    View registration
+                                  </>
+                                ) : (
+                                  <>
+                                    <TicketCheck size={15} />
+                                    Register to Attend
+                                  </>
+                                )}
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
 
