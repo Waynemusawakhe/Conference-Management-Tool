@@ -34,6 +34,10 @@ import AdminFaqsPage from "./pages/AdminFaqsPage";
 import AdminFaqEditPage from "./pages/AdminFaqEditPage";
 import AdminEditConferencePage from "./pages/AdminEditConferencePage";
 import AdminConferencesPage from "./pages/AdminConferencesPage";
+import AdminReviewsPage from "./pages/AdminReviewsPage";
+import AdminTestimonialsPage from "./pages/AdminTestimonialsPage";
+import AdminRegistrationsPage from "./pages/AdminRegistrationsPage";
+import AdminSubmissionsPage from "./pages/AdminSubmissionsPage";
 
 import { ThemeProvider } from "./context/ThemeContext";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -139,7 +143,10 @@ export default function App() {
             path="/admin/conferences"
             element={<ProtectedRoute roles={ADMIN}><AdminConferencesPage /></ProtectedRoute>}
           />
-
+          <Route
+          path="/admin/submissions"
+          element={<ProtectedRoute roles={ADMIN}><AdminSubmissionsPage /></ProtectedRoute>}
+          />
           {/* Users directory + detail */}
           <Route
             path="/users"
@@ -178,6 +185,25 @@ export default function App() {
           <Route
             path="/admin/conferences/:id/edit"
             element={<ProtectedRoute roles={ADMIN}><AdminEditConferencePage /></ProtectedRoute>}
+
+          />
+
+          {/* Reviews */}
+          <Route
+            path="/admin/reviews"
+            element={<ProtectedRoute roles={ADMIN}><AdminReviewsPage /></ProtectedRoute>}
+          />
+
+          {/* Registrations */}
+          <Route
+            path="/admin/registrations"
+            element={<ProtectedRoute roles={ADMIN}><AdminRegistrationsPage /></ProtectedRoute>}
+          />
+
+          {/* Testimonials */}
+          <Route
+            path="/admin/testimonials"
+            element={<ProtectedRoute roles={ADMIN}><AdminTestimonialsPage /></ProtectedRoute>}
           />
 
           {/* ==================== SHARED AUTH ==================== */}

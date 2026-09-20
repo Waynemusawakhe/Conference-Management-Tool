@@ -1,4 +1,3 @@
-// src/components/AdminLayout.jsx
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
@@ -6,17 +5,21 @@ import {
   Bell,
   CalendarDays,
   CheckCheck,
+  FileCheck2,
   FileText,
   HelpCircle,
   LayoutDashboard,
   LogOut,
   Mail,
   Menu,
+  MessageSquareQuote,
   Moon,
   Sun,
+  Ticket,
   Users,
   X,
 } from "lucide-react";
+
 import Logo from "./Logo";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
@@ -28,12 +31,15 @@ import { submissionsApi } from "../api/submissionsApi";
 const NAV_ITEMS = [
   { to: "/admin-dashboard", label: "Overview", icon: LayoutDashboard, exact: true },
   { to: "/admin/conferences", label: "Conferences", icon: CalendarDays },
+  { to: "/admin/submissions", label: "Submissions", icon: FileText },
+  { to: "/admin/reviews", label: "Reviews", icon: FileCheck2 },
+  { to: "/admin/registrations", label: "Registrations", icon: Ticket },
   { to: "/admin/reports", label: "Reports", icon: BarChart3 },
   { to: "/users", label: "Users", icon: Users },
+  { to: "/admin/testimonials", label: "Testimonials", icon: MessageSquareQuote },
   { to: "/admin/contact-messages", label: "Contact Messages", icon: Mail },
   { to: "/admin/faqs", label: "FAQs", icon: HelpCircle },
 ];
-
 const DISMISSED_KEY = "cmt_admin_dismissed_notifications";
 
 /* ------------------------------------------------------------------ *
