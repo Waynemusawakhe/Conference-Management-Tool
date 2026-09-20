@@ -1,11 +1,6 @@
 import { useState } from "react";
 import Navbar from "../components/Navbar";
-
-// FR-020: Any visitor can view this page and submit a message via the
-// Contact Us form without logging in. Submission is accepted and
-// confirmed to the visitor.
-// NFR-USE-002: clear, understandable validation messages for required fields.
-// NFR-COM-001 / NFR-ACC-001-002: usable on desktop + mobile, readable text sizes.
+import { contactMessagesApi } from "../api/contactMessagesApi";
 
 export default function Contact() {
   const [form, setForm] = useState({ name: "", email: "", message: "" });
@@ -16,7 +11,6 @@ export default function Contact() {
   function handleChange(e) {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
-    // Clear the field's error as soon as the user starts fixing it
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: undefined }));
     }
@@ -48,19 +42,34 @@ export default function Contact() {
 
     setSubmitting(true);
     try {
-      // TODO: replace with the real endpoint once the backend contact
-      // route is available, e.g.:
-      // await fetch("/api/contact", {
-      //   method: "POST",
-      //   headers: { "Content-Type": "application/json" },
-      //   body: JSON.stringify(form),
-      // });
-      await new Promise((resolve) => setTimeout(resolve, 500)); // temp mock delay
+      await contactMessagesApi.create({
+        name: form.name.trim(),
+        email: form.email.trim(),
+        message: form.message.trim(),
+      });
 
       setSubmitted(true);
       setForm({ name: "", email: "", message: "" });
     } catch (err) {
-      setErrors({ form: "Something went wrong. Please try again." });
+      const status = err?.status ?? null;
+
+      if (status === 422 && err.errors && Object.keys(err.errors).length > 0) {
+        const fieldErrors = {};
+        Object.entries(err.errors).forEach(([field, messages]) => {
+          fieldErrors[field] = Array.isArray(messages) ? messages[0] : String(messages);
+        });
+        setErrors(fieldErrors);
+      } else if (status === 429) {
+        setErrors({
+          form:
+            err?.message ||
+            "Too many messages sent. Please wait a minute before trying again.",
+        });
+      } else {
+        setErrors({
+          form: err?.message || "Something went wrong. Please try again.",
+        });
+      }
     } finally {
       setSubmitting(false);
     }
@@ -76,8 +85,7 @@ export default function Contact() {
             <span className="mb-2 inline-block text-[10px] font-extrabold uppercase tracking-[.12em] text-[#5c50ec]">Get in touch</span>
             <h1 className="text-4xl font-bold tracking-[-.05em]">Contact Us</h1>
             <p className="mx-auto mt-3 max-w-xl text-sm leading-7 text-[#66728b]">
-              Have a question about a conference, a submission, or the
-              platform itself? Send us a message and we'll get back to you.
+              Have a question about a conference, a submission, or the platform itself? Send us a message and we'll get back to you.
             </p>
           </div>
 
@@ -97,8 +105,7 @@ export default function Contact() {
                 </div>
                 <h3 className="mt-4 text-xl font-bold">Message sent</h3>
                 <p className="mx-auto mt-2 max-w-md text-sm leading-7 text-[#66728b]">
-                  Thanks for reaching out — we've received your message and
-                  will get back to you as soon as we can.
+                  Thanks for reaching out — we've received your message and will get back to you as soon as we can.
                 </p>
                 <button
                   type="button"
@@ -160,9 +167,7 @@ export default function Contact() {
                     placeholder="How can we help?"
                     rows={6}
                     aria-invalid={Boolean(errors.message)}
-                    aria-describedby={
-                      errors.message ? "message-error" : undefined
-                    }
+                    aria-describedby={errors.message ? "message-error" : undefined}
                     className="rounded-[10px] border border-[#dfe4ed] px-3 py-3 text-sm outline-none focus:border-[#7568f7] focus:ring-4 focus:ring-[#7568f7]/10"
                   />
                   {errors.message && (

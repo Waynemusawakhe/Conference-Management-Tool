@@ -1,4 +1,3 @@
-// src/pages/ContactMessagesPage.jsx
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -18,9 +17,6 @@ import { useApiResource } from "../hooks/useApiResource";
 import { toArray } from "../api/normalize";
 import { contactMessagesApi } from "../api/contactMessagesApi";
 
-/* ------------------------------------------------------------------ *
- * Status config — one place for chip, avatar tint and label
- * ------------------------------------------------------------------ */
 const STATUS_CONFIG = {
   new: {
     label: "New",
@@ -54,35 +50,12 @@ function statusConfig(raw) {
   return STATUS_CONFIG[statusKey(raw)] ?? STATUS_CONFIG.new;
 }
 
-/* ------------------------------------------------------------------ *
- * Stat strip
- * ------------------------------------------------------------------ */
 function StatStrip({ counts }) {
   const items = [
-    {
-      label: "Total",
-      value: counts.all,
-      icon: <Inbox size={14} />,
-      tone: "text-[#4f46c7] bg-[#efedff]",
-    },
-    {
-      label: "New",
-      value: counts.new,
-      icon: <Mail size={14} />,
-      tone: "text-[#5548d7] bg-[#f0efff]",
-    },
-    {
-      label: "In progress",
-      value: counts.in_progress,
-      icon: <Clock size={14} />,
-      tone: "text-[#9b7414] bg-[#fff9e9]",
-    },
-    {
-      label: "Resolved",
-      value: counts.resolved,
-      icon: <CheckCircle2 size={14} />,
-      tone: "text-[#18794e] bg-[#effaf4]",
-    },
+    { label: "Total", value: counts.all, icon: <Inbox size={14} />, tone: "text-[#4f46c7] bg-[#efedff]" },
+    { label: "New", value: counts.new, icon: <Mail size={14} />, tone: "text-[#5548d7] bg-[#f0efff]" },
+    { label: "In progress", value: counts.in_progress, icon: <Clock size={14} />, tone: "text-[#9b7414] bg-[#fff9e9]" },
+    { label: "Resolved", value: counts.resolved, icon: <CheckCircle2 size={14} />, tone: "text-[#18794e] bg-[#effaf4]" },
   ];
 
   return (
@@ -107,9 +80,6 @@ function StatStrip({ counts }) {
   );
 }
 
-/* ------------------------------------------------------------------ *
- * Loading skeleton rows
- * ------------------------------------------------------------------ */
 function LoadingRows({ rows = 6 }) {
   return Array.from({ length: rows }).map((_, i) => (
     <tr key={i} className="border-b border-[#f0f2f6] last:border-0">
@@ -130,9 +100,6 @@ function LoadingRows({ rows = 6 }) {
   ));
 }
 
-/* ------------------------------------------------------------------ *
- * Page
- * ------------------------------------------------------------------ */
 export default function ContactMessagesPage() {
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
@@ -176,7 +143,6 @@ export default function ContactMessagesPage() {
 
   return (
     <AdminLayout subtitle="Inbox" title="Contact Messages">
-      {/* Stats */}
       {!messagesRes.loading && !messagesRes.error && messages.length > 0 && (
         <div className="mb-5">
           <StatStrip counts={counts} />
@@ -196,10 +162,7 @@ export default function ContactMessagesPage() {
           }
           action={
             <div className="relative w-full sm:w-[280px]">
-              <Search
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-[#98a1b3]"
-                size={15}
-              />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#98a1b3]" size={15} />
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
@@ -219,7 +182,6 @@ export default function ContactMessagesPage() {
           }
         />
 
-        {/* Status filter chips */}
         <div className="flex flex-wrap gap-2 border-b border-[#edf0f5] px-5 py-3 sm:px-6">
           {FILTERS.map((f) => {
             const isActive = filter === f.key;
@@ -263,11 +225,7 @@ export default function ContactMessagesPage() {
               {!messagesRes.loading && messagesRes.error && (
                 <tr>
                   <td colSpan={5}>
-                    <StateBlock
-                      kind="error"
-                      message={messagesRes.error.message}
-                      onRetry={messagesRes.reload}
-                    />
+                    <StateBlock kind="error" message={messagesRes.error.message} onRetry={messagesRes.reload} />
                   </td>
                 </tr>
               )}
@@ -301,9 +259,7 @@ export default function ContactMessagesPage() {
                     >
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
-                          <span
-                            className={`grid h-9 w-9 shrink-0 place-items-center rounded-full ${config.icon}`}
-                          >
+                          <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-full ${config.icon}`}>
                             {key === "resolved" ? <MailOpen size={15} /> : <Mail size={15} />}
                           </span>
                           <div className="min-w-0">
@@ -322,9 +278,7 @@ export default function ContactMessagesPage() {
                         </p>
                       </td>
                       <td className="px-4 py-4">
-                        <span
-                          className={`inline-flex rounded-full border px-2.5 py-1 text-[9px] font-extrabold uppercase tracking-[.06em] ${config.chip}`}
-                        >
+                        <span className={`inline-flex rounded-full border px-2.5 py-1 text-[9px] font-extrabold uppercase tracking-[.06em] ${config.chip}`}>
                           {config.label}
                         </span>
                       </td>

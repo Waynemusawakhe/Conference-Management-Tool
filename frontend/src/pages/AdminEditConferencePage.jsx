@@ -17,7 +17,6 @@ import { conferencesApi } from "../api/conferencesApi";
 
 const DESCRIPTION_MAX = 2000;
 
-
 function Field({ icon, label, error, hint, children }) {
   return (
     <div className="grid gap-2">
@@ -32,10 +31,7 @@ function Field({ icon, label, error, hint, children }) {
         {children}
       </label>
       {error && (
-        <span
-          role="alert"
-          className="flex items-center gap-1 text-[11px] font-semibold text-red-600"
-        >
+        <span role="alert" className="flex items-center gap-1 text-[11px] font-semibold text-red-600">
           <AlertCircle size={12} /> {error}
         </span>
       )}
@@ -52,9 +48,6 @@ function inputClass(error, extra = "") {
   return `${base} ${tone} ${extra}`;
 }
 
-/* ------------------------------------------------------------------ *
- * Page
- * ------------------------------------------------------------------ */
 export default function EditConferencePage() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -82,15 +75,12 @@ export default function EditConferencePage() {
       name: conference.name ?? conference.title ?? "",
       description: conference.description ?? "",
       date: (conference.date ?? conference.start_date ?? "").slice?.(0, 10) ?? "",
-      location:
-        conference.location ?? conference.venue ?? conference.venue_name ?? "",
-      external_website:
-        conference.external_website ?? conference.website ?? conference.url ?? "",
+      location: conference.location ?? conference.venue ?? conference.venue_name ?? "",
+      external_website: conference.external_website ?? conference.website ?? conference.url ?? "",
     });
   }, [conference]);
 
-  const update = (key) => (e) =>
-    setForm((f) => ({ ...f, [key]: e.target.value }));
+  const update = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
 
   const descriptionCount = form.description.length;
 
@@ -126,10 +116,7 @@ export default function EditConferencePage() {
       navigate("/admin/conferences");
     } catch (err) {
       if (err?.status === 422 && err.errors) setErrors(err.errors);
-      setBanner({
-        type: "error",
-        text: err?.message ?? "Unable to update conference.",
-      });
+      setBanner({ type: "error", text: err?.message ?? "Unable to update conference." });
     } finally {
       setSaving(false);
     }
@@ -149,10 +136,7 @@ export default function EditConferencePage() {
       await conferencesApi.remove(id);
       navigate("/admin/conferences");
     } catch (err) {
-      setBanner({
-        type: "error",
-        text: err?.message ?? "Failed to delete conference.",
-      });
+      setBanner({ type: "error", text: err?.message ?? "Failed to delete conference." });
     } finally {
       setDeleting(false);
     }
@@ -183,11 +167,7 @@ export default function EditConferencePage() {
 
       {!confRes.loading && confRes.error && (
         <Card>
-          <StateBlock
-            kind="error"
-            message={confRes.error.message}
-            onRetry={confRes.reload}
-          />
+          <StateBlock kind="error" message={confRes.error.message} onRetry={confRes.reload} />
         </Card>
       )}
 
@@ -207,19 +187,11 @@ export default function EditConferencePage() {
           )}
 
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-            {/* ---------- Form ---------- */}
             <Card className="overflow-hidden lg:col-span-2">
-              <CardHeader
-                eyebrow="Details"
-                title="Conference information"
-              />
+              <CardHeader eyebrow="Details" title="Conference information" />
 
               <form onSubmit={handleSubmit} className="grid gap-6 p-6 sm:p-7">
-                <Field
-                  icon={<Type size={13} />}
-                  label="Conference name"
-                  error={errors.name}
-                >
+                <Field icon={<Type size={13} />} label="Conference name" error={errors.name}>
                   <input
                     value={form.name}
                     onChange={update("name")}
@@ -253,19 +225,12 @@ export default function EditConferencePage() {
                     rows={5}
                     placeholder="What is this conference about?"
                     aria-invalid={Boolean(errors.description)}
-                    className={inputClass(
-                      errors.description,
-                      "resize-y py-3 leading-6"
-                    )}
+                    className={inputClass(errors.description, "resize-y py-3 leading-6")}
                   />
                 </Field>
 
                 <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                  <Field
-                    icon={<CalendarDays size={13} />}
-                    label="Date"
-                    error={errors.date}
-                  >
+                  <Field icon={<CalendarDays size={13} />} label="Date" error={errors.date}>
                     <input
                       type="date"
                       min={today}
@@ -276,11 +241,7 @@ export default function EditConferencePage() {
                     />
                   </Field>
 
-                  <Field
-                    icon={<MapPin size={13} />}
-                    label="Location"
-                    error={errors.location}
-                  >
+                  <Field icon={<MapPin size={13} />} label="Location" error={errors.location}>
                     <input
                       value={form.location}
                       onChange={update("location")}
@@ -291,10 +252,7 @@ export default function EditConferencePage() {
                   </Field>
                 </div>
 
-                <Field
-                  icon={<Info size={13} />}
-                  label="External website (optional)"
-                >
+                <Field icon={<Info size={13} />} label="External website (optional)">
                   <input
                     value={form.external_website}
                     onChange={update("external_website")}
@@ -321,35 +279,25 @@ export default function EditConferencePage() {
               </form>
             </Card>
 
-            {/* ---------- Sidebar ---------- */}
             <aside className="space-y-6">
-              {/* Record info */}
               <Card className="overflow-hidden">
                 <CardHeader eyebrow="Metadata" title="Record info" />
                 <dl className="divide-y divide-[#f2f4f9] px-6">
                   <MetaRow label="Reference" value={`#${conference.id}`} />
                   <MetaRow
                     label="Created"
-                    value={formatDate(
-                      conference.created_at ?? conference.createdAt
-                    )}
+                    value={formatDate(conference.created_at ?? conference.createdAt)}
                   />
                   <MetaRow
                     label="Last updated"
-                    value={formatDate(
-                      conference.updated_at ?? conference.updatedAt
-                    )}
+                    value={formatDate(conference.updated_at ?? conference.updatedAt)}
                   />
                   {conference.submissions_count != null && (
-                    <MetaRow
-                      label="Submissions"
-                      value={conference.submissions_count}
-                    />
+                    <MetaRow label="Submissions" value={conference.submissions_count} />
                   )}
                 </dl>
               </Card>
 
-              {/* Danger zone */}
               <div className="overflow-hidden rounded-[20px] border border-[#f0d4d4] bg-gradient-to-b from-[#fffafa] to-[#fff5f5] p-6">
                 <div className="flex items-center gap-2">
                   <span className="grid h-7 w-7 place-items-center rounded-lg bg-red-100 text-red-600">
@@ -360,8 +308,7 @@ export default function EditConferencePage() {
                   </strong>
                 </div>
                 <p className="mt-3 text-[11px] leading-5 text-[#9a6470]">
-                  Deleting a conference also removes its submissions. This
-                  cannot be undone.
+                  Deleting a conference also removes its submissions. This cannot be undone.
                 </p>
                 <button
                   type="button"
@@ -381,18 +328,11 @@ export default function EditConferencePage() {
   );
 }
 
-/* ------------------------------------------------------------------ *
- * MetaRow
- * ------------------------------------------------------------------ */
 function MetaRow({ label, value }) {
   return (
     <div className="flex items-center justify-between gap-3 py-3.5">
-      <dt className="text-[10px] font-extrabold uppercase tracking-[.1em] text-[#9ba4b5]">
-        {label}
-      </dt>
-      <dd className="m-0 text-right text-[12px] font-semibold text-[#1c2a4a]">
-        {value ?? "—"}
-      </dd>
+      <dt className="text-[10px] font-extrabold uppercase tracking-[.1em] text-[#9ba4b5]">{label}</dt>
+      <dd className="m-0 text-right text-[12px] font-semibold text-[#1c2a4a]">{value ?? "—"}</dd>
     </div>
   );
 }

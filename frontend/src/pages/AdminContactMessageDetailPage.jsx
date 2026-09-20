@@ -122,17 +122,12 @@ export default function ContactMessageDetailPage() {
 
       {!messageRes.loading && messageRes.error && (
         <Card>
-          <StateBlock
-            kind="error"
-            message={messageRes.error.message}
-            onRetry={messageRes.reload}
-          />
+          <StateBlock kind="error" message={messageRes.error.message} onRetry={messageRes.reload} />
         </Card>
       )}
 
       {message && (
         <>
-          {/* Feedback banner */}
           {feedback && (
             <div
               role="alert"
@@ -147,11 +142,9 @@ export default function ContactMessageDetailPage() {
           )}
 
           <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
-            {/* ---------- Sender card ---------- */}
             <Card className="lg:col-span-1">
               <CardHeader eyebrow="Sender" title="Contact details" />
               <div className="p-5 sm:p-6">
-                {/* Avatar + name */}
                 <div className="flex items-center gap-3 border-b border-[#edf0f5] pb-5">
                   <div className={`grid h-12 w-12 place-items-center rounded-full ${config.iconTint}`}>
                     {config.icon}
@@ -166,26 +159,12 @@ export default function ContactMessageDetailPage() {
                   </div>
                 </div>
 
-                {/* Meta */}
                 <dl className="mt-5 space-y-4">
-                  <Field
-                    icon={<Mail size={13} />}
-                    label="Email"
-                    value={message.email ?? "—"}
-                  />
-                  <Field
-                    icon={<Clock size={13} />}
-                    label="Received"
-                    value={formatDateTime(message.created_at)}
-                  />
-                  <Field
-                    icon={<AtSign size={13} />}
-                    label="Reference"
-                    value={`#${message.id}`}
-                  />
+                  <Field icon={<Mail size={13} />} label="Email" value={message.email ?? "—"} />
+                  <Field icon={<Clock size={13} />} label="Received" value={formatDateTime(message.created_at)} />
+                  <Field icon={<AtSign size={13} />} label="Reference" value={`#${message.id}`} />
                 </dl>
 
-                {/* Quick actions — Reply via email: blue, dark blue on hover */}
                 {message.email && (
                   <a
                     href={`mailto:${message.email}?subject=Re: your message to CMT`}
@@ -197,15 +176,12 @@ export default function ContactMessageDetailPage() {
               </div>
             </Card>
 
-            {/* ---------- Message content ---------- */}
             <Card className="lg:col-span-2">
               <CardHeader
                 eyebrow="Message"
                 title="Content"
                 action={
-                  <span
-                    className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[9px] font-extrabold uppercase tracking-[.06em] ${config.chip}`}
-                  >
+                  <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[9px] font-extrabold uppercase tracking-[.06em] ${config.chip}`}>
                     <span className={`h-1.5 w-1.5 rounded-full ${config.dot}`} />
                     {config.label}
                   </span>
@@ -222,7 +198,6 @@ export default function ContactMessageDetailPage() {
                   </p>
                 </div>
 
-                {/* Status controls — confirmed statuses: new, in_progress, resolved */}
                 <div className="mt-6 border-t border-[#edf0f5] pt-5">
                   <div className="flex items-center justify-between gap-3">
                     <span className="text-[9px] font-extrabold uppercase tracking-[.1em] text-[#9ba4b5]">
@@ -253,9 +228,7 @@ export default function ContactMessageDetailPage() {
                         >
                           <span className={`h-1.5 w-1.5 rounded-full ${c.dot}`} />
                           {c.label}
-                          {isActive && (
-                            <CheckCircle2 size={12} className="ml-0.5" />
-                          )}
+                          {isActive && <CheckCircle2 size={12} className="ml-0.5" />}
                         </button>
                       );
                     })}
@@ -270,18 +243,13 @@ export default function ContactMessageDetailPage() {
   );
 }
 
-/* ------------------------------------------------------------------ *
- * Field
- * ------------------------------------------------------------------ */
 function Field({ icon, label, value }) {
   return (
     <div>
       <dt className="flex items-center gap-1.5 text-[9px] font-extrabold uppercase tracking-[.1em] text-[#9ba4b5]">
         {icon} {label}
       </dt>
-      <dd className="m-0 mt-2 break-words text-[12px] font-semibold text-[#1c2a4a]">
-        {value}
-      </dd>
+      <dd className="m-0 mt-2 break-words text-[12px] font-semibold text-[#1c2a4a]">{value}</dd>
     </div>
   );
 }

@@ -18,9 +18,6 @@ import { toArray } from "../api/normalize";
 import { conferencesApi } from "../api/conferencesApi";
 import { submissionsApi } from "../api/submissionsApi";
 
-/* ------------------------------------------------------------------ *
- * Field resolvers — defensive against "field names require confirmation"
- * ------------------------------------------------------------------ */
 const confName = (c) => c.name ?? c.title ?? `Conference #${c.id}`;
 const confDate = (c) =>
   formatDate(c.date ?? c.start_date ?? c.starts_at ?? c.startDate ?? c.started_at);
@@ -36,9 +33,7 @@ function resolveLocation(conf) {
     conf.country,
     conf.venue_address,
   ];
-  const hit = candidates.find(
-    (v) => typeof v === "string" && v.trim().length > 0
-  );
+  const hit = candidates.find((v) => typeof v === "string" && v.trim().length > 0);
   return hit ? hit.trim() : null;
 }
 
@@ -48,13 +43,8 @@ function resolveSubmissionCount(conf, submissionCounts) {
     conf.submissionsCount ??
     conf.total_submissions ??
     conf.submissions_total;
-
-  if (direct != null && Number.isFinite(Number(direct))) {
-    return Number(direct);
-  }
-  if (Array.isArray(conf.submissions)) {
-    return conf.submissions.length;
-  }
+  if (direct != null && Number.isFinite(Number(direct))) return Number(direct);
+  if (Array.isArray(conf.submissions)) return conf.submissions.length;
   return submissionCounts.get(conf.id) ?? 0;
 }
 
@@ -68,22 +58,14 @@ function getInitials(name) {
     .join("");
 }
 
-/* ------------------------------------------------------------------ *
- * Submission-count badge — color-coded by volume
- * ------------------------------------------------------------------ */
 function SubmissionBadge({ count, loading }) {
-  if (loading) {
-    return (
-      <span className="inline-block h-6 w-10 animate-pulse rounded-lg bg-[#eef1f7]" />
-    );
-  }
-  if (count === 0) {
+  if (loading) return <span className="inline-block h-6 w-10 animate-pulse rounded-lg bg-[#eef1f7]" />;
+  if (count === 0)
     return (
       <span className="inline-flex min-w-[32px] justify-center rounded-lg border border-[#edf0f5] bg-[#fafbfe] px-2 py-1 text-[10px] font-bold text-[#aeb6c6]">
         0
       </span>
     );
-  }
   const tone =
     count >= 20
       ? "border-[#c9dff5] bg-[#eef5fd] text-[#1d5fa8]"
@@ -91,28 +73,18 @@ function SubmissionBadge({ count, loading }) {
       ? "border-[#e2d9f5] bg-[#f1efff] text-[#5b4fe3]"
       : "border-[#d9e3ee] bg-[#f5f8fc] text-[#4a637a]";
   return (
-    <span
-      className={`inline-flex min-w-[32px] justify-center rounded-lg border px-2 py-1 text-[10px] font-extrabold ${tone}`}
-    >
+    <span className={`inline-flex min-w-[32px] justify-center rounded-lg border px-2 py-1 text-[10px] font-extrabold ${tone}`}>
       {count}
     </span>
   );
 }
 
-/* ------------------------------------------------------------------ *
- * Stat card
- * ------------------------------------------------------------------ */
 function StatCard({ icon, tint, value, label, note, loading }) {
   return (
     <div className="group relative overflow-hidden rounded-[16px] border border-[#e4e8f0] bg-white p-4 shadow-[0_10px_28px_rgba(15,28,65,.04)] transition hover:-translate-y-px hover:shadow-[0_14px_36px_rgba(15,28,65,.07)]">
       <div className="flex items-start justify-between">
-        <span className={`grid h-9 w-9 place-items-center rounded-[10px] ${tint}`}>
-          {icon}
-        </span>
-        <Sparkles
-          size={12}
-          className="text-[#dfe4ed] opacity-0 transition group-hover:opacity-100"
-        />
+        <span className={`grid h-9 w-9 place-items-center rounded-[10px] ${tint}`}>{icon}</span>
+        <Sparkles size={12} className="text-[#dfe4ed] opacity-0 transition group-hover:opacity-100" />
       </div>
       <strong className="mt-4 block text-[24px] leading-none tracking-[-.04em] text-[#1c2a4a]">
         {loading ? "…" : value}
@@ -122,7 +94,6 @@ function StatCard({ icon, tint, value, label, note, loading }) {
     </div>
   );
 }
-
 
 function LoadingRows({ rows = 6 }) {
   return Array.from({ length: rows }).map((_, i) => (
@@ -144,7 +115,6 @@ function LoadingRows({ rows = 6 }) {
   ));
 }
 
-
 export default function AdminConferencesPage() {
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
@@ -153,14 +123,8 @@ export default function AdminConferencesPage() {
   const conferencesRes = useApiResource(() => conferencesApi.getAll(), []);
   const submissionsRes = useApiResource(() => submissionsApi.getAll(), []);
 
-  const conferences = useMemo(
-    () => toArray(conferencesRes.data),
-    [conferencesRes.data]
-  );
-  const submissions = useMemo(
-    () => toArray(submissionsRes.data),
-    [submissionsRes.data]
-  );
+  const conferences = useMemo(() => toArray(conferencesRes.data), [conferencesRes.data]);
+  const submissions = useMemo(() => toArray(submissionsRes.data), [submissionsRes.data]);
 
   const submissionCounts = useMemo(() => {
     const map = new Map();
@@ -182,10 +146,7 @@ export default function AdminConferencesPage() {
     if (!q) return conferences;
     return conferences.filter((c) => {
       const loc = resolveLocation(c) ?? "";
-      return [confName(c), loc, String(c.id ?? "")]
-        .join(" ")
-        .toLowerCase()
-        .includes(q);
+      return [confName(c), loc, String(c.id ?? "")].join(" ").toLowerCase().includes(q);
     });
   }, [conferences, query]);
 
@@ -207,7 +168,6 @@ export default function AdminConferencesPage() {
       console.log("[AdminConferencesPage] sample conference:", conferences[0]);
     }
     if (submissions.length > 0) {
-      
       console.log("[AdminConferencesPage] sample submission:", submissions[0]);
     }
   }, [conferences, submissions]);
@@ -226,15 +186,9 @@ export default function AdminConferencesPage() {
     try {
       await conferencesApi.remove(conf.id);
       await Promise.all([conferencesRes.reload(), submissionsRes.reload()]);
-      setFeedback({
-        type: "success",
-        message: `"${name}" was deleted.`,
-      });
+      setFeedback({ type: "success", message: `"${name}" was deleted.` });
     } catch (err) {
-      setFeedback({
-        type: "error",
-        message: err?.message ?? "Failed to delete conference.",
-      });
+      setFeedback({ type: "error", message: err?.message ?? "Failed to delete conference." });
     }
   };
 
@@ -242,7 +196,6 @@ export default function AdminConferencesPage() {
 
   return (
     <AdminLayout subtitle="Platform" title="Conferences">
-      {/* Feedback banner */}
       {feedback && (
         <div
           role="alert"
@@ -253,62 +206,27 @@ export default function AdminConferencesPage() {
           }`}
         >
           <span>{feedback.message}</span>
-          <button
-            onClick={() => setFeedback(null)}
-            className="shrink-0 opacity-60 hover:opacity-100"
-            aria-label="Dismiss"
-          >
+          <button onClick={() => setFeedback(null)} className="shrink-0 opacity-60 hover:opacity-100" aria-label="Dismiss">
             <X size={14} />
           </button>
         </div>
       )}
 
-      {/* Submissions-fetch error notice (non-blocking) */}
       {!submissionsRes.loading && submissionsRes.error && conferences.length > 0 && (
         <div className="mb-4 flex items-center justify-between gap-3 rounded-xl border border-[#e9d9a7] bg-[#fff9e9] px-4 py-2.5 text-[11px] font-semibold text-[#9b7414]">
           <span>Couldn't load submissions — counts below may be incomplete.</span>
-          <button
-            onClick={submissionsRes.reload}
-            className="shrink-0 underline hover:no-underline"
-          >
+          <button onClick={submissionsRes.reload} className="shrink-0 underline hover:no-underline">
             Retry
           </button>
         </div>
       )}
 
-      {/* Stats */}
       {!conferencesRes.loading && !conferencesRes.error && conferences.length > 0 && (
         <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <StatCard
-            icon={<CalendarDays size={17} />}
-            tint="bg-[#efedff] text-[#4f46c7]"
-            value={stats.total}
-            label="Conferences"
-            note="Across the platform"
-          />
-          <StatCard
-            icon={<FileText size={17} />}
-            tint="bg-[#eef5fd] text-[#1d5fa8]"
-            value={stats.totalSubmissions}
-            label="Submissions"
-            note="Total received"
-            loading={submissionsLoading}
-          />
-          <StatCard
-            icon={<Sparkles size={17} />}
-            tint="bg-[#effaf4] text-[#18794e]"
-            value={stats.withSubmissions}
-            label="Active"
-            note="With submissions"
-            loading={submissionsLoading}
-          />
-          <StatCard
-            icon={<Search size={17} />}
-            tint="bg-[#fff6ee] text-[#a55b25]"
-            value={filtered.length}
-            label={query ? "Matching" : "Ready to manage"}
-            note={query ? "Search results" : "All editable"}
-          />
+          <StatCard icon={<CalendarDays size={17} />} tint="bg-[#efedff] text-[#4f46c7]" value={stats.total} label="Conferences" note="Across the platform" />
+          <StatCard icon={<FileText size={17} />} tint="bg-[#eef5fd] text-[#1d5fa8]" value={stats.totalSubmissions} label="Submissions" note="Total received" loading={submissionsLoading} />
+          <StatCard icon={<Sparkles size={17} />} tint="bg-[#effaf4] text-[#18794e]" value={stats.withSubmissions} label="Active" note="With submissions" loading={submissionsLoading} />
+          <StatCard icon={<Search size={17} />} tint="bg-[#fff6ee] text-[#a55b25]" value={filtered.length} label={query ? "Matching" : "Ready to manage"} note={query ? "Search results" : "All editable"} />
         </div>
       )}
 
@@ -327,10 +245,7 @@ export default function AdminConferencesPage() {
           }
           action={
             <div className="relative w-full sm:w-[280px]">
-              <Search
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-[#98a1b3]"
-                size={15}
-              />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#98a1b3]" size={15} />
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
@@ -367,11 +282,7 @@ export default function AdminConferencesPage() {
               {!conferencesRes.loading && conferencesRes.error && (
                 <tr>
                   <td colSpan={5}>
-                    <StateBlock
-                      kind="error"
-                      message={conferencesRes.error.message}
-                      onRetry={conferencesRes.reload}
-                    />
+                    <StateBlock kind="error" message={conferencesRes.error.message} onRetry={conferencesRes.reload} />
                   </td>
                 </tr>
               )}
@@ -384,9 +295,7 @@ export default function AdminConferencesPage() {
                         <CalendarDays size={22} />
                       </span>
                       <h3 className="m-0 text-[13px] font-bold text-[#1c2a4a]">
-                        {conferences.length === 0
-                          ? "No conferences yet"
-                          : "No matches"}
+                        {conferences.length === 0 ? "No conferences yet" : "No matches"}
                       </h3>
                       <p className="m-0 max-w-[380px] text-[11px] leading-5 text-[#8993a6]">
                         {conferences.length === 0
@@ -412,7 +321,6 @@ export default function AdminConferencesPage() {
                   const name = confName(conf);
                   const location = resolveLocation(conf);
                   const count = resolveSubmissionCount(conf, submissionCounts);
-
                   return (
                     <tr
                       key={conf.id}
@@ -422,11 +330,7 @@ export default function AdminConferencesPage() {
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
                           <span className="relative grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-[#efedff] to-[#e0dcff] text-[11px] font-extrabold text-[#4f46c7] shadow-[0_6px_14px_-4px_rgba(102,85,246,.28)]">
-                            {getInitials(name) === "?" ? (
-                              <CalendarDays size={16} />
-                            ) : (
-                              getInitials(name)
-                            )}
+                            {getInitials(name) === "?" ? <CalendarDays size={16} /> : getInitials(name)}
                             <span className="absolute -bottom-0.5 -right-0.5 grid h-4 w-4 place-items-center rounded-full border-2 border-white bg-gradient-to-br from-[#6655f6] to-[#8b7bff] text-white">
                               <CalendarDays size={8} strokeWidth={3} />
                             </span>
@@ -435,9 +339,7 @@ export default function AdminConferencesPage() {
                             <strong className="block truncate text-[11px] font-bold text-[#1c2a4a]">
                               {name}
                             </strong>
-                            <span className="text-[9px] font-semibold text-[#929bad]">
-                              #{conf.id}
-                            </span>
+                            <span className="text-[9px] font-semibold text-[#929bad]">#{conf.id}</span>
                           </div>
                         </div>
                       </td>

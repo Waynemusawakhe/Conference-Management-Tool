@@ -89,28 +89,18 @@ function renderValue(value) {
   return String(value);
 }
 
-/* ----------------------------- Metric Card ----------------------------- */
-
 function MetricCard({ label, value, accent, text, glow, ring }) {
   return (
     <div
       className={`group relative overflow-hidden rounded-2xl bg-white p-4 ring-1 ring-[#eef1f7] transition-all duration-300 hover:-translate-y-1 hover:ring-2 ${ring} ${glow}`}
     >
-      {/* Soft gradient wash (very subtle) */}
       <div
         className={`pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-br ${accent} opacity-[.06] transition-opacity duration-300 group-hover:opacity-[.12]`}
       />
-
-      {/* Top accent bar */}
-      <div
-        className={`absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r ${accent}`}
-      />
-
-      {/* Corner dot */}
+      <div className={`absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r ${accent}`} />
       <div
         className={`absolute right-4 top-4 h-1.5 w-1.5 rounded-full bg-gradient-to-br ${accent} opacity-40 transition-opacity group-hover:opacity-100`}
       />
-
       <div className="relative">
         <span className="block text-[9px] font-bold uppercase tracking-[.12em] text-[#9ba4b5]">
           {prettifyKey(label)}
@@ -127,14 +117,10 @@ function MetricCard({ label, value, accent, text, glow, ring }) {
   );
 }
 
-/* ------------------------------- Tables ------------------------------- */
-
 function DataTable({ rows }) {
   if (!Array.isArray(rows) || rows.length === 0) {
     return (
-      <p className="rounded-xl bg-[#f7f8fc] px-4 py-3 text-xs text-[#9ba4b5]">
-        No records.
-      </p>
+      <p className="rounded-xl bg-[#f7f8fc] px-4 py-3 text-xs text-[#9ba4b5]">No records.</p>
     );
   }
 
@@ -142,10 +128,7 @@ function DataTable({ rows }) {
     return (
       <ul className="grid gap-1.5 text-xs text-[#43506a]">
         {rows.map((row, i) => (
-          <li
-            key={i}
-            className="rounded-lg border border-[#eef1f7] bg-white px-3 py-2 transition hover:bg-[#fafbff]"
-          >
+          <li key={i} className="rounded-lg border border-[#eef1f7] bg-white px-3 py-2 transition hover:bg-[#fafbff]">
             {renderValue(row)}
           </li>
         ))}
@@ -178,15 +161,9 @@ function DataTable({ rows }) {
           </thead>
           <tbody>
             {rows.map((row, i) => (
-              <tr
-                key={i}
-                className="border-b border-[#f2f4f9] transition-colors last:border-0 hover:bg-[#fafbff]"
-              >
+              <tr key={i} className="border-b border-[#f2f4f9] transition-colors last:border-0 hover:bg-[#fafbff]">
                 {columns.map((col) => (
-                  <td
-                    key={col}
-                    className="whitespace-nowrap px-4 py-3 text-[#43506a]"
-                  >
+                  <td key={col} className="whitespace-nowrap px-4 py-3 text-[#43506a]">
                     {renderValue(row?.[col])}
                   </td>
                 ))}
@@ -199,8 +176,6 @@ function DataTable({ rows }) {
   );
 }
 
-/* ----------------------------- Sub-sections ---------------------------- */
-
 function SubSection({ title, value, accent, text, glow, ring }) {
   if (Array.isArray(value)) {
     return (
@@ -211,9 +186,7 @@ function SubSection({ title, value, accent, text, glow, ring }) {
     );
   }
 
-  const entries = Object.entries(value).filter(
-    ([, v]) => v === null || typeof v !== "object"
-  );
+  const entries = Object.entries(value).filter(([, v]) => v === null || typeof v !== "object");
   if (entries.length === 0) return null;
 
   return (
@@ -221,15 +194,7 @@ function SubSection({ title, value, accent, text, glow, ring }) {
       <SectionTitle title={title} accent={accent} />
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
         {entries.map(([k, v]) => (
-          <MetricCard
-            key={k}
-            label={k}
-            value={v}
-            accent={accent}
-            text={text}
-            glow={glow}
-            ring={ring}
-          />
+          <MetricCard key={k} label={k} value={v} accent={accent} text={text} glow={glow} ring={ring} />
         ))}
       </div>
     </section>
@@ -239,9 +204,7 @@ function SubSection({ title, value, accent, text, glow, ring }) {
 function SectionTitle({ title, accent }) {
   return (
     <div className="mb-3 flex items-center gap-2.5">
-      <span
-        className={`h-4 w-[3px] rounded-full bg-gradient-to-b ${accent}`}
-      />
+      <span className={`h-4 w-[3px] rounded-full bg-gradient-to-b ${accent}`} />
       <h3 className="text-[11px] font-extrabold uppercase tracking-[.12em] text-[#5b6780]">
         {prettifyKey(title)}
       </h3>
@@ -249,8 +212,6 @@ function SectionTitle({ title, accent }) {
     </div>
   );
 }
-
-/* ------------------------------ Report Body ---------------------------- */
 
 function ReportBody({ payload, tab }) {
   const { accent, text, glow, ring } = tab;
@@ -271,9 +232,7 @@ function ReportBody({ payload, tab }) {
     return (
       <div className="p-6 sm:p-7">
         <div className="relative overflow-hidden rounded-2xl bg-white p-6 ring-1 ring-[#eef1f7] shadow-[0_18px_45px_-25px_rgba(23,35,66,.25)]">
-          <div
-            className={`absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r ${accent}`}
-          />
+          <div className={`absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r ${accent}`} />
           <div className={`text-4xl font-bold tracking-[-.04em] ${text}`}>
             {renderValue(payload)}
           </div>
@@ -282,12 +241,8 @@ function ReportBody({ payload, tab }) {
     );
   }
 
-  const scalars = Object.entries(payload).filter(
-    ([, v]) => v === null || typeof v !== "object"
-  );
-  const collections = Object.entries(payload).filter(
-    ([, v]) => v !== null && typeof v === "object"
-  );
+  const scalars = Object.entries(payload).filter(([, v]) => v === null || typeof v !== "object");
+  const collections = Object.entries(payload).filter(([, v]) => v !== null && typeof v === "object");
 
   if (scalars.length === 0 && collections.length === 0) {
     return <StateBlock message="This report has no metrics to display." />;
@@ -298,15 +253,7 @@ function ReportBody({ payload, tab }) {
       {scalars.length > 0 && (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
           {scalars.map(([key, value]) => (
-            <MetricCard
-              key={key}
-              label={key}
-              value={value}
-              accent={accent}
-              text={text}
-              glow={glow}
-              ring={ring}
-            />
+            <MetricCard key={key} label={key} value={value} accent={accent} text={text} glow={glow} ring={ring} />
           ))}
         </div>
       )}
@@ -325,19 +272,12 @@ function ReportBody({ payload, tab }) {
   );
 }
 
-/* ---------------------------- Loading skeleton ------------------------- */
-
 function LoadingSkeleton({ accent }) {
   return (
     <div className="grid grid-cols-2 gap-4 p-6 sm:grid-cols-3 sm:p-7 lg:grid-cols-4">
       {Array.from({ length: 8 }).map((_, i) => (
-        <div
-          key={i}
-          className="relative overflow-hidden rounded-2xl bg-white p-4 ring-1 ring-[#eef1f7]"
-        >
-          <div
-            className={`absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r ${accent} opacity-30`}
-          />
+        <div key={i} className="relative overflow-hidden rounded-2xl bg-white p-4 ring-1 ring-[#eef1f7]">
+          <div className={`absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r ${accent} opacity-30`} />
           <div className="h-2 w-16 animate-pulse rounded-full bg-[#eef1f7]" />
           <div className="mt-3 h-6 w-20 animate-pulse rounded-full bg-[#eef1f7]" />
         </div>
@@ -345,8 +285,6 @@ function LoadingSkeleton({ accent }) {
     </div>
   );
 }
-
-/* ------------------------------- The Page ------------------------------ */
 
 export default function ReportsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -369,20 +307,11 @@ export default function ReportsPage() {
       title="Reports"
       action={
         <GhostButton onClick={reportRes.reload}>
-          <RefreshCw
-            size={14}
-            className={reportRes.loading ? "animate-spin" : ""}
-          />{" "}
-          Refresh
+          <RefreshCw size={14} className={reportRes.loading ? "animate-spin" : ""} /> Refresh
         </GhostButton>
       }
     >
-      {/* Tabs */}
-      <div
-        role="tablist"
-        aria-label="Report sections"
-        className="mb-5 flex flex-wrap gap-2"
-      >
+      <div role="tablist" aria-label="Report sections" className="mb-5 flex flex-wrap gap-2">
         {TABS.map((t) => {
           const Icon = t.icon;
           const isActive = t.key === active;
@@ -405,7 +334,6 @@ export default function ReportsPage() {
         })}
       </div>
 
-      {/* Card wrapper */}
       <Card className="overflow-hidden border-0 ring-1 ring-[#eef1f7] shadow-[0_20px_60px_-30px_rgba(23,35,66,.28)]">
         <CardHeader
           eyebrow={
@@ -415,9 +343,7 @@ export default function ReportsPage() {
           }
           title={
             <span className="inline-flex items-center gap-2">
-              <span
-                className={`grid h-7 w-7 place-items-center rounded-lg bg-gradient-to-br ${tab.accent} text-white shadow-[0_8px_18px_-6px_rgba(23,35,66,.4)]`}
-              >
+              <span className={`grid h-7 w-7 place-items-center rounded-lg bg-gradient-to-br ${tab.accent} text-white shadow-[0_8px_18px_-6px_rgba(23,35,66,.4)]`}>
                 <TabIcon size={14} />
               </span>
               {tab.label}
@@ -427,15 +353,9 @@ export default function ReportsPage() {
 
         {reportRes.loading && <LoadingSkeleton accent={tab.accent} />}
         {!reportRes.loading && reportRes.error && (
-          <StateBlock
-            kind="error"
-            message={reportRes.error.message}
-            onRetry={reportRes.reload}
-          />
+          <StateBlock kind="error" message={reportRes.error.message} onRetry={reportRes.reload} />
         )}
-        {!reportRes.loading && !reportRes.error && (
-          <ReportBody payload={payload} tab={tab} />
-        )}
+        {!reportRes.loading && !reportRes.error && <ReportBody payload={payload} tab={tab} />}
       </Card>
     </AdminLayout>
   );

@@ -1,4 +1,3 @@
-// src/components/AdminLayout.jsx
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
@@ -6,17 +5,21 @@ import {
   Bell,
   CalendarDays,
   CheckCheck,
+  FileCheck2,
   FileText,
   HelpCircle,
   LayoutDashboard,
   LogOut,
   Mail,
   Menu,
+  MessageSquareQuote,
   Moon,
   Sun,
+  Ticket,
   Users,
   X,
 } from "lucide-react";
+
 import Logo from "./Logo";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
@@ -28,15 +31,20 @@ import { submissionsApi } from "../api/submissionsApi";
 const NAV_ITEMS = [
   { to: "/admin-dashboard", label: "Overview", icon: LayoutDashboard, exact: true },
   { to: "/admin/conferences", label: "Conferences", icon: CalendarDays },
+  { to: "/admin/submissions", label: "Submissions", icon: FileText },
+  { to: "/admin/reviews", label: "Reviews", icon: FileCheck2 },
+  { to: "/admin/registrations", label: "Registrations", icon: Ticket },
   { to: "/admin/reports", label: "Reports", icon: BarChart3 },
   { to: "/users", label: "Users", icon: Users },
+  { to: "/admin/testimonials", label: "Testimonials", icon: MessageSquareQuote },
   { to: "/admin/contact-messages", label: "Contact Messages", icon: Mail },
   { to: "/admin/faqs", label: "FAQs", icon: HelpCircle },
 ];
-
 const DISMISSED_KEY = "cmt_admin_dismissed_notifications";
 
-
+/* ------------------------------------------------------------------ *
+ * Notification persistence — dismissed IDs survive reloads
+ * ------------------------------------------------------------------ */
 function loadDismissed() {
   try {
     const raw = localStorage.getItem(DISMISSED_KEY);
@@ -53,7 +61,9 @@ function saveDismissed(set) {
   }
 }
 
-
+/* ------------------------------------------------------------------ *
+ * Relative time helper
+ * ------------------------------------------------------------------ */
 function relativeTime(value) {
   if (!value) return "";
   const d = new Date(value);
@@ -70,7 +80,9 @@ function relativeTime(value) {
   return d.toISOString().slice(0, 10);
 }
 
-
+/* ------------------------------------------------------------------ *
+ * Helpers
+ * ------------------------------------------------------------------ */
 function getInitials(name) {
   if (!name) return "•";
   const parts = String(name).trim().split(/\s+/).filter(Boolean);
@@ -89,6 +101,9 @@ function prettifyRole(role) {
 const statusKey = (raw) =>
   raw ? String(raw).trim().toLowerCase().replace(/[\s-]+/g, "_") : "";
 
+/* ------------------------------------------------------------------ *
+ * AdminLayout
+ * ------------------------------------------------------------------ */
 export default function AdminLayout({ children, title, subtitle, action }) {
   const navigate = useNavigate();
   const { pathname } = useLocation();
@@ -113,11 +128,11 @@ export default function AdminLayout({ children, title, subtitle, action }) {
     [submissionsRes.data]
   );
 
-
+  /* Build notification list */
   const notifications = useMemo(() => {
     const list = [];
 
-   
+    // New contact messages (status = "new")
     messages
       .filter((m) => statusKey(m.status ?? "new") === "new")
       .forEach((m) => {
@@ -133,7 +148,7 @@ export default function AdminLayout({ children, title, subtitle, action }) {
         });
       });
 
- 
+    // Pending submissions
     submissions
       .filter((s) => {
         const k = statusKey(s.status);
@@ -157,7 +172,7 @@ export default function AdminLayout({ children, title, subtitle, action }) {
         });
       });
 
-    
+    // Sort newest first
     return list.sort((a, b) => {
       const ta = a.time ? new Date(a.time).getTime() : 0;
       const tb = b.time ? new Date(b.time).getTime() : 0;
@@ -165,7 +180,7 @@ export default function AdminLayout({ children, title, subtitle, action }) {
     });
   }, [messages, submissions]);
 
-  
+  /* Filter out dismissed */
   const visibleNotifications = useMemo(
     () => notifications.filter((n) => !dismissed.has(n.id)),
     [notifications, dismissed]
@@ -173,7 +188,7 @@ export default function AdminLayout({ children, title, subtitle, action }) {
 
   const notificationCount = visibleNotifications.length;
 
- 
+  /* Dismiss a single notification */
   const dismissOne = (id) => {
     setDismissed((prev) => {
       const next = new Set(prev);
@@ -183,7 +198,7 @@ export default function AdminLayout({ children, title, subtitle, action }) {
     });
   };
 
-  
+  /* Clear all visible */
   const dismissAll = () => {
     setDismissed((prev) => {
       const next = new Set(prev);
@@ -193,7 +208,7 @@ export default function AdminLayout({ children, title, subtitle, action }) {
     });
   };
 
-  
+  /* Click outside closes the panel */
   useEffect(() => {
     if (!showNotifications) return;
     const onClick = (e) => {
@@ -213,13 +228,13 @@ export default function AdminLayout({ children, title, subtitle, action }) {
     };
   }, [showNotifications]);
 
-
+  /* Close notification panel on route change */
   useEffect(() => {
     setShowNotifications(false);
     setSidebarOpen(false);
   }, [pathname]);
 
-
+  /* ---- Auth display ---- */
   const isActive = (item) => {
     if (item.exact) return pathname === item.to;
     return pathname === item.to || pathname.startsWith(`${item.to}/`);

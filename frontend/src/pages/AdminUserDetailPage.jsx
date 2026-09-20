@@ -79,7 +79,6 @@ export default function UserDetailPage() {
 
       {user && (
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
-          {/* ---------- Profile card ---------- */}
           <Card className="overflow-hidden lg:col-span-1">
             <div className="relative h-28 bg-[radial-gradient(circle_at_78%_18%,rgba(121,104,255,.32),transparent_35%),radial-gradient(circle_at_100%_100%,rgba(27,94,255,.22),transparent_40%),linear-gradient(135deg,#07132f_0%,#0a1740_52%,#15165a_100%)]">
               <div className="absolute inset-0 opacity-[.18] [background-image:radial-gradient(rgba(255,255,255,.18)_0.7px,transparent_0.7px)] [background-size:22px_22px]" />
@@ -129,7 +128,6 @@ export default function UserDetailPage() {
             </div>
           </Card>
 
-          {/* ---------- Details card ---------- */}
           <Card className="lg:col-span-2">
             <CardHeader eyebrow="Profile" title="Account details" />
             <div className="grid grid-cols-1 gap-px bg-[#edf0f5] sm:grid-cols-2">
@@ -144,22 +142,14 @@ export default function UserDetailPage() {
               <Field
                 icon={<CheckCircle2 size={13} />}
                 label="Email verified"
-                value={
-                  user.email_verified_at
-                    ? formatDateTime(user.email_verified_at)
-                    : "Not verified"
-                }
+                value={user.email_verified_at ? formatDateTime(user.email_verified_at) : "Not verified"}
               />
               <Field
                 icon={<Calendar size={13} />}
                 label="Joined"
                 value={formatDateTime(user.created_at ?? user.joined_at)}
               />
-              <Field
-                icon={<Clock size={13} />}
-                label="Last updated"
-                value={formatDateTime(user.updated_at)}
-              />
+              <Field icon={<Clock size={13} />} label="Last updated" value={formatDateTime(user.updated_at)} />
             </div>
           </Card>
         </div>
