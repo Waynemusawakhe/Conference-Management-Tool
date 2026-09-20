@@ -186,4 +186,8 @@ export default function Contact() {
       </section>
     </div>
   );
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> origin/main

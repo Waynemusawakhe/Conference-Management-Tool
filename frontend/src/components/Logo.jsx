@@ -8,4 +8,8 @@ export default function Logo({ compact = false }) {
       </div>
     </div>
   );
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> origin/main

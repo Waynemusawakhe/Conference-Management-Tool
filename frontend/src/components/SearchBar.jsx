@@ -108,3 +108,7 @@ export default function SearchBar({
     </div>
   );
 }
+<<<<<<< HEAD
+=======
+
+>>>>>>> origin/main

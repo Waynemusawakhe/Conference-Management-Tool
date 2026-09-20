@@ -8,4 +8,8 @@ export default function StatCard({ icon, value, label }) {
       </div>
     </div>
   );
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> origin/main

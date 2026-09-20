@@ -6,4 +6,8 @@ export const sessionsApi = {
   create: (body) => http.post('/sessions', body),
   update: (id, body) => http.put(`/sessions/${id}`, body),
   remove: (id) => http.delete(`/sessions/${id}`),
+<<<<<<< HEAD
 };
+=======
+};
+>>>>>>> origin/main

@@ -16,3 +16,7 @@ export function ThemeProvider({ children }) {
 export function useTheme() {
   return useContext(ThemeContext);
 }
+<<<<<<< HEAD
+=======
+
+>>>>>>> origin/main

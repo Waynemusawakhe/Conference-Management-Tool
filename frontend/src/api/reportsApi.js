@@ -6,4 +6,8 @@ export const reportsApi = {
   reviews: () => http.get('/reports/reviews'),
   registrations: () => http.get('/reports/registrations'),
   conferences: () => http.get('/reports/conferences'),
+<<<<<<< HEAD
 };
+=======
+};
+>>>>>>> origin/main

@@ -34,3 +34,7 @@ export default function HeroVisual() {
     </div>
   );
 }
+<<<<<<< HEAD
+=======
+
+>>>>>>> origin/main

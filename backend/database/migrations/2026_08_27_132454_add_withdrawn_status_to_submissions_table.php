@@ -1,4 +1,7 @@
+<<<<<<< HEAD
 ```php
+=======
+>>>>>>> origin/main
 <?php
 
 use Illuminate\Database\Migrations\Migration;

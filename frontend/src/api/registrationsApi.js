@@ -6,4 +6,8 @@ export const registrationsApi = {
   create: (body) => http.post('/registrations', body),
   update: (id, body) => http.put(`/registrations/${id}`, body),
   remove: (id) => http.delete(`/registrations/${id}`),
+<<<<<<< HEAD
 };
+=======
+};
+>>>>>>> origin/main

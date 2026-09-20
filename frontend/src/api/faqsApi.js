@@ -6,4 +6,8 @@ export const faqsApi = {
   create: (body) => http.post('/faqs', body),
   update: (id, body) => http.put(`/faqs/${id}`, body),
   remove: (id) => http.delete(`/faqs/${id}`),
+<<<<<<< HEAD
 };
+=======
+};
+>>>>>>> origin/main

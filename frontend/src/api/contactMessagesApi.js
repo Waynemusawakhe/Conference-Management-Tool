@@ -6,4 +6,8 @@ export const contactMessagesApi = {
   create: (body) => http.post('/contact-messages', body),
   remove: (id) => http.delete(`/contact-messages/${id}`),
   updateStatus: (id, status) => http.patch(`/contact-messages/${id}/status`, { status }),
+<<<<<<< HEAD
 };
+=======
+};
+>>>>>>> origin/main

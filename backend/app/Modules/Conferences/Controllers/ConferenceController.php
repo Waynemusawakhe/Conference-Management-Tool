@@ -9,7 +9,10 @@ use App\Modules\Conferences\Actions\UpdateConferenceStatus;
 use App\Modules\Conferences\Models\Conference;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+<<<<<<< HEAD
 use Illuminate\Support\Facades\DB;
+=======
+>>>>>>> origin/main
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 use OpenApi\Attributes as OA;
@@ -25,6 +28,7 @@ class ConferenceController
                 response: 200,
                 description: 'List of conferences'
             ),
+<<<<<<< HEAD
             new OA\Response(
                 response: 401,
                 description: 'Unauthorised'
@@ -40,10 +44,37 @@ class ConferenceController
 
         return response()->json($conferences);
     }
+=======
+        ]
+    )]
+    public function index(Request $request): JsonResponse
+{
+    $perPage = (int) $request->input('per_page', 15);
+
+    $perPage = max(1, min($perPage, 100));
+
+    $conferences = Conference::query()
+        ->with('organiser:id,name,email')
+        ->orderByDesc('created_at')
+        ->paginate($perPage);
+
+    return response()->json([
+        'success' => true,
+        'data' => $conferences->items(),
+        'meta' => [
+            'current_page' => $conferences->currentPage(),
+            'per_page' => $conferences->perPage(),
+            'total' => $conferences->total(),
+            'last_page' => $conferences->lastPage(),
+        ],
+    ]);
+}
+>>>>>>> origin/main
 
     #[OA\Post(
         path: '/api/v1/conferences',
         summary: 'Create a conference',
+<<<<<<< HEAD
         tags: ['Conferences'],
         requestBody: new OA\RequestBody(
             required: true,
@@ -55,12 +86,51 @@ class ConferenceController
                     new OA\Property(property: 'name', type: 'string', example: 'CMT Annual Conference'),
                     new OA\Property(property: 'description', type: 'string', example: 'Annual conference'),
                     new OA\Property(property: 'category', type: 'string', example: 'Technology'),
+=======
+        description: 'The authenticated organiser or admin becomes the conference organiser.',
+        tags: ['Conferences'],
+        security: [['sanctum' => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: [
+                    'code',
+                    'name',
+                    'format',
+                    'start_date',
+                    'end_date',
+                ],
+                properties: [
+                    new OA\Property(
+                        property: 'code',
+                        type: 'string',
+                        example: 'CMT2026'
+                    ),
+                    new OA\Property(
+                        property: 'name',
+                        type: 'string',
+                        example: 'CMT Annual Conference'
+                    ),
+                    new OA\Property(
+                        property: 'description',
+                        type: 'string',
+                        nullable: true,
+                        example: 'Annual conference'
+                    ),
+                    new OA\Property(
+                        property: 'category',
+                        type: 'string',
+                        nullable: true,
+                        example: 'Technology'
+                    ),
+>>>>>>> origin/main
                     new OA\Property(
                         property: 'topics',
                         type: 'array',
                         items: new OA\Items(type: 'string'),
                         example: ['AI', 'Software Engineering']
                     ),
+<<<<<<< HEAD
                     new OA\Property(property: 'format', type: 'string', enum: ['in_person', 'virtual', 'hybrid'], example: 'virtual'),
                     new OA\Property(property: 'submission_status', type: 'string', enum: ['open', 'closed'], example: 'open'),
                     new OA\Property(property: 'start_date', type: 'string', format: 'date', example: '2026-10-01'),
@@ -70,12 +140,89 @@ class ConferenceController
                     new OA\Property(property: 'city', type: 'string', nullable: true, example: 'Johannesburg'),
                     new OA\Property(property: 'country', type: 'string', nullable: true, example: 'South Africa'),
                     new OA\Property(property: 'website_link', type: 'string', nullable: true, example: 'https://example.com'),
+=======
+                    new OA\Property(
+                        property: 'format',
+                        type: 'string',
+                        enum: ['in_person', 'virtual', 'hybrid'],
+                        example: 'virtual'
+                    ),
+                    new OA\Property(
+                        property: 'submission_status',
+                        type: 'string',
+                        enum: ['open', 'closed'],
+                        example: 'open'
+                    ),
+                    new OA\Property(
+                        property: 'start_date',
+                        type: 'string',
+                        format: 'date',
+                        example: '2026-10-01'
+                    ),
+                    new OA\Property(
+                        property: 'end_date',
+                        type: 'string',
+                        format: 'date',
+                        example: '2026-10-03'
+                    ),
+                    new OA\Property(
+                        property: 'submission_deadline',
+                        type: 'string',
+                        format: 'date',
+                        nullable: true,
+                        example: '2026-09-01'
+                    ),
+                    new OA\Property(
+                        property: 'venue_name',
+                        type: 'string',
+                        nullable: true,
+                        example: 'CMT Convention Centre'
+                    ),
+                    new OA\Property(
+                        property: 'city',
+                        type: 'string',
+                        nullable: true,
+                        example: 'Johannesburg'
+                    ),
+                    new OA\Property(
+                        property: 'country',
+                        type: 'string',
+                        nullable: true,
+                        example: 'South Africa'
+                    ),
+                    new OA\Property(
+                        property: 'website_link',
+                        type: 'string',
+                        format: 'uri',
+                        nullable: true,
+                        example: 'https://example.com'
+                    ),
+>>>>>>> origin/main
                 ]
             )
         ),
         responses: [
+<<<<<<< HEAD
             new OA\Response(response: 201, description: 'Conference created successfully'),
             new OA\Response(response: 422, description: 'Validation error'),
+=======
+            new OA\Response(
+                response: 201,
+                description: 'Conference created successfully'
+            ),
+            new OA\Response(
+                response: 401,
+                description: 'Unauthenticated'
+            ),
+            new OA\Response(
+                response: 403,
+                description: 'Organiser or admin role required'
+            ),
+            new OA\Response(
+                response: 422,
+                description: 'Validation error'
+            ),
+>>>>>>> origin/main
         ]
     )]
     public function store(
@@ -91,34 +238,52 @@ class ConferenceController
                 'max:255',
                 'unique:conferences,code',
             ],
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/main
             'name' => [
                 'required',
                 'string',
                 'max:255',
             ],
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/main
             'description' => [
                 'nullable',
                 'string',
             ],
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/main
             'category' => [
                 'nullable',
                 'string',
                 'max:255',
             ],
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/main
             'topics' => [
                 'nullable',
                 'array',
             ],
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/main
             'topics.*' => [
                 'string',
                 'max:255',
             ],
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/main
             'format' => [
                 'required',
                 Rule::in([
@@ -127,7 +292,10 @@ class ConferenceController
                     'hybrid',
                 ]),
             ],
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/main
             'submission_status' => [
                 'nullable',
                 Rule::in([
@@ -135,42 +303,63 @@ class ConferenceController
                     'closed',
                 ]),
             ],
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/main
             'start_date' => [
                 'required',
                 'date',
             ],
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/main
             'end_date' => [
                 'required',
                 'date',
                 'after_or_equal:start_date',
             ],
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/main
             'submission_deadline' => [
                 'nullable',
                 'date',
                 'before_or_equal:start_date',
             ],
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/main
             'venue_name' => [
                 'nullable',
                 'string',
                 'max:255',
             ],
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/main
             'city' => [
                 'nullable',
                 'string',
                 'max:255',
             ],
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/main
             'country' => [
                 'nullable',
                 'string',
                 'max:255',
             ],
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/main
             'website_link' => [
                 'nullable',
                 'url',
@@ -178,7 +367,10 @@ class ConferenceController
             ],
         ]);
 
+<<<<<<< HEAD
         // The authenticated user is the organiser
+=======
+>>>>>>> origin/main
         $data['organiser_id'] = $request->user()->id;
 
         $conference = $action->execute($data);
@@ -205,8 +397,19 @@ class ConferenceController
             ),
         ],
         responses: [
+<<<<<<< HEAD
             new OA\Response(response: 200, description: 'Conference details'),
             new OA\Response(response: 404, description: 'Conference not found'),
+=======
+            new OA\Response(
+                response: 200,
+                description: 'Conference details'
+            ),
+            new OA\Response(
+                response: 404,
+                description: 'Conference not found'
+            ),
+>>>>>>> origin/main
         ]
     )]
     public function show(Conference $conference): JsonResponse
@@ -222,6 +425,10 @@ class ConferenceController
         path: '/api/v1/conferences/{conference}',
         summary: 'Update a conference',
         tags: ['Conferences'],
+<<<<<<< HEAD
+=======
+        security: [['sanctum' => []]],
+>>>>>>> origin/main
         parameters: [
             new OA\Parameter(
                 name: 'conference',
@@ -236,6 +443,7 @@ class ConferenceController
             required: true,
             content: new OA\JsonContent(
                 properties: [
+<<<<<<< HEAD
                     new OA\Property(property: 'code', type: 'string', example: 'CMT2026'),
                     new OA\Property(property: 'name', type: 'string', example: 'Updated Conference Name'),
                     new OA\Property(property: 'description', type: 'string'),
@@ -249,13 +457,110 @@ class ConferenceController
                     new OA\Property(property: 'city', type: 'string', nullable: true),
                     new OA\Property(property: 'country', type: 'string', nullable: true),
                     new OA\Property(property: 'website_link', type: 'string', nullable: true),
+=======
+                    new OA\Property(
+                        property: 'code',
+                        type: 'string',
+                        example: 'CMT2026'
+                    ),
+                    new OA\Property(
+                        property: 'name',
+                        type: 'string',
+                        example: 'Updated Conference Name'
+                    ),
+                    new OA\Property(
+                        property: 'description',
+                        type: 'string',
+                        nullable: true
+                    ),
+                    new OA\Property(
+                        property: 'category',
+                        type: 'string',
+                        nullable: true
+                    ),
+                    new OA\Property(
+                        property: 'topics',
+                        type: 'array',
+                        items: new OA\Items(type: 'string')
+                    ),
+                    new OA\Property(
+                        property: 'format',
+                        type: 'string',
+                        enum: ['in_person', 'virtual', 'hybrid']
+                    ),
+                    new OA\Property(
+                        property: 'submission_status',
+                        type: 'string',
+                        enum: ['open', 'closed']
+                    ),
+                    new OA\Property(
+                        property: 'start_date',
+                        type: 'string',
+                        format: 'date'
+                    ),
+                    new OA\Property(
+                        property: 'end_date',
+                        type: 'string',
+                        format: 'date'
+                    ),
+                    new OA\Property(
+                        property: 'submission_deadline',
+                        type: 'string',
+                        format: 'date',
+                        nullable: true
+                    ),
+                    new OA\Property(
+                        property: 'venue_name',
+                        type: 'string',
+                        nullable: true
+                    ),
+                    new OA\Property(
+                        property: 'city',
+                        type: 'string',
+                        nullable: true
+                    ),
+                    new OA\Property(
+                        property: 'country',
+                        type: 'string',
+                        nullable: true
+                    ),
+                    new OA\Property(
+                        property: 'website_link',
+                        type: 'string',
+                        format: 'uri',
+                        nullable: true
+                    ),
+>>>>>>> origin/main
                 ]
             )
         ),
         responses: [
+<<<<<<< HEAD
             new OA\Response(response: 200, description: 'Conference updated successfully'),
             new OA\Response(response: 404, description: 'Conference not found'),
             new OA\Response(response: 422, description: 'Validation error'),
+=======
+            new OA\Response(
+                response: 200,
+                description: 'Conference updated successfully'
+            ),
+            new OA\Response(
+                response: 401,
+                description: 'Unauthenticated'
+            ),
+            new OA\Response(
+                response: 403,
+                description: 'Forbidden'
+            ),
+            new OA\Response(
+                response: 404,
+                description: 'Conference not found'
+            ),
+            new OA\Response(
+                response: 422,
+                description: 'Validation error'
+            ),
+>>>>>>> origin/main
         ]
     )]
     public function update(
@@ -264,11 +569,16 @@ class ConferenceController
         UpdateConference $action
     ): JsonResponse {
         Gate::authorize('update', $conference);
+<<<<<<< HEAD
+=======
+
+>>>>>>> origin/main
         $data = $request->validate([
             'code' => [
                 'sometimes',
                 'string',
                 'max:255',
+<<<<<<< HEAD
                 Rule::unique('conferences', 'code')->ignore($conference->id),
             ],
             'name' => ['sometimes', 'string', 'max:255'],
@@ -285,6 +595,80 @@ class ConferenceController
             'city' => ['nullable', 'string', 'max:255'],
             'country' => ['nullable', 'string', 'max:255'],
             'website_link' => ['nullable', 'url', 'max:255'],
+=======
+                Rule::unique('conferences', 'code')
+                    ->ignore($conference->id),
+            ],
+            'name' => [
+                'sometimes',
+                'string',
+                'max:255',
+            ],
+            'description' => [
+                'nullable',
+                'string',
+            ],
+            'category' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
+            'topics' => [
+                'nullable',
+                'array',
+            ],
+            'topics.*' => [
+                'string',
+                'max:255',
+            ],
+            'format' => [
+                'sometimes',
+                Rule::in([
+                    'in_person',
+                    'virtual',
+                    'hybrid',
+                ]),
+            ],
+            'submission_status' => [
+                'sometimes',
+                Rule::in([
+                    'open',
+                    'closed',
+                ]),
+            ],
+            'start_date' => [
+                'sometimes',
+                'date',
+            ],
+            'end_date' => [
+                'sometimes',
+                'date',
+            ],
+            'submission_deadline' => [
+                'nullable',
+                'date',
+            ],
+            'venue_name' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
+            'city' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
+            'country' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
+            'website_link' => [
+                'nullable',
+                'url',
+                'max:255',
+            ],
+>>>>>>> origin/main
         ]);
 
         $updated = $action->execute($conference, $data);
@@ -299,6 +683,10 @@ class ConferenceController
         path: '/api/v1/conferences/{conference}',
         summary: 'Delete a conference',
         tags: ['Conferences'],
+<<<<<<< HEAD
+=======
+        security: [['sanctum' => []]],
+>>>>>>> origin/main
         parameters: [
             new OA\Parameter(
                 name: 'conference',
@@ -310,8 +698,27 @@ class ConferenceController
             ),
         ],
         responses: [
+<<<<<<< HEAD
             new OA\Response(response: 200, description: 'Conference deleted successfully'),
             new OA\Response(response: 404, description: 'Conference not found'),
+=======
+            new OA\Response(
+                response: 200,
+                description: 'Conference deleted successfully'
+            ),
+            new OA\Response(
+                response: 401,
+                description: 'Unauthenticated'
+            ),
+            new OA\Response(
+                response: 403,
+                description: 'Forbidden'
+            ),
+            new OA\Response(
+                response: 404,
+                description: 'Conference not found'
+            ),
+>>>>>>> origin/main
         ]
     )]
     public function destroy(
@@ -319,6 +726,10 @@ class ConferenceController
         DeleteConference $action
     ): JsonResponse {
         Gate::authorize('delete', $conference);
+<<<<<<< HEAD
+=======
+
+>>>>>>> origin/main
         $action->execute($conference);
 
         return response()->json([
@@ -330,6 +741,10 @@ class ConferenceController
         path: '/api/v1/conferences/{conference}/status',
         summary: 'Update conference submission status',
         tags: ['Conferences'],
+<<<<<<< HEAD
+=======
+        security: [['sanctum' => []]],
+>>>>>>> origin/main
         parameters: [
             new OA\Parameter(
                 name: 'conference',
@@ -355,8 +770,31 @@ class ConferenceController
             )
         ),
         responses: [
+<<<<<<< HEAD
             new OA\Response(response: 200, description: 'Status updated successfully'),
             new OA\Response(response: 422, description: 'Validation error'),
+=======
+            new OA\Response(
+                response: 200,
+                description: 'Status updated successfully'
+            ),
+            new OA\Response(
+                response: 401,
+                description: 'Unauthenticated'
+            ),
+            new OA\Response(
+                response: 403,
+                description: 'Forbidden'
+            ),
+            new OA\Response(
+                response: 404,
+                description: 'Conference not found'
+            ),
+            new OA\Response(
+                response: 422,
+                description: 'Validation error'
+            ),
+>>>>>>> origin/main
         ]
     )]
     public function updateStatus(
@@ -365,11 +803,29 @@ class ConferenceController
         UpdateConferenceStatus $action
     ): JsonResponse {
         Gate::authorize('updateStatus', $conference);
+<<<<<<< HEAD
         $data = $request->validate([
             'status' => ['required', Rule::in(['open', 'closed'])],
         ]);
 
         $updated = $action->execute($conference, $data['status']);
+=======
+
+        $data = $request->validate([
+            'status' => [
+                'required',
+                Rule::in([
+                    'open',
+                    'closed',
+                ]),
+            ],
+        ]);
+
+        $updated = $action->execute(
+            $conference,
+            $data['status']
+        );
+>>>>>>> origin/main
 
         return response()->json([
             'message' => 'Conference status updated successfully.',
@@ -379,8 +835,15 @@ class ConferenceController
 
     #[OA\Get(
         path: '/api/v1/conferences/{conference}/submissions',
+<<<<<<< HEAD
         summary: 'Get all submissions for a conference',
         tags: ['Conferences'],
+=======
+        summary: 'Get submissions belonging to a conference',
+        description: 'Only an admin or the organiser who owns the conference may access these submissions.',
+        tags: ['Conferences'],
+        security: [['sanctum' => []]],
+>>>>>>> origin/main
         parameters: [
             new OA\Parameter(
                 name: 'conference',
@@ -392,6 +855,7 @@ class ConferenceController
             ),
         ],
         responses: [
+<<<<<<< HEAD
             new OA\Response(response: 200, description: 'Conference submissions'),
             new OA\Response(response: 404, description: 'Conference not found'),
         ]
@@ -400,6 +864,33 @@ class ConferenceController
     {
         $submissions = DB::table('submissions')
             ->where('conference_id', $conference->id)
+=======
+            new OA\Response(
+                response: 200,
+                description: 'Conference submissions'
+            ),
+            new OA\Response(
+                response: 401,
+                description: 'Unauthenticated'
+            ),
+            new OA\Response(
+                response: 403,
+                description: 'Forbidden'
+            ),
+            new OA\Response(
+                response: 404,
+                description: 'Conference not found'
+            ),
+        ]
+    )]
+    public function submissions(
+        Conference $conference
+    ): JsonResponse {
+        Gate::authorize('viewRelated', $conference);
+
+        $submissions = $conference->submissions()
+            ->with('author:id,name,email')
+>>>>>>> origin/main
             ->orderByDesc('created_at')
             ->paginate(15);
 
@@ -408,8 +899,15 @@ class ConferenceController
 
     #[OA\Get(
         path: '/api/v1/conferences/{conference}/registrations',
+<<<<<<< HEAD
         summary: 'Get all registrations for a conference',
         tags: ['Conferences'],
+=======
+        summary: 'Get registrations belonging to a conference',
+        description: 'Only an admin or the organiser who owns the conference may access these registrations.',
+        tags: ['Conferences'],
+        security: [['sanctum' => []]],
+>>>>>>> origin/main
         parameters: [
             new OA\Parameter(
                 name: 'conference',
@@ -421,6 +919,7 @@ class ConferenceController
             ),
         ],
         responses: [
+<<<<<<< HEAD
             new OA\Response(response: 200, description: 'Conference registrations'),
             new OA\Response(response: 404, description: 'Conference not found'),
         ]
@@ -429,6 +928,33 @@ class ConferenceController
     {
         $registrations = DB::table('conference_registrations')
             ->where('conference_id', $conference->id)
+=======
+            new OA\Response(
+                response: 200,
+                description: 'Conference registrations'
+            ),
+            new OA\Response(
+                response: 401,
+                description: 'Unauthenticated'
+            ),
+            new OA\Response(
+                response: 403,
+                description: 'Forbidden'
+            ),
+            new OA\Response(
+                response: 404,
+                description: 'Conference not found'
+            ),
+        ]
+    )]
+    public function registrations(
+        Conference $conference
+    ): JsonResponse {
+        Gate::authorize('viewRelated', $conference);
+
+        $registrations = $conference->registrations()
+            ->with('user:id,name,email')
+>>>>>>> origin/main
             ->orderByDesc('registered_at')
             ->paginate(15);
 
@@ -437,8 +963,15 @@ class ConferenceController
 
     #[OA\Get(
         path: '/api/v1/conferences/{conference}/sessions',
+<<<<<<< HEAD
         summary: 'Get all sessions for a conference',
         tags: ['Conferences'],
+=======
+        summary: 'Get sessions belonging to a conference',
+        description: 'Only an admin or the organiser who owns the conference may access these sessions.',
+        tags: ['Conferences'],
+        security: [['sanctum' => []]],
+>>>>>>> origin/main
         parameters: [
             new OA\Parameter(
                 name: 'conference',
@@ -450,6 +983,7 @@ class ConferenceController
             ),
         ],
         responses: [
+<<<<<<< HEAD
             new OA\Response(response: 200, description: 'Conference sessions'),
             new OA\Response(response: 404, description: 'Conference not found'),
         ]
@@ -458,9 +992,42 @@ class ConferenceController
     {
         $sessions = DB::table('conference_sessions')
             ->where('conference_id', $conference->id)
+=======
+            new OA\Response(
+                response: 200,
+                description: 'Conference sessions'
+            ),
+            new OA\Response(
+                response: 401,
+                description: 'Unauthenticated'
+            ),
+            new OA\Response(
+                response: 403,
+                description: 'Forbidden'
+            ),
+            new OA\Response(
+                response: 404,
+                description: 'Conference not found'
+            ),
+        ]
+    )]
+    public function sessions(
+        Conference $conference
+    ): JsonResponse {
+        Gate::authorize('viewRelated', $conference);
+
+        $sessions = $conference->sessions()
+            ->with(
+                'submission:id,conference_id,title,track,status'
+            )
+>>>>>>> origin/main
             ->orderBy('scheduled_time')
             ->paginate(15);
 
         return response()->json($sessions);
     }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> origin/main

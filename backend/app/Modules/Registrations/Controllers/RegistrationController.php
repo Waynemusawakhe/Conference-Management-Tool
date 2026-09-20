@@ -23,7 +23,12 @@ class RegistrationController extends Controller
     #[OA\Get(
         path: '/api/v1/registrations',
         tags: ['Registrations'],
+<<<<<<< HEAD
         summary: 'Get all registrations',
+=======
+        summary: 'Get registrations visible to the authenticated user',
+        description: 'Admins see all registrations, organisers see registrations for their conferences, and regular users see only their own registrations.',
+>>>>>>> origin/main
         security: [['sanctum' => []]],
         parameters: [
             new OA\Parameter(
@@ -43,7 +48,11 @@ class RegistrationController extends Controller
             new OA\Parameter(
                 name: 'status',
                 in: 'query',
+<<<<<<< HEAD
                 description: 'Filter by status',
+=======
+                description: 'Filter by registration status',
+>>>>>>> origin/main
                 required: false,
                 schema: new OA\Schema(
                     type: 'string',
@@ -51,12 +60,43 @@ class RegistrationController extends Controller
                 )
             ),
             new OA\Parameter(
+<<<<<<< HEAD
                 name: 'per_page',
                 in: 'query',
                 description: 'Items per page',
                 required: false,
                 schema: new OA\Schema(
                     type: 'integer',
+=======
+                name: 'registered_from',
+                in: 'query',
+                description: 'Filter registrations from this date',
+                required: false,
+                schema: new OA\Schema(
+                    type: 'string',
+                    format: 'date'
+                )
+            ),
+            new OA\Parameter(
+                name: 'registered_to',
+                in: 'query',
+                description: 'Filter registrations up to this date',
+                required: false,
+                schema: new OA\Schema(
+                    type: 'string',
+                    format: 'date'
+                )
+            ),
+            new OA\Parameter(
+                name: 'per_page',
+                in: 'query',
+                description: 'Number of registrations per page',
+                required: false,
+                schema: new OA\Schema(
+                    type: 'integer',
+                    minimum: 1,
+                    maximum: 100,
+>>>>>>> origin/main
                     default: 15
                 )
             ),
@@ -64,18 +104,64 @@ class RegistrationController extends Controller
         responses: [
             new OA\Response(
                 response: 200,
+<<<<<<< HEAD
                 description: 'Successful operation'
+=======
+                description: 'Registrations retrieved successfully'
+>>>>>>> origin/main
             ),
             new OA\Response(
                 response: 401,
                 description: 'Unauthenticated'
             ),
+<<<<<<< HEAD
+=======
+            new OA\Response(
+                response: 422,
+                description: 'Invalid query parameter'
+            ),
+>>>>>>> origin/main
         ]
     )]
     public function index(
         Request $request,
         GetRegistrationsAction $action
     ): JsonResponse {
+<<<<<<< HEAD
+=======
+        $validated = $request->validate([
+            'conference_id' => [
+                'nullable',
+                'integer',
+                'exists:conferences,id',
+            ],
+            'user_id' => [
+                'nullable',
+                'integer',
+                'exists:users,id',
+            ],
+            'status' => [
+                'nullable',
+                'in:registered,cancelled',
+            ],
+            'registered_from' => [
+                'nullable',
+                'date',
+            ],
+            'registered_to' => [
+                'nullable',
+                'date',
+                'after_or_equal:registered_from',
+            ],
+            'per_page' => [
+                'nullable',
+                'integer',
+                'min:1',
+                'max:100',
+            ],
+        ]);
+
+>>>>>>> origin/main
         $filters = $request->only([
             'conference_id',
             'user_id',
@@ -84,9 +170,19 @@ class RegistrationController extends Controller
             'registered_to',
         ]);
 
+<<<<<<< HEAD
         $perPage = $request->input('per_page', 15);
 
         $registrations = $action->execute($filters, $perPage);
+=======
+        $perPage = (int) ($validated['per_page'] ?? 15);
+
+        $registrations = $action->execute(
+            $request->user(),
+            $filters,
+            $perPage
+        );
+>>>>>>> origin/main
 
         return response()->json([
             'success' => true,
@@ -104,25 +200,44 @@ class RegistrationController extends Controller
         path: '/api/v1/registrations/{id}',
         tags: ['Registrations'],
         summary: 'Get a specific registration',
+<<<<<<< HEAD
+=======
+        description: 'Admins may view any registration, organisers may view registrations for their conferences, and users may view their own registrations.',
+>>>>>>> origin/main
         security: [['sanctum' => []]],
         parameters: [
             new OA\Parameter(
                 name: 'id',
                 in: 'path',
                 required: true,
+<<<<<<< HEAD
+=======
+                description: 'Registration ID',
+>>>>>>> origin/main
                 schema: new OA\Schema(type: 'integer')
             ),
         ],
         responses: [
             new OA\Response(
                 response: 200,
+<<<<<<< HEAD
                 description: 'Successful operation'
+=======
+                description: 'Registration retrieved successfully'
+>>>>>>> origin/main
             ),
             new OA\Response(
                 response: 401,
                 description: 'Unauthenticated'
             ),
             new OA\Response(
+<<<<<<< HEAD
+=======
+                response: 403,
+                description: 'Forbidden'
+            ),
+            new OA\Response(
+>>>>>>> origin/main
                 response: 404,
                 description: 'Registration not found'
             ),
@@ -145,18 +260,28 @@ class RegistrationController extends Controller
     #[OA\Post(
         path: '/api/v1/registrations',
         tags: ['Registrations'],
+<<<<<<< HEAD
         summary: 'Create a new registration',
+=======
+        summary: 'Register the authenticated user for a conference',
+        description: 'The user ID and registration status are derived by the backend and cannot be selected by the client.',
+>>>>>>> origin/main
         security: [['sanctum' => []]],
         requestBody: new OA\RequestBody(
             required: true,
             content: new OA\JsonContent(
+<<<<<<< HEAD
                 required: ['conference_id', 'user_id'],
+=======
+                required: ['conference_id'],
+>>>>>>> origin/main
                 properties: [
                     new OA\Property(
                         property: 'conference_id',
                         type: 'integer',
                         example: 1
                     ),
+<<<<<<< HEAD
                     new OA\Property(
                         property: 'user_id',
                         type: 'integer',
@@ -168,6 +293,8 @@ class RegistrationController extends Controller
                         enum: ['registered', 'cancelled'],
                         example: 'registered'
                     ),
+=======
+>>>>>>> origin/main
                 ]
             )
         ),
@@ -182,11 +309,15 @@ class RegistrationController extends Controller
             ),
             new OA\Response(
                 response: 422,
+<<<<<<< HEAD
                 description: 'Validation error'
             ),
             new OA\Response(
                 response: 409,
                 description: 'Already registered'
+=======
+                description: 'Validation error or duplicate registration'
+>>>>>>> origin/main
             ),
         ]
     )]
@@ -198,6 +329,7 @@ class RegistrationController extends Controller
 
         $data = $request->validated();
 
+<<<<<<< HEAD
         try {
             $registration = $action->execute($data);
 
@@ -213,18 +345,41 @@ class RegistrationController extends Controller
                 'error' => $e->getMessage(),
             ], 422);
         }
+=======
+        // The authenticated user can only register themselves.
+        $data['user_id'] = $request->user()->id;
+
+        // New registrations always begin as registered.
+        $data['status'] = 'registered';
+
+        $registration = $action->execute($data);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Registration created successfully.',
+            'data' => $registration,
+        ], 201);
+>>>>>>> origin/main
     }
 
     #[OA\Put(
         path: '/api/v1/registrations/{id}',
         tags: ['Registrations'],
+<<<<<<< HEAD
         summary: 'Update a registration',
+=======
+        summary: 'Update a registration status',
+>>>>>>> origin/main
         security: [['sanctum' => []]],
         parameters: [
             new OA\Parameter(
                 name: 'id',
                 in: 'path',
                 required: true,
+<<<<<<< HEAD
+=======
+                description: 'Registration ID',
+>>>>>>> origin/main
                 schema: new OA\Schema(type: 'integer')
             ),
         ],
@@ -233,6 +388,7 @@ class RegistrationController extends Controller
             content: new OA\JsonContent(
                 properties: [
                     new OA\Property(
+<<<<<<< HEAD
                         property: 'conference_id',
                         type: 'integer',
                         example: 1
@@ -243,6 +399,8 @@ class RegistrationController extends Controller
                         example: 1
                     ),
                     new OA\Property(
+=======
+>>>>>>> origin/main
                         property: 'status',
                         type: 'string',
                         enum: ['registered', 'cancelled'],
@@ -261,6 +419,13 @@ class RegistrationController extends Controller
                 description: 'Unauthenticated'
             ),
             new OA\Response(
+<<<<<<< HEAD
+=======
+                response: 403,
+                description: 'Forbidden'
+            ),
+            new OA\Response(
+>>>>>>> origin/main
                 response: 404,
                 description: 'Registration not found'
             ),
@@ -275,6 +440,7 @@ class RegistrationController extends Controller
         int $id,
         UpdateRegistrationAction $action
     ): JsonResponse {
+<<<<<<< HEAD
         $registration = (new GetRegistrationAction)->execute($id);
 
         $this->authorize('update', $registration);
@@ -296,18 +462,43 @@ class RegistrationController extends Controller
                 'error' => $e->getMessage(),
             ], 422);
         }
+=======
+        $registration = (new GetRegistrationAction())->execute($id);
+
+        $this->authorize('update', $registration);
+
+        $updatedRegistration = $action->execute(
+            $id,
+            $request->validated()
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Registration updated successfully.',
+            'data' => $updatedRegistration,
+        ]);
+>>>>>>> origin/main
     }
 
     #[OA\Delete(
         path: '/api/v1/registrations/{id}',
         tags: ['Registrations'],
+<<<<<<< HEAD
         summary: 'Cancel/delete a registration',
+=======
+        summary: 'Cancel a registration',
+        description: 'The registration is retained for reporting and its status is changed to cancelled.',
+>>>>>>> origin/main
         security: [['sanctum' => []]],
         parameters: [
             new OA\Parameter(
                 name: 'id',
                 in: 'path',
                 required: true,
+<<<<<<< HEAD
+=======
+                description: 'Registration ID',
+>>>>>>> origin/main
                 schema: new OA\Schema(type: 'integer')
             ),
         ],
@@ -321,6 +512,13 @@ class RegistrationController extends Controller
                 description: 'Unauthenticated'
             ),
             new OA\Response(
+<<<<<<< HEAD
+=======
+                response: 403,
+                description: 'Forbidden'
+            ),
+            new OA\Response(
+>>>>>>> origin/main
                 response: 404,
                 description: 'Registration not found'
             ),
@@ -330,6 +528,7 @@ class RegistrationController extends Controller
         int $id,
         DeleteRegistrationAction $action
     ): JsonResponse {
+<<<<<<< HEAD
         $registration = (new GetRegistrationAction)->execute($id);
 
         $this->authorize('delete', $registration);
@@ -350,3 +549,17 @@ class RegistrationController extends Controller
         }
     }
 }
+=======
+        $registration = (new GetRegistrationAction())->execute($id);
+
+        $this->authorize('delete', $registration);
+
+        $action->execute($id);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Registration cancelled successfully.',
+        ]);
+    }
+}
+>>>>>>> origin/main

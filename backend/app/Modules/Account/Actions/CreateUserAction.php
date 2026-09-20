@@ -13,7 +13,11 @@ class CreateUserAction
             'name' => $data['name'],
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
+<<<<<<< HEAD
             'role' => $data['role'] 
+=======
+            'role' => $data['role'],
+>>>>>>> origin/main
         ]);
 
         $user->sendEmailVerificationNotification();

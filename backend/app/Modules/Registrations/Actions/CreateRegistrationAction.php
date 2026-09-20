@@ -30,7 +30,12 @@ class CreateRegistrationAction
         } catch (QueryException $e) {
             if ($e->getCode() === '23505' || str_contains($e->getMessage(), 'Duplicate entry')) {
                 throw ValidationException::withMessages([
+<<<<<<< HEAD
                     'user_id' => 'This user is already registered for this conference.',
+=======
+                    'conference_id' =>
+                        'You are already registered for this conference.',
+>>>>>>> origin/main
                 ]);
             }
             throw $e;

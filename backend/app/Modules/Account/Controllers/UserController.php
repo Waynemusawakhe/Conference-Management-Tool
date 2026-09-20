@@ -5,6 +5,10 @@ namespace App\Modules\Account\Controllers;
 use App\Http\Controllers\Controller;
 use App\Modules\Account\Actions\GetUserAction;
 use App\Modules\Account\Actions\GetUsersAction;
+<<<<<<< HEAD
+=======
+use App\Modules\Account\Actions\GetReviewersAction;
+>>>>>>> origin/main
 use Illuminate\Http\JsonResponse;
 use OpenApi\Attributes as OA;
 
@@ -31,6 +35,18 @@ class UserController extends Controller
         ]);
     }
 
+<<<<<<< HEAD
+=======
+    public function reviewers(
+        GetReviewersAction $action
+    ): JsonResponse {
+        return response()->json([
+            'success' => true,
+            'data' => $action->execute(),
+        ]);
+    }
+
+>>>>>>> origin/main
     #[OA\Get(
         path: '/api/v1/users/{id}',
         tags: ['User Management'],

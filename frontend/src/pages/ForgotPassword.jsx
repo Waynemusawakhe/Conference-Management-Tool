@@ -23,4 +23,8 @@ export default function ForgotPassword() {
       </section>
     </main>
   );
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> origin/main

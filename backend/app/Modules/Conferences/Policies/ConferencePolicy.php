@@ -32,4 +32,15 @@ class ConferencePolicy
             || ($user->role === 'organiser'
                 && $user->id === $conference->organiser_id);
     }
+<<<<<<< HEAD
+=======
+
+    public function viewRelated(User $user,Conference $conference): bool {
+    return $user->role === 'admin'
+        || (
+            $user->role === 'organiser'
+            && $user->id === $conference->organiser_id
+        );
+    }
+>>>>>>> origin/main
 }

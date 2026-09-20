@@ -118,3 +118,7 @@ export default function ScoreSubmission() {
     </div>
   );
 }
+<<<<<<< HEAD
+=======
+
+>>>>>>> origin/main

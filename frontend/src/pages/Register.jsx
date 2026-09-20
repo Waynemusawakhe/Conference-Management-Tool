@@ -329,4 +329,8 @@ function Register() {
   );
 }
 
+<<<<<<< HEAD
 export default Register;
+=======
+export default Register;
+>>>>>>> origin/main

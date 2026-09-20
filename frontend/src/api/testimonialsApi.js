@@ -6,4 +6,8 @@ export const testimonialsApi = {
   create: (body) => http.post('/testimonials', body),
   update: (id, body) => http.put(`/testimonials/${id}`, body),
   remove: (id) => http.delete(`/testimonials/${id}`),
+<<<<<<< HEAD
 };
+=======
+};
+>>>>>>> origin/main

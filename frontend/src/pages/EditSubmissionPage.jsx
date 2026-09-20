@@ -33,7 +33,11 @@ export default function EditSubmissionPage() {
     setError(null);
     try {
       await submissionsApi.update(id, formData);
+<<<<<<< HEAD
       navigate("/admin");
+=======
+      navigate("/admin-dashboard");
+>>>>>>> origin/main
     } catch (err) {
       setError(err.message || "Failed to update submission");
     } finally {
@@ -45,7 +49,11 @@ export default function EditSubmissionPage() {
 
   return (
     <div className="rounded-[20px] border border-[#e4e8f0] bg-white p-6 shadow-[0_10px_30px_rgba(15,28,65,.035)]">
+<<<<<<< HEAD
       <button onClick={() => navigate("/AdminDashboard")} className="mb-6 flex items-center gap-2 text-[11px] font-bold text-[#6655f6] hover:underline">
+=======
+      <button onClick={() => navigate("/admin-dashboard")} className="mb-6 flex items-center gap-2 text-[11px] font-bold text-[#6655f6] hover:underline">
+>>>>>>> origin/main
         <ArrowLeft size={14} /> Back to Dashboard
       </button>
 
@@ -81,7 +89,11 @@ export default function EditSubmissionPage() {
             {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
             {saving ? "Saving…" : "Save Changes"}
           </button>
+<<<<<<< HEAD
           <button type="button" onClick={() => navigate("/admin")} className="rounded-xl border border-[#e2e6ee] bg-white px-5 py-3 text-[12px] font-bold text-[#59657d] hover:bg-[#f0f2f6]">
+=======
+          <button type="button" onClick={() => navigate("/admin-dashboard")} className="rounded-xl border border-[#e2e6ee] bg-white px-5 py-3 text-[12px] font-bold text-[#59657d] hover:bg-[#f0f2f6]">
+>>>>>>> origin/main
             Cancel
           </button>
         </div>
@@ -89,3 +101,8 @@ export default function EditSubmissionPage() {
     </div>
   );
 }
+<<<<<<< HEAD
+=======
+
+
+>>>>>>> origin/main

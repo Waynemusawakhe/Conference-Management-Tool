@@ -9,4 +9,8 @@ export default function SectionHeading({ eyebrow, title, description, action }) 
       {action}
     </div>
   );
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> origin/main

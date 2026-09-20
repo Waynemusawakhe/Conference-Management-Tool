@@ -28,6 +28,14 @@ return [
 
     'env' => env('APP_ENV', 'production'),
 
+<<<<<<< HEAD
+=======
+    'frontend_url' => env(
+    'FRONTEND_URL',
+    'http://localhost:3000'
+    ),
+
+>>>>>>> origin/main
     /*
     |--------------------------------------------------------------------------
     | Application Debug Mode

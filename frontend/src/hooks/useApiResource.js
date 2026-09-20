@@ -23,4 +23,8 @@ export function useApiResource(loader, dependencies = []) {
   }, [reload]);
 
   return { data, loading, error, reload };
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> origin/main

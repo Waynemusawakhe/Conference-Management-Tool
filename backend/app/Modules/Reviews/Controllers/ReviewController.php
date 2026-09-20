@@ -15,7 +15,10 @@ use App\Modules\Reviews\Requests\SubmitReviewRequest;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+<<<<<<< HEAD
 use Illuminate\Support\Facades\Route;
+=======
+>>>>>>> origin/main
 use OpenApi\Attributes as OA;
 
 class ReviewController extends Controller
@@ -59,6 +62,7 @@ class ReviewController extends Controller
         ]);
     }
 
+<<<<<<< HEAD
     public function pending(Request $request, GetReviewsAction $action): JsonResponse
     {
         $this->authorize('viewAny', SubmissionReview::class);
@@ -74,6 +78,8 @@ class ReviewController extends Controller
         ]);
     }
 
+=======
+>>>>>>> origin/main
     #[OA\Get(
         path: '/api/v1/reviews/{id}',
         summary: 'Get a specific review',
@@ -266,6 +272,7 @@ class ReviewController extends Controller
         }
     }
 }
+<<<<<<< HEAD
 
 Route::prefix('v1/reviews')
     ->middleware('auth:sanctum')
@@ -278,3 +285,5 @@ Route::prefix('v1/reviews')
         Route::post('/{id}/lock', [ReviewController::class, 'lock']);
         Route::delete('/{id}', [ReviewController::class, 'destroy']);
     });
+=======
+>>>>>>> origin/main
