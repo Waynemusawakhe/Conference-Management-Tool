@@ -26,11 +26,22 @@ import EditSubmissionPage from "./pages/EditSubmissionPage";
 import AssignReviewersPage from "./pages/AssignReviewersPage";
 import UsersPage from "./pages/UsersPage";
 
+import AdminReportsPage from "./pages/AdminReportsPage";
+import AdminUserDetailPage from "./pages/AdminUserDetailPage";
+import AdminContactMessagesPage from "./pages/AdminContactMessagesPage";
+import AdminContactMessageDetailPage from "./pages/AdminContactMessageDetailPage";
+import AdminFaqsPage from "./pages/AdminFaqsPage";
+import AdminFaqEditPage from "./pages/AdminFaqEditPage";
+import AdminEditConferencePage from "./pages/AdminEditConferencePage";
+import AdminConferencesPage from "./pages/AdminConferencesPage";
+
 import { ThemeProvider } from "./context/ThemeContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 const AuthorDashboard = lazy(() => import("./pages/AuthorDashboard"));
 const AttendeeDashboard = lazy(() => import("./pages/AttendeeDashboard"));
+
+const ADMIN = ["admin"];
 
 export default function App() {
   return (
@@ -43,93 +54,35 @@ export default function App() {
         }
       >
         <Routes>
-          {/* ==================== PUBLIC ROUTES ==================== */}
-
+          {/* ==================== PUBLIC ==================== */}
           <Route path="/" element={<Home />} />
-
-          <Route
-            path="/login"
-            element={<Login />}
-          />
-
-          <Route
-            path="/register"
-            element={<Register />}
-          />
-
-          <Route
-            path="/forgot-password"
-            element={<ForgotPassword />}
-          />
-
-          <Route
-            path="/email-verified"
-            element={<EmailVerified />}
-          />
-
-          <Route
-            path="/conferences"
-            element={<Conferences />}
-          />
-
-          <Route
-            path="/contact"
-            element={<Contact />}
-          />
-
-          <Route
-            path="/help-faq"
-            element={<HelpFAQ />}
-          />
-
-          <Route
-            path="/about"
-            element={<About />}
-          />
-
-          <Route
-            path="/testimonials"
-            element={<Testimonials />}
-          />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/email-verified" element={<EmailVerified />} />
+          <Route path="/conferences" element={<Conferences />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/help-faq" element={<HelpFAQ />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/testimonials" element={<Testimonials />} />
 
           {/* ==================== AUTHOR ==================== */}
-
           <Route
             path="/author-dashboard"
-            element={
-              <ProtectedRoute roles={["author"]}>
-                <AuthorDashboard />
-              </ProtectedRoute>
-            }
+            element={<ProtectedRoute roles={["author"]}><AuthorDashboard /></ProtectedRoute>}
           />
-
-          <Route
-            path="/author/proposals"
-            element={
-              <ProtectedRoute roles={["author"]}>
-                <AuthorDashboard />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/author/deadlines"
-            element={
-              <ProtectedRoute roles={["author"]}>
-                <AuthorDashboard />
-              </ProtectedRoute>
-            }
-          />
-
           <Route
             path="/submit-proposal/:conferenceId"
-            element={
-              <ProtectedRoute roles={["author"]}>
-                <SubmitProposal />
-              </ProtectedRoute>
-            }
+            element={<ProtectedRoute roles={["author"]}><SubmitProposal /></ProtectedRoute>}
           />
-
+          <Route
+            path="/author/proposals"
+            element={<ProtectedRoute roles={["author"]}><AuthorDashboard /></ProtectedRoute>}
+          />
+          <Route
+            path="/author/deadlines"
+            element={<ProtectedRoute roles={["author"]}><AuthorDashboard /></ProtectedRoute>}
+          />
           <Route
             path="/edit-submission/:id"
             element={
@@ -140,156 +93,121 @@ export default function App() {
           />
 
           {/* ==================== REVIEWER ==================== */}
-
           <Route
             path="/reviewer-dashboard"
-            element={
-              <ProtectedRoute roles={["reviewer"]}>
-                <ReviewerDashboard />
-              </ProtectedRoute>
-            }
+            element={<ProtectedRoute roles={["reviewer"]}><ReviewerDashboard /></ProtectedRoute>}
           />
 
           {/* ==================== ORGANISER ==================== */}
-
           <Route
             path="/organiser-dashboard"
-            element={
-              <ProtectedRoute roles={["organiser"]}>
-                <OrganiserDashboard />
-              </ProtectedRoute>
-            }
+            element={<ProtectedRoute roles={["organiser"]}><OrganiserDashboard /></ProtectedRoute>}
           />
-
           <Route
             path="/create-conference"
-            element={
-              <ProtectedRoute roles={["organiser", "admin"]}>
-                <CreateEditConference />
-              </ProtectedRoute>
-            }
+            element={<ProtectedRoute roles={["organiser", "admin"]}><CreateEditConference /></ProtectedRoute>}
           />
-
           <Route
             path="/edit-conference/:id"
-            element={
-              <ProtectedRoute roles={["organiser", "admin"]}>
-                <CreateEditConference />
-              </ProtectedRoute>
-            }
+            element={<ProtectedRoute roles={["organiser", "admin"]}><CreateEditConference /></ProtectedRoute>}
           />
-
           <Route
             path="/assign-reviewers/:id"
-            element={
-              <ProtectedRoute roles={["organiser", "admin"]}>
-                <AssignReviewersPage />
-              </ProtectedRoute>
-            }
+            element={<ProtectedRoute roles={["organiser", "admin"]}><AssignReviewersPage /></ProtectedRoute>}
           />
 
           {/* ==================== ATTENDEE ==================== */}
-
           <Route
             path="/my-conferences"
-            element={
-              <ProtectedRoute roles={["attendee"]}>
-                <AttendeeDashboard />
-              </ProtectedRoute>
-            }
+            element={<ProtectedRoute roles={["attendee"]}><AttendeeDashboard /></ProtectedRoute>}
           />
-
-          <Route
-            path="/attendee-dashboard"
-            element={<Navigate to="/my-conferences" replace />}
-          />
-
-          <Route
-            path="/attendee/registrations"
-            element={<Navigate to="/my-conferences" replace />}
-          />
+          <Route path="/attendee-dashboard" element={<Navigate to="/my-conferences" replace />} />
+          <Route path="/attendee/registrations" element={<Navigate to="/my-conferences" replace />} />
 
           {/* ==================== ADMIN ==================== */}
-
           <Route
             path="/admin-dashboard"
-            element={
-              <ProtectedRoute roles={["admin"]}>
-                <AdminDashboard />
-              </ProtectedRoute>
-            }
+            element={<ProtectedRoute roles={ADMIN}><AdminDashboard /></ProtectedRoute>}
+          />
+          <Route
+            path="/admin/reports"
+            element={<ProtectedRoute roles={ADMIN}><AdminReportsPage /></ProtectedRoute>}
           />
 
+          {/*  Conferences management page (view / edit / delete ) */}
+          <Route
+            path="/admin/conferences"
+            element={<ProtectedRoute roles={ADMIN}><AdminConferencesPage /></ProtectedRoute>}
+          />
+
+          {/* Users directory + detail */}
           <Route
             path="/users"
-            element={
-              <ProtectedRoute roles={["admin"]}>
-                <UsersPage />
-              </ProtectedRoute>
-            }
+            element={<ProtectedRoute roles={ADMIN}><UsersPage /></ProtectedRoute>}
+          />
+          <Route
+            path="/admin/users/:id"
+            element={<ProtectedRoute roles={ADMIN}><AdminUserDetailPage /></ProtectedRoute>}
           />
 
-          {/* ==================== SHARED AUTH ROUTES ==================== */}
+          {/* Contact messages */}
+          <Route
+            path="/admin/contact-messages"
+            element={<ProtectedRoute roles={ADMIN}><AdminContactMessagesPage /></ProtectedRoute>}
+          />
+          <Route
+            path="/admin/contact-messages/:id"
+            element={<ProtectedRoute roles={ADMIN}><AdminContactMessageDetailPage /></ProtectedRoute>}
+          />
 
-          
+          {/* FAQs */}
+          <Route
+            path="/admin/faqs"
+            element={<ProtectedRoute roles={ADMIN}><AdminFaqsPage /></ProtectedRoute>}
+          />
+          <Route
+            path="/admin/faqs/new"
+            element={<ProtectedRoute roles={ADMIN}><AdminFaqEditPage /></ProtectedRoute>}
+          />
+          <Route
+            path="/admin/faqs/:id/edit"
+            element={<ProtectedRoute roles={ADMIN}><AdminFaqEditPage /></ProtectedRoute>}
+          />
 
+          {/* Conference editing (admin side) */}
+          <Route
+            path="/admin/conferences/:id/edit"
+            element={<ProtectedRoute roles={ADMIN}><AdminEditConferencePage /></ProtectedRoute>}
+          />
+
+          {/* ==================== SHARED AUTH ==================== */}
           <Route
             path="/profile"
             element={
-              <ProtectedRoute
-                roles={[
-                  "author",
-                  "reviewer",
-                  "organiser",
-                  "attendee",
-                  "admin",
-                ]}
-              >
+              <ProtectedRoute roles={["author", "reviewer", "organiser", "attendee", "admin"]}>
                 <Profile />
               </ProtectedRoute>
             }
           />
-
           <Route
             path="/settings"
             element={
-              <ProtectedRoute
-                roles={[
-                  "author",
-                  "reviewer",
-                  "organiser",
-                  "attendee",
-                  "admin",
-                ]}
-              >
+              <ProtectedRoute roles={["author", "reviewer", "organiser", "attendee", "admin"]}>
                 <Settings />
               </ProtectedRoute>
             }
           />
-
           <Route
             path="/account-settings"
             element={
-              <ProtectedRoute
-                roles={[
-                  "author",
-                  "reviewer",
-                  "organiser",
-                  "attendee",
-                  "admin",
-                ]}
-              >
+              <ProtectedRoute roles={["author", "reviewer", "organiser", "attendee", "admin"]}>
                 <AccountSettings />
               </ProtectedRoute>
             }
           />
 
           {/* ==================== FALLBACK ==================== */}
-
-          <Route
-            path="*"
-            element={<Navigate to="/" replace />}
-          />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Suspense>
     </ThemeProvider>

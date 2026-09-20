@@ -1,3 +1,4 @@
+// src/components/AdminLayout.jsx
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
@@ -35,6 +36,9 @@ const NAV_ITEMS = [
 
 const DISMISSED_KEY = "cmt_admin_dismissed_notifications";
 
+/* ------------------------------------------------------------------ *
+ * Notification persistence — dismissed IDs survive reloads
+ * ------------------------------------------------------------------ */
 function loadDismissed() {
   try {
     const raw = localStorage.getItem(DISMISSED_KEY);
@@ -46,9 +50,14 @@ function loadDismissed() {
 function saveDismissed(set) {
   try {
     localStorage.setItem(DISMISSED_KEY, JSON.stringify([...set]));
-  } catch {}
+  } catch {
+    /* storage unavailable — ignore */
+  }
 }
 
+/* ------------------------------------------------------------------ *
+ * Relative time helper
+ * ------------------------------------------------------------------ */
 function relativeTime(value) {
   if (!value) return "";
   const d = new Date(value);
@@ -65,6 +74,9 @@ function relativeTime(value) {
   return d.toISOString().slice(0, 10);
 }
 
+/* ------------------------------------------------------------------ *
+ * Helpers
+ * ------------------------------------------------------------------ */
 function getInitials(name) {
   if (!name) return "•";
   const parts = String(name).trim().split(/\s+/).filter(Boolean);
@@ -83,6 +95,9 @@ function prettifyRole(role) {
 const statusKey = (raw) =>
   raw ? String(raw).trim().toLowerCase().replace(/[\s-]+/g, "_") : "";
 
+/* ------------------------------------------------------------------ *
+ * AdminLayout
+ * ------------------------------------------------------------------ */
 export default function AdminLayout({ children, title, subtitle, action }) {
   const navigate = useNavigate();
   const { pathname } = useLocation();
@@ -94,15 +109,24 @@ export default function AdminLayout({ children, title, subtitle, action }) {
 
   const notificationsRef = useRef(null);
 
+  /* ---- Notification sources ---- */
   const messagesRes = useApiResource(() => contactMessagesApi.getAll(), []);
   const submissionsRes = useApiResource(() => submissionsApi.getAll(), []);
 
-  const messages = useMemo(() => toArray(messagesRes.data), [messagesRes.data]);
-  const submissions = useMemo(() => toArray(submissionsRes.data), [submissionsRes.data]);
+  const messages = useMemo(
+    () => toArray(messagesRes.data),
+    [messagesRes.data]
+  );
+  const submissions = useMemo(
+    () => toArray(submissionsRes.data),
+    [submissionsRes.data]
+  );
 
+  /* Build notification list */
   const notifications = useMemo(() => {
     const list = [];
 
+    // New contact messages (status = "new")
     messages
       .filter((m) => statusKey(m.status ?? "new") === "new")
       .forEach((m) => {
@@ -118,6 +142,7 @@ export default function AdminLayout({ children, title, subtitle, action }) {
         });
       });
 
+    // Pending submissions
     submissions
       .filter((s) => {
         const k = statusKey(s.status);
@@ -141,6 +166,7 @@ export default function AdminLayout({ children, title, subtitle, action }) {
         });
       });
 
+    // Sort newest first
     return list.sort((a, b) => {
       const ta = a.time ? new Date(a.time).getTime() : 0;
       const tb = b.time ? new Date(b.time).getTime() : 0;
@@ -148,6 +174,7 @@ export default function AdminLayout({ children, title, subtitle, action }) {
     });
   }, [messages, submissions]);
 
+  /* Filter out dismissed */
   const visibleNotifications = useMemo(
     () => notifications.filter((n) => !dismissed.has(n.id)),
     [notifications, dismissed]
@@ -155,6 +182,7 @@ export default function AdminLayout({ children, title, subtitle, action }) {
 
   const notificationCount = visibleNotifications.length;
 
+  /* Dismiss a single notification */
   const dismissOne = (id) => {
     setDismissed((prev) => {
       const next = new Set(prev);
@@ -164,6 +192,7 @@ export default function AdminLayout({ children, title, subtitle, action }) {
     });
   };
 
+  /* Clear all visible */
   const dismissAll = () => {
     setDismissed((prev) => {
       const next = new Set(prev);
@@ -173,6 +202,7 @@ export default function AdminLayout({ children, title, subtitle, action }) {
     });
   };
 
+  /* Click outside closes the panel */
   useEffect(() => {
     if (!showNotifications) return;
     const onClick = (e) => {
@@ -192,11 +222,13 @@ export default function AdminLayout({ children, title, subtitle, action }) {
     };
   }, [showNotifications]);
 
+  /* Close notification panel on route change */
   useEffect(() => {
     setShowNotifications(false);
     setSidebarOpen(false);
   }, [pathname]);
 
+  /* ---- Auth display ---- */
   const isActive = (item) => {
     if (item.exact) return pathname === item.to;
     return pathname === item.to || pathname.startsWith(`${item.to}/`);
@@ -215,6 +247,7 @@ export default function AdminLayout({ children, title, subtitle, action }) {
 
   return (
     <div className="min-h-screen bg-[#f7f9fc] text-[#0d1b3d] transition-colors dark:bg-[#0a0f1f] dark:text-white">
+      {/* ===================== Header ===================== */}
       <header className="sticky top-0 z-50 border-b border-white/10 bg-[#07132f]/95 text-white shadow-[0_8px_30px_rgba(7,19,47,.12)] backdrop-blur-xl">
         <div className="mx-auto flex min-h-[76px] w-[min(1400px,calc(100%-32px))] items-center gap-4 sm:gap-6">
           <button
@@ -238,6 +271,7 @@ export default function AdminLayout({ children, title, subtitle, action }) {
           </div>
 
           <div className="ml-auto flex items-center gap-2">
+            {/* ---- Notification bell ---- */}
             <div className="relative" ref={notificationsRef}>
               <button
                 onClick={() => setShowNotifications((v) => !v)}
@@ -253,8 +287,10 @@ export default function AdminLayout({ children, title, subtitle, action }) {
                 )}
               </button>
 
+              {/* ---- Notification panel ---- */}
               {showNotifications && (
                 <div className="absolute right-0 top-[calc(100%+10px)] z-[60] w-[min(380px,calc(100vw-32px))] overflow-hidden rounded-2xl border border-[#e4e8f0] bg-white text-[#0d1b3d] shadow-[0_25px_60px_rgba(7,19,47,.28)] dark:border-[#1e293b] dark:bg-[#0f172a] dark:text-white">
+                  {/* Panel header */}
                   <div className="flex items-center justify-between gap-3 border-b border-[#edf0f5] px-4 py-3 dark:border-[#1e293b]">
                     <div className="flex items-center gap-2">
                       <span className="grid h-7 w-7 place-items-center rounded-lg bg-[#efedff] text-[#4f46c7] dark:bg-[#2a2354] dark:text-[#a9a2ff]">
@@ -279,11 +315,15 @@ export default function AdminLayout({ children, title, subtitle, action }) {
                     )}
                   </div>
 
+                  {/* Panel body */}
                   <div className="max-h-[420px] overflow-y-auto">
                     {messagesRes.loading && submissionsRes.loading ? (
                       <div className="space-y-1 p-2">
                         {[0, 1, 2].map((i) => (
-                          <div key={i} className="flex items-center gap-3 rounded-xl p-3">
+                          <div
+                            key={i}
+                            className="flex items-center gap-3 rounded-xl p-3"
+                          >
                             <div className="h-9 w-9 animate-pulse rounded-lg bg-[#eef1f7] dark:bg-[#1e293b]" />
                             <div className="flex-1 space-y-1.5">
                               <div className="h-2.5 w-40 animate-pulse rounded-full bg-[#eef1f7] dark:bg-[#1e293b]" />
@@ -320,7 +360,9 @@ export default function AdminLayout({ children, title, subtitle, action }) {
                                 }}
                                 className="flex flex-1 items-start gap-3 text-left"
                               >
-                                <span className={`mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-lg ${n.tint}`}>
+                                <span
+                                  className={`mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-lg ${n.tint}`}
+                                >
                                   <Icon size={15} />
                                 </span>
                                 <div className="min-w-0 flex-1 pr-6">
@@ -351,6 +393,7 @@ export default function AdminLayout({ children, title, subtitle, action }) {
                     )}
                   </div>
 
+                  {/* Panel footer */}
                   {visibleNotifications.length > 0 && (
                     <div className="border-t border-[#edf0f5] bg-[#fafbff] px-4 py-2.5 dark:border-[#1e293b] dark:bg-[#0b1224]">
                       <button
@@ -368,6 +411,7 @@ export default function AdminLayout({ children, title, subtitle, action }) {
               )}
             </div>
 
+            {/* ---- Theme toggle ---- */}
             <button
               onClick={toggleTheme}
               className="grid h-10 w-10 place-items-center rounded-xl border border-white/10 bg-white/[.04] text-white/85 transition hover:bg-white/10"
@@ -377,6 +421,7 @@ export default function AdminLayout({ children, title, subtitle, action }) {
               {dark ? <Sun size={17} /> : <Moon size={17} />}
             </button>
 
+            {/* ---- User chip ---- */}
             <div className="hidden items-center gap-2.5 border-l border-white/10 pl-3 sm:flex">
               <div className="grid h-9 w-9 place-items-center rounded-full bg-[#e8e6ff] text-[10px] font-extrabold text-[#4f46c7]">
                 {isInitializing ? "…" : initials}
@@ -394,6 +439,7 @@ export default function AdminLayout({ children, title, subtitle, action }) {
         </div>
       </header>
 
+      {/* ===================== Body ===================== */}
       <div className="mx-auto flex w-[min(1400px,calc(100%-32px))] gap-6 py-6 lg:gap-7">
         {sidebarOpen && (
           <div
@@ -402,6 +448,7 @@ export default function AdminLayout({ children, title, subtitle, action }) {
           />
         )}
 
+        {/* ---- Sidebar ---- */}
         <aside
           className={`fixed inset-y-0 left-0 z-50 w-[260px] transform bg-white p-4 shadow-2xl transition-transform duration-300 dark:bg-[#0f172a] lg:sticky lg:top-[100px] lg:block lg:max-h-[calc(100vh-120px)] lg:w-[260px] lg:translate-x-0 lg:overflow-y-auto lg:rounded-2xl lg:border lg:border-[#e4e8f0] lg:bg-white lg:p-3 lg:shadow-none lg:dark:border-[#1e293b] lg:dark:bg-[#0f172a] ${
             sidebarOpen ? "translate-x-0" : "-translate-x-full"
@@ -429,6 +476,7 @@ export default function AdminLayout({ children, title, subtitle, action }) {
             {NAV_ITEMS.map((item) => {
               const Icon = item.icon;
               const active = isActive(item);
+              // Show count badge on Contact Messages
               const showBadge =
                 item.to === "/admin/contact-messages" && notificationCount > 0;
               return (
@@ -463,6 +511,7 @@ export default function AdminLayout({ children, title, subtitle, action }) {
           </button>
         </aside>
 
+        {/* ---- Main content ---- */}
         <main className="min-w-0 flex-1">
           {(title || action) && (
             <div className="mb-5 flex flex-col sm:flex-row sm:items-end justify-between gap-3">
