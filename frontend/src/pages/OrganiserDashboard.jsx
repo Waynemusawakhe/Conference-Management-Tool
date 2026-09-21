@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   AlertCircle, ArrowRight, BarChart3, Bell, CalendarDays, Check, ChevronDown,
   FileText, LayoutDashboard, LogOut, Menu, Pencil, Plus, Search, Settings,
-  Sparkles, Trash2, UserRound, Users, X, ClipboardList, UserPlus, Gavel
+  Sparkles, Trash2, UserRound, Users, X, ClipboardList, UserPlus, Gavel, Download
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Logo from "../components/Logo";
@@ -12,6 +12,7 @@ import { conferencesApi } from "../api/conferencesApi";
 import { submissionsApi } from "../api/submissionsApi";
 import { reviewsApi } from "../api/reviewsApi";
 import { usersApi } from "../api/usersApi";
+import { sessionsApi } from "../api/sessionsApi";
 
 const EMPTY_CONFERENCE = {
   code: "", name: "", description: "", category: "", topics: "",
@@ -81,6 +82,8 @@ export default function OrganiserDashboard() {
   const [conferenceForm, setConferenceForm] = useState(EMPTY_CONFERENCE);
   const [reviewerId, setReviewerId] = useState("");
   const [reviewerCandidates, setReviewerCandidates] = useState([]);
+  const [sessionForm, setSessionForm] = useState({ title: "", submission_id: "", start_time: "", end_time: "", room: "" });
+  const [sessionSaving, setSessionSaving] = useState(false);
 
   const loadConferences = useCallback(async () => {
     setLoading(true); setError("");
@@ -147,16 +150,10 @@ export default function OrganiserDashboard() {
     attendees: registrations.filter((r)=>r.status !== "cancelled").length,
   }), [submissions, reviews, registrations]);
 
-  const openCreateConference = () => { setConferenceForm(EMPTY_CONFERENCE); setFormError(""); setModal("conference-create"); };
+  const openCreateConference = () => { navigate("/create-conference"); };
   const openEditConference = (c) => {
-    setConferenceForm({
-      code:c.code||"", name:c.name||"", description:c.description||"", category:c.category||"",
-      topics:Array.isArray(c.topics)?c.topics.join(", "):"", format:c.format||"in_person",
-      submission_status:c.submission_status||"open", start_date:dateInput(c.start_date), end_date:dateInput(c.end_date),
-      submission_deadline:dateInput(c.submission_deadline), venue_name:c.venue_name||"", city:c.city||"",
-      country:c.country||"South Africa", website_link:c.website_link||"",
-    });
-    setFormError(""); setModal("conference-edit");
+    if (!c?.id) return;
+    navigate(`/edit-conference/${c.id}`);
   };
 
   const saveConference = async (e) => {
@@ -240,6 +237,64 @@ export default function OrganiserDashboard() {
     catch (err) { setError(getErrorMessage(err)); }
   };
 
+  const createSession = async (event) => {
+    event.preventDefault();
+    if (!selectedConference) return;
+    if (!sessionForm.title.trim() || !sessionForm.start_time || !sessionForm.end_time) {
+      setError("Session title, start time and end time are required.");
+      return;
+    }
+    setSessionSaving(true); setError("");
+    try {
+      await sessionsApi.create({
+        conference_id: Number(selectedConference.id),
+        submission_id: sessionForm.submission_id ? Number(sessionForm.submission_id) : null,
+        title: sessionForm.title.trim(),
+        start_time: sessionForm.start_time,
+        end_time: sessionForm.end_time,
+        room: sessionForm.room.trim() || null,
+      });
+      setSessionForm({ title: "", submission_id: "", start_time: "", end_time: "", room: "" });
+      await loadConferenceData(selectedConference);
+    } catch (err) {
+      setError(getErrorMessage(err));
+    } finally { setSessionSaving(false); }
+  };
+
+  const removeSession = async (session) => {
+    if (!window.confirm(`Remove session "${session.title || "Untitled session"}"?`)) return;
+    try {
+      await sessionsApi.remove(session.id);
+      await loadConferenceData(selectedConference);
+    } catch (err) { setError(getErrorMessage(err)); }
+  };
+
+  const exportReport = () => {
+    if (!selectedConference) return;
+    const rows = [
+      ["Conference", selectedConference.name],
+      ["Date", `${dateLabel(selectedConference.start_date)} - ${dateLabel(selectedConference.end_date)}`],
+      ["Submissions", submissions.length],
+      ["Reviewed", stats.reviewed],
+      ["Attendees", stats.attendees],
+      ["Sessions", sessions.length],
+      [],
+      ["Submission ID", "Title", "Status", "Reviewer", "Recommendation"],
+      ...submissions.map((submission) => {
+        const review = reviews.find((r) => Number(r.submission_id) === Number(submission.id) && (r.submitted_at || r.locked));
+        return [submission.id, submission.title, submission.status || "pending", review?.reviewer?.name || review?.reviewer_id || "Unassigned", review?.recommendation || "Pending"];
+      }),
+    ];
+    const csv = rows.map((row) => row.map((value) => `"${String(value ?? "").replaceAll('"', '""')}"`).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${String(selectedConference.code || selectedConference.name).replace(/[^a-z0-9]+/gi, "-").toLowerCase()}-report.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
   const scrollTo=(id)=>{setSidebarOpen(false);document.getElementById(id)?.scrollIntoView({behavior:"smooth",block:"start"});};
   const displayName=user?.name||"Organiser";
   const initials=displayName.split(/\s+/).filter(Boolean).slice(0,2).map((x)=>x[0]).join("").toUpperCase()||"O";
@@ -286,8 +341,17 @@ export default function OrganiserDashboard() {
         </section>
 
         <section className="mt-6 grid gap-5 md:grid-cols-2">
-          <article className="rounded-[20px] border border-[#e4e8f0] bg-white p-5 shadow-[0_10px_30px_rgba(15,28,65,.035)] sm:p-6"><div className="flex items-start justify-between"><div><span className="text-[10px] font-extrabold uppercase tracking-[.1em] text-[#6655f6]">Programme</span><h2 className="mb-0 mt-1 text-xl font-bold">Conference snapshot</h2></div><BarChart3 size={19} className="text-[#6a5af2]"/></div><div className="mt-5 grid grid-cols-2 gap-3"><div className="rounded-xl bg-[#fafbfe] p-3"><span className="text-[9px] text-[#8a95a8]">Format</span><strong className="mt-1 block text-xs">{selectedConference?.format?.replace("_"," ")||"—"}</strong></div><div className="rounded-xl bg-[#fafbfe] p-3"><span className="text-[9px] text-[#8a95a8]">Sessions</span><strong className="mt-1 block text-xs">{sessions.length}</strong></div><div className="rounded-xl bg-[#fafbfe] p-3"><span className="text-[9px] text-[#8a95a8]">Active attendees</span><strong className="mt-1 block text-xs">{stats.attendees}</strong></div><div className="rounded-xl bg-[#fafbfe] p-3"><span className="text-[9px] text-[#8a95a8]">Deadline</span><strong className="mt-1 block text-xs">{dateLabel(selectedConference?.submission_deadline)}</strong></div></div></article>
-          <article className="rounded-[20px] bg-gradient-to-br from-[#111e4b] to-[#342b87] p-6 text-white shadow-[0_18px_45px_rgba(20,28,80,.15)]"><span className="grid h-10 w-10 place-items-center rounded-xl bg-white/10"><Gavel size={18}/></span><h2 className="mb-2 mt-5 text-xl font-bold">Decision workflow</h2><p className="m-0 text-[10px] leading-6 text-white/60">Assign reviewers, wait for review activity, then record the final accept, reject or revision-requested decision.</p><div className="mt-5 flex flex-wrap gap-2 text-[9px] font-bold text-white/75"><span className="rounded-full bg-white/10 px-2.5 py-1.5">1 · Assign</span><span className="rounded-full bg-white/10 px-2.5 py-1.5">2 · Review</span><span className="rounded-full bg-white/10 px-2.5 py-1.5">3 · Decide</span></div></article>
+          <article className="rounded-[20px] border border-[#e4e8f0] bg-white p-5 shadow-[0_10px_30px_rgba(15,28,65,.035)] sm:p-6">
+            <div className="flex items-start justify-between gap-3"><div><span className="text-[10px] font-extrabold uppercase tracking-[.1em] text-[#6655f6]">Programme</span><h2 className="mb-0 mt-1 text-xl font-bold">Schedule sessions</h2></div><BarChart3 size={19} className="text-[#6a5af2]"/></div>
+            {selectedConference && <form onSubmit={createSession} className="mt-5 grid gap-3">
+              <input value={sessionForm.title} onChange={(e)=>setSessionForm(v=>({...v,title:e.target.value}))} placeholder="Session title" className="h-10 rounded-xl border border-[#dfe4ed] px-3 text-xs outline-none focus:border-[#7568f7]"/>
+              <select value={sessionForm.submission_id} onChange={(e)=>setSessionForm(v=>({...v,submission_id:e.target.value}))} className="h-10 rounded-xl border border-[#dfe4ed] bg-white px-3 text-xs"><option value="">General session</option>{submissions.filter((x)=>x.status==="accepted").map((x)=><option key={x.id} value={x.id}>{x.title}</option>)}</select>
+              <div className="grid grid-cols-2 gap-3"><input type="datetime-local" value={sessionForm.start_time} onChange={(e)=>setSessionForm(v=>({...v,start_time:e.target.value}))} className="h-10 rounded-xl border border-[#dfe4ed] px-3 text-[11px]"/><input type="datetime-local" value={sessionForm.end_time} onChange={(e)=>setSessionForm(v=>({...v,end_time:e.target.value}))} className="h-10 rounded-xl border border-[#dfe4ed] px-3 text-[11px]"/></div>
+              <div className="flex gap-2"><input value={sessionForm.room} onChange={(e)=>setSessionForm(v=>({...v,room:e.target.value}))} placeholder="Room / venue" className="h-10 min-w-0 flex-1 rounded-xl border border-[#dfe4ed] px-3 text-xs"/><button disabled={sessionSaving} className="rounded-xl bg-[#6655f6] px-3.5 text-[10px] font-extrabold text-white">{sessionSaving?"Saving…":"Add session"}</button></div>
+            </form>}
+            <div className="mt-5 space-y-2">{sessions.length ? sessions.map((session)=><div key={session.id} className="flex items-center justify-between gap-3 rounded-xl bg-[#fafbfe] p-3"><div className="min-w-0"><strong className="block truncate text-[11px]">{session.title || "Untitled session"}</strong><span className="text-[9px] text-[#8993a6]">{dateLabel(session.start_time || session.starts_at)} · {session.room || "Room TBA"}</span></div><button onClick={()=>removeSession(session)} className="text-[9px] font-extrabold text-red-600">Remove</button></div>) : <p className="text-[10px] text-[#8993a6]">No sessions scheduled yet. Accepted submissions can be attached to a session above.</p>}</div>
+          </article>
+          <article className="rounded-[20px] bg-gradient-to-br from-[#111e4b] to-[#342b87] p-6 text-white shadow-[0_18px_45px_rgba(20,28,80,.15)]"><span className="grid h-10 w-10 place-items-center rounded-xl bg-white/10"><Gavel size={18}/></span><h2 className="mb-2 mt-5 text-xl font-bold">Decision workflow</h2><p className="m-0 text-[10px] leading-6 text-white/60">Assign reviewers, wait for review activity, then record the final accept, reject or revision-requested decision.</p><div className="mt-5 flex flex-wrap items-center gap-2 text-[9px] font-bold text-white/75"><button onClick={exportReport} className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-1.5 hover:bg-white/20"><Download size={12}/> Export report</button><span className="rounded-full bg-white/10 px-2.5 py-1.5">1 · Assign</span><span className="rounded-full bg-white/10 px-2.5 py-1.5">2 · Review</span><span className="rounded-full bg-white/10 px-2.5 py-1.5">3 · Decide</span></div></article>
         </section>
         <footer className="flex flex-wrap items-center justify-between gap-3 px-1 py-8 text-[9px] text-[#8c96a9]"><span>CMT Organiser Workspace · API connected</span><span>Backend policies remain the final authority for every action.</span></footer>
       </main>

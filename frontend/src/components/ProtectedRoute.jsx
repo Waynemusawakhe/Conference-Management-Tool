@@ -1,24 +1,30 @@
-import {
-  Navigate,
-  useLocation,
-} from "react-router-dom";
-
+import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
-import {
-  getDashboardPath,
-  normalizeRole,
-} from "../utils/roleRoutes";
+function getDashboardPath(role) {
+  switch (role) {
+    case "author":
+      return "/author-dashboard";
 
-export default function ProtectedRoute({
-  children,
-  roles,
-}) {
-  const {
-    status,
-    role,
-  } = useAuth();
+    case "reviewer":
+      return "/reviewer-dashboard";
 
+    case "organiser":
+      return "/organiser-dashboard";
+
+    case "admin":
+      return "/admin-dashboard";
+
+    case "attendee":
+      return "/attendee-dashboard";
+
+    default:
+      return "/login";
+  }
+}
+
+export default function ProtectedRoute({ children, roles }) {
+  const { status, role } = useAuth();
   const location = useLocation();
 
   if (status === "initializing") {
@@ -36,28 +42,15 @@ export default function ProtectedRoute({
       <Navigate
         to="/login"
         replace
-        state={{
-          from: location.pathname,
-        }}
+        state={{ from: location.pathname }}
       />
     );
   }
 
-  const normalizedRole = normalizeRole(role);
+  const normalizedRole = String(role || "").toLowerCase();
 
-  const allowedRoles =
-    roles?.map((item) => normalizeRole(item)) ?? [];
-
-  if (
-    allowedRoles.length > 0 &&
-    !allowedRoles.includes(normalizedRole)
-  ) {
-    return (
-      <Navigate
-        to={getDashboardPath(normalizedRole)}
-        replace
-      />
-    );
+  if (roles?.length && !roles.map((item) => String(item).toLowerCase()).includes(normalizedRole)) {
+    return <Navigate to={getDashboardPath(normalizedRole)} replace />;
   }
 
   return children;

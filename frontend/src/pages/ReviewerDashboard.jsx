@@ -20,10 +20,12 @@ import { useNavigate } from "react-router-dom";
 import Logo from "../components/Logo";
 import { useTheme } from "../context/ThemeContext";
 import { reviewsApi } from "../api/reviewsApi";
+import { useAuth } from "../context/AuthContext";
 
 export default function ReviewerDashboard() {
   const navigate = useNavigate();
   const { dark, toggleTheme } = useTheme();
+  const { logout } = useAuth();
 
   const [sidebarVisible, setSidebarVisible] = useState(false);
   const [query, setQuery] = useState("");
@@ -253,9 +255,9 @@ export default function ReviewerDashboard() {
             </nav>
 
             <div className="my-4 border-t border-[#edf0f5]" />
-            <button className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] font-semibold text-[#66728b] hover:bg-[#f5f6fa] hover:text-[#1c2a4a]"><UserRound size={16} /> Profile</button>
-            <button className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] font-semibold text-[#66728b] hover:bg-[#f5f6fa] hover:text-[#1c2a4a]"><Settings size={16} /> Settings</button>
-            <button className="mt-auto flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] font-semibold text-[#9a6470] hover:bg-[#fff4f5]" onClick={() => navigate("/login")}><LogOut size={16} /> Sign out</button>
+            <button onClick={() => navigate("/profile")} className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] font-semibold text-[#66728b] hover:bg-[#f5f6fa] hover:text-[#1c2a4a]"><UserRound size={16} /> Profile</button>
+            <button onClick={() => navigate("/settings")} className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] font-semibold text-[#66728b] hover:bg-[#f5f6fa] hover:text-[#1c2a4a]"><Settings size={16} /> Settings</button>
+            <button className="mt-auto flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] font-semibold text-[#9a6470] hover:bg-[#fff4f5]" onClick={async () => { await logout(); navigate("/login", { replace: true }); }}><LogOut size={16} /> Sign out</button>
           </div>
         </aside>
 
@@ -342,7 +344,7 @@ export default function ReviewerDashboard() {
                       </p>
                     </div>
                     <button
-                      onClick={() => alert(`Opening review workspace for ID: ${item.id}`)}
+                      onClick={() => navigate(`/reviewer/evaluate/${item.id}`)}
                       className="self-start sm:self-auto rounded-lg bg-[#4f46e5] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#4338ca]"
                     >
                       Evaluate
