@@ -61,32 +61,38 @@ export default function ScoreSubmission() {
     setSubmitting(true);
     setError(null);
 
-    const payload = {
-      review_id: id,
-      score,
-      comments,
-      recommendation,
-    };
+  const handleSubmit = async (e) => {
+  e.preventDefault();
+  setSubmitting(true);
+  setError(null);
 
-    try {
-      if (reviewsApi.submit) {
-        await reviewsApi.submit(payload);
-      } else {
-        await fetch("http://localhost:5000/api/reviews/submit", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-      }
-      setSuccess(true);
-      setTimeout(() => navigate("/reviewer-dashboard"), 1500);
-    } catch (err) {
-      console.error("Submission failed:", err);
-      setError("Failed to submit review. Please try again.");
-    } finally {
-      setSubmitting(false);
-    }
+  const payload = {
+    score,
+    comments,
+    recommendation,
   };
+
+  try {
+    await reviewsApi.submit(id, payload);
+
+    setSuccess(true);
+
+    setTimeout(() => {
+      navigate("/reviewer-dashboard");
+    }, 1500);
+  } catch (err) {
+    console.error("Submission failed:", err);
+
+    const message =
+      err?.message ||
+      err?.data?.message ||
+      "Failed to submit review. Please try again.";
+
+    setError(message);
+  } finally {
+    setSubmitting(false);
+  }
+}
 
   if (loading) {
     return (
@@ -221,10 +227,9 @@ export default function ScoreSubmission() {
                   onChange={(e) => setRecommendation(e.target.value)}
                   className="w-full rounded-xl border border-[#d1d5db] bg-white p-3 text-sm text-[#111827] outline-none focus:border-[#4f46e5]"
                 >
-                  <option value="accept">Accept</option>
-                  <option value="revise">Minor Revision</option>
-                  <option value="major_revision">Major Revision</option>
-                  <option value="reject">Reject</option>
+                 <option value="accept">Accept</option>
+                 <option value="revise">Request Revision</option>
+                 <option value="reject">Reject</option>
                 </select>
               </div>
 
@@ -259,4 +264,4 @@ export default function ScoreSubmission() {
     </div>
   );
 }
-
+}

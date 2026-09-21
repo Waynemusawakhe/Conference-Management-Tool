@@ -94,7 +94,7 @@ function Register() {
       setError("Please choose a role.");
       return;
     }
-    if (!["admin", "organiser", "reviewer", "attendee"].includes(formData.role)) {
+    if (!["admin", "author", "reviewer", "organiser", "attendee"].includes(formData.role)) {
       setError("Please select a valid role.");
       return;
     }
@@ -284,6 +284,7 @@ function Register() {
                   >
                     <option value="" disabled>Please choose a role</option>
                     <option value="attendee">Attendee</option>
+                    <option value="author">Author</option>
                     <option value="reviewer">Reviewer</option>
                     <option value="organiser">Organiser</option>
                     <option value="admin">Admin</option>

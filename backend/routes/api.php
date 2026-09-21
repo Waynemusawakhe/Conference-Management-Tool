@@ -10,6 +10,7 @@ use App\Modules\Registrations\Controllers\RegistrationController;
 use App\Modules\Reporting\Controllers\ReportingController;
 use App\Modules\Reviews\Controllers\ReviewController;
 use App\Modules\Reviews\Controllers\TestimonialController;
+use App\Http\Controllers\NotificationController;
 use App\Modules\Sessions\Controllers\SessionController;
 use App\Modules\Submissions\Controllers\SubmissionController;
 use Illuminate\Auth\Events\Verified;
@@ -33,40 +34,40 @@ Route::prefix('v1/auth')->group(function () {
         int $id,
         string $hash
     ) {
-        $frontendUrl = rtrim(
-            config('app.frontend_url', 'http://localhost:5173'),
-            '/'
-        );
-
         $user = User::findOrFail($id);
 
         if (! hash_equals(
             (string) $hash,
             sha1($user->getEmailForVerification())
         )) {
-            return redirect()->away(
-                $frontendUrl . '/email-verified?status=invalid'
-            );
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid verification link.',
+            ], 403);
         }
 
         if ($user->hasVerifiedEmail()) {
-            return redirect()->away(
-                $frontendUrl . '/email-verified?status=success'
-            );
+            return response()->json([
+                'success' => true,
+                'message' => 'Email already verified.',
+            ]);
         }
 
         if ($user->markEmailAsVerified()) {
             event(new Verified($user));
         }
 
-        return redirect()->away(
-            $frontendUrl . '/email-verified?status=success'
-        );
-    })
-        ->middleware('signed')
-        ->name('verification.verify');
+        return response()->json([
+            'success' => true,
+            'message' => 'Email verified successfully.',
+        ]);
+    })->middleware('signed')->name('verification.verify');
 
     Route::middleware('auth:sanctum')->group(function () {
+        Route::get('/notifications', [NotificationController::class, 'index']);
+        Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount']);
+        Route::post('/notifications/{id}/read', [NotificationController::class, 'read']);
+        Route::post('/notifications/read-all', [NotificationController::class, 'readAll']);
         Route::get('/me', [AuthController::class, 'me']);
         Route::patch('/me', [AuthController::class, 'updateProfile']);
         Route::put('/password', [AuthController::class, 'changePassword']);
