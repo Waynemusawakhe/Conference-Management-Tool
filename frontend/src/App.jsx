@@ -28,6 +28,20 @@ import AttendeeDashboard from "./pages/AttendeeDashboard";
 import MyConferences from "./pages/MyConferences";
 import UsersPage from "./pages/UsersPage";
 
+/* ---------- Admin pages ---------- */
+import AdminReportsPage from "./pages/AdminReportsPage";
+import AdminUserDetailPage from "./pages/AdminUserDetailPage";
+import AdminContactMessagesPage from "./pages/AdminContactMessagesPage";
+import AdminContactMessageDetailPage from "./pages/AdminContactMessageDetailPage";
+import AdminFaqsPage from "./pages/AdminFaqsPage";
+import AdminFaqEditPage from "./pages/AdminFaqEditPage";
+import AdminConferencesPage from "./pages/AdminConferencesPage";
+import AdminEditConferencePage from "./pages/AdminEditConferencePage";
+import AdminReviewsPage from "./pages/AdminReviewsPage";
+import AdminRegistrationsPage from "./pages/AdminRegistrationsPage";
+import AdminTestimonialsPage from "./pages/AdminTestimonialsPage";
+import AdminSubmissionsPage from "./pages/AdminSubmissionsPage";
+
 import { ThemeProvider } from "./context/ThemeContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -66,14 +80,16 @@ export default function App() {
               </ProtectedRoute>
             }
           />
-           <Route
-               path="/submit-proposal/:conferenceId"
-               element={
-                 <ProtectedRoute roles={["author"]}>
-               <SubmitProposal />
+
+          <Route
+            path="/submit-proposal/:conferenceId"
+            element={
+              <ProtectedRoute roles={["author"]}>
+                <SubmitProposal />
               </ProtectedRoute>
-  }
-/>
+            }
+          />
+
           <Route
             path="/edit-submission/:id"
             element={
@@ -93,8 +109,6 @@ export default function App() {
               </ProtectedRoute>
             }
           />
-
-          {/* ==================== REVIEWER EVALUATION ==================== */}
 
           <Route
             path="/reviewer/evaluate/:id"
@@ -119,7 +133,9 @@ export default function App() {
           <Route
             path="/my-conferences"
             element={
-              <ProtectedRoute roles={["author", "reviewer", "organiser", "attendee", "admin"]}>
+              <ProtectedRoute
+                roles={["author", "reviewer", "organiser", "attendee", "admin"]}
+              >
                 <MyConferences />
               </ProtectedRoute>
             }
@@ -165,6 +181,7 @@ export default function App() {
 
           {/* ==================== ADMIN ==================== */}
 
+          {/* Dashboard */}
           <Route
             path="/admin-dashboard"
             element={
@@ -174,11 +191,132 @@ export default function App() {
             }
           />
 
+          {/* Reports */}
+          <Route
+            path="/admin/reports"
+            element={
+              <ProtectedRoute roles={["admin"]}>
+                <AdminReportsPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Conferences — list + edit */}
+          <Route
+            path="/admin/conferences"
+            element={
+              <ProtectedRoute roles={["admin"]}>
+                <AdminConferencesPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/conferences/:id/edit"
+            element={
+              <ProtectedRoute roles={["admin"]}>
+                <AdminEditConferencePage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Submissions (read-only oversight) */}
+          <Route
+            path="/admin/submissions"
+            element={
+              <ProtectedRoute roles={["admin"]}>
+                <AdminSubmissionsPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Reviews — assign, lock, remove */}
+          <Route
+            path="/admin/reviews"
+            element={
+              <ProtectedRoute roles={["admin"]}>
+                <AdminReviewsPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Registrations */}
+          <Route
+            path="/admin/registrations"
+            element={
+              <ProtectedRoute roles={["admin"]}>
+                <AdminRegistrationsPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Users directory + detail */}
           <Route
             path="/users"
             element={
               <ProtectedRoute roles={["admin"]}>
                 <UsersPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/users/:id"
+            element={
+              <ProtectedRoute roles={["admin"]}>
+                <AdminUserDetailPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Contact messages + detail */}
+          <Route
+            path="/admin/contact-messages"
+            element={
+              <ProtectedRoute roles={["admin"]}>
+                <AdminContactMessagesPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/contact-messages/:id"
+            element={
+              <ProtectedRoute roles={["admin"]}>
+                <AdminContactMessageDetailPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Testimonials */}
+          <Route
+            path="/admin/testimonials"
+            element={
+              <ProtectedRoute roles={["admin"]}>
+                <AdminTestimonialsPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* FAQs — list + create + edit */}
+          <Route
+            path="/admin/faqs"
+            element={
+              <ProtectedRoute roles={["admin"]}>
+                <AdminFaqsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/faqs/new"
+            element={
+              <ProtectedRoute roles={["admin"]}>
+                <AdminFaqEditPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/faqs/:id/edit"
+            element={
+              <ProtectedRoute roles={["admin"]}>
+                <AdminFaqEditPage />
               </ProtectedRoute>
             }
           />
