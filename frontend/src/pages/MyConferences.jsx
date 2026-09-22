@@ -1,416 +1,561 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import {
-  Building2,
   CalendarDays,
-  FileText,
-  LayoutDashboard,
-  MapPin,
+  LayoutGrid,
+  List,
+  Search,
+  SlidersHorizontal,
+  Sparkles,
   Plus,
   RefreshCw,
-  Search,
-  Settings,
-  Sparkles,
-  Trash2,
-  UserRound,
-  Users,
 } from "lucide-react";
-import Logo from "../components/Logo";
+import { useLocation, useNavigate } from "react-router-dom";
+import Navbar from "../components/Navbar";
+import ConferenceCard from "../components/ConferenceCard";
 import { conferencesApi } from "../api/conferencesApi";
 
-const statusStyles = {
-  Registered: "border-[#bfe5d1] bg-[#effaf4] text-[#18794e]",
-  Pending: "border-[#e9d9a7] bg-[#fff9e9] text-[#9b7414]",
-  pending: "border-[#e9d9a7] bg-[#fff9e9] text-[#9b7414]",
-  "Under review": "border-[#cfd0ff] bg-[#f0efff] text-[#5548d7]",
-  "under review": "border-[#cfd0ff] bg-[#f0efff] text-[#5548d7]",
-  Accepted: "border-[#bfe5d1] bg-[#effaf4] text-[#18794e]",
-  accepted: "border-[#bfe5d1] bg-[#effaf4] text-[#18794e]",
-  Rejected: "border-[#f1c8c8] bg-[#fff2f2] text-[#b13a3a]",
-  rejected: "border-[#f1c8c8] bg-[#fff2f2] text-[#b13a3a]",
-  "Revision requested": "border-[#f0d0b9] bg-[#fff6ee] text-[#a55b25]",
-  "revision requested": "border-[#f0d0b9] bg-[#fff6ee] text-[#a55b25]",
-  "Open for submissions": "border-[#cfd0ff] bg-[#f0efff] text-[#5548d7]",
-  open: "border-[#cfd0ff] bg-[#f0efff] text-[#5548d7]",
-  closed: "border-[#e4e8f0] bg-[#f8f9fc] text-[#68748b]",
-  Closed: "border-[#e4e8f0] bg-[#f8f9fc] text-[#68748b]",
-};
+const CATEGORIES = [
+  "AI & Machine Learning",
+  "Computer Science",
+  "Engineering",
+  "Medicine & Health",
+  "Education",
+];
 
-function StatusBadge({ status }) {
-  const key = status || "—";
-  const style =
-    statusStyles[key] ||
-    statusStyles[String(key).toLowerCase()] ||
-    "border-[#e4e8f0] bg-[#f8f9fc] text-[#68748b]";
-  return (
-    <span
-      className={`inline-flex rounded-full border px-2.5 py-1 text-[10px] font-extrabold ${style}`}
-    >
-      {key}
-    </span>
-  );
-}
+const STATUSES = ["open", "closed"];
+const FORMATS = ["in_person", "hybrid", "virtual"];
 
-function asList(payload) {
-  if (Array.isArray(payload?.data)) return payload.data;
-  if (Array.isArray(payload)) return payload;
-  if (Array.isArray(payload?.data?.data)) return payload.data.data;
+const PAGE_MENU = [
+  { label: "All conferences", path: "/conferences" },
+  { label: "My Conferences", path: "/my-conferences" },
+  { label: "Create conference", path: "/create-conference" },
+  { label: "Author dashboard", path: "/author-dashboard" },
+];
+
+function unwrapList(response) {
+  if (Array.isArray(response)) return response;
+  if (Array.isArray(response?.data)) return response.data;
+  if (Array.isArray(response?.data?.data)) return response.data.data;
+  if (Array.isArray(response?.data?.items)) return response.data.items;
+  if (Array.isArray(response?.items)) return response.items;
   return [];
 }
 
-function mapOrganising(c) {
-  const start = c.start_date ? String(c.start_date).slice(0, 10) : "";
-  const end = c.end_date ? String(c.end_date).slice(0, 10) : "";
+function formatDate(value) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value);
+  return date.toLocaleDateString("en-ZA", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+function getAccent(category) {
+  const value = String(category || "").toLowerCase();
+  if (value.includes("medicine") || value.includes("health")) return "green";
+  if (value.includes("engineering") || value.includes("education")) return "orange";
+  return "purple";
+}
+
+function normaliseConference(conference) {
+  const formatMap = {
+    in_person: "In-person",
+    virtual: "Online",
+    hybrid: "Hybrid",
+  };
+  const statusMap = {
+    open: "Open for submissions",
+    closed: "Closed",
+  };
+
   return {
-    id: c.id,
-    title: c.name || "Untitled conference",
-    acronym: c.code || "",
-    date: start && end ? `${start} – ${end}` : start || end || "Dates TBA",
-    location:
-      c.venue_name || [c.city, c.country].filter(Boolean).join(", ") || "TBA",
+    ...conference,
+    id: conference.id,
+    code: conference.code || "",
+    name: conference.name || "Untitled Conference",
+    shortTitle: conference.name || conference.code || "Untitled Conference",
+    title: conference.name || "Untitled Conference",
+    description:
+      conference.description || "Conference information and submission details.",
+    category: conference.category || "Computer Science",
+    topics: Array.isArray(conference.topics) ? conference.topics : [],
+    format: formatMap[conference.format] || conference.format || "",
     status:
-      c.submission_status === "open"
-        ? "Open for submissions"
-        : c.submission_status === "closed"
-          ? "Closed"
-          : c.submission_status || "—",
+      statusMap[conference.submission_status] ||
+      conference.submission_status ||
+      "",
+    submission_status: conference.submission_status || "",
+    submissionDeadline: formatDate(conference.submission_deadline),
+    startDate: formatDate(conference.start_date),
+    endDate: formatDate(conference.end_date),
+    date: formatDate(conference.start_date),
+    location: conference.venue_name || "Venue to be announced",
+    city: conference.city || "",
+    country: conference.country || "",
+    websiteLink: conference.website_link || "",
+    accent: getAccent(conference.category),
   };
 }
 
-const tabs = [
-  { id: "attending", label: "Attending", icon: Users },
-  { id: "proposals", label: "My Proposals", icon: FileText },
-  { id: "organising", label: "Organising", icon: Building2 },
-];
+function matchesSearch(conference, query) {
+  if (!query.trim()) return true;
+  const text = [
+    conference.name,
+    conference.code,
+    conference.description,
+    conference.category,
+    conference.format,
+    conference.submission_status,
+    conference.venue_name,
+    conference.city,
+    conference.country,
+    ...(Array.isArray(conference.topics) ? conference.topics : []),
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+  return text.includes(query.trim().toLowerCase());
+}
 
-export default function MyConferences() {
+function matchesFilters(conference, filters) {
+  if (
+    filters.category &&
+    String(conference.category || "").toLowerCase() !==
+      filters.category.toLowerCase()
+  ) {
+    return false;
+  }
+  if (
+    filters.country &&
+    String(conference.country || "").toLowerCase() !==
+      filters.country.toLowerCase()
+  ) {
+    return false;
+  }
+  if (
+    filters.status &&
+    String(conference.submission_status || "").toLowerCase() !==
+      filters.status.toLowerCase()
+  ) {
+    return false;
+  }
+  if (
+    filters.format &&
+    String(conference.format || "").toLowerCase() !==
+      filters.format.toLowerCase()
+  ) {
+    return false;
+  }
+  return true;
+}
+
+function sortConferences(list, sortBy) {
+  const sorted = [...list];
+  if (sortBy === "name") {
+    return sorted.sort((a, b) =>
+      String(a.name || "").localeCompare(String(b.name || ""))
+    );
+  }
+  if (sortBy === "date") {
+    return sorted.sort((a, b) => {
+      const aT = a.start_date ? new Date(a.start_date).getTime() : Number.MAX_SAFE_INTEGER;
+      const bT = b.start_date ? new Date(b.start_date).getTime() : Number.MAX_SAFE_INTEGER;
+      return aT - bT;
+    });
+  }
+  return sorted.sort((a, b) => {
+    const aT = a.submission_deadline
+      ? new Date(a.submission_deadline).getTime()
+      : Number.MAX_SAFE_INTEGER;
+    const bT = b.submission_deadline
+      ? new Date(b.submission_deadline).getTime()
+      : Number.MAX_SAFE_INTEGER;
+    return aT - bT;
+  });
+}
+
+export default function Conferences() {
   const navigate = useNavigate();
-  const [tab, setTab] = useState("organising");
-  const [query, setQuery] = useState("");
-  const [attending, setAttending] = useState([]);
-  const [proposals] = useState([]);
-  const [organising, setOrganising] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const location = useLocation();
 
-  const loadOrganising = useCallback(async () => {
+  const [query, setQuery] = useState("");
+  const [filters, setFilters] = useState({
+    category: "",
+    country: "",
+    status: "",
+    format: "",
+  });
+  const [sortBy, setSortBy] = useState("deadline");
+  const [view, setView] = useState("grid");
+  const [conferences, setConferences] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
+
+  const loadConferences = useCallback(async () => {
     setLoading(true);
-    setError(null);
+    setError("");
     try {
-      const payload = await conferencesApi.getAll();
-      setOrganising(asList(payload).map(mapOrganising));
-    } catch (e) {
-      setOrganising([]);
+      const response = await conferencesApi.getAll({ per_page: 100 });
+      setConferences(unwrapList(response));
+    } catch (err) {
+      console.error("Failed to load conferences:", err);
       setError(
-        e?.message ||
-          "Could not load conferences from API. Is php artisan serve running?"
+        err?.message ||
+          "Unable to load conferences. Is the API running at http://127.0.0.1:8000?"
       );
+      setConferences([]);
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    loadOrganising();
-  }, [loadOrganising]);
+    loadConferences();
+  }, [loadConferences]);
 
-  const counts = {
-    attending: attending.length,
-    proposals: proposals.length,
-    organising: organising.length,
-  };
+  const countries = useMemo(() => {
+    const set = new Set(conferences.map((c) => c.country).filter(Boolean));
+    return Array.from(set).sort();
+  }, [conferences]);
 
-  const filterList = (list, fields) => {
-    const q = query.trim().toLowerCase();
-    if (!q) return list;
-    return list.filter((item) =>
-      fields
-        .map((f) => String(item[f] ?? ""))
-        .join(" ")
-        .toLowerCase()
-        .includes(q)
+  const displayConferences = useMemo(() => {
+    const filtered = conferences.filter(
+      (c) => matchesSearch(c, query) && matchesFilters(c, filters)
     );
+    return sortConferences(filtered, sortBy).map(normaliseConference);
+  }, [conferences, query, filters, sortBy]);
+
+  const updateFilter = (key, value) => {
+    setFilters((prev) => ({ ...prev, [key]: value }));
   };
 
-  const filteredAttending = useMemo(
-    () => filterList(attending, ["title", "acronym", "location", "status"]),
-    [attending, query]
-  );
-  const filteredProposals = useMemo(
-    () => filterList(proposals, ["title", "conference", "track", "status"]),
-    [proposals, query]
-  );
-  const filteredOrganising = useMemo(
-    () => filterList(organising, ["title", "acronym", "location", "status"]),
-    [organising, query]
-  );
-
-  const list =
-    tab === "attending"
-      ? filteredAttending
-      : tab === "proposals"
-        ? filteredProposals
-        : filteredOrganising;
-
-  const emptyMessage =
-    tab === "attending"
-      ? "You are not registered for any conferences yet."
-      : tab === "proposals"
-        ? "You have not submitted any proposals yet."
-        : "No conferences yet. Create one to get started.";
-
-  const cancelRegistration = (item) => {
-    if (!window.confirm(`Cancel registration for “${item.title}”?`)) return;
-    setAttending((prev) => prev.filter((r) => r.id !== item.id));
+  const clearFilters = () => {
+    setQuery("");
+    setFilters({ category: "", country: "", status: "", format: "" });
   };
 
-  return (
-    <div className="min-h-screen bg-[#f5f7fb] text-[#0d1b3d]">
-      <header className="sticky top-0 z-30 border-b border-[#e4e8f0] bg-white/95 backdrop-blur">
-        <div className="mx-auto flex w-[min(1200px,calc(100%-32px))] items-center justify-between gap-4 py-3.5">
+  const activeFilterCount = Object.values(filters).filter(Boolean).length;
+
+  const FilterPanel = () => (
+    <aside className="rounded-2xl border border-[#d0d5e0] bg-white p-5 shadow-sm dark:border-white/10 dark:bg-[#121a33]">
+      <div className="mb-5 flex items-center justify-between border-b border-[#e8ebf2] pb-4 dark:border-white/10">
+        <strong className="text-[13px] font-extrabold text-[#0d1b3d] dark:text-white">
+          Filters
+        </strong>
+        {activeFilterCount > 0 && (
           <button
             type="button"
-            className="border-0 bg-transparent p-0"
-            onClick={() => navigate("/")}
+            className="border-0 bg-transparent text-[11px] font-bold text-[#5c50ec] dark:text-[#b7aeff]"
+            onClick={clearFilters}
           >
-            <Logo />
+            Clear all
           </button>
+        )}
+      </div>
+
+      <label className="mb-4 grid gap-1.5 text-[11px] font-bold text-[#4a5568] dark:text-[#c0c7d6]">
+        <span>Category</span>
+        <select
+          value={filters.category}
+          onChange={(e) => updateFilter("category", e.target.value)}
+          className="min-h-10 w-full rounded-[11px] border border-[#d0d5e0] bg-[#f8f9fc] px-3 text-[13px] font-medium text-[#0d1b3d] dark:border-white/15 dark:bg-[#1a2442] dark:text-white"
+        >
+          <option value="">All categories</option>
+          {CATEGORIES.map((c) => (
+            <option key={c} value={c}>
+              {c}
+            </option>
+          ))}
+        </select>
+      </label>
+
+      <label className="mb-4 grid gap-1.5 text-[11px] font-bold text-[#4a5568] dark:text-[#c0c7d6]">
+        <span>Country</span>
+        <select
+          value={filters.country}
+          onChange={(e) => updateFilter("country", e.target.value)}
+          className="min-h-10 w-full rounded-[11px] border border-[#d0d5e0] bg-[#f8f9fc] px-3 text-[13px] font-medium text-[#0d1b3d] dark:border-white/15 dark:bg-[#1a2442] dark:text-white"
+        >
+          <option value="">All countries</option>
+          {countries.map((c) => (
+            <option key={c} value={c}>
+              {c}
+            </option>
+          ))}
+        </select>
+      </label>
+
+      <label className="mb-4 grid gap-1.5 text-[11px] font-bold text-[#4a5568] dark:text-[#c0c7d6]">
+        <span>Submission status</span>
+        <select
+          value={filters.status}
+          onChange={(e) => updateFilter("status", e.target.value)}
+          className="min-h-10 w-full rounded-[11px] border border-[#d0d5e0] bg-[#f8f9fc] px-3 text-[13px] font-medium text-[#0d1b3d] dark:border-white/15 dark:bg-[#1a2442] dark:text-white"
+        >
+          <option value="">All statuses</option>
+          {STATUSES.map((s) => (
+            <option key={s} value={s}>
+              {s === "open" ? "Open for submissions" : "Closed"}
+            </option>
+          ))}
+        </select>
+      </label>
+
+      <label className="grid gap-1.5 text-[11px] font-bold text-[#4a5568] dark:text-[#c0c7d6]">
+        <span>Format</span>
+        <select
+          value={filters.format}
+          onChange={(e) => updateFilter("format", e.target.value)}
+          className="min-h-10 w-full rounded-[11px] border border-[#d0d5e0] bg-[#f8f9fc] px-3 text-[13px] font-medium text-[#0d1b3d] dark:border-white/15 dark:bg-[#1a2442] dark:text-white"
+        >
+          <option value="">All formats</option>
+          {FORMATS.map((f) => (
+            <option key={f} value={f}>
+              {f === "in_person" ? "In-person" : f === "virtual" ? "Online" : "Hybrid"}
+            </option>
+          ))}
+        </select>
+      </label>
+    </aside>
+  );
+
+  return (
+    <div className="min-h-screen bg-[#f4f6fb] text-[#0d1b3d] dark:bg-[#070f24] dark:text-white">
+      <Navbar />
+
+      <section className="border-b border-white/10 bg-gradient-to-br from-[#07132f] via-[#0c1c40] to-[#1a2458] text-white">
+        <div className="mx-auto w-[min(1200px,calc(100%-40px))] py-10 md:py-12">
+          <div className="flex flex-wrap items-end justify-between gap-6">
+            <div className="max-w-2xl">
+              <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#cfc8ff]">
+                <Sparkles size={14} /> All conferences
+              </span>
+              <h1 className="mt-4 text-[clamp(28px,4vw,44px)] font-bold leading-tight tracking-[-0.04em] text-white">
+                Browse academic conferences
+              </h1>
+              <p className="mt-3 max-w-xl text-[14px] leading-relaxed text-white/85">
+                Search and filter open calls, hybrid events, and in-person
+                programmes from the live CMT database.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={loadConferences}
+                className="inline-flex items-center gap-2 rounded-[11px] border border-white/20 bg-transparent px-4 py-2.5 text-[13px] font-bold text-white transition hover:-translate-y-px"
+              >
+                <RefreshCw size={15} /> Refresh
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate("/my-conferences")}
+                className="rounded-[11px] border border-white/20 bg-transparent px-4 py-2.5 text-[13px] font-bold text-white transition hover:-translate-y-px"
+              >
+                My Conferences
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate("/create-conference")}
+                className="inline-flex items-center gap-2 rounded-[11px] bg-gradient-to-br from-[#6655f6] to-[#7869ff] px-4 py-2.5 text-[13px] font-bold text-white shadow-[0_10px_26px_rgba(103,87,245,.26)] transition hover:-translate-y-px"
+              >
+                <Plus size={15} /> Create conference
+              </button>
+            </div>
+          </div>
+
+          <div className="mt-8 flex flex-wrap gap-2 border-t border-white/10 pt-5">
+            {PAGE_MENU.map((item) => {
+              const active = location.pathname === item.path;
+              return (
+                <button
+                  key={item.path}
+                  type="button"
+                  onClick={() => navigate(item.path)}
+                  className={`rounded-full px-4 py-2 text-[12px] font-bold transition ${
+                    active
+                      ? "bg-white text-[#07132f]"
+                      : "border border-white/20 bg-white/5 text-white/85 hover:bg-white/10 hover:text-white"
+                  }`}
+                >
+                  {item.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      <div className="border-b border-[#e4e8f0] bg-white dark:border-white/10 dark:bg-[#0c152c]">
+        <div className="mx-auto flex w-[min(1200px,calc(100%-40px))] flex-wrap items-center justify-between gap-3 py-4">
+          <div className="relative min-w-[240px] max-w-md flex-1">
+            <Search
+              size={16}
+              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#5b657a] dark:text-[#aeb6c8]"
+            />
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search by name, code, city, topic…"
+              className="w-full rounded-[11px] border border-[#d0d5e0] bg-[#f8f9fc] py-2.5 pl-10 pr-3 text-[13px] font-medium text-[#0d1b3d] outline-none placeholder:text-[#6b7280] focus:border-[#6655f6] dark:border-white/15 dark:bg-[#1a2442] dark:text-white dark:placeholder:text-[#9aa3b5]"
+            />
+          </div>
+
           <div className="flex flex-wrap items-center gap-2">
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="rounded-[11px] border border-[#d0d5e0] bg-white px-3 py-2.5 text-[12px] font-bold text-[#0d1b3d] dark:border-white/15 dark:bg-[#1a2442] dark:text-white"
+            >
+              <option value="deadline">Sort: deadline</option>
+              <option value="date">Sort: start date</option>
+              <option value="name">Sort: name</option>
+            </select>
+
+            <div className="flex overflow-hidden rounded-[11px] border border-[#d0d5e0] dark:border-white/15">
+              <button
+                type="button"
+                onClick={() => setView("grid")}
+                className={`grid h-10 w-10 place-items-center ${
+                  view === "grid"
+                    ? "bg-[#efedff] text-[#5c50ec] dark:bg-[#2a3358] dark:text-[#cfc8ff]"
+                    : "bg-white text-[#4a5568] dark:bg-[#121a33] dark:text-[#c0c7d6]"
+                }`}
+                aria-label="Grid view"
+              >
+                <LayoutGrid size={16} />
+              </button>
+              <button
+                type="button"
+                onClick={() => setView("list")}
+                className={`grid h-10 w-10 place-items-center border-l border-[#d0d5e0] dark:border-white/15 ${
+                  view === "list"
+                    ? "bg-[#efedff] text-[#5c50ec] dark:bg-[#2a3358] dark:text-[#cfc8ff]"
+                    : "bg-white text-[#4a5568] dark:bg-[#121a33] dark:text-[#c0c7d6]"
+                }`}
+                aria-label="List view"
+              >
+                <List size={16} />
+              </button>
+            </div>
+
             <button
               type="button"
-              onClick={loadOrganising}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-[#e4e8f0] bg-white px-3 py-2 text-[12px] font-bold text-[#35415f]"
+              onClick={() => setShowMobileFilters((v) => !v)}
+              className="inline-flex items-center gap-2 rounded-[11px] border border-[#d0d5e0] bg-white px-3 py-2.5 text-[12px] font-bold text-[#0d1b3d] lg:hidden dark:border-white/15 dark:bg-[#1a2442] dark:text-white"
             >
-              <RefreshCw size={14} /> Refresh
-            </button>
-            <button
-              type="button"
-              onClick={() => navigate("/author-dashboard")}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-[#e4e8f0] bg-white px-3 py-2 text-[12px] font-bold text-[#35415f]"
-            >
-              <LayoutDashboard size={14} /> Author dashboard
-            </button>
-            <button
-              type="button"
-              onClick={() => navigate("/account-settings")}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-[#e4e8f0] bg-white px-3 py-2 text-[12px] font-bold text-[#35415f]"
-            >
-              <Settings size={14} /> Settings
-            </button>
-            <button
-              type="button"
-              onClick={() => navigate("/create-conference")}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-br from-[#6655f6] to-[#7869ff] px-3 py-2 text-[12px] font-extrabold text-white"
-            >
-              <Plus size={14} /> Create conference
+              <SlidersHorizontal size={15} /> Filters
+              {activeFilterCount > 0 ? ` (${activeFilterCount})` : ""}
             </button>
           </div>
         </div>
-      </header>
+      </div>
 
-      <main className="mx-auto w-[min(1200px,calc(100%-32px))] py-6">
-        <section className="relative overflow-hidden rounded-[22px] bg-gradient-to-br from-[#111e4b] via-[#1c2860] to-[#342b87] px-6 py-7 text-white">
-          <span className="inline-flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-[.12em] text-[#b9b3ff]">
-            <Sparkles size={14} /> My Conferences
-          </span>
-          <h1 className="mb-2 mt-3 text-[clamp(26px,4vw,40px)] font-bold tracking-[-.045em]">
-            Everything you’re involved in
-          </h1>
-          <p className="m-0 max-w-[640px] text-[13px] text-white/70">
-            Attending, proposals, and conferences you organise.
-          </p>
-          <button
-            type="button"
-            onClick={() => navigate("/create-conference")}
-            className="mt-5 inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-[12px] font-extrabold text-[#342b87]"
-          >
-            <Plus size={16} /> Create conference
-          </button>
-        </section>
-
+      <main className="mx-auto w-[min(1200px,calc(100%-40px))] py-6">
         {error && (
           <div
             role="alert"
-            className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-[12px] text-amber-900"
+            className="mb-4 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-[13px] font-semibold text-amber-950 dark:border-amber-400/30 dark:bg-amber-500/10 dark:text-amber-100"
           >
             {error}
           </div>
         )}
 
-        <section className="mt-5 grid grid-cols-3 gap-4 max-[720px]:grid-cols-1">
-          {[
-            { label: "Attending", value: counts.attending, icon: <Users size={18} /> },
-            { label: "My Proposals", value: counts.proposals, icon: <FileText size={18} /> },
-            { label: "Organising", value: counts.organising, icon: <Building2 size={18} /> },
-          ].map((s) => (
-            <article
-              key={s.label}
-              className="rounded-[17px] border border-[#e4e8f0] bg-white p-4"
-            >
-              <span className="grid h-9 w-9 place-items-center rounded-[10px] bg-[#efedff] text-[#5c50ec]">
-                {s.icon}
-              </span>
-              <strong className="mt-3 block text-[24px]">
-                {loading && s.label === "Organising" ? "…" : s.value}
-              </strong>
-              <p className="mb-0 mt-1 text-[12px] font-bold">{s.label}</p>
-            </article>
-          ))}
-        </section>
+        <p className="mb-4 text-[13px] font-semibold text-[#4a5568] dark:text-[#c0c7d6]">
+          {loading
+            ? "Loading conferences…"
+            : `${displayConferences.length} conference${
+                displayConferences.length === 1 ? "" : "s"
+              } found`}
+        </p>
 
-        <section className="mt-6 rounded-[20px] border border-[#e4e8f0] bg-white">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#e4e8f0] p-4">
-            <div className="flex flex-wrap gap-2">
-              {tabs.map((t) => {
-                const Icon = t.icon;
-                const active = tab === t.id;
-                return (
-                  <button
-                    key={t.id}
-                    type="button"
-                    onClick={() => setTab(t.id)}
-                    className={`inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-[12px] font-extrabold ${
-                      active
-                        ? "bg-gradient-to-br from-[#6655f6] to-[#7869ff] text-white"
-                        : "border border-[#e4e8f0] bg-[#f8f9fc] text-[#35415f]"
-                    }`}
-                  >
-                    <Icon size={14} />
-                    {t.label}
-                    <span className="ml-1 rounded-full bg-black/10 px-1.5 text-[10px]">
-                      {counts[t.id]}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-            <div className="relative min-w-[220px] max-w-xs flex-1">
-              <Search
-                size={15}
-                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#8b95a8]"
-              />
-              <input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search this list…"
-                className="w-full rounded-xl border border-[#e4e8f0] bg-[#f8f9fc] py-2.5 pl-9 pr-3 text-[12px] outline-none"
-              />
-            </div>
+        <div className="grid gap-6 lg:grid-cols-[260px_1fr]">
+          <div className={`${showMobileFilters ? "block" : "hidden"} lg:block`}>
+            <FilterPanel />
           </div>
 
-          <div className="p-4">
-            {loading && tab === "organising" ? (
-              <p className="py-10 text-center text-[13px] text-[#68748b]">
-                Loading conferences…
-              </p>
-            ) : list.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-[#dfe4ee] px-6 py-12 text-center">
-                <UserRound className="mx-auto text-[#aeb6c6]" size={28} />
-                <p className="mt-3 text-[13px] font-bold">{emptyMessage}</p>
-                <button
-                  type="button"
-                  onClick={() =>
-                    navigate(
-                      tab === "organising" ? "/create-conference" : "/conferences"
-                    )
-                  }
-                  className="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-br from-[#6655f6] to-[#7869ff] px-4 py-2.5 text-[12px] font-extrabold text-white"
-                >
-                  <Plus size={14} />{" "}
-                  {tab === "organising" ? "Create conference" : "Browse conferences"}
-                </button>
+          <div>
+            {loading && (
+              <div className="rounded-2xl border border-dashed border-[#c5cddb] bg-white px-6 py-16 text-center text-[13px] font-semibold text-[#4a5568] dark:border-white/15 dark:bg-[#121a33] dark:text-[#c0c7d6]">
+                Loading conferences from the API…
               </div>
-            ) : (
-              <div className="grid gap-3">
-                {tab === "attending" &&
-                  filteredAttending.map((item) => (
-                    <article
-                      key={item.id}
-                      className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#e4e8f0] bg-[#fafbfe] p-4"
-                    >
-                      <div>
-                        <StatusBadge status={item.status} />
-                        <h3 className="mt-1 text-[14px] font-extrabold">{item.title}</h3>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => cancelRegistration(item)}
-                        className="inline-flex items-center gap-1 rounded-xl border border-[#f1c8c8] bg-[#fff2f2] px-3 py-2 text-[11px] font-bold text-[#b13a3a]"
-                      >
-                        <Trash2 size={13} /> Cancel
-                      </button>
-                    </article>
-                  ))}
+            )}
 
-                {tab === "proposals" &&
-                  filteredProposals.map((item) => (
-                    <article
-                      key={item.id}
-                      className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#e4e8f0] bg-[#fafbfe] p-4"
-                    >
-                      <div>
-                        <StatusBadge status={item.status} />
-                        <h3 className="mt-1 text-[14px] font-extrabold">{item.title}</h3>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => navigate("/author-dashboard")}
-                        className="rounded-xl border border-[#e4e8f0] bg-white px-3 py-2 text-[11px] font-bold"
-                      >
-                        Open
-                      </button>
-                    </article>
-                  ))}
+            {!loading && !error && displayConferences.length === 0 && (
+              <div className="rounded-2xl border border-dashed border-[#c5cddb] bg-white px-6 py-16 text-center dark:border-white/15 dark:bg-[#121a33]">
+                <p className="text-[14px] font-extrabold text-[#0d1b3d] dark:text-white">
+                  No conferences match your search
+                </p>
+                <p className="mt-2 text-[13px] text-[#4a5568] dark:text-[#c0c7d6]">
+                  Try clearing filters or create a new conference.
+                </p>
+                <div className="mt-5 flex flex-wrap justify-center gap-2">
+                  <button
+                    type="button"
+                    onClick={clearFilters}
+                    className="rounded-[11px] border border-[#d0d5e0] bg-white px-4 py-2.5 text-[13px] font-bold text-[#0d1b3d] dark:border-white/15 dark:bg-[#1a2442] dark:text-white"
+                  >
+                    Clear filters
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => navigate("/create-conference")}
+                    className="rounded-[11px] bg-gradient-to-br from-[#6655f6] to-[#7869ff] px-4 py-2.5 text-[13px] font-bold text-white"
+                  >
+                    Create conference
+                  </button>
+                </div>
+              </div>
+            )}
 
-                {tab === "organising" &&
-                  filteredOrganising.map((item) => (
-                    <article
-                      key={item.id}
-                      className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#e4e8f0] bg-[#fafbfe] p-4"
-                    >
-                      <div>
-                        <div className="mb-1 flex flex-wrap items-center gap-2">
-                          <StatusBadge status={item.status} />
-                          {item.acronym && (
-                            <span className="text-[11px] font-bold text-[#5c50ec]">
-                              {item.acronym}
-                            </span>
-                          )}
-                        </div>
-                        <h3 className="m-0 text-[14px] font-extrabold">{item.title}</h3>
-                        <div className="mt-2 flex flex-wrap gap-3 text-[11px] text-[#68748b]">
-                          <span className="inline-flex items-center gap-1">
-                            <CalendarDays size={13} /> {item.date}
-                          </span>
-                          <span className="inline-flex items-center gap-1">
-                            <MapPin size={13} /> {item.location}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <button
-                          type="button"
-                          onClick={() => navigate(`/edit-conference/${item.id}`)}
-                          className="rounded-xl border border-[#e4e8f0] bg-white px-3 py-2 text-[11px] font-bold"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => navigate("/conferences")}
-                          className="rounded-xl bg-gradient-to-br from-[#6655f6] to-[#7869ff] px-3 py-2 text-[11px] font-extrabold text-white"
-                        >
-                          Manage
-                        </button>
-                      </div>
-                    </article>
-                  ))}
+            {!loading && displayConferences.length > 0 && (
+              <div
+                className={
+                  view === "grid"
+                    ? "grid gap-4 sm:grid-cols-2 xl:grid-cols-3"
+                    : "grid gap-3"
+                }
+              >
+                {displayConferences.map((conference) => (
+                  <ConferenceCard
+                    key={conference.id}
+                    conference={conference}
+                    layout={view}
+                  />
+                ))}
+              </div>
+            )}
+
+            {!loading && displayConferences.length > 0 && (
+              <div className="mt-6 flex flex-wrap justify-between gap-3 border-t border-[#e8ebf2] pt-4 text-[12px] text-[#4a5568] dark:border-white/10 dark:text-[#c0c7d6]">
+                <span className="flex items-center gap-1.5 font-semibold">
+                  <CalendarDays size={16} />
+                  Sorted by{" "}
+                  {sortBy === "deadline"
+                    ? "submission deadline"
+                    : sortBy === "date"
+                      ? "conference date"
+                      : "name"}
+                </span>
+                <span className="font-semibold">
+                  {displayConferences.length} conference
+                  {displayConferences.length === 1 ? "" : "s"} available
+                </span>
               </div>
             )}
           </div>
-        </section>
+        </div>
       </main>
+
+      <footer className="bg-[#07132f] text-white/70">
+        <div className="mx-auto flex min-h-[90px] w-[min(1200px,calc(100%-40px))] flex-wrap items-center justify-between gap-4 py-6 text-[12px]">
+          <strong className="text-white">CMT · Conference Management Tool</strong>
+          <span>© {new Date().getFullYear()} CMT</span>
+        </div>
+      </footer>
     </div>
   );
 }
-
