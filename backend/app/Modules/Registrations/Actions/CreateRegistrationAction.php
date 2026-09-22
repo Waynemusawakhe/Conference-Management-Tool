@@ -1,0 +1,40 @@
+<?php
+
+namespace App\Modules\Registrations\Actions;
+
+use App\Modules\Registrations\Models\Registration;
+use App\Modules\Registrations\Notifications\RegistrationConfirmationNotification;
+use Illuminate\Database\QueryException;
+use Illuminate\Validation\ValidationException;
+
+class CreateRegistrationAction
+{
+    public function execute(array $data): Registration
+    {
+        try {
+            if (empty($data['status'])) {
+                $data['status'] = 'registered';
+            }
+
+            if (empty($data['registered_at'])) {
+                $data['registered_at'] = now();
+            }
+
+            $registration = Registration::create($data);
+            $registration->load(['conference', 'user']);
+
+            // 📧 Send confirmation email
+            $registration->user->notify(new RegistrationConfirmationNotification($registration));
+
+            return $registration;
+        } catch (QueryException $e) {
+            if ($e->getCode() === '23505' || str_contains($e->getMessage(), 'Duplicate entry')) {
+                throw ValidationException::withMessages([
+                    'conference_id' =>
+                        'You are already registered for this conference.',
+                ]);
+            }
+            throw $e;
+        }
+    }
+}
