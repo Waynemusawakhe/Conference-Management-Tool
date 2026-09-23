@@ -5,12 +5,12 @@ namespace App\Modules\Submissions\Models;
 use App\Models\User;
 use App\Modules\Conferences\Models\Conference;
 use App\Modules\Reviews\Models\SubmissionReview;
+use Database\Factories\SubmissionFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
-use Database\Factories\SubmissionFactory;
 
 class Submission extends Model
 {
