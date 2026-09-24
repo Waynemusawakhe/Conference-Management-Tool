@@ -1,6 +1,6 @@
 // src/pages/ReviewerDashboard.jsx
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   CheckCircle2,
   ClipboardCheck,
@@ -9,14 +9,10 @@ import {
   Filter,
   LayoutDashboard,
   Lock,
-  LogOut,
-  Moon,
   Search,
-  Sun,
   X,
 } from "lucide-react";
-import Logo from "../components/Logo";
-import { useTheme } from "../context/ThemeContext";
+import ReviewerLayout from "../components/ReviewerLayout";
 import { useAuth } from "../context/AuthContext";
 import { reviewsApi } from "../api/reviewsApi";
 
@@ -59,9 +55,6 @@ const STATE_META = {
   },
 };
 
-/* ------------------------------------------------------------------ *
- * Card resolvers — guide §8.8 doesn't confirm exact field names
- * ------------------------------------------------------------------ */
 const itemReviewId = (r) => r.id;
 const itemSubmissionId = (r) => r.submission_id ?? r.submission?.id ?? null;
 const itemTitle = (r) =>
@@ -76,12 +69,8 @@ const itemConference = (r) =>
   "";
 const itemTrack = (r) =>
   r.submission?.track ?? r.track ?? r.submission?.category ?? "";
-const itemAbstract = (r) =>
-  r.submission?.abstract ?? r.abstract ?? "";
+const itemAbstract = (r) => r.submission?.abstract ?? r.abstract ?? "";
 
-/* ------------------------------------------------------------------ *
- * Small primitives
- * ------------------------------------------------------------------ */
 function StatCard({ icon, value, label, tint }) {
   return (
     <div className="rounded-[16px] border border-[#e4e8f0] bg-white p-4 shadow-[0_10px_28px_rgba(15,28,65,.04)] transition hover:-translate-y-px hover:shadow-[0_14px_36px_rgba(15,28,65,.07)] dark:border-[#1e293b] dark:bg-[#0f172a]">
@@ -212,29 +201,19 @@ const FILTERS = [
   { key: "locked", label: "Locked" },
 ];
 
-/* ------------------------------------------------------------------ *
- * Page
- * ------------------------------------------------------------------ */
 export default function ReviewerDashboard() {
   const navigate = useNavigate();
-  const { dark, toggleTheme } = useTheme();
-  const { user, logout } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { user } = useAuth();
 
+  const filter = searchParams.get("filter") ?? "all";
   const [query, setQuery] = useState("");
-  const [filter, setFilter] = useState("all");
 
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   const displayName = user?.name ?? user?.full_name ?? "Reviewer";
-  const initials =
-    displayName
-      .split(" ")
-      .filter(Boolean)
-      .slice(0, 2)
-      .map((p) => p[0]?.toUpperCase() ?? "")
-      .join("") || "RV";
 
   useEffect(() => {
     let cancelled = false;
@@ -289,9 +268,11 @@ export default function ReviewerDashboard() {
     });
   }, [reviews, query, filter]);
 
-  const handleLogout = async () => {
-    await logout();
-    navigate("/login", { replace: true });
+  const handleFilterChange = (key) => {
+    const next = new URLSearchParams(searchParams);
+    if (key === "all") next.delete("filter");
+    else next.set("filter", key);
+    setSearchParams(next, { replace: true });
   };
 
   const handleEvaluate = (review) => {
@@ -299,264 +280,106 @@ export default function ReviewerDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f7f9fc] text-[#0d1b3d] transition-colors dark:bg-[#0a0f1f] dark:text-white">
-      {/* ---------- Header ---------- */}
-      <header className="sticky top-0 z-50 border-b border-white/10 bg-[#07132f]/95 text-white shadow-[0_8px_30px_rgba(7,19,47,.12)] backdrop-blur-xl">
-        <div className="mx-auto flex min-h-[76px] w-[min(1400px,calc(100%-32px))] items-center gap-4 sm:gap-6">
-          <button
-            className="border-0 bg-transparent p-0"
-            onClick={() => navigate("/")}
-            aria-label="CMT home"
-          >
-            <Logo />
-          </button>
-          <div className="hidden h-7 w-px bg-white/10 sm:block" />
-          <div className="hidden sm:block">
-            <p className="m-0 text-[10px] font-extrabold uppercase tracking-[.13em] text-[#a9a2ff]">
-              Reviewer workspace
-            </p>
-            <p className="m-0 mt-0.5 text-[12px] font-semibold text-white/65">
-              Conference Management Tool
-            </p>
-          </div>
-
-          <div className="ml-auto flex items-center gap-2">
-            <button
-              onClick={toggleTheme}
-              className="grid h-10 w-10 place-items-center rounded-xl border border-white/10 bg-white/[.04] text-white/85 transition hover:bg-white/10"
-              aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
-            >
-              {dark ? <Sun size={17} /> : <Moon size={17} />}
-            </button>
-
-            <div className="hidden items-center gap-2.5 border-l border-white/10 pl-3 sm:flex">
-              <div className="grid h-9 w-9 place-items-center rounded-full bg-[#e8e6ff] text-[10px] font-extrabold text-[#4f46c7]">
-                {initials}
-              </div>
-              <div className="leading-tight">
-                <strong className="block text-[11px] text-white">
-                  {displayName}
-                </strong>
-                <span className="block text-[9px] text-white/45">Reviewer</span>
-              </div>
-            </div>
-          </div>
+    <ReviewerLayout>
+      {/* Hero */}
+      <section className="relative overflow-hidden rounded-[22px] bg-[radial-gradient(circle_at_78%_18%,rgba(121,104,255,.22),transparent_25%),radial-gradient(circle_at_100%_100%,rgba(27,94,255,.18),transparent_36%),linear-gradient(135deg,#07132f_0%,#0a1740_52%,#15165a_100%)] p-6 text-white shadow-[0_18px_55px_rgba(15,28,65,.12)] sm:p-8">
+        <div className="absolute inset-0 opacity-[.16] [background-image:radial-gradient(rgba(255,255,255,.15)_0.7px,transparent_0.7px)] [background-size:22px_22px]" />
+        <div className="relative">
+          <span className="inline-flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-[.12em] text-[#b9b3ff]">
+            <ClipboardCheck size={14} /> Reviewer overview
+          </span>
+          <h1 className="mb-2 mt-3 text-[clamp(24px,3.4vw,36px)] font-bold leading-tight tracking-[-.045em]">
+            Welcome, {displayName}.
+          </h1>
+          <p className="m-0 max-w-[620px] text-[12px] leading-6 text-white/65">
+            Score assigned submissions, leave recommendations, and lock completed reviews.
+          </p>
         </div>
-      </header>
+      </section>
 
-      {/* ---------- Main ---------- */}
-      <div className="mx-auto w-[min(1400px,calc(100%-32px))] py-6">
-        <div className="grid gap-6 lg:grid-cols-[260px_1fr]">
-          {/* Sidebar */}
-          <aside className="hidden lg:sticky lg:top-[100px] lg:block lg:max-h-[calc(100vh-120px)] lg:overflow-y-auto">
-            <div className="rounded-2xl border border-[#e4e8f0] bg-white p-3 shadow-[0_18px_45px_rgba(15,28,65,.06)] dark:border-[#1e293b] dark:bg-[#0f172a]">
-              <div className="mb-3 rounded-xl bg-gradient-to-br from-[#111e4b] to-[#342b87] p-4 text-white">
-                <span className="mb-2 grid h-9 w-9 place-items-center rounded-lg bg-white/10">
-                  <ClipboardCheck size={17} />
-                </span>
-                <strong className="block text-[13px]">Reviewer menu</strong>
-                <p className="mt-1 text-[10px] leading-5 text-white/60">
-                  Manage your assigned reviews.
-                </p>
-              </div>
+      {/* Stats */}
+      {!loading && !error && reviews.length > 0 && (
+        <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <StatCard icon={<ClipboardCheck size={17} />} tint="bg-[#efedff] text-[#4f46c7]" value={counts.all} label="Total assigned" />
+          <StatCard icon={<Clock size={17} />} tint="bg-[#fff9e9] text-[#9b7414]" value={counts.pending} label="Pending" />
+          <StatCard icon={<FileText size={17} />} tint="bg-[#f0efff] text-[#5548d7]" value={counts.submitted} label="Submitted" />
+          <StatCard icon={<Lock size={17} />} tint="bg-[#effaf4] text-[#18794e]" value={counts.locked} label="Locked" />
+        </section>
+      )}
 
-              <nav className="space-y-1" aria-label="Reviewer navigation">
-                <button
-                  onClick={() => {
-                    setFilter("all");
-                    setQuery("");
-                  }}
-                  className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] transition ${
-                    filter === "all" && !query
-                      ? "bg-[#efedff] font-extrabold text-[#5649dc] dark:bg-[#2a2354] dark:text-[#a9a2ff]"
-                      : "font-semibold text-[#66728b] hover:bg-[#f5f6fa] hover:text-[#1c2a4a] dark:text-[#94a3b8] dark:hover:bg-[#111c33] dark:hover:text-white"
-                  }`}
-                >
-                  <LayoutDashboard size={16} /> Overview
-                </button>
-                <button
-                  onClick={() => setFilter("pending")}
-                  className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] transition ${
-                    filter === "pending"
-                      ? "bg-[#efedff] font-extrabold text-[#5649dc] dark:bg-[#2a2354] dark:text-[#a9a2ff]"
-                      : "font-semibold text-[#66728b] hover:bg-[#f5f6fa] hover:text-[#1c2a4a] dark:text-[#94a3b8] dark:hover:bg-[#111c33] dark:hover:text-white"
-                  }`}
-                >
-                  <Clock size={16} /> Pending
-                </button>
-                <button
-                  onClick={() => setFilter("submitted")}
-                  className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] transition ${
-                    filter === "submitted"
-                      ? "bg-[#efedff] font-extrabold text-[#5649dc] dark:bg-[#2a2354] dark:text-[#a9a2ff]"
-                      : "font-semibold text-[#66728b] hover:bg-[#f5f6fa] hover:text-[#1c2a4a] dark:text-[#94a3b8] dark:hover:bg-[#111c33] dark:hover:text-white"
-                  }`}
-                >
-                  <FileText size={16} /> Submitted
-                </button>
-                <button
-                  onClick={() => setFilter("locked")}
-                  className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] transition ${
-                    filter === "locked"
-                      ? "bg-[#efedff] font-extrabold text-[#5649dc] dark:bg-[#2a2354] dark:text-[#a9a2ff]"
-                      : "font-semibold text-[#66728b] hover:bg-[#f5f6fa] hover:text-[#1c2a4a] dark:text-[#94a3b8] dark:hover:bg-[#111c33] dark:hover:text-white"
-                  }`}
-                >
-                  <Lock size={16} /> Locked
-                </button>
-              </nav>
+      {/* Error */}
+      {error && (
+        <div role="alert" className="rounded-2xl border border-[#f1c8c8] bg-[#fff2f2] p-5 text-[12px] text-[#b13a3a]">
+          <strong className="block text-[12px] font-extrabold">Couldn't load your reviews</strong>
+          <span className="mt-1 block text-[11px]">{error}</span>
+        </div>
+      )}
 
-              <div className="my-4 border-t border-[#edf0f5] dark:border-[#1e293b]" />
-
+      {/* Search + filter */}
+      {!error && (
+        <div className="flex flex-col gap-3 rounded-2xl border border-[#e4e8f0] bg-white p-4 shadow-[0_6px_18px_rgba(15,28,65,.03)] dark:border-[#1e293b] dark:bg-[#0f172a] sm:flex-row sm:items-center sm:gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#98a1b3]" size={15} />
+            <input
+              type="text"
+              placeholder="Search by title, conference, or ID…"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              className="h-11 w-full rounded-xl border border-[#e2e6ee] bg-[#fafbfe] pl-10 pr-9 text-[12px] outline-none transition focus:border-[#8175ef] focus:bg-white focus:ring-2 focus:ring-[#8175ef]/10 dark:border-[#1e293b] dark:bg-[#0b1224] dark:text-white"
+            />
+            {query && (
               <button
-                className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] font-semibold text-[#9a6470] hover:bg-[#fff4f5] dark:text-[#f08a9a] dark:hover:bg-[#2a1218]"
-                onClick={handleLogout}
+                onClick={() => setQuery("")}
+                className="absolute right-2.5 top-1/2 grid h-6 w-6 -translate-y-1/2 place-items-center rounded-full text-[#98a1b3] hover:bg-[#eef1f7] hover:text-[#5c6880]"
+                aria-label="Clear search"
               >
-                <LogOut size={16} /> Sign out
+                <X size={12} />
               </button>
-            </div>
-          </aside>
-
-          {/* Content */}
-          <main className="min-w-0 space-y-5">
-            {/* Hero */}
-            <section className="relative overflow-hidden rounded-[22px] bg-[radial-gradient(circle_at_78%_18%,rgba(121,104,255,.22),transparent_25%),radial-gradient(circle_at_100%_100%,rgba(27,94,255,.18),transparent_36%),linear-gradient(135deg,#07132f_0%,#0a1740_52%,#15165a_100%)] p-6 text-white shadow-[0_18px_55px_rgba(15,28,65,.12)] sm:p-8">
-              <div className="absolute inset-0 opacity-[.16] [background-image:radial-gradient(rgba(255,255,255,.15)_0.7px,transparent_0.7px)] [background-size:22px_22px]" />
-              <div className="relative">
-                <span className="inline-flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-[.12em] text-[#b9b3ff]">
-                  <ClipboardCheck size={14} /> Reviewer overview
-                </span>
-                <h1 className="mb-2 mt-3 text-[clamp(24px,3.4vw,36px)] font-bold leading-tight tracking-[-.045em]">
-                  Welcome, {displayName}.
-                </h1>
-                <p className="m-0 max-w-[620px] text-[12px] leading-6 text-white/65">
-                  Score assigned submissions, leave recommendations, and lock
-                  completed reviews.
-                </p>
-              </div>
-            </section>
-
-            {/* Stats */}
-            {!loading && !error && reviews.length > 0 && (
-              <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                <StatCard
-                  icon={<ClipboardCheck size={17} />}
-                  tint="bg-[#efedff] text-[#4f46c7]"
-                  value={counts.all}
-                  label="Total assigned"
-                />
-                <StatCard
-                  icon={<Clock size={17} />}
-                  tint="bg-[#fff9e9] text-[#9b7414]"
-                  value={counts.pending}
-                  label="Pending"
-                />
-                <StatCard
-                  icon={<FileText size={17} />}
-                  tint="bg-[#f0efff] text-[#5548d7]"
-                  value={counts.submitted}
-                  label="Submitted"
-                />
-                <StatCard
-                  icon={<Lock size={17} />}
-                  tint="bg-[#effaf4] text-[#18794e]"
-                  value={counts.locked}
-                  label="Locked"
-                />
-              </section>
             )}
+          </div>
 
-            {/* Error */}
-            {error && (
-              <div
-                role="alert"
-                className="rounded-2xl border border-[#f1c8c8] bg-[#fff2f2] p-5 text-[12px] text-[#b13a3a]"
-              >
-                <strong className="block text-[12px] font-extrabold">
-                  Couldn't load your reviews
-                </strong>
-                <span className="mt-1 block text-[11px]">{error}</span>
-              </div>
-            )}
-
-            {/* Search + filter */}
-            {!error && (
-              <div className="flex flex-col gap-3 rounded-2xl border border-[#e4e8f0] bg-white p-4 shadow-[0_6px_18px_rgba(15,28,65,.03)] dark:border-[#1e293b] dark:bg-[#0f172a] sm:flex-row sm:items-center sm:gap-3">
-                <div className="relative flex-1">
-                  <Search
-                    className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#98a1b3]"
-                    size={15}
-                  />
-                  <input
-                    type="text"
-                    placeholder="Search by title, conference, or ID…"
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    className="h-11 w-full rounded-xl border border-[#e2e6ee] bg-[#fafbfe] pl-10 pr-9 text-[12px] outline-none transition focus:border-[#8175ef] focus:bg-white focus:ring-2 focus:ring-[#8175ef]/10 dark:border-[#1e293b] dark:bg-[#0b1224] dark:text-white"
-                  />
-                  {query && (
-                    <button
-                      onClick={() => setQuery("")}
-                      className="absolute right-2.5 top-1/2 grid h-6 w-6 -translate-y-1/2 place-items-center rounded-full text-[#98a1b3] hover:bg-[#eef1f7] hover:text-[#5c6880]"
-                      aria-label="Clear search"
-                    >
-                      <X size={12} />
-                    </button>
-                  )}
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <Filter size={15} className="text-[#98a1b3]" />
-                  <select
-                    value={filter}
-                    onChange={(e) => setFilter(e.target.value)}
-                    className="h-11 rounded-xl border border-[#e2e6ee] bg-white px-3 text-[12px] font-semibold text-[#43506a] outline-none focus:border-[#8175ef] focus:ring-2 focus:ring-[#8175ef]/10 dark:border-[#1e293b] dark:bg-[#0b1224] dark:text-white"
-                  >
-                    {FILTERS.map((f) => (
-                      <option key={f.key} value={f.key}>
-                        {f.label} ({counts[f.key] ?? 0})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-            )}
-
-            {/* Reviews list */}
-            {loading && <LoadingCards />}
-
-            {!loading && !error && filtered.length === 0 && (
-              <div className="rounded-2xl border border-dashed border-[#d6dbe8] bg-white p-12 text-center dark:border-[#1e293b] dark:bg-[#0f172a]">
-                <span className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-[#efedff] text-[#5c50ec]">
-                  <ClipboardCheck size={22} />
-                </span>
-                <h3 className="mt-4 text-[14px] font-bold text-[#1c2a4a] dark:text-white">
-                  {reviews.length === 0
-                    ? "No reviews assigned yet"
-                    : "No matches"}
-                </h3>
-                <p className="mx-auto mt-2 max-w-[420px] text-[11px] leading-5 text-[#8993a6]">
-                  {reviews.length === 0
-                    ? "Once an organiser assigns you a submission, it will appear here for scoring."
-                    : "Try a different filter or clear the search."}
-                </p>
-              </div>
-            )}
-
-            {!loading && !error && filtered.length > 0 && (
-              <section className="grid gap-4">
-                {filtered.map((review) => (
-                  <ReviewCard
-                    key={itemReviewId(review)}
-                    review={review}
-                    onEvaluate={handleEvaluate}
-                  />
-                ))}
-              </section>
-            )}
-          </main>
+          <div className="flex items-center gap-2">
+            <Filter size={15} className="text-[#98a1b3]" />
+            <select
+              value={filter}
+              onChange={(e) => handleFilterChange(e.target.value)}
+              className="h-11 rounded-xl border border-[#e2e6ee] bg-white px-3 text-[12px] font-semibold text-[#43506a] outline-none focus:border-[#8175ef] focus:ring-2 focus:ring-[#8175ef]/10 dark:border-[#1e293b] dark:bg-[#0b1224] dark:text-white"
+            >
+              {FILTERS.map((f) => (
+                <option key={f.key} value={f.key}>
+                  {f.label} ({counts[f.key] ?? 0})
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
-      </div>
-    </div>
+      )}
+
+      {loading && <LoadingCards />}
+
+      {!loading && !error && filtered.length === 0 && (
+        <div className="rounded-2xl border border-dashed border-[#d6dbe8] bg-white p-12 text-center dark:border-[#1e293b] dark:bg-[#0f172a]">
+          <span className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-[#efedff] text-[#5c50ec]">
+            <ClipboardCheck size={22} />
+          </span>
+          <h3 className="mt-4 text-[14px] font-bold text-[#1c2a4a] dark:text-white">
+            {reviews.length === 0 ? "No reviews assigned yet" : "No matches"}
+          </h3>
+          <p className="mx-auto mt-2 max-w-[420px] text-[11px] leading-5 text-[#8993a6]">
+            {reviews.length === 0
+              ? "Once an organiser assigns you a submission, it will appear here for scoring."
+              : "Try a different filter or clear the search."}
+          </p>
+        </div>
+      )}
+
+      {!loading && !error && filtered.length > 0 && (
+        <section className="grid gap-4">
+          {filtered.map((review) => (
+            <ReviewCard key={itemReviewId(review)} review={review} onEvaluate={handleEvaluate} />
+          ))}
+        </section>
+      )}
+    </ReviewerLayout>
   );
-}//LINDOKUHLE418 
+}

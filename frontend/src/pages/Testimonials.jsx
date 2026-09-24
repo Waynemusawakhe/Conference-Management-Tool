@@ -1,12 +1,21 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Quote, Star, ArrowRight, Plus, X } from "lucide-react";
+import {
+  CalendarDays,
+  Pencil,
+  Plus,
+  Quote,
+  Star,
+  ArrowRight,
+  X,
+} from "lucide-react";
 import Navbar from "../components/Navbar";
 import { useAuth } from "../context/AuthContext";
 import { useApiResource } from "../hooks/useApiResource";
 import { toArray } from "../api/normalize";
 import { testimonialsApi } from "../api/testimonialsApi";
-
+import { conferencesApi } from "../api/conferencesApi";
+import { getDashboardPath, normalizeRole } from "../utils/roleRoutes";
 
 const tBody = (t) =>
   t.content ?? t.body ?? t.message ?? t.text ?? t.quote ?? "";
@@ -23,18 +32,19 @@ const tRating = (t) => {
   const n = Number(t.rating ?? t.score ?? t.stars ?? 0);
   return Number.isFinite(n) && n > 0 ? Math.min(Math.round(n), 5) : 0;
 };
+const tOwnerId = (t) =>
+  t.user_id ?? t.author_id ?? t.userId ?? t.authorId ?? t.user?.id ?? t.author?.id ?? null;
+const confName = (c) => c.name ?? c.title ?? `Conference #${c.id}`;
 
 function getInitials(name) {
   if (!name) return "?";
   const parts = String(name).trim().split(/\s+/).filter(Boolean);
   if (parts.length === 0) return "?";
-  return parts
-    .slice(0, 2)
-    .map((p) => p[0]?.toUpperCase() ?? "")
-    .join("");
+  return parts.slice(0, 2).map((p) => p[0]?.toUpperCase() ?? "").join("");
 }
 
-function TestimonialCard({ item }) {
+/* -- Card -- */
+function TestimonialCard({ item, isOwn, onEdit }) {
   const rating = item.rating ?? 0;
   return (
     <div className="testimonial-card">
@@ -55,50 +65,103 @@ function TestimonialCard({ item }) {
       <div className="testimonial-footer">
         <span className="testimonial-initials">{item.initials}</span>
         <div>
-          <p className="testimonial-name">{item.name || "Anonymous"}</p>
+          <p className="testimonial-name">{item.name || "CMT user"}</p>
           {item.role && <p className="testimonial-role">{item.role}</p>}
         </div>
+
+        {isOwn && (
+          <button
+            onClick={onEdit}
+            className="ml-auto inline-flex items-center gap-1.5 rounded-lg bg-[#efedff] px-2.5 py-1.5 text-[10px] font-extrabold text-[#5649dc] transition hover:bg-[#e5e2ff]"
+            aria-label="Edit your testimonial"
+          >
+            <Pencil size={11} /> Edit yours
+          </button>
+        )}
       </div>
     </div>
   );
 }
 
+/* -- Modal (create + edit) -- */
+function AddTestimonialDialog({
+  open,
+  onClose,
+  onSaved,
+  currentUser,
+  conferences,
+  conferencesLoading,
+  existing,
+}) {
+  const isEdit = Boolean(existing);
+  const userRole = currentUser?.role ? String(currentUser.role).toLowerCase() : "";
 
-function AddTestimonialDialog({ open, onClose, onSaved }) {
   const [content, setContent] = useState("");
-  const [role, setRole] = useState("");
   const [rating, setRating] = useState(0);
+  const [conferenceId, setConferenceId] = useState("");
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState("");
+
+  /* Pre-fill whenever the modal opens */
+  useEffect(() => {
+    if (!open) return;
+    if (isEdit && existing) {
+      setContent(tBody(existing));
+      setRating(tRating(existing));
+    } else {
+      setContent("");
+      setRating(0);
+      setConferenceId("");
+    }
+    setErr("");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, isEdit, existing?.id]);
 
   if (!open) return null;
 
   const submit = async (e) => {
     e.preventDefault();
     setErr("");
+
+    if (!isEdit && !conferenceId) {
+      setErr("Please choose a conference.");
+      return;
+    }
     if (!content.trim()) {
       setErr("Please write your testimonial.");
       return;
     }
+
     setSaving(true);
     try {
-      const payload = { content: content.trim() };
-      if (role.trim()) payload.role = role.trim();
-      if (rating > 0) payload.rating = rating;
+      const displayName =
+        currentUser?.name ?? currentUser?.full_name ?? currentUser?.email ?? "";
 
-      await testimonialsApi.create(payload);
+      const payload = {
+        content: content.trim(),
+        name: displayName,
+        role: userRole,
+      };
+      if (rating > 0) payload.rating = rating;
+      if (!isEdit) payload.conference_id = Number(conferenceId);
+
+      if (isEdit) {
+        await testimonialsApi.update(existing.id, payload);
+      } else {
+        await testimonialsApi.create(payload);
+      }
+
       await onSaved();
-      setContent("");
-      setRole("");
-      setRating(0);
       onClose();
     } catch (e2) {
       if (e2?.status === 401) {
-        setErr("Please log in to post a testimonial.");
+        setErr("Your session expired. Please log in again.");
+      } else if (e2?.status === 409) {
+        setErr("You've already posted a testimonial.");
       } else if (e2?.status === 422 && e2.errors) {
         setErr(Object.values(e2.errors).flat()[0] || e2.message);
       } else {
-        setErr(e2?.message ?? "Failed to submit testimonial.");
+        setErr(e2?.message ?? "Failed to save testimonial.");
       }
     } finally {
       setSaving(false);
@@ -116,7 +179,7 @@ function AddTestimonialDialog({ open, onClose, onSaved }) {
       >
         <div className="flex items-center justify-between gap-3 border-b border-[#edf0f5] px-5 py-4">
           <strong className="text-[13px] font-extrabold text-[#1c2a4a]">
-            Share your experience
+            {isEdit ? "Edit your testimonial" : "Share your experience"}
           </strong>
           <button
             onClick={onClose}
@@ -126,7 +189,33 @@ function AddTestimonialDialog({ open, onClose, onSaved }) {
             <X size={16} />
           </button>
         </div>
+
         <form onSubmit={submit} className="grid gap-4 p-5">
+          {/* Conference — only when creating */}
+          {!isEdit && (
+            <label className="grid gap-2">
+              <span className="flex items-center gap-1.5 text-[11px] font-bold text-[#3b4761]">
+                <CalendarDays size={12} className="text-[#7a6ef0]" />
+                Conference
+              </span>
+              <select
+                value={conferenceId}
+                onChange={(e) => setConferenceId(e.target.value)}
+                disabled={conferencesLoading || saving}
+                className="h-11 rounded-xl border border-[#e4e8f0] bg-white px-3.5 text-[13px] outline-none transition focus:border-[#8878f8] focus:ring-4 focus:ring-[#8878f8]/10 disabled:bg-[#f7f8fc] disabled:text-[#8a95a8]"
+              >
+                <option value="">
+                  {conferencesLoading ? "Loading conferences…" : "Select a conference"}
+                </option>
+                {conferences.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {confName(c)}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+
           <label className="grid gap-2">
             <span className="text-[11px] font-bold text-[#3b4761]">
               Your testimonial
@@ -139,18 +228,24 @@ function AddTestimonialDialog({ open, onClose, onSaved }) {
               className="rounded-xl border border-[#e4e8f0] bg-white px-3.5 py-3 text-[13px] outline-none focus:border-[#8878f8] focus:ring-4 focus:ring-[#8878f8]/10 resize-y"
             />
           </label>
+
           <div className="grid gap-4 sm:grid-cols-2">
+            {/* Role — auto-filled and locked */}
             <label className="grid gap-2">
               <span className="text-[11px] font-bold text-[#3b4761]">
-                Role (optional)
+                Role
               </span>
               <input
-                value={role}
-                onChange={(e) => setRole(e.target.value)}
-                placeholder="e.g. Author"
-                className="h-11 rounded-xl border border-[#e4e8f0] bg-white px-3.5 text-[13px] outline-none focus:border-[#8878f8] focus:ring-4 focus:ring-[#8878f8]/10"
+                value={userRole}
+                readOnly
+                disabled
+                className="h-11 cursor-not-allowed rounded-xl border border-[#e4e8f0] bg-[#f7f8fc] px-3.5 text-[13px] capitalize text-[#5c6880] outline-none"
               />
+              <span className="text-[10px] text-[#8a95a8]">
+                Set automatically from your account.
+              </span>
             </label>
+
             <label className="grid gap-2">
               <span className="text-[11px] font-bold text-[#3b4761]">
                 Rating (optional)
@@ -162,13 +257,12 @@ function AddTestimonialDialog({ open, onClose, onSaved }) {
                     type="button"
                     onClick={() => setRating(n === rating ? 0 : n)}
                     className="grid h-11 w-11 place-items-center rounded-xl border border-[#e4e8f0] bg-white transition hover:border-[#d6dbe8] hover:bg-[#fafbff]"
+                    aria-label={`${n} star${n > 1 ? "s" : ""}`}
                   >
                     <Star
                       size={15}
                       className={
-                        n <= rating
-                          ? "fill-[#f59e0b] text-[#f59e0b]"
-                          : "text-[#dfe4ed]"
+                        n <= rating ? "fill-[#f59e0b] text-[#f59e0b]" : "text-[#dfe4ed]"
                       }
                     />
                   </button>
@@ -176,6 +270,7 @@ function AddTestimonialDialog({ open, onClose, onSaved }) {
               </div>
             </label>
           </div>
+
           {err && (
             <p
               role="alert"
@@ -184,6 +279,7 @@ function AddTestimonialDialog({ open, onClose, onSaved }) {
               {err}
             </p>
           )}
+
           <div className="flex justify-end gap-2 border-t border-[#eef1f7] pt-4">
             <button
               type="button"
@@ -197,7 +293,7 @@ function AddTestimonialDialog({ open, onClose, onSaved }) {
               disabled={saving}
               className="inline-flex min-h-11 items-center justify-center rounded-xl bg-gradient-to-br from-[#6655f6] to-[#7869ff] px-5 text-[11px] font-extrabold text-white shadow-[0_12px_28px_rgba(103,87,245,.28)] transition hover:-translate-y-px disabled:opacity-60"
             >
-              {saving ? "Posting…" : "Post testimonial"}
+              {saving ? "Saving…" : isEdit ? "Save changes" : "Post testimonial"}
             </button>
           </div>
         </form>
@@ -206,16 +302,19 @@ function AddTestimonialDialog({ open, onClose, onSaved }) {
   );
 }
 
-
+/* -- Page -- */
 export default function Testimonials() {
   const navigate = useNavigate();
   const { user, status } = useAuth();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [successFlash, setSuccessFlash] = useState(false);
 
   const testimonialsRes = useApiResource(() => testimonialsApi.getAll(), []);
-  const isAuthenticated = status === "authenticated" && Boolean(user);
+  const conferencesRes = useApiResource(() => conferencesApi.getAll(), []);
 
-  /* Map API data → card shape */
+  const isAuthenticated = status === "authenticated" && Boolean(user);
+  const isInitializing = status === "initializing";
+
   const testimonials = useMemo(() => {
     return toArray(testimonialsRes.data)
       .map((t) => {
@@ -230,18 +329,59 @@ export default function Testimonials() {
           role,
           initials: getInitials(name),
           rating: tRating(t),
+          ownerId: tOwnerId(t),
+          _raw: t,
         };
       })
       .filter(Boolean);
   }, [testimonialsRes.data]);
 
+  const conferences = useMemo(
+    () => toArray(conferencesRes.data),
+    [conferencesRes.data]
+  );
+
+  const currentUserId = user?.id ?? null;
+
+  /* Find the user's own testimonial (if any) */
+  const myTestimonial = useMemo(() => {
+    if (!currentUserId) return null;
+    return (
+      testimonials.find(
+        (t) => t.ownerId != null && String(t.ownerId) === String(currentUserId)
+      ) ?? null
+    );
+  }, [testimonials, currentUserId]);
+
+  const userHasPosted = Boolean(myTestimonial);
+
   const handleAdd = () => {
+    if (isInitializing) return;
     if (!isAuthenticated) {
       navigate("/login");
       return;
     }
+    if (userHasPosted) return;
     setDialogOpen(true);
   };
+
+  const handleEdit = () => {
+    if (!isAuthenticated || !myTestimonial) return;
+    setDialogOpen(true);
+  };
+
+  const handleSaved = async () => {
+    await testimonialsRes.reload();
+    setSuccessFlash(true);
+    setTimeout(() => setSuccessFlash(false), 4000);
+  };
+
+  /* -- Button state -- */
+  const addButtonLabel = isInitializing
+    ? "Loading…"
+    : userHasPosted
+    ? "Edit your testimonial"
+    : "Add yours";
 
   return (
     <div className="site">
@@ -260,19 +400,32 @@ export default function Testimonials() {
           </p>
         </section>
 
-        {/* Action row — Add yours */}
+        {/* Action row */}
         <section className="mx-auto -mt-2 mb-6 flex w-[min(1200px,calc(100%-40px))] justify-end">
           <button
-            onClick={handleAdd}
-            className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-br from-[#6655f6] to-[#7869ff] px-4 py-2.5 text-[11px] font-extrabold text-white shadow-[0_12px_28px_rgba(103,87,245,.28)] transition hover:-translate-y-px"
+            onClick={userHasPosted ? handleEdit : handleAdd}
+            disabled={isInitializing}
+            className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-br from-[#6655f6] to-[#7869ff] px-4 py-2.5 text-[11px] font-extrabold text-white shadow-[0_12px_28px_rgba(103,87,245,.28)] transition hover:-translate-y-px disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
           >
-            <Plus size={14} /> Add yours
+            {userHasPosted ? <Pencil size={14} /> : <Plus size={14} />}
+            {addButtonLabel}
           </button>
         </section>
 
-        {/* Testimonials Grid */}
+        {/* Success flash */}
+        {successFlash && (
+          <div
+            role="status"
+            className="mx-auto mb-6 flex w-[min(1200px,calc(100%-40px))] items-center gap-2 rounded-xl border border-[#bfe5d1] bg-[#effaf4] px-4 py-3 text-[11px] font-semibold text-[#18794e]"
+          >
+            <Quote size={13} />
+            Thanks — your testimonial is live!
+          </div>
+        )}
+
+        {/* Grid */}
         <section className="testimonials-grid">
-          {testimonialsRes.loading && (
+          {testimonialsRes.loading &&
             Array.from({ length: 6 }).map((_, i) => (
               <div key={i} className="testimonial-card" aria-hidden="true">
                 <Quote className="quote-icon" />
@@ -280,8 +433,7 @@ export default function Testimonials() {
                 <div className="h-3 w-[60%] animate-pulse rounded-full bg-[#eef1f7] mb-5" />
                 <div className="h-3 w-[45%] animate-pulse rounded-full bg-[#eef1f7]" />
               </div>
-            ))
-          )}
+            ))}
 
           {!testimonialsRes.loading && testimonialsRes.error && (
             <div className="col-span-full flex flex-col items-center gap-3 py-16 text-center">
@@ -318,18 +470,30 @@ export default function Testimonials() {
                 </p>
                 <button
                   onClick={handleAdd}
-                  className="mt-1 inline-flex items-center gap-1.5 rounded-lg bg-[#efedff] px-3 py-1.5 text-[10px] font-extrabold text-[#5649dc] hover:bg-[#e5e2ff]"
+                  disabled={isInitializing || userHasPosted}
+                  className="mt-1 inline-flex items-center gap-1.5 rounded-lg bg-[#efedff] px-3 py-1.5 text-[10px] font-extrabold text-[#5649dc] hover:bg-[#e5e2ff] disabled:opacity-60"
                 >
-                  <Plus size={12} /> Add yours
+                  <Plus size={12} /> {addButtonLabel}
                 </button>
               </div>
             )}
 
           {!testimonialsRes.loading &&
             !testimonialsRes.error &&
-            testimonials.map((item, i) => (
-              <TestimonialCard key={item.id ?? `t-${i}`} item={item} />
-            ))}
+            testimonials.map((item, i) => {
+              const isOwn =
+                currentUserId != null &&
+                item.ownerId != null &&
+                String(item.ownerId) === String(currentUserId);
+              return (
+                <TestimonialCard
+                  key={item.id ?? `t-${i}`}
+                  item={item}
+                  isOwn={isOwn}
+                  onEdit={handleEdit}
+                />
+              );
+            })}
         </section>
 
         {/* CTA */}
@@ -348,7 +512,11 @@ export default function Testimonials() {
       <AddTestimonialDialog
         open={dialogOpen}
         onClose={() => setDialogOpen(false)}
-        onSaved={() => testimonialsRes.reload()}
+        onSaved={handleSaved}
+        currentUser={user}
+        conferences={conferences}
+        conferencesLoading={conferencesRes.loading}
+        existing={myTestimonial ? myTestimonial._raw : null}
       />
     </div>
   );

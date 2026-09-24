@@ -15,6 +15,7 @@ import ReviewerDashboard from "./pages/ReviewerDashboard";
 import OrganiserDashboard from "./pages/OrganiserDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 
+
 import AccountSettings from "./pages/AccountSettings";
 import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
@@ -117,6 +118,24 @@ export default function App() {
                 <ScoreSubmission />
               </ProtectedRoute>
             }
+          />
+          
+         <Route
+            path="/user-testimonials"
+            element={
+              <ProtectedRoute roles={["author", "reviewer", "organiser", "attendee", "admin"]}>
+                <Testimonials />
+              </ProtectedRoute>
+            }
+          />
+        
+          <Route
+            path="/reviewer/pending"
+            element={<Navigate to="/reviewer-dashboard?filter=pending" replace />}
+          />
+          <Route
+            path="/reviewer/history"
+            element={<Navigate to="/reviewer-dashboard?filter=locked" replace />}
           />
 
           {/* ==================== ATTENDEE ==================== */}
