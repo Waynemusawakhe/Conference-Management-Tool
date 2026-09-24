@@ -1,378 +1,562 @@
-import { useEffect, useState } from "react";
+// src/pages/ReviewerDashboard.jsx
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
-  Bell,
-  ChevronDown,
-  ChevronRight,
+  CheckCircle2,
+  ClipboardCheck,
+  Clock,
   FileText,
   Filter,
   LayoutDashboard,
+  Lock,
   LogOut,
-  Menu,
-  Plus,
+  Moon,
   Search,
-  Settings,
-  Sparkles,
-  UserRound,
-  Users,
+  Sun,
   X,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 import Logo from "../components/Logo";
 import { useTheme } from "../context/ThemeContext";
-import { reviewsApi } from "../api/reviewsApi";
 import { useAuth } from "../context/AuthContext";
+import { reviewsApi } from "../api/reviewsApi";
 
+/* ------------------------------------------------------------------ *
+ * Status helpers
+ * ------------------------------------------------------------------ */
+function reviewIsLocked(r) {
+  return Boolean(r.locked ?? r.is_locked);
+}
+function reviewIsSubmitted(r) {
+  return Boolean(
+    r.submitted_at ??
+      r.submittedAt ??
+      r.comments ??
+      r.comment ??
+      r.recommendation
+  );
+}
+function reviewState(r) {
+  if (reviewIsLocked(r)) return "locked";
+  if (reviewIsSubmitted(r)) return "submitted";
+  return "pending";
+}
+
+const STATE_META = {
+  pending: {
+    label: "Pending",
+    chip: "border-[#e9d9a7] bg-[#fff9e9] text-[#9b7414]",
+    dot: "bg-[#9b7414]",
+  },
+  submitted: {
+    label: "Submitted",
+    chip: "border-[#cfd0ff] bg-[#f0efff] text-[#5548d7]",
+    dot: "bg-[#5548d7]",
+  },
+  locked: {
+    label: "Locked",
+    chip: "border-[#bfe5d1] bg-[#effaf4] text-[#18794e]",
+    dot: "bg-[#18794e]",
+  },
+};
+
+/* ------------------------------------------------------------------ *
+ * Card resolvers — guide §8.8 doesn't confirm exact field names
+ * ------------------------------------------------------------------ */
+const itemReviewId = (r) => r.id;
+const itemSubmissionId = (r) => r.submission_id ?? r.submission?.id ?? null;
+const itemTitle = (r) =>
+  r.submission?.title ??
+  r.title ??
+  (itemSubmissionId(r) ? `Submission #${itemSubmissionId(r)}` : "Untitled submission");
+const itemConference = (r) =>
+  r.submission?.conference?.name ??
+  r.conference?.name ??
+  r.conference_name ??
+  r.submission?.conference_name ??
+  "";
+const itemTrack = (r) =>
+  r.submission?.track ?? r.track ?? r.submission?.category ?? "";
+const itemAbstract = (r) =>
+  r.submission?.abstract ?? r.abstract ?? "";
+
+/* ------------------------------------------------------------------ *
+ * Small primitives
+ * ------------------------------------------------------------------ */
+function StatCard({ icon, value, label, tint }) {
+  return (
+    <div className="rounded-[16px] border border-[#e4e8f0] bg-white p-4 shadow-[0_10px_28px_rgba(15,28,65,.04)] transition hover:-translate-y-px hover:shadow-[0_14px_36px_rgba(15,28,65,.07)] dark:border-[#1e293b] dark:bg-[#0f172a]">
+      <span className={`inline-grid h-9 w-9 place-items-center rounded-[10px] ${tint}`}>
+        {icon}
+      </span>
+      <strong className="mt-4 block text-[24px] leading-none tracking-[-.04em] text-[#1c2a4a] dark:text-white">
+        {value}
+      </strong>
+      <p className="m-0 mt-1.5 text-[11px] font-bold text-[#35415f] dark:text-[#94a3b8]">
+        {label}
+      </p>
+    </div>
+  );
+}
+
+function ReviewCard({ review, onEvaluate }) {
+  const state = reviewState(review);
+  const meta = STATE_META[state];
+  const conference = itemConference(review);
+  const track = itemTrack(review);
+  const abstract = itemAbstract(review);
+
+  return (
+    <article className="group flex flex-col gap-4 rounded-2xl border border-[#e4e8f0] bg-white p-5 shadow-[0_6px_18px_rgba(15,28,65,.03)] transition hover:-translate-y-px hover:border-[#d6dbe8] hover:shadow-[0_14px_36px_rgba(15,28,65,.08)] dark:border-[#1e293b] dark:bg-[#0f172a] sm:p-6">
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <span
+              className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[9px] font-extrabold uppercase tracking-[.06em] ${meta.chip}`}
+            >
+              <span className={`h-1.5 w-1.5 rounded-full ${meta.dot}`} />
+              {meta.label}
+            </span>
+            <span className="text-[9px] font-semibold text-[#aeb6c6]">
+              Review #{itemReviewId(review)}
+            </span>
+          </div>
+
+          <h3 className="m-0 mt-3 text-[14px] font-bold leading-6 tracking-[-.01em] text-[#1c2a4a] dark:text-white">
+            {itemTitle(review)}
+          </h3>
+
+          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-[#7b869b]">
+            {conference && (
+              <span className="inline-flex items-center gap-1.5">
+                <LayoutDashboard size={11} className="text-[#aeb6c6]" />
+                {conference}
+              </span>
+            )}
+            {track && (
+              <span className="inline-flex items-center gap-1.5">
+                <ClipboardCheck size={11} className="text-[#aeb6c6]" />
+                {track}
+              </span>
+            )}
+          </div>
+
+          {abstract && (
+            <p className="m-0 mt-3 line-clamp-2 text-[11px] leading-5 text-[#5c6880] dark:text-[#94a3b8]">
+              {abstract}
+            </p>
+          )}
+        </div>
+
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-[#efedff] to-[#e0dcff] text-[#4f46c7] shadow-[0_6px_14px_-4px_rgba(102,85,246,.28)]">
+          <FileText size={16} />
+        </span>
+      </div>
+
+      <div className="flex items-center justify-between gap-3 border-t border-[#f2f4f9] pt-4 dark:border-[#1e293b]">
+        <span className="text-[10px] font-semibold text-[#8a95a8]">
+          {state === "pending"
+            ? "Not yet evaluated"
+            : state === "submitted"
+            ? "Awaiting lock"
+            : "Completed and locked"}
+        </span>
+        <button
+          onClick={() => onEvaluate(review)}
+          className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-[11px] font-extrabold transition ${
+            state === "locked"
+              ? "border border-[#e4e8f0] bg-white text-[#5c6880] hover:bg-[#fafbff] dark:border-[#1e293b] dark:bg-[#0f172a] dark:text-white dark:hover:bg-[#111c33]"
+              : "bg-[#2563eb] text-white shadow-[0_12px_28px_rgba(37,99,235,.28)] hover:-translate-y-px hover:bg-[#1d4ed8]"
+          }`}
+        >
+          {state === "locked" ? (
+            <>
+              <CheckCircle2 size={13} /> View review
+            </>
+          ) : state === "submitted" ? (
+            <>
+              <Lock size={13} /> Lock / view
+            </>
+          ) : (
+            <>
+              <ClipboardCheck size={13} /> Score this paper
+            </>
+          )}
+        </button>
+      </div>
+    </article>
+  );
+}
+
+function LoadingCards({ rows = 4 }) {
+  return (
+    <div className="grid gap-4">
+      {Array.from({ length: rows }).map((_, i) => (
+        <div
+          key={i}
+          className="rounded-2xl border border-[#e4e8f0] bg-white p-6 dark:border-[#1e293b] dark:bg-[#0f172a]"
+        >
+          <div className="h-5 w-20 animate-pulse rounded-full bg-[#eef1f7] dark:bg-[#1e293b]" />
+          <div className="mt-4 h-3 w-2/3 animate-pulse rounded-full bg-[#eef1f7] dark:bg-[#1e293b]" />
+          <div className="mt-2 h-2.5 w-1/3 animate-pulse rounded-full bg-[#eef1f7] dark:bg-[#1e293b]" />
+          <div className="mt-4 h-2.5 w-full animate-pulse rounded-full bg-[#eef1f7] dark:bg-[#1e293b]" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+const FILTERS = [
+  { key: "all", label: "All" },
+  { key: "pending", label: "Pending" },
+  { key: "submitted", label: "Submitted" },
+  { key: "locked", label: "Locked" },
+];
+
+/* ------------------------------------------------------------------ *
+ * Page
+ * ------------------------------------------------------------------ */
 export default function ReviewerDashboard() {
   const navigate = useNavigate();
   const { dark, toggleTheme } = useTheme();
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
 
-  const [sidebarVisible, setSidebarVisible] = useState(false);
   const [query, setQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState("All statuses");
-  const [notice, setNotice] = useState(true);
+  const [filter, setFilter] = useState("all");
 
-  // States for data fetching
-  const [items, setItems] = useState([]);
+  const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Dropdown states for sidebar sections
-  const [expanded, setExpanded] = useState({
-    reviews: false,
-    history: false,
-    settings: false,
-  });
+  const displayName = user?.name ?? user?.full_name ?? "Reviewer";
+  const initials =
+    displayName
+      .split(" ")
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((p) => p[0]?.toUpperCase() ?? "")
+      .join("") || "RV";
 
   useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
     reviewsApi
-      .pending()
+      .getAll()
       .then((response) => {
-        const fetchedData = response?.data ?? response;
-        setItems(
-          Array.isArray(fetchedData)
-            ? fetchedData
-            : fetchedData?.data || []
-        );
+        if (cancelled) return;
+        const payload = response?.data ?? response ?? [];
+        setReviews(Array.isArray(payload) ? payload : payload?.data ?? []);
       })
       .catch((err) => {
-        console.error("Failed to load pending reviews:", err);
-        setError("Unable to load pending reviews right now.");
-        setItems([]);
+        if (cancelled) return;
+        console.error("Failed to load reviews:", err);
+        setError(err?.message ?? "Unable to load your assigned reviews.");
+        setReviews([]);
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  const toggleSection = (section) => {
-    setExpanded((prev) => ({ ...prev, [section]: !prev[section] }));
-  };
-
-  const collapseAll = () => {
-    setExpanded({
-      reviews: false,
-      history: false,
-      settings: false,
+  const counts = useMemo(() => {
+    const c = { all: reviews.length, pending: 0, submitted: 0, locked: 0 };
+    reviews.forEach((r) => {
+      const s = reviewState(r);
+      if (c[s] !== undefined) c[s] += 1;
     });
+    return c;
+  }, [reviews]);
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return reviews.filter((r) => {
+      const state = reviewState(r);
+      if (filter !== "all" && state !== filter) return false;
+      if (!q) return true;
+      return [
+        itemTitle(r),
+        itemConference(r),
+        itemTrack(r),
+        String(itemReviewId(r) ?? ""),
+        String(itemSubmissionId(r) ?? ""),
+      ]
+        .join(" ")
+        .toLowerCase()
+        .includes(q);
+    });
+  }, [reviews, query, filter]);
+
+  const handleLogout = async () => {
+    await logout();
+    navigate("/login", { replace: true });
   };
 
-  const toggleSidebar = () => {
-    setSidebarVisible((prev) => !prev);
+  const handleEvaluate = (review) => {
+    navigate(`/reviewer/evaluate/${itemReviewId(review)}`);
   };
-
-  useEffect(() => {
-    if (sidebarVisible) {
-      setExpanded({
-        reviews: false,
-        history: false,
-        settings: false,
-      });
-    }
-  }, [sidebarVisible]);
-
-  const filteredItems = items.filter((item) => {
-    const titleText =
-      item.submission?.title || item.title || `Submission ID: ${item.submission_id}`;
-    const itemStatus = item.status || "Pending";
-    const matchesStatus =
-      statusFilter === "All statuses" || itemStatus === statusFilter;
-    const matchesQuery =
-      !query ||
-      titleText.toLowerCase().includes(query.toLowerCase()) ||
-      item.id.toString().includes(query);
-    return matchesStatus && matchesQuery;
-  });
-
-  const scrollTo = (id) => {
-    document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
-
-  if (loading) {
-    return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '60vh', fontFamily: 'sans-serif', color: '#4b5563' }}>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: '18px', fontWeight: '600' }}>Loading reviewer queue...</div>
-        </div>
-      </div>
-    );
-  }
 
   return (
-    <div className="min-h-screen bg-[#f7f9fc] text-[#0d1b3d]">
-      {/* Header */}
+    <div className="min-h-screen bg-[#f7f9fc] text-[#0d1b3d] transition-colors dark:bg-[#0a0f1f] dark:text-white">
+      {/* ---------- Header ---------- */}
       <header className="sticky top-0 z-50 border-b border-white/10 bg-[#07132f]/95 text-white shadow-[0_8px_30px_rgba(7,19,47,.12)] backdrop-blur-xl">
-        <div className="mx-auto flex min-h-[76px] w-[min(1400px,calc(100%-32px))] items-center gap-6">
+        <div className="mx-auto flex min-h-[76px] w-[min(1400px,calc(100%-32px))] items-center gap-4 sm:gap-6">
           <button
-            className="rounded-lg p-2 transition hover:bg-white/10"
-            onClick={toggleSidebar}
-            aria-label="Toggle sidebar"
+            className="border-0 bg-transparent p-0"
+            onClick={() => navigate("/")}
+            aria-label="CMT home"
           >
-            {sidebarVisible ? <X size={22} /> : <Menu size={22} />}
-          </button>
-          <button className="border-0 bg-transparent p-0" onClick={() => navigate("/")} aria-label="CMT home">
             <Logo />
           </button>
           <div className="hidden h-7 w-px bg-white/10 sm:block" />
           <div className="hidden sm:block">
-            <p className="m-0 text-[10px] font-extrabold uppercase tracking-[.13em] text-[#a9a2ff]">Reviewer workspace</p>
-            <p className="m-0 mt-0.5 text-[12px] font-semibold text-white/65">Conference Management Tool</p>
+            <p className="m-0 text-[10px] font-extrabold uppercase tracking-[.13em] text-[#a9a2ff]">
+              Reviewer workspace
+            </p>
+            <p className="m-0 mt-0.5 text-[12px] font-semibold text-white/65">
+              Conference Management Tool
+            </p>
           </div>
+
           <div className="ml-auto flex items-center gap-2">
             <button
-              className="relative grid h-10 w-10 place-items-center rounded-[11px] border border-white/15 bg-white/[.05] text-white/80 hover:bg-white/10"
-              onClick={() => setNotice((v) => !v)}
-              aria-label="Toggle notifications"
-              title="Notifications"
-            >
-              <Bell size={17} />
-              {notice && <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-[#7d6bff]" />}
-            </button>
-            <button
-              className="hidden h-10 w-10 place-items-center rounded-[11px] border border-white/15 bg-white/[.05] text-white/80 sm:grid"
               onClick={toggleTheme}
+              className="grid h-10 w-10 place-items-center rounded-xl border border-white/10 bg-white/[.04] text-white/85 transition hover:bg-white/10"
               aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
-              title={dark ? "Switch to light mode" : "Switch to dark mode"}
             >
-              <Sparkles size={16} />
+              {dark ? <Sun size={17} /> : <Moon size={17} />}
             </button>
-            <div className="ml-1 hidden items-center gap-2.5 border-l border-white/10 pl-3 sm:flex">
-              <div className="grid h-9 w-9 place-items-center rounded-full bg-[#e8e6ff] text-[10px] font-extrabold text-[#4f46c7]">RV</div>
+
+            <div className="hidden items-center gap-2.5 border-l border-white/10 pl-3 sm:flex">
+              <div className="grid h-9 w-9 place-items-center rounded-full bg-[#e8e6ff] text-[10px] font-extrabold text-[#4f46c7]">
+                {initials}
+              </div>
               <div className="leading-tight">
-                <strong className="block text-[11px] text-white">Reviewer User</strong>
-                <span className="block text-[9px] text-white/45">Evaluator</span>
+                <strong className="block text-[11px] text-white">
+                  {displayName}
+                </strong>
+                <span className="block text-[9px] text-white/45">Reviewer</span>
               </div>
             </div>
           </div>
         </div>
       </header>
 
-      {/* Main Layout */}
-      <div className="mx-auto flex w-[min(1400px,calc(100%-32px))] gap-6 py-6 lg:gap-7">
-        {/* Sidebar */}
-        <aside
-          className={`
-            relative z-40 transition-all duration-300 ease-in-out
-            ${sidebarVisible ? 'max-w-[260px]' : 'max-w-0'}
-            overflow-hidden
-            lg:sticky lg:top-[100px] lg:max-h-[calc(100vh-120px)]
-          `}
-          style={{ flexShrink: 0 }}
-        >
-          <div className="w-[260px] overflow-y-auto rounded-2xl border border-[#e4e8f0] bg-white p-3 shadow-[0_18px_45px_rgba(15,28,65,.10)] lg:shadow-none">
-            <style>
-              {`
-                .overflow-y-auto::-webkit-scrollbar {
-                  width: 4px;
-                }
-                .overflow-y-auto::-webkit-scrollbar-track {
-                  background: transparent;
-                }
-                .overflow-y-auto::-webkit-scrollbar-thumb {
-                  background: #c4c8d4;
-                  border-radius: 999px;
-                }
-              `}
-            </style>
+      {/* ---------- Main ---------- */}
+      <div className="mx-auto w-[min(1400px,calc(100%-32px))] py-6">
+        <div className="grid gap-6 lg:grid-cols-[260px_1fr]">
+          {/* Sidebar */}
+          <aside className="hidden lg:sticky lg:top-[100px] lg:block lg:max-h-[calc(100vh-120px)] lg:overflow-y-auto">
+            <div className="rounded-2xl border border-[#e4e8f0] bg-white p-3 shadow-[0_18px_45px_rgba(15,28,65,.06)] dark:border-[#1e293b] dark:bg-[#0f172a]">
+              <div className="mb-3 rounded-xl bg-gradient-to-br from-[#111e4b] to-[#342b87] p-4 text-white">
+                <span className="mb-2 grid h-9 w-9 place-items-center rounded-lg bg-white/10">
+                  <ClipboardCheck size={17} />
+                </span>
+                <strong className="block text-[13px]">Reviewer menu</strong>
+                <p className="mt-1 text-[10px] leading-5 text-white/60">
+                  Manage your assigned reviews.
+                </p>
+              </div>
 
-            <div className="flex justify-end -mt-1 -mr-1">
+              <nav className="space-y-1" aria-label="Reviewer navigation">
+                <button
+                  onClick={() => {
+                    setFilter("all");
+                    setQuery("");
+                  }}
+                  className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] transition ${
+                    filter === "all" && !query
+                      ? "bg-[#efedff] font-extrabold text-[#5649dc] dark:bg-[#2a2354] dark:text-[#a9a2ff]"
+                      : "font-semibold text-[#66728b] hover:bg-[#f5f6fa] hover:text-[#1c2a4a] dark:text-[#94a3b8] dark:hover:bg-[#111c33] dark:hover:text-white"
+                  }`}
+                >
+                  <LayoutDashboard size={16} /> Overview
+                </button>
+                <button
+                  onClick={() => setFilter("pending")}
+                  className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] transition ${
+                    filter === "pending"
+                      ? "bg-[#efedff] font-extrabold text-[#5649dc] dark:bg-[#2a2354] dark:text-[#a9a2ff]"
+                      : "font-semibold text-[#66728b] hover:bg-[#f5f6fa] hover:text-[#1c2a4a] dark:text-[#94a3b8] dark:hover:bg-[#111c33] dark:hover:text-white"
+                  }`}
+                >
+                  <Clock size={16} /> Pending
+                </button>
+                <button
+                  onClick={() => setFilter("submitted")}
+                  className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] transition ${
+                    filter === "submitted"
+                      ? "bg-[#efedff] font-extrabold text-[#5649dc] dark:bg-[#2a2354] dark:text-[#a9a2ff]"
+                      : "font-semibold text-[#66728b] hover:bg-[#f5f6fa] hover:text-[#1c2a4a] dark:text-[#94a3b8] dark:hover:bg-[#111c33] dark:hover:text-white"
+                  }`}
+                >
+                  <FileText size={16} /> Submitted
+                </button>
+                <button
+                  onClick={() => setFilter("locked")}
+                  className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] transition ${
+                    filter === "locked"
+                      ? "bg-[#efedff] font-extrabold text-[#5649dc] dark:bg-[#2a2354] dark:text-[#a9a2ff]"
+                      : "font-semibold text-[#66728b] hover:bg-[#f5f6fa] hover:text-[#1c2a4a] dark:text-[#94a3b8] dark:hover:bg-[#111c33] dark:hover:text-white"
+                  }`}
+                >
+                  <Lock size={16} /> Locked
+                </button>
+              </nav>
+
+              <div className="my-4 border-t border-[#edf0f5] dark:border-[#1e293b]" />
+
               <button
-                onClick={toggleSidebar}
-                className="rounded-lg p-1.5 text-[#66728b] hover:bg-[#f0f2f6] transition"
-                aria-label="Close sidebar"
+                className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] font-semibold text-[#9a6470] hover:bg-[#fff4f5] dark:text-[#f08a9a] dark:hover:bg-[#2a1218]"
+                onClick={handleLogout}
               >
-                <X size={18} />
+                <LogOut size={16} /> Sign out
               </button>
             </div>
+          </aside>
 
-            <div
-              className="mb-3 cursor-pointer rounded-xl bg-gradient-to-br from-[#111e4b] to-[#342b87] p-4 text-white transition hover:shadow-lg"
-              onClick={collapseAll}
-            >
-              <span className="mb-2 grid h-9 w-9 place-items-center rounded-lg bg-white/10"><LayoutDashboard size={17} /></span>
-              <strong className="block text-[13px]">Reviewer menu</strong>
-              <p className="mt-1 text-[10px] leading-5 text-white/60">Click to collapse all submenus</p>
-            </div>
+          {/* Content */}
+          <main className="min-w-0 space-y-5">
+            {/* Hero */}
+            <section className="relative overflow-hidden rounded-[22px] bg-[radial-gradient(circle_at_78%_18%,rgba(121,104,255,.22),transparent_25%),radial-gradient(circle_at_100%_100%,rgba(27,94,255,.18),transparent_36%),linear-gradient(135deg,#07132f_0%,#0a1740_52%,#15165a_100%)] p-6 text-white shadow-[0_18px_55px_rgba(15,28,65,.12)] sm:p-8">
+              <div className="absolute inset-0 opacity-[.16] [background-image:radial-gradient(rgba(255,255,255,.15)_0.7px,transparent_0.7px)] [background-size:22px_22px]" />
+              <div className="relative">
+                <span className="inline-flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-[.12em] text-[#b9b3ff]">
+                  <ClipboardCheck size={14} /> Reviewer overview
+                </span>
+                <h1 className="mb-2 mt-3 text-[clamp(24px,3.4vw,36px)] font-bold leading-tight tracking-[-.045em]">
+                  Welcome, {displayName}.
+                </h1>
+                <p className="m-0 max-w-[620px] text-[12px] leading-6 text-white/65">
+                  Score assigned submissions, leave recommendations, and lock
+                  completed reviews.
+                </p>
+              </div>
+            </section>
 
-            <nav className="space-y-1" aria-label="Reviewer dashboard navigation">
-              <button
-                className="flex w-full items-center gap-3 rounded-xl bg-[#efedff] px-3 py-2.5 text-left text-[12px] font-extrabold text-[#5649dc]"
-                onClick={() => scrollTo("dashboard-overview")}
+            {/* Stats */}
+            {!loading && !error && reviews.length > 0 && (
+              <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                <StatCard
+                  icon={<ClipboardCheck size={17} />}
+                  tint="bg-[#efedff] text-[#4f46c7]"
+                  value={counts.all}
+                  label="Total assigned"
+                />
+                <StatCard
+                  icon={<Clock size={17} />}
+                  tint="bg-[#fff9e9] text-[#9b7414]"
+                  value={counts.pending}
+                  label="Pending"
+                />
+                <StatCard
+                  icon={<FileText size={17} />}
+                  tint="bg-[#f0efff] text-[#5548d7]"
+                  value={counts.submitted}
+                  label="Submitted"
+                />
+                <StatCard
+                  icon={<Lock size={17} />}
+                  tint="bg-[#effaf4] text-[#18794e]"
+                  value={counts.locked}
+                  label="Locked"
+                />
+              </section>
+            )}
+
+            {/* Error */}
+            {error && (
+              <div
+                role="alert"
+                className="rounded-2xl border border-[#f1c8c8] bg-[#fff2f2] p-5 text-[12px] text-[#b13a3a]"
               >
-                <LayoutDashboard size={16} /> Overview
-              </button>
-
-              {/* Reviews */}
-              <div>
-                <button
-                  className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left text-[12px] font-semibold text-[#66728b] hover:bg-[#f5f6fa] hover:text-[#1c2a4a]"
-                  onClick={() => toggleSection("reviews")}
-                >
-                  <span className="flex items-center gap-3"><FileText size={16} /> Assigned Reviews</span>
-                  {expanded.reviews ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-                </button>
-                {expanded.reviews && (
-                  <div className="ml-6 space-y-1 border-l border-[#edf0f5] pl-3">
-                    <button className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[11px] font-medium text-[#66728b] hover:bg-[#f5f6fa] hover:text-[#1c2a4a]" onClick={() => scrollTo("reviews-table")}>Pending Queue</button>
-                    <button className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[11px] font-medium text-[#66728b] hover:bg-[#f5f6fa] hover:text-[#1c2a4a]">Guidelines</button>
-                  </div>
-                )}
-              </div>
-
-              {/* History */}
-              <div>
-                <button
-                  className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left text-[12px] font-semibold text-[#66728b] hover:bg-[#f5f6fa] hover:text-[#1c2a4a]"
-                  onClick={() => toggleSection("history")}
-                >
-                  <span className="flex items-center gap-3"><Users size={16} /> Past Reviews</span>
-                  {expanded.history ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-                </button>
-                {expanded.history && (
-                  <div className="ml-6 space-y-1 border-l border-[#edf0f5] pl-3">
-                    <button className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[11px] font-medium text-[#66728b] hover:bg-[#f5f6fa] hover:text-[#1c2a4a]">Completed</button>
-                  </div>
-                )}
-              </div>
-            </nav>
-
-            <div className="my-4 border-t border-[#edf0f5]" />
-            <button onClick={() => navigate("/profile")} className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] font-semibold text-[#66728b] hover:bg-[#f5f6fa] hover:text-[#1c2a4a]"><UserRound size={16} /> Profile</button>
-            <button onClick={() => navigate("/settings")} className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] font-semibold text-[#66728b] hover:bg-[#f5f6fa] hover:text-[#1c2a4a]"><Settings size={16} /> Settings</button>
-            <button className="mt-auto flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] font-semibold text-[#9a6470] hover:bg-[#fff4f5]" onClick={async () => { await logout(); navigate("/login", { replace: true }); }}><LogOut size={16} /> Sign out</button>
-          </div>
-        </aside>
-
-        {sidebarVisible && (
-          <div
-            className="fixed inset-0 z-30 bg-black/30 backdrop-blur-sm lg:hidden"
-            onClick={toggleSidebar}
-          />
-        )}
-
-        {/* Main Content */}
-        <main id="dashboard-overview" className="min-w-0 flex-1 scroll-mt-24 space-y-6">
-          <div className="flex flex-col justify-between gap-4 rounded-2xl border border-[#e4e8f0] bg-white p-6 shadow-sm sm:flex-row sm:items-center">
-            <div>
-              <h1 className="text-xl font-bold text-[#111827] m-0">Reviewer Dashboard</h1>
-              <p className="text-sm text-[#6b7280] mt-1 mb-0">Manage and evaluate your pending conference submissions.</p>
-            </div>
-            <div className="flex items-center gap-3 self-start sm:self-auto">
-              <div className="rounded-full bg-[#e0e7ff] px-3 py-1.5 text-xs font-semibold text-[#3730a3]">
-                {items.length} Pending
-              </div>
-            </div>
-          </div>
-
-          {error && (
-            <div className="rounded-xl border border-[#f87171] bg-[#fef2f2] p-4 text-sm text-[#991b1b]">
-              {error}
-            </div>
-          )}
-
-          {/* Search and Filter Bar */}
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="relative flex-1">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#9ca3af]" size={16} />
-              <input
-                type="text"
-                placeholder="Search reviews by title or ID..."
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                className="w-full rounded-xl border border-[#d1d5db] bg-white py-2.5 pl-10 pr-4 text-sm text-[#111827] outline-none focus:border-[#4f46e5]"
-              />
-            </div>
-            <div className="flex items-center gap-2">
-              <Filter size={16} className="text-[#6b7280]" />
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="rounded-xl border border-[#d1d5db] bg-white px-3 py-2.5 text-sm text-[#111827] outline-none focus:border-[#4f46e5]"
-              >
-                <option value="All statuses">All statuses</option>
-                <option value="Pending">Pending</option>
-                <option value="Under review">Under review</option>
-                <option value="Revision requested">Revision requested</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Reviews List */}
-          <div id="reviews-table" className="scroll-mt-24">
-            {filteredItems.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-[#d1d5db] bg-[#f9fafb] p-12 text-center text-[#6b7280]">
-                <p className="text-base font-medium text-[#374151] m-0 mb-1">No pending items to review.</p>
-                <p className="text-sm m-0">You are all caught up! New assigned reviews will appear here.</p>
-              </div>
-            ) : (
-              <div className="grid gap-4">
-                {filteredItems.map((item) => (
-                  <div
-                    key={item.id}
-                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-xl border border-[#e5e7eb] bg-white p-5 shadow-sm transition hover:shadow-md"
-                  >
-                    <div>
-                      <span className="inline-block rounded bg-[#f3f4f6] px-2 py-0.5 text-xs font-semibold text-[#374151] mb-1.5">
-                        Review #{item.id}
-                      </span>
-                      <h3 className="text-base font-semibold text-[#1f2937] m-0 mb-1">
-                        {item.submission?.title || item.title || `Submission ID: ${item.submission_id}`}
-                      </h3>
-                      <p className="text-xs text-[#6b7280] m-0">
-                        Status:{" "}
-                        <span className="font-medium text-[#d97706] capitalize">
-                          {item.status || "Pending"}
-                        </span>
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => navigate(`/reviewer/evaluate/${item.id}`)}
-                      className="self-start sm:self-auto rounded-lg bg-[#4f46e5] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#4338ca]"
-                    >
-                      Evaluate
-                    </button>
-                  </div>
-                ))}
+                <strong className="block text-[12px] font-extrabold">
+                  Couldn't load your reviews
+                </strong>
+                <span className="mt-1 block text-[11px]">{error}</span>
               </div>
             )}
-          </div>
-        </main>
-      </div>
 
-      {/* Footer */}
-      <footer className="bg-[#07132f] text-white/60 mt-12">
-        <div className="mx-auto flex min-h-[100px] w-[min(1200px,calc(100%-40px))] items-center justify-between gap-5 text-[10px] max-[560px]:block max-[560px]:py-6">
-          <div>
-            <div className="flex items-center gap-2.5 text-white">
-              <img className="h-[34px] w-[34px] object-contain" src="/cmt-mark.png" alt="CMT logo" />
-              <div className="flex flex-col leading-[1.05]">
-                <strong className="text-xl tracking-[-.04em]">CMT</strong>
-                <span className="mt-1 whitespace-nowrap text-[9px] text-white/70">Conference Management Tool</span>
+            {/* Search + filter */}
+            {!error && (
+              <div className="flex flex-col gap-3 rounded-2xl border border-[#e4e8f0] bg-white p-4 shadow-[0_6px_18px_rgba(15,28,65,.03)] dark:border-[#1e293b] dark:bg-[#0f172a] sm:flex-row sm:items-center sm:gap-3">
+                <div className="relative flex-1">
+                  <Search
+                    className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#98a1b3]"
+                    size={15}
+                  />
+                  <input
+                    type="text"
+                    placeholder="Search by title, conference, or ID…"
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    className="h-11 w-full rounded-xl border border-[#e2e6ee] bg-[#fafbfe] pl-10 pr-9 text-[12px] outline-none transition focus:border-[#8175ef] focus:bg-white focus:ring-2 focus:ring-[#8175ef]/10 dark:border-[#1e293b] dark:bg-[#0b1224] dark:text-white"
+                  />
+                  {query && (
+                    <button
+                      onClick={() => setQuery("")}
+                      className="absolute right-2.5 top-1/2 grid h-6 w-6 -translate-y-1/2 place-items-center rounded-full text-[#98a1b3] hover:bg-[#eef1f7] hover:text-[#5c6880]"
+                      aria-label="Clear search"
+                    >
+                      <X size={12} />
+                    </button>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Filter size={15} className="text-[#98a1b3]" />
+                  <select
+                    value={filter}
+                    onChange={(e) => setFilter(e.target.value)}
+                    className="h-11 rounded-xl border border-[#e2e6ee] bg-white px-3 text-[12px] font-semibold text-[#43506a] outline-none focus:border-[#8175ef] focus:ring-2 focus:ring-[#8175ef]/10 dark:border-[#1e293b] dark:bg-[#0b1224] dark:text-white"
+                  >
+                    {FILTERS.map((f) => (
+                      <option key={f.key} value={f.key}>
+                        {f.label} ({counts[f.key] ?? 0})
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
-            </div>
-            <p className="mt-1 text-[9px] text-white/45">Conference Management Tool</p>
-          </div>
-          <span>© {new Date().getFullYear()} CMT. Conference Management Tool.</span>
+            )}
+
+            {/* Reviews list */}
+            {loading && <LoadingCards />}
+
+            {!loading && !error && filtered.length === 0 && (
+              <div className="rounded-2xl border border-dashed border-[#d6dbe8] bg-white p-12 text-center dark:border-[#1e293b] dark:bg-[#0f172a]">
+                <span className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-[#efedff] text-[#5c50ec]">
+                  <ClipboardCheck size={22} />
+                </span>
+                <h3 className="mt-4 text-[14px] font-bold text-[#1c2a4a] dark:text-white">
+                  {reviews.length === 0
+                    ? "No reviews assigned yet"
+                    : "No matches"}
+                </h3>
+                <p className="mx-auto mt-2 max-w-[420px] text-[11px] leading-5 text-[#8993a6]">
+                  {reviews.length === 0
+                    ? "Once an organiser assigns you a submission, it will appear here for scoring."
+                    : "Try a different filter or clear the search."}
+                </p>
+              </div>
+            )}
+
+            {!loading && !error && filtered.length > 0 && (
+              <section className="grid gap-4">
+                {filtered.map((review) => (
+                  <ReviewCard
+                    key={itemReviewId(review)}
+                    review={review}
+                    onEvaluate={handleEvaluate}
+                  />
+                ))}
+              </section>
+            )}
+          </main>
         </div>
-      </footer>
+      </div>
     </div>
   );
 }//LINDOKUHLE418 
