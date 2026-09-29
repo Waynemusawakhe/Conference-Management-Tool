@@ -27,6 +27,7 @@ import AssignReviewersPage from "./pages/AssignReviewersPage";
 import ScoreSubmission from "./pages/ScoreSubmission";
 import AttendeeDashboard from "./pages/AttendeeDashboard";
 import MyConferences from "./pages/MyConferences";
+import AttendeeProposalStatus from "./pages/AttendeeProposalStatus";
 import UsersPage from "./pages/UsersPage";
 
 /* ---------- Admin pages ---------- */
@@ -61,7 +62,8 @@ export default function App() {
         <Routes>
           {/* ==================== PUBLIC ROUTES ==================== */}
 
-          <Route path="/" element={<Home />} />
+          <Route path="/" element={<Navigate to="/login" replace />} />
+          <Route path="/home" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -83,9 +85,18 @@ export default function App() {
           />
 
           <Route
+            path="/submit-proposal"
+            element={
+              <ProtectedRoute roles={["author", "attendee"]}>
+                <SubmitProposal />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
             path="/submit-proposal/:conferenceId"
             element={
-              <ProtectedRoute roles={["author"]}>
+              <ProtectedRoute roles={["author", "attendee"]}>
                 <SubmitProposal />
               </ProtectedRoute>
             }
@@ -156,6 +167,15 @@ export default function App() {
                 roles={["author", "reviewer", "organiser", "attendee", "admin"]}
               >
                 <MyConferences />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/attendee-proposals"
+            element={
+              <ProtectedRoute roles={["attendee"]}>
+                <AttendeeProposalStatus />
               </ProtectedRoute>
             }
           />

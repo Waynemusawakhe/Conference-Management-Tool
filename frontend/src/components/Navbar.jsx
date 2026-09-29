@@ -6,7 +6,7 @@ import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
 
 const navItems = [
-  { label: "Home", target: "/", section: "top" },
+  { label: "Home", target: "/home", section: "top" },
   { label: "Conferences", target: "/conferences" },
   { label: "About", target: "/about" },
   { label: "Testimonials", target: "/testimonials" },
@@ -48,7 +48,7 @@ export default function Navbar() {
           {navItems.map((item) => (
             <button
               key={item.label}
-              className={`relative border-0 bg-transparent px-0 py-7 text-[13px] font-semibold text-white/80 transition hover:text-white ${item.target === "/" && location.pathname === "/" ? "text-white after:absolute after:inset-x-0 after:bottom-4 after:h-0.5 after:rounded-full after:bg-[#7d6bff] after:content-['']" : ""}`}
+              className={`relative border-0 bg-transparent px-0 py-7 text-[13px] font-semibold text-white/80 transition hover:text-white ${item.target === "/home" && location.pathname === "/home" ? "text-white after:absolute after:inset-x-0 after:bottom-4 after:h-0.5 after:rounded-full after:bg-[#7d6bff] after:content-['']" : ""}`}
               onClick={() => goTo(item)}
             >
               {item.label}

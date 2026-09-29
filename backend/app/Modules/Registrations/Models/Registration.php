@@ -20,11 +20,13 @@ class Registration extends Model
         'status',
         'registered_at',
         'cancelled_at',
+        'reminder_sent_at',
     ];
 
     protected $casts = [
         'registered_at' => 'datetime',
         'cancelled_at' => 'datetime',
+        'reminder_sent_at' => 'datetime',
     ];
 
     public function conference(): BelongsTo

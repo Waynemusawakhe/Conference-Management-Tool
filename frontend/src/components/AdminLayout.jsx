@@ -9,6 +9,7 @@ import {
   FileText,
   HelpCircle,
   LayoutDashboard,
+  LoaderCircle,
   LogOut,
   Mail,
   Menu,
@@ -108,6 +109,7 @@ export default function AdminLayout({ children, title, subtitle, action }) {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [dismissed, setDismissed] = useState(() => loadDismissed());
   const { user, status, logout } = useAuth();
@@ -246,7 +248,8 @@ export default function AdminLayout({ children, title, subtitle, action }) {
   const roleLabel = prettifyRole(user?.role);
 
   const handleSignOut = async () => {
-    setSidebarOpen(false);
+    if (signingOut) return;
+    setSigningOut(true);
     await logout();
     navigate("/login", { replace: true });
   };
@@ -512,8 +515,11 @@ export default function AdminLayout({ children, title, subtitle, action }) {
           <button
             className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] font-semibold text-[#9a6470] hover:bg-[#fff4f5] dark:text-[#f08a9a] dark:hover:bg-[#2a1218]"
             onClick={handleSignOut}
+            disabled={signingOut}
+            aria-busy={signingOut}
           >
-            <LogOut size={16} /> Sign out
+            {signingOut ? <LoaderCircle size={16} className="animate-spin" /> : <LogOut size={16} />}
+            {signingOut ? "Signing out..." : "Sign out"}
           </button>
         </aside>
 
