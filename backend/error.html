@@ -20,7 +20,7 @@
     class="w-full max-w-7xl mx-auto p-4 sm:p-14 border-x border-dashed border-neutral-300 dark:border-white/[9%] px-6 py-0 sm:py-0"
 >
     <script>
-    const markdown = '# Illuminate\\Database\\QueryException - Internal Server Error\n\nSQLSTATE[23514]: Check violation: 7 ERROR:  new row for relation \u0022conferences\u0022 violates check constraint \u0022conferences_venue_by_format_check\u0022\nDETAIL:  Failing row contains (2, 16, CMT2026, CMT Annual Conference, Annual conference for technology and software development., Technology, [\u0022Artificial Intelligence\u0022,\u0022Software Engineering\u0022,\u0022Cybersecurity..., virtual, open, 2026-10-01, 2026-10-03, 2026-09-01, CMT Convention Centre, Johannesburg, South Africa, https:\/\/example.com, 2026-08-25 13:33:11, 2026-08-25 13:33:11). (Connection: pgsql, Host: 127.0.0.1, Port: 5432, Database: conference_management, SQL: insert into \u0022conferences\u0022 (\u0022code\u0022, \u0022name\u0022, \u0022description\u0022, \u0022category\u0022, \u0022format\u0022, \u0022submission_status\u0022, \u0022start_date\u0022, \u0022end_date\u0022, \u0022submission_deadline\u0022, \u0022venue_name\u0022, \u0022city\u0022, \u0022country\u0022, \u0022website_link\u0022, \u0022topics\u0022, \u0022organiser_id\u0022, \u0022updated_at\u0022, \u0022created_at\u0022) values (CMT2026, CMT Annual Conference, Annual conference for technology and software development., Technology, virtual, open, 2026-10-01 00:00:00, 2026-10-03 00:00:00, 2026-09-01 00:00:00, CMT Convention Centre, Johannesburg, South Africa, https:\/\/example.com, [\u0022Artificial Intelligence\u0022,\u0022Software Engineering\u0022,\u0022Cybersecurity\u0022], 16, 2026-08-25 13:33:11, 2026-08-25 13:33:11) returning \u0022id\u0022)\n\nPHP 8.5.9\nLaravel 12.66.0\n127.0.0.1:8000\n\n## Stack Trace\n\n0 - vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connection.php:838\n1 - vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connection.php:794\n2 - vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connection.php:411\n3 - vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connection.php:398\n4 - vendor\\laravel\\framework\\src\\Illuminate\\Database\\Query\\Processors\\PostgresProcessor.php:24\n5 - vendor\\laravel\\framework\\src\\Illuminate\\Database\\Query\\Builder.php:4170\n6 - vendor\\laravel\\framework\\src\\Illuminate\\Database\\Eloquent\\Builder.php:2237\n7 - vendor\\laravel\\framework\\src\\Illuminate\\Database\\Eloquent\\Model.php:1436\n8 - vendor\\laravel\\framework\\src\\Illuminate\\Database\\Eloquent\\Model.php:1401\n9 - vendor\\laravel\\framework\\src\\Illuminate\\Database\\Eloquent\\Model.php:1240\n10 - vendor\\laravel\\framework\\src\\Illuminate\\Database\\Eloquent\\Builder.php:1219\n11 - vendor\\laravel\\framework\\src\\Illuminate\\Support\\helpers.php:393\n12 - vendor\\laravel\\framework\\src\\Illuminate\\Database\\Eloquent\\Builder.php:1218\n13 - vendor\\laravel\\framework\\src\\Illuminate\\Support\\Traits\\ForwardsCalls.php:23\n14 - vendor\\laravel\\framework\\src\\Illuminate\\Database\\Eloquent\\Model.php:2544\n15 - vendor\\laravel\\framework\\src\\Illuminate\\Database\\Eloquent\\Model.php:2560\n16 - app\\Modules\\Conferences\\Actions\\CreateConference.php:11\n17 - app\\Modules\\Conferences\\Controllers\\ConferenceController.php:184\n18 - vendor\\laravel\\framework\\src\\Illuminate\\Routing\\ControllerDispatcher.php:46\n19 - vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Route.php:265\n20 - vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Route.php:211\n21 - vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php:822\n22 - vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php:180\n23 - vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Middleware\\SubstituteBindings.php:50\n24 - vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php:219\n25 - vendor\\laravel\\framework\\src\\Illuminate\\Auth\\Middleware\\Authenticate.php:63\n26 - vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php:219\n27 - vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php:137\n28 - vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php:821\n29 - vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php:800\n30 - vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php:764\n31 - vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php:753\n32 - vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Kernel.php:200\n33 - vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php:180\n34 - vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest.php:21\n35 - vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\ConvertEmptyStringsToNull.php:31\n36 - vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php:219\n37 - vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest.php:21\n38 - vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\TrimStrings.php:51\n39 - vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php:219\n40 - vendor\\laravel\\framework\\src\\Illuminate\\Http\\Middleware\\ValidatePostSize.php:27\n41 - vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php:219\n42 - vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\PreventRequestsDuringMaintenance.php:109\n43 - vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php:219\n44 - vendor\\laravel\\framework\\src\\Illuminate\\Http\\Middleware\\HandleCors.php:74\n45 - vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php:219\n46 - vendor\\laravel\\framework\\src\\Illuminate\\Http\\Middleware\\TrustProxies.php:58\n47 - vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php:219\n48 - vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\InvokeDeferredCallbacks.php:22\n49 - vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php:219\n50 - vendor\\laravel\\framework\\src\\Illuminate\\Http\\Middleware\\ValidatePathEncoding.php:26\n51 - vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php:219\n52 - vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php:137\n53 - vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Kernel.php:175\n54 - vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Kernel.php:144\n55 - vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Application.php:1220\n56 - public\\index.php:20\n57 - vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\resources\\server.php:23\n\n## Request\n\nPOST \/api\/v1\/conferences\n\n## Headers\n\n* **host**: 127.0.0.1:8000\n* **connection**: keep-alive\n* **content-length**: 573\n* **sec-ch-ua-platform**: \u0022Windows\u0022\n* **authorization**: Bearer 4|EGWKeXSOGGgaQX4aFHfK4EalNKwigS9KU1OeMdeW74f784f5\n* **x-csrf-token**: \n* **sec-ch-ua**: \u0022Not=A?Brand\u0022;v=\u002299\u0022, \u0022Microsoft Edge\u0022;v=\u0022151\u0022, \u0022Chromium\u0022;v=\u0022151\u0022\n* **sec-ch-ua-mobile**: ?0\n* **user-agent**: Mozilla\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\/537.36 (KHTML, like Gecko) Chrome\/151.0.0.0 Safari\/537.36 Edg\/151.0.0.0\n* **accept**: *\/*\n* **content-type**: application\/json\n* **origin**: http:\/\/127.0.0.1:8000\n* **sec-fetch-site**: same-origin\n* **sec-fetch-mode**: cors\n* **sec-fetch-dest**: empty\n* **referer**: http:\/\/127.0.0.1:8000\/api\/documentation\n* **accept-encoding**: gzip, deflate, br, zstd\n* **accept-language**: en-US,en;q=0.9,en-ZA;q=0.8\n\n## Route Context\n\ncontroller: App\\Modules\\Conferences\\Controllers\\ConferenceController@store\nmiddleware: api, auth:sanctum\n\n## Route Parameters\n\nNo route parameter data available.\n\n## Database Queries\n\n* pgsql - select * from \u0022personal_access_tokens\u0022 where \u0022personal_access_tokens\u0022.\u0022id\u0022 = \u00274\u0027 limit 1 (51.82 ms)\n* pgsql - select * from \u0022users\u0022 where \u0022users\u0022.\u0022id\u0022 = 16 limit 1 (6.38 ms)\n* pgsql - update \u0022personal_access_tokens\u0022 set \u0022last_used_at\u0022 = \u00272026-08-25 13:33:11\u0027, \u0022updated_at\u0022 = \u00272026-08-25 13:33:11\u0027 where \u0022id\u0022 = 4 (2.57 ms)\n* pgsql - select count(*) as aggregate from \u0022conferences\u0022 where \u0022code\u0022 = \u0027CMT2026\u0027 (7.79 ms)\n'
+    const markdown = '# Symfony\\Component\\Routing\\Exception\\RouteNotFoundException - Internal Server Error\n\nRoute [login] not defined.\n\nPHP 8.5.9\nLaravel 12.66.0\n127.0.0.1:8000\n\n## Stack Trace\n\n0 - vendor\\laravel\\framework\\src\\Illuminate\\Routing\\UrlGenerator.php:536\n1 - vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\helpers.php:870\n2 - vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Configuration\\ApplicationBuilder.php:278\n3 - vendor\\laravel\\framework\\src\\Illuminate\\Auth\\Middleware\\Authenticate.php:117\n4 - vendor\\laravel\\framework\\src\\Illuminate\\Auth\\Middleware\\Authenticate.php:104\n5 - vendor\\laravel\\framework\\src\\Illuminate\\Auth\\Middleware\\Authenticate.php:87\n6 - vendor\\laravel\\framework\\src\\Illuminate\\Auth\\Middleware\\Authenticate.php:61\n7 - vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php:219\n8 - vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php:137\n9 - vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php:821\n10 - vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php:800\n11 - vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php:764\n12 - vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php:753\n13 - vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Kernel.php:200\n14 - vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php:180\n15 - vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest.php:21\n16 - vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\ConvertEmptyStringsToNull.php:31\n17 - vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php:219\n18 - vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest.php:21\n19 - vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\TrimStrings.php:51\n20 - vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php:219\n21 - vendor\\laravel\\framework\\src\\Illuminate\\Http\\Middleware\\ValidatePostSize.php:27\n22 - vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php:219\n23 - vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\PreventRequestsDuringMaintenance.php:109\n24 - vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php:219\n25 - vendor\\laravel\\framework\\src\\Illuminate\\Http\\Middleware\\HandleCors.php:74\n26 - vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php:219\n27 - vendor\\laravel\\framework\\src\\Illuminate\\Http\\Middleware\\TrustProxies.php:58\n28 - vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php:219\n29 - vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\InvokeDeferredCallbacks.php:22\n30 - vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php:219\n31 - vendor\\laravel\\framework\\src\\Illuminate\\Http\\Middleware\\ValidatePathEncoding.php:26\n32 - vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php:219\n33 - vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php:137\n34 - vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Kernel.php:175\n35 - vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Kernel.php:144\n36 - vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Application.php:1220\n37 - public\\index.php:20\n38 - vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\resources\\server.php:23\n\n## Request\n\nGET \/api\/v1\/users\n\n## Headers\n\n* **host**: 127.0.0.1:8000\n* **connection**: keep-alive\n* **sec-ch-ua-platform**: \u0022Windows\u0022\n* **x-csrf-token**: \n* **user-agent**: Mozilla\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\/537.36 (KHTML, like Gecko) Chrome\/152.0.0.0 Safari\/537.36 Edg\/152.0.0.0\n* **accept**: *\/*\n* **sec-ch-ua**: \u0022Chromium\u0022;v=\u0022152\u0022, \u0022Not?A_Brand\u0022;v=\u002224\u0022, \u0022Microsoft Edge\u0022;v=\u0022152\u0022\n* **sec-ch-ua-mobile**: ?0\n* **sec-fetch-site**: same-origin\n* **sec-fetch-mode**: cors\n* **sec-fetch-dest**: empty\n* **referer**: http:\/\/127.0.0.1:8000\/api\/documentation\n* **accept-encoding**: gzip, deflate, br, zstd\n* **accept-language**: en-US,en;q=0.9,en-ZA;q=0.8\n\n## Route Context\n\ncontroller: App\\Modules\\Account\\Controllers\\UserController@index\nmiddleware: api, auth:sanctum, role:admin\n\n## Route Parameters\n\nNo route parameter data available.\n\n## Database Queries\n\nNo database queries detected.\n'
 </script>
 
 <div
@@ -82,18 +82,17 @@
 >
     <div class="flex flex-col pt-8 sm:pt-16 overflow-x-auto">
     <div class="flex flex-col gap-5 mb-8">
-        <h1 class="text-3xl font-semibold text-neutral-950 dark:text-white">Illuminate\Database\QueryException</h1>
+        <h1 class="text-3xl font-semibold text-neutral-950 dark:text-white">Symfony\Component\Routing\Exception\RouteNotFoundException</h1>
         <div
     class="truncate font-mono text-xs text-neutral-500 dark:text-neutral-400 -mt-3 text-xs"
     dir="ltr"
 >
-    <span data-tippy-content="vendor\laravel\framework\src\Illuminate\Database\Connection.php:838">
-                    vendor\laravel\framework\src\Illuminate\Database\Connection.php<span class="text-neutral-500">:838</span>
+    <span data-tippy-content="vendor\laravel\framework\src\Illuminate\Routing\UrlGenerator.php:536">
+                    vendor\laravel\framework\src\Illuminate\Routing\UrlGenerator.php<span class="text-neutral-500">:536</span>
             </span>
 </div>
         <p class="text-xl font-light text-neutral-800 dark:text-neutral-300">
-            SQLSTATE[23514]: Check violation: 7 ERROR:  new row for relation &quot;conferences&quot; violates check constraint &quot;conferences_venue_by_format_check&quot;
-DETAIL:  Failing row contains (2, 16, CMT2026, CMT Annual Conference, Annual conference for technology and software development., Technology, [&quot;Artificial Intelligence&quot;,&quot;Software Engineering&quot;,&quot;Cybersecurity..., virtual, open, 2026-10-01, 2026-10-03, 2026-09-01, CMT Convention Centre, Johannesburg, South Africa, https://example.com, 2026-08-25 13:33:11, 2026-08-25 13:33:11). (Connection: pgsql, Host: 127.0.0.1, Port: 5432, Database: conference_management, SQL: insert into &quot;conferences&quot; (&quot;code&quot;, &quot;name&quot;, &quot;description&quot;, &quot;category&quot;, &quot;format&quot;, &quot;submission_status&quot;, &quot;start_date&quot;, &quot;end_date&quot;, &quot;submission_deadline&quot;, &quot;venue_name&quot;, &quot;city&quot;, &quot;country&quot;, &quot;website_link&quot;, &quot;topics&quot;, &quot;organiser_id&quot;, &quot;updated_at&quot;, &quot;created_at&quot;) values (CMT2026, CMT Annual Conference, Annual conference for technology and software development., Technology, virtual, open, 2026-10-01 00:00:00, 2026-10-03 00:00:00, 2026-09-01 00:00:00, CMT Convention Centre, Johannesburg, South Africa, https://example.com, [&quot;Artificial Intelligence&quot;,&quot;Software Engineering&quot;,&quot;Cybersecurity&quot;], 16, 2026-08-25 13:33:11, 2026-08-25 13:33:11) returning &quot;id&quot;)
+            Route [login] not defined.
         </p>
     </div>
 
@@ -122,7 +121,7 @@ DETAIL:  Failing row contains (2, 16, CMT2026, CMT Annual Conference, Annual con
             UNHANDLED
 </div>
         <div class="inline-flex w-fit shrink-0 items-center justify-center gap-1 font-mono leading-3 uppercase transition-colors dark:border [&amp;_svg]:size-2.5 h-6 min-w-5 rounded-md px-1.5 text-xs/none bg-rose-600 dark:border-rose-500 dark:bg-rose-600 text-white dark:text-white [&amp;_svg]:!text-white">
-    CODE 23514
+    CODE 0
 </div>
     </div>
 
@@ -131,7 +130,7 @@ DETAIL:  Failing row contains (2, 16, CMT2026, CMT Annual Conference, Annual con
         copied: false,
         async copyToClipboard() {
             try {
-                await window.copyToClipboard('http://127.0.0.1:8000/api/v1/conferences');
+                await window.copyToClipboard('http://127.0.0.1:8000/api/v1/users');
                 this.copied = true;
                 setTimeout(() => { this.copied = false }, 3000);
             } catch (err) {
@@ -155,17 +154,17 @@ DETAIL:  Failing row contains (2, 16, CMT2026, CMT Annual Conference, Annual con
 </svg>
             500
 </div>
-        <div class="inline-flex w-fit shrink-0 items-center justify-center gap-1 font-mono leading-3 uppercase transition-colors dark:border [&amp;_svg]:size-2.5 h-6 min-w-5 rounded-md px-1.5 text-xs/none bg-emerald-200 text-emerald-900 dark:border-emerald-600 dark:bg-emerald-900/70 dark:text-emerald-400">
+        <div class="inline-flex w-fit shrink-0 items-center justify-center gap-1 font-mono leading-3 uppercase transition-colors dark:border [&amp;_svg]:size-2.5 h-6 min-w-5 rounded-md px-1.5 text-xs/none bg-black/8 text-neutral-900 dark:border-neutral-700 dark:bg-white/10 dark:text-neutral-100">
     <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-2.5 h-2.5">
     <path d="M5.99996 10.6876C7.10936 10.6876 8.00871 8.58896 8.00871 6.00012C8.00871 3.41129 7.10936 1.31262 5.99996 1.31262C4.89056 1.31262 3.99121 3.41129 3.99121 6.00012C3.99121 8.58896 4.89056 10.6876 5.99996 10.6876Z" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
     <path d="M1.3125 6.00012H10.6875" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
     <path d="M6 10.6876C8.58883 10.6876 10.6875 8.58896 10.6875 6.00012C10.6875 3.41129 8.58883 1.31262 6 1.31262C3.41117 1.31262 1.3125 3.41129 1.3125 6.00012C1.3125 8.58896 3.41117 10.6876 6 10.6876Z" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>
-    POST
+    GET
 </div>
         <div class="flex-1 text-sm font-light truncate text-neutral-950 dark:text-white">
-            <span data-tippy-content="http://127.0.0.1:8000/api/v1/conferences">
-                http://127.0.0.1:8000/api/v1/conferences
+            <span data-tippy-content="http://127.0.0.1:8000/api/v1/users">
+                http://127.0.0.1:8000/api/v1/users
             </span>
         </div>
         <button
@@ -247,7 +246,7 @@ DETAIL:  Failing row contains (2, 16, CMT2026, CMT Annual Conference, Annual con
 </svg>
 
         <div class="flex-1 font-mono text-xs leading-3 text-neutral-900 dark:text-neutral-400">
-            16 vendor frames
+            37 vendor frames
         </div>
 
         <button
@@ -292,7 +291,7 @@ DETAIL:  Failing row contains (2, 16, CMT2026, CMT Annual Conference, Annual con
     x-data="{ highlightedCode: null }"
     x-init="
         highlightedCode = window.highlight(
-            'Illuminate\\Database\\Connection-\u003ErunQueryCallback(string, array, object(Closure))',
+            'Illuminate\\Routing\\UrlGenerator-\u003Eroute(string, array, boolean)',
             'php',
             true,
             false,
@@ -300,13 +299,13 @@ DETAIL:  Failing row contains (2, 16, CMT2026, CMT Annual Conference, Annual con
             null
         );
     "
-    class="text-xs min-w-0" data-tippy-content="Illuminate\Database\Connection-&gt;runQueryCallback(string, array, object(Closure))"
+    class="text-xs min-w-0" data-tippy-content="Illuminate\Routing\UrlGenerator-&gt;route(string, array, boolean)"
 >
     <div
         x-cloak
         x-html="highlightedCode"
     ></div>
-    <div x-show="!highlightedCode"><pre class="truncate"><code>Illuminate\Database\Connection-&gt;runQueryCallback(string, array, object(Closure))</code></pre></div>
+    <div x-show="!highlightedCode"><pre class="truncate"><code>Illuminate\Routing\UrlGenerator-&gt;route(string, array, boolean)</code></pre></div>
 </div>
         </div>
     
@@ -314,8 +313,8 @@ DETAIL:  Failing row contains (2, 16, CMT2026, CMT Annual Conference, Annual con
     class="truncate font-mono text-xs text-neutral-500 dark:text-neutral-400 text-xs"
     dir="ltr"
 >
-    <span data-tippy-content="vendor\laravel\framework\src\Illuminate\Database\Connection.php:838">
-                    vendor\laravel\framework\src\Illuminate\Database\Connection.php<span class="text-neutral-500">:838</span>
+    <span data-tippy-content="vendor\laravel\framework\src\Illuminate\Routing\UrlGenerator.php:536">
+                    vendor\laravel\framework\src\Illuminate\Routing\UrlGenerator.php<span class="text-neutral-500">:536</span>
             </span>
 </div>
 </div>
@@ -327,7 +326,7 @@ DETAIL:  Failing row contains (2, 16, CMT2026, CMT Annual Conference, Annual con
     x-data="{ highlightedCode: null }"
     x-init="
         highlightedCode = window.highlight(
-            'Illuminate\\Database\\Connection-\u003ErunQueryCallback(string, array, object(Closure))',
+            'Illuminate\\Routing\\UrlGenerator-\u003Eroute(string, array, boolean)',
             'php',
             true,
             false,
@@ -335,13 +334,13 @@ DETAIL:  Failing row contains (2, 16, CMT2026, CMT Annual Conference, Annual con
             null
         );
     "
-    class="text-xs min-w-0" data-tippy-content="Illuminate\Database\Connection-&gt;runQueryCallback(string, array, object(Closure))"
+    class="text-xs min-w-0" data-tippy-content="Illuminate\Routing\UrlGenerator-&gt;route(string, array, boolean)"
 >
     <div
         x-cloak
         x-html="highlightedCode"
     ></div>
-    <div x-show="!highlightedCode"><pre class="truncate"><code>Illuminate\Database\Connection-&gt;runQueryCallback(string, array, object(Closure))</code></pre></div>
+    <div x-show="!highlightedCode"><pre class="truncate"><code>Illuminate\Routing\UrlGenerator-&gt;route(string, array, boolean)</code></pre></div>
 </div>
         </div>
     
@@ -349,8 +348,8 @@ DETAIL:  Failing row contains (2, 16, CMT2026, CMT Annual Conference, Annual con
     class="truncate font-mono text-xs text-neutral-500 dark:text-neutral-400 text-xs"
     dir="ltr"
 >
-    <span data-tippy-content="vendor\laravel\framework\src\Illuminate\Database\Connection.php:794">
-                    vendor\laravel\framework\src\Illuminate\Database\Connection.php<span class="text-neutral-500">:794</span>
+    <span data-tippy-content="vendor\laravel\framework\src\Illuminate\Foundation\helpers.php:870">
+                    vendor\laravel\framework\src\Illuminate\Foundation\helpers.php<span class="text-neutral-500">:870</span>
             </span>
 </div>
 </div>
@@ -362,7 +361,7 @@ DETAIL:  Failing row contains (2, 16, CMT2026, CMT Annual Conference, Annual con
     x-data="{ highlightedCode: null }"
     x-init="
         highlightedCode = window.highlight(
-            'Illuminate\\Database\\Connection-\u003Erun(string, array, object(Closure))',
+            'route(string)',
             'php',
             true,
             false,
@@ -370,13 +369,13 @@ DETAIL:  Failing row contains (2, 16, CMT2026, CMT Annual Conference, Annual con
             null
         );
     "
-    class="text-xs min-w-0" data-tippy-content="Illuminate\Database\Connection-&gt;run(string, array, object(Closure))"
+    class="text-xs min-w-0" data-tippy-content="route(string)"
 >
     <div
         x-cloak
         x-html="highlightedCode"
     ></div>
-    <div x-show="!highlightedCode"><pre class="truncate"><code>Illuminate\Database\Connection-&gt;run(string, array, object(Closure))</code></pre></div>
+    <div x-show="!highlightedCode"><pre class="truncate"><code>route(string)</code></pre></div>
 </div>
         </div>
     
@@ -384,8 +383,8 @@ DETAIL:  Failing row contains (2, 16, CMT2026, CMT Annual Conference, Annual con
     class="truncate font-mono text-xs text-neutral-500 dark:text-neutral-400 text-xs"
     dir="ltr"
 >
-    <span data-tippy-content="vendor\laravel\framework\src\Illuminate\Database\Connection.php:411">
-                    vendor\laravel\framework\src\Illuminate\Database\Connection.php<span class="text-neutral-500">:411</span>
+    <span data-tippy-content="vendor\laravel\framework\src\Illuminate\Foundation\Configuration\ApplicationBuilder.php:278">
+                    vendor\laravel\framework\src\Illuminate\Foundation\Configuration\ApplicationBuilder.php<span class="text-neutral-500">:278</span>
             </span>
 </div>
 </div>
@@ -397,7 +396,7 @@ DETAIL:  Failing row contains (2, 16, CMT2026, CMT Annual Conference, Annual con
     x-data="{ highlightedCode: null }"
     x-init="
         highlightedCode = window.highlight(
-            'Illuminate\\Database\\Connection-\u003Eselect(string, array, boolean)',
+            'call_user_func(object(Closure), object(Illuminate\\Http\\Request))',
             'php',
             true,
             false,
@@ -405,13 +404,13 @@ DETAIL:  Failing row contains (2, 16, CMT2026, CMT Annual Conference, Annual con
             null
         );
     "
-    class="text-xs min-w-0" data-tippy-content="Illuminate\Database\Connection-&gt;select(string, array, boolean)"
+    class="text-xs min-w-0" data-tippy-content="call_user_func(object(Closure), object(Illuminate\Http\Request))"
 >
     <div
         x-cloak
         x-html="highlightedCode"
     ></div>
-    <div x-show="!highlightedCode"><pre class="truncate"><code>Illuminate\Database\Connection-&gt;select(string, array, boolean)</code></pre></div>
+    <div x-show="!highlightedCode"><pre class="truncate"><code>call_user_func(object(Closure), object(Illuminate\Http\Request))</code></pre></div>
 </div>
         </div>
     
@@ -419,8 +418,8 @@ DETAIL:  Failing row contains (2, 16, CMT2026, CMT Annual Conference, Annual con
     class="truncate font-mono text-xs text-neutral-500 dark:text-neutral-400 text-xs"
     dir="ltr"
 >
-    <span data-tippy-content="vendor\laravel\framework\src\Illuminate\Database\Connection.php:398">
-                    vendor\laravel\framework\src\Illuminate\Database\Connection.php<span class="text-neutral-500">:398</span>
+    <span data-tippy-content="vendor\laravel\framework\src\Illuminate\Auth\Middleware\Authenticate.php:117">
+                    vendor\laravel\framework\src\Illuminate\Auth\Middleware\Authenticate.php<span class="text-neutral-500">:117</span>
             </span>
 </div>
 </div>
@@ -432,7 +431,7 @@ DETAIL:  Failing row contains (2, 16, CMT2026, CMT Annual Conference, Annual con
     x-data="{ highlightedCode: null }"
     x-init="
         highlightedCode = window.highlight(
-            'Illuminate\\Database\\Connection-\u003EselectFromWriteConnection(string, array)',
+            'Illuminate\\Auth\\Middleware\\Authenticate-\u003EredirectTo(object(Illuminate\\Http\\Request))',
             'php',
             true,
             false,
@@ -440,13 +439,13 @@ DETAIL:  Failing row contains (2, 16, CMT2026, CMT Annual Conference, Annual con
             null
         );
     "
-    class="text-xs min-w-0" data-tippy-content="Illuminate\Database\Connection-&gt;selectFromWriteConnection(string, array)"
+    class="text-xs min-w-0" data-tippy-content="Illuminate\Auth\Middleware\Authenticate-&gt;redirectTo(object(Illuminate\Http\Request))"
 >
     <div
         x-cloak
         x-html="highlightedCode"
     ></div>
-    <div x-show="!highlightedCode"><pre class="truncate"><code>Illuminate\Database\Connection-&gt;selectFromWriteConnection(string, array)</code></pre></div>
+    <div x-show="!highlightedCode"><pre class="truncate"><code>Illuminate\Auth\Middleware\Authenticate-&gt;redirectTo(object(Illuminate\Http\Request))</code></pre></div>
 </div>
         </div>
     
@@ -454,8 +453,8 @@ DETAIL:  Failing row contains (2, 16, CMT2026, CMT Annual Conference, Annual con
     class="truncate font-mono text-xs text-neutral-500 dark:text-neutral-400 text-xs"
     dir="ltr"
 >
-    <span data-tippy-content="vendor\laravel\framework\src\Illuminate\Database\Query\Processors\PostgresProcessor.php:24">
-                    vendor\laravel\framework\src\Illuminate\Database\Query\Processors\PostgresProcessor.php<span class="text-neutral-500">:24</span>
+    <span data-tippy-content="vendor\laravel\framework\src\Illuminate\Auth\Middleware\Authenticate.php:104">
+                    vendor\laravel\framework\src\Illuminate\Auth\Middleware\Authenticate.php<span class="text-neutral-500">:104</span>
             </span>
 </div>
 </div>
@@ -467,7 +466,7 @@ DETAIL:  Failing row contains (2, 16, CMT2026, CMT Annual Conference, Annual con
     x-data="{ highlightedCode: null }"
     x-init="
         highlightedCode = window.highlight(
-            'Illuminate\\Database\\Query\\Processors\\PostgresProcessor-\u003EprocessInsertGetId(object(Illuminate\\Database\\Query\\Builder), string, array, string)',
+            'Illuminate\\Auth\\Middleware\\Authenticate-\u003Eunauthenticated(object(Illuminate\\Http\\Request), array)',
             'php',
             true,
             false,
@@ -475,13 +474,13 @@ DETAIL:  Failing row contains (2, 16, CMT2026, CMT Annual Conference, Annual con
             null
         );
     "
-    class="text-xs min-w-0" data-tippy-content="Illuminate\Database\Query\Processors\PostgresProcessor-&gt;processInsertGetId(object(Illuminate\Database\Query\Builder), string, array, string)"
+    class="text-xs min-w-0" data-tippy-content="Illuminate\Auth\Middleware\Authenticate-&gt;unauthenticated(object(Illuminate\Http\Request), array)"
 >
     <div
         x-cloak
         x-html="highlightedCode"
     ></div>
-    <div x-show="!highlightedCode"><pre class="truncate"><code>Illuminate\Database\Query\Processors\PostgresProcessor-&gt;processInsertGetId(object(Illuminate\Database\Query\Builder), string, array, string)</code></pre></div>
+    <div x-show="!highlightedCode"><pre class="truncate"><code>Illuminate\Auth\Middleware\Authenticate-&gt;unauthenticated(object(Illuminate\Http\Request), array)</code></pre></div>
 </div>
         </div>
     
@@ -489,8 +488,8 @@ DETAIL:  Failing row contains (2, 16, CMT2026, CMT Annual Conference, Annual con
     class="truncate font-mono text-xs text-neutral-500 dark:text-neutral-400 text-xs"
     dir="ltr"
 >
-    <span data-tippy-content="vendor\laravel\framework\src\Illuminate\Database\Query\Builder.php:4170">
-                    vendor\laravel\framework\src\Illuminate\Database\Query\Builder.php<span class="text-neutral-500">:4170</span>
+    <span data-tippy-content="vendor\laravel\framework\src\Illuminate\Auth\Middleware\Authenticate.php:87">
+                    vendor\laravel\framework\src\Illuminate\Auth\Middleware\Authenticate.php<span class="text-neutral-500">:87</span>
             </span>
 </div>
 </div>
@@ -502,7 +501,7 @@ DETAIL:  Failing row contains (2, 16, CMT2026, CMT Annual Conference, Annual con
     x-data="{ highlightedCode: null }"
     x-init="
         highlightedCode = window.highlight(
-            'Illuminate\\Database\\Query\\Builder-\u003EinsertGetId(array, string)',
+            'Illuminate\\Auth\\Middleware\\Authenticate-\u003Eauthenticate(object(Illuminate\\Http\\Request), array)',
             'php',
             true,
             false,
@@ -510,13 +509,13 @@ DETAIL:  Failing row contains (2, 16, CMT2026, CMT Annual Conference, Annual con
             null
         );
     "
-    class="text-xs min-w-0" data-tippy-content="Illuminate\Database\Query\Builder-&gt;insertGetId(array, string)"
+    class="text-xs min-w-0" data-tippy-content="Illuminate\Auth\Middleware\Authenticate-&gt;authenticate(object(Illuminate\Http\Request), array)"
 >
     <div
         x-cloak
         x-html="highlightedCode"
     ></div>
-    <div x-show="!highlightedCode"><pre class="truncate"><code>Illuminate\Database\Query\Builder-&gt;insertGetId(array, string)</code></pre></div>
+    <div x-show="!highlightedCode"><pre class="truncate"><code>Illuminate\Auth\Middleware\Authenticate-&gt;authenticate(object(Illuminate\Http\Request), array)</code></pre></div>
 </div>
         </div>
     
@@ -524,915 +523,8 @@ DETAIL:  Failing row contains (2, 16, CMT2026, CMT Annual Conference, Annual con
     class="truncate font-mono text-xs text-neutral-500 dark:text-neutral-400 text-xs"
     dir="ltr"
 >
-    <span data-tippy-content="vendor\laravel\framework\src\Illuminate\Database\Eloquent\Builder.php:2237">
-                    vendor\laravel\framework\src\Illuminate\Database\Eloquent\Builder.php<span class="text-neutral-500">:2237</span>
-            </span>
-</div>
-</div>
-            </div>
-                    <div class="flex flex-col divide-y divide-neutral-200 dark:divide-white/5">
-                <div class="grid gap-3 p-4 bg-neutral-50 dark:bg-transparent overflow-x-auto rounded-lg">
-            <div class="flex">
-            <div
-    x-data="{ highlightedCode: null }"
-    x-init="
-        highlightedCode = window.highlight(
-            'Illuminate\\Database\\Eloquent\\Builder-\u003E__call(string, array)',
-            'php',
-            true,
-            false,
-            1,
-            null
-        );
-    "
-    class="text-xs min-w-0" data-tippy-content="Illuminate\Database\Eloquent\Builder-&gt;__call(string, array)"
->
-    <div
-        x-cloak
-        x-html="highlightedCode"
-    ></div>
-    <div x-show="!highlightedCode"><pre class="truncate"><code>Illuminate\Database\Eloquent\Builder-&gt;__call(string, array)</code></pre></div>
-</div>
-        </div>
-    
-    <div
-    class="truncate font-mono text-xs text-neutral-500 dark:text-neutral-400 text-xs"
-    dir="ltr"
->
-    <span data-tippy-content="vendor\laravel\framework\src\Illuminate\Database\Eloquent\Model.php:1436">
-                    vendor\laravel\framework\src\Illuminate\Database\Eloquent\Model.php<span class="text-neutral-500">:1436</span>
-            </span>
-</div>
-</div>
-            </div>
-                    <div class="flex flex-col divide-y divide-neutral-200 dark:divide-white/5">
-                <div class="grid gap-3 p-4 bg-neutral-50 dark:bg-transparent overflow-x-auto rounded-lg">
-            <div class="flex">
-            <div
-    x-data="{ highlightedCode: null }"
-    x-init="
-        highlightedCode = window.highlight(
-            'Illuminate\\Database\\Eloquent\\Model-\u003EinsertAndSetId(object(Illuminate\\Database\\Eloquent\\Builder), array)',
-            'php',
-            true,
-            false,
-            1,
-            null
-        );
-    "
-    class="text-xs min-w-0" data-tippy-content="Illuminate\Database\Eloquent\Model-&gt;insertAndSetId(object(Illuminate\Database\Eloquent\Builder), array)"
->
-    <div
-        x-cloak
-        x-html="highlightedCode"
-    ></div>
-    <div x-show="!highlightedCode"><pre class="truncate"><code>Illuminate\Database\Eloquent\Model-&gt;insertAndSetId(object(Illuminate\Database\Eloquent\Builder), array)</code></pre></div>
-</div>
-        </div>
-    
-    <div
-    class="truncate font-mono text-xs text-neutral-500 dark:text-neutral-400 text-xs"
-    dir="ltr"
->
-    <span data-tippy-content="vendor\laravel\framework\src\Illuminate\Database\Eloquent\Model.php:1401">
-                    vendor\laravel\framework\src\Illuminate\Database\Eloquent\Model.php<span class="text-neutral-500">:1401</span>
-            </span>
-</div>
-</div>
-            </div>
-                    <div class="flex flex-col divide-y divide-neutral-200 dark:divide-white/5">
-                <div class="grid gap-3 p-4 bg-neutral-50 dark:bg-transparent overflow-x-auto rounded-lg">
-            <div class="flex">
-            <div
-    x-data="{ highlightedCode: null }"
-    x-init="
-        highlightedCode = window.highlight(
-            'Illuminate\\Database\\Eloquent\\Model-\u003EperformInsert(object(Illuminate\\Database\\Eloquent\\Builder))',
-            'php',
-            true,
-            false,
-            1,
-            null
-        );
-    "
-    class="text-xs min-w-0" data-tippy-content="Illuminate\Database\Eloquent\Model-&gt;performInsert(object(Illuminate\Database\Eloquent\Builder))"
->
-    <div
-        x-cloak
-        x-html="highlightedCode"
-    ></div>
-    <div x-show="!highlightedCode"><pre class="truncate"><code>Illuminate\Database\Eloquent\Model-&gt;performInsert(object(Illuminate\Database\Eloquent\Builder))</code></pre></div>
-</div>
-        </div>
-    
-    <div
-    class="truncate font-mono text-xs text-neutral-500 dark:text-neutral-400 text-xs"
-    dir="ltr"
->
-    <span data-tippy-content="vendor\laravel\framework\src\Illuminate\Database\Eloquent\Model.php:1240">
-                    vendor\laravel\framework\src\Illuminate\Database\Eloquent\Model.php<span class="text-neutral-500">:1240</span>
-            </span>
-</div>
-</div>
-            </div>
-                    <div class="flex flex-col divide-y divide-neutral-200 dark:divide-white/5">
-                <div class="grid gap-3 p-4 bg-neutral-50 dark:bg-transparent overflow-x-auto rounded-lg">
-            <div class="flex">
-            <div
-    x-data="{ highlightedCode: null }"
-    x-init="
-        highlightedCode = window.highlight(
-            'Illuminate\\Database\\Eloquent\\Model-\u003Esave()',
-            'php',
-            true,
-            false,
-            1,
-            null
-        );
-    "
-    class="text-xs min-w-0" data-tippy-content="Illuminate\Database\Eloquent\Model-&gt;save()"
->
-    <div
-        x-cloak
-        x-html="highlightedCode"
-    ></div>
-    <div x-show="!highlightedCode"><pre class="truncate"><code>Illuminate\Database\Eloquent\Model-&gt;save()</code></pre></div>
-</div>
-        </div>
-    
-    <div
-    class="truncate font-mono text-xs text-neutral-500 dark:text-neutral-400 text-xs"
-    dir="ltr"
->
-    <span data-tippy-content="vendor\laravel\framework\src\Illuminate\Database\Eloquent\Builder.php:1219">
-                    vendor\laravel\framework\src\Illuminate\Database\Eloquent\Builder.php<span class="text-neutral-500">:1219</span>
-            </span>
-</div>
-</div>
-            </div>
-                    <div class="flex flex-col divide-y divide-neutral-200 dark:divide-white/5">
-                <div class="grid gap-3 p-4 bg-neutral-50 dark:bg-transparent overflow-x-auto rounded-lg">
-            <div class="flex">
-            <div
-    x-data="{ highlightedCode: null }"
-    x-init="
-        highlightedCode = window.highlight(
-            'Illuminate\\Database\\Eloquent\\Builder-\u003E{closure:Illuminate\\Database\\Eloquent\\Builder::create():1218}(object(App\\Modules\\Conferences\\Models\\Conference))',
-            'php',
-            true,
-            false,
-            1,
-            null
-        );
-    "
-    class="text-xs min-w-0" data-tippy-content="Illuminate\Database\Eloquent\Builder-&gt;{closure:Illuminate\Database\Eloquent\Builder::create():1218}(object(App\Modules\Conferences\Models\Conference))"
->
-    <div
-        x-cloak
-        x-html="highlightedCode"
-    ></div>
-    <div x-show="!highlightedCode"><pre class="truncate"><code>Illuminate\Database\Eloquent\Builder-&gt;{closure:Illuminate\Database\Eloquent\Builder::create():1218}(object(App\Modules\Conferences\Models\Conference))</code></pre></div>
-</div>
-        </div>
-    
-    <div
-    class="truncate font-mono text-xs text-neutral-500 dark:text-neutral-400 text-xs"
-    dir="ltr"
->
-    <span data-tippy-content="vendor\laravel\framework\src\Illuminate\Support\helpers.php:393">
-                    vendor\laravel\framework\src\Illuminate\Support\helpers.php<span class="text-neutral-500">:393</span>
-            </span>
-</div>
-</div>
-            </div>
-                    <div class="flex flex-col divide-y divide-neutral-200 dark:divide-white/5">
-                <div class="grid gap-3 p-4 bg-neutral-50 dark:bg-transparent overflow-x-auto rounded-lg">
-            <div class="flex">
-            <div
-    x-data="{ highlightedCode: null }"
-    x-init="
-        highlightedCode = window.highlight(
-            'tap(object(App\\Modules\\Conferences\\Models\\Conference), object(Closure))',
-            'php',
-            true,
-            false,
-            1,
-            null
-        );
-    "
-    class="text-xs min-w-0" data-tippy-content="tap(object(App\Modules\Conferences\Models\Conference), object(Closure))"
->
-    <div
-        x-cloak
-        x-html="highlightedCode"
-    ></div>
-    <div x-show="!highlightedCode"><pre class="truncate"><code>tap(object(App\Modules\Conferences\Models\Conference), object(Closure))</code></pre></div>
-</div>
-        </div>
-    
-    <div
-    class="truncate font-mono text-xs text-neutral-500 dark:text-neutral-400 text-xs"
-    dir="ltr"
->
-    <span data-tippy-content="vendor\laravel\framework\src\Illuminate\Database\Eloquent\Builder.php:1218">
-                    vendor\laravel\framework\src\Illuminate\Database\Eloquent\Builder.php<span class="text-neutral-500">:1218</span>
-            </span>
-</div>
-</div>
-            </div>
-                    <div class="flex flex-col divide-y divide-neutral-200 dark:divide-white/5">
-                <div class="grid gap-3 p-4 bg-neutral-50 dark:bg-transparent overflow-x-auto rounded-lg">
-            <div class="flex">
-            <div
-    x-data="{ highlightedCode: null }"
-    x-init="
-        highlightedCode = window.highlight(
-            'Illuminate\\Database\\Eloquent\\Builder-\u003Ecreate(array)',
-            'php',
-            true,
-            false,
-            1,
-            null
-        );
-    "
-    class="text-xs min-w-0" data-tippy-content="Illuminate\Database\Eloquent\Builder-&gt;create(array)"
->
-    <div
-        x-cloak
-        x-html="highlightedCode"
-    ></div>
-    <div x-show="!highlightedCode"><pre class="truncate"><code>Illuminate\Database\Eloquent\Builder-&gt;create(array)</code></pre></div>
-</div>
-        </div>
-    
-    <div
-    class="truncate font-mono text-xs text-neutral-500 dark:text-neutral-400 text-xs"
-    dir="ltr"
->
-    <span data-tippy-content="vendor\laravel\framework\src\Illuminate\Support\Traits\ForwardsCalls.php:23">
-                    vendor\laravel\framework\src\Illuminate\Support\Traits\ForwardsCalls.php<span class="text-neutral-500">:23</span>
-            </span>
-</div>
-</div>
-            </div>
-                    <div class="flex flex-col divide-y divide-neutral-200 dark:divide-white/5">
-                <div class="grid gap-3 p-4 bg-neutral-50 dark:bg-transparent overflow-x-auto rounded-lg">
-            <div class="flex">
-            <div
-    x-data="{ highlightedCode: null }"
-    x-init="
-        highlightedCode = window.highlight(
-            'Illuminate\\Database\\Eloquent\\Model-\u003EforwardCallTo(object(Illuminate\\Database\\Eloquent\\Builder), string, array)',
-            'php',
-            true,
-            false,
-            1,
-            null
-        );
-    "
-    class="text-xs min-w-0" data-tippy-content="Illuminate\Database\Eloquent\Model-&gt;forwardCallTo(object(Illuminate\Database\Eloquent\Builder), string, array)"
->
-    <div
-        x-cloak
-        x-html="highlightedCode"
-    ></div>
-    <div x-show="!highlightedCode"><pre class="truncate"><code>Illuminate\Database\Eloquent\Model-&gt;forwardCallTo(object(Illuminate\Database\Eloquent\Builder), string, array)</code></pre></div>
-</div>
-        </div>
-    
-    <div
-    class="truncate font-mono text-xs text-neutral-500 dark:text-neutral-400 text-xs"
-    dir="ltr"
->
-    <span data-tippy-content="vendor\laravel\framework\src\Illuminate\Database\Eloquent\Model.php:2544">
-                    vendor\laravel\framework\src\Illuminate\Database\Eloquent\Model.php<span class="text-neutral-500">:2544</span>
-            </span>
-</div>
-</div>
-            </div>
-                    <div class="flex flex-col divide-y divide-neutral-200 dark:divide-white/5">
-                <div class="grid gap-3 p-4 bg-neutral-50 dark:bg-transparent overflow-x-auto rounded-lg">
-            <div class="flex">
-            <div
-    x-data="{ highlightedCode: null }"
-    x-init="
-        highlightedCode = window.highlight(
-            'Illuminate\\Database\\Eloquent\\Model-\u003E__call(string, array)',
-            'php',
-            true,
-            false,
-            1,
-            null
-        );
-    "
-    class="text-xs min-w-0" data-tippy-content="Illuminate\Database\Eloquent\Model-&gt;__call(string, array)"
->
-    <div
-        x-cloak
-        x-html="highlightedCode"
-    ></div>
-    <div x-show="!highlightedCode"><pre class="truncate"><code>Illuminate\Database\Eloquent\Model-&gt;__call(string, array)</code></pre></div>
-</div>
-        </div>
-    
-    <div
-    class="truncate font-mono text-xs text-neutral-500 dark:text-neutral-400 text-xs"
-    dir="ltr"
->
-    <span data-tippy-content="vendor\laravel\framework\src\Illuminate\Database\Eloquent\Model.php:2560">
-                    vendor\laravel\framework\src\Illuminate\Database\Eloquent\Model.php<span class="text-neutral-500">:2560</span>
-            </span>
-</div>
-</div>
-            </div>
-            </div>
-</div>
-                                                                    <div
-    x-data="{
-        expanded: true,
-        hasCode: true
-    }"
-    class="group rounded-lg border border-neutral-200 dark:border-white/10 overflow-hidden shadow-xs"
-    :class="{ 'dark:border-white/5': expanded }"
->
-    <div
-        class="flex h-11 items-center gap-3 bg-white pr-2.5 pl-4 overflow-x-auto dark:bg-white/3"
-        :class="{
-            'cursor-pointer hover:bg-white/50 dark:hover:bg-white/5 hover:[&_svg]:stroke-emerald-500': hasCode,
-            'dark:bg-white/5 rounded-t-lg': expanded,
-            'dark:bg-white/3 rounded-lg': !expanded
-        }"
-        @click="hasCode && (expanded = !expanded)"
-    >
-        
-        <div class="flex size-3 items-center justify-center flex-shrink-0">
-          <div
-          class="size-2 rounded-full"
-          :class="{
-            'bg-rose-500 dark:bg-neutral-400': expanded,
-            'bg-rose-200 dark:bg-neutral-700': !expanded
-          }"
-          ></div>
-        </div>
-
-        <div class="flex flex-1 items-center justify-between gap-6 min-w-0">
-            <div
-    x-data="{ highlightedCode: null }"
-    x-init="
-        highlightedCode = window.highlight(
-            'Illuminate\\Database\\Eloquent\\Model::__callStatic(string, array)',
-            'php',
-            true,
-            false,
-            1,
-            null
-        );
-    "
-    class="text-xs min-w-0" data-tippy-content="Illuminate\Database\Eloquent\Model::__callStatic(string, array)"
->
-    <div
-        x-cloak
-        x-html="highlightedCode"
-    ></div>
-    <div x-show="!highlightedCode"><pre class="truncate"><code>Illuminate\Database\Eloquent\Model::__callStatic(string, array)</code></pre></div>
-</div>
-            <div
-    class="truncate font-mono text-xs text-neutral-500 dark:text-neutral-400"
-    dir="rtl"
->
-    <span data-tippy-content="app\Modules\Conferences\Actions\CreateConference.php:11">
-                    app\Modules\Conferences\Actions\CreateConference.php<span class="text-neutral-500">:11</span>
-            </span>
-</div>
-        </div>
-
-        <div class="flex-shrink-0">
-            <button
-                x-cloak
-                type="button"
-                class="flex h-6 w-6 cursor-pointer items-center justify-center rounded-md dark:border dark:border-white/8 group-hover:text-blue-500 group-hover:dark:text-emerald-500"
-                :class="{
-                    'text-blue-500 dark:text-emerald-500 dark:bg-white/5': expanded,
-                    'text-neutral-500 dark:text-neutral-500 dark:bg-white/3': !expanded,
-                }"
-            >
-                <svg xmlns="http://www.w3.org/2000/svg" width="8" height="12" viewBox="0 0 8 12" fill="none" x-show="expanded">
-  <g clip-path="url(#clip0_14550_6168)">
-    <path d="M6.75 11.0001L4 8.25012L1.25 11.0001" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="M6.75 1.50012L4 4.25012L1.25 1.50012" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
-  </g>
-  <defs>
-    <clipPath id="clip0_14550_6168">
-      <rect width="8" height="11" fill="white" style="fill:white;fill-opacity:1;" transform="translate(0 0.500122)"/>
-    </clipPath>
-  </defs>
-</svg>
-                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12" fill="none" x-show="!expanded">
-  <g clip-path="url(#clip0_14550_6155)">
-    <path d="M8.75 8.25012L6 11.0001L3.25 8.25012" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="M8.75 3.75012L6 1.00012L3.25 3.75012" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
-  </g>
-  <defs>
-    <clipPath id="clip0_14550_6155">
-      <rect width="12" height="12" fill="white" style="fill:white;fill-opacity:1;"/>
-    </clipPath>
-  </defs>
-</svg>
-            </button>
-        </div>
-    </div>
-
-            <div
-    class="text-sm rounded-b-lg bg-neutral-50 border-t border-neutral-100 dark:bg-neutral-900 dark:border-white/10"
-    x-show="expanded"
->
-    <div
-    x-data="{ highlightedCode: null }"
-    x-init="
-        highlightedCode = window.highlight(
-            '\nclass CreateConference\n{\n    public function execute(array $data): Conference\n    {\n        return Conference::create($data);\n    }\n}\n',
-            'php',
-            false,
-            true,
-            6,
-            5
-        );
-    "
-    class="overflow-x-auto"
->
-    <div
-        x-cloak
-        x-html="highlightedCode"
-    ></div>
-    <div x-show="!highlightedCode"><pre><code><span class="block px-4 py-1 h-7 even:bg-white odd:bg-white/2 even:dark:bg-white/2 odd:dark:bg-white/4 "><span class="mr-6 text-neutral-500! dark:text-neutral-600! ">6</span></span><span class="block px-4 py-1 h-7 even:bg-white odd:bg-white/2 even:dark:bg-white/2 odd:dark:bg-white/4 "><span class="mr-6 text-neutral-500! dark:text-neutral-600! ">7</span>class CreateConference</span><span class="block px-4 py-1 h-7 even:bg-white odd:bg-white/2 even:dark:bg-white/2 odd:dark:bg-white/4 "><span class="mr-6 text-neutral-500! dark:text-neutral-600! ">8</span>{</span><span class="block px-4 py-1 h-7 even:bg-white odd:bg-white/2 even:dark:bg-white/2 odd:dark:bg-white/4 "><span class="mr-6 text-neutral-500! dark:text-neutral-600! ">9</span>    public function execute(array $data): Conference</span><span class="block px-4 py-1 h-7 even:bg-white odd:bg-white/2 even:dark:bg-white/2 odd:dark:bg-white/4 "><span class="mr-6 text-neutral-500! dark:text-neutral-600! ">10</span>    {</span><span class="block px-4 py-1 h-7 even:bg-white odd:bg-white/2 even:dark:bg-white/2 odd:dark:bg-white/4 bg-rose-200! dark:bg-rose-900!"><span class="mr-6 text-neutral-500! dark:text-neutral-600! dark:text-white!">11</span>        return Conference::create($data);</span><span class="block px-4 py-1 h-7 even:bg-white odd:bg-white/2 even:dark:bg-white/2 odd:dark:bg-white/4 "><span class="mr-6 text-neutral-500! dark:text-neutral-600! ">12</span>    }</span><span class="block px-4 py-1 h-7 even:bg-white odd:bg-white/2 even:dark:bg-white/2 odd:dark:bg-white/4 "><span class="mr-6 text-neutral-500! dark:text-neutral-600! ">13</span>}</span><span class="block px-4 py-1 h-7 even:bg-white odd:bg-white/2 even:dark:bg-white/2 odd:dark:bg-white/4 "><span class="mr-6 text-neutral-500! dark:text-neutral-600! ">14</span></span></code></pre></div>
-</div>
-</div>
-    </div>
-                                    <div
-    x-data="{
-        expanded: false,
-        hasCode: true
-    }"
-    class="group rounded-lg border border-neutral-200 dark:border-white/10 overflow-hidden shadow-xs"
-    :class="{ 'dark:border-white/5': expanded }"
->
-    <div
-        class="flex h-11 items-center gap-3 bg-white pr-2.5 pl-4 overflow-x-auto dark:bg-white/3"
-        :class="{
-            'cursor-pointer hover:bg-white/50 dark:hover:bg-white/5 hover:[&_svg]:stroke-emerald-500': hasCode,
-            'dark:bg-white/5 rounded-t-lg': expanded,
-            'dark:bg-white/3 rounded-lg': !expanded
-        }"
-        @click="hasCode && (expanded = !expanded)"
-    >
-        
-        <div class="flex size-3 items-center justify-center flex-shrink-0">
-          <div
-          class="size-2 rounded-full"
-          :class="{
-            'bg-rose-500 dark:bg-neutral-400': expanded,
-            'bg-rose-200 dark:bg-neutral-700': !expanded
-          }"
-          ></div>
-        </div>
-
-        <div class="flex flex-1 items-center justify-between gap-6 min-w-0">
-            <div
-    x-data="{ highlightedCode: null }"
-    x-init="
-        highlightedCode = window.highlight(
-            'App\\Modules\\Conferences\\Actions\\CreateConference-\u003Eexecute(array)',
-            'php',
-            true,
-            false,
-            1,
-            null
-        );
-    "
-    class="text-xs min-w-0" data-tippy-content="App\Modules\Conferences\Actions\CreateConference-&gt;execute(array)"
->
-    <div
-        x-cloak
-        x-html="highlightedCode"
-    ></div>
-    <div x-show="!highlightedCode"><pre class="truncate"><code>App\Modules\Conferences\Actions\CreateConference-&gt;execute(array)</code></pre></div>
-</div>
-            <div
-    class="truncate font-mono text-xs text-neutral-500 dark:text-neutral-400"
-    dir="rtl"
->
-    <span data-tippy-content="app\Modules\Conferences\Controllers\ConferenceController.php:184">
-                    app\Modules\Conferences\Controllers\ConferenceController.php<span class="text-neutral-500">:184</span>
-            </span>
-</div>
-        </div>
-
-        <div class="flex-shrink-0">
-            <button
-                x-cloak
-                type="button"
-                class="flex h-6 w-6 cursor-pointer items-center justify-center rounded-md dark:border dark:border-white/8 group-hover:text-blue-500 group-hover:dark:text-emerald-500"
-                :class="{
-                    'text-blue-500 dark:text-emerald-500 dark:bg-white/5': expanded,
-                    'text-neutral-500 dark:text-neutral-500 dark:bg-white/3': !expanded,
-                }"
-            >
-                <svg xmlns="http://www.w3.org/2000/svg" width="8" height="12" viewBox="0 0 8 12" fill="none" x-show="expanded">
-  <g clip-path="url(#clip0_14550_6168)">
-    <path d="M6.75 11.0001L4 8.25012L1.25 11.0001" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="M6.75 1.50012L4 4.25012L1.25 1.50012" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
-  </g>
-  <defs>
-    <clipPath id="clip0_14550_6168">
-      <rect width="8" height="11" fill="white" style="fill:white;fill-opacity:1;" transform="translate(0 0.500122)"/>
-    </clipPath>
-  </defs>
-</svg>
-                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12" fill="none" x-show="!expanded">
-  <g clip-path="url(#clip0_14550_6155)">
-    <path d="M8.75 8.25012L6 11.0001L3.25 8.25012" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="M8.75 3.75012L6 1.00012L3.25 3.75012" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
-  </g>
-  <defs>
-    <clipPath id="clip0_14550_6155">
-      <rect width="12" height="12" fill="white" style="fill:white;fill-opacity:1;"/>
-    </clipPath>
-  </defs>
-</svg>
-            </button>
-        </div>
-    </div>
-
-            <div
-    class="text-sm rounded-b-lg bg-neutral-50 border-t border-neutral-100 dark:bg-neutral-900 dark:border-white/10"
-    x-show="expanded" x-cloak="x-cloak"
->
-    <div
-    x-data="{ highlightedCode: null }"
-    x-init="
-        highlightedCode = window.highlight(
-            '    ]);\n\n    \/\/ The authenticated user is the organiser\n    $data[\u0027organiser_id\u0027] = $request-\u003Euser()-\u003Eid;\n\n    $conference = $action-\u003Eexecute($data);\n\n    return response()-\u003Ejson([\n        \u0027success\u0027 =\u003E true,\n        \u0027message\u0027 =\u003E \u0027Conference created successfully.\u0027,\n        \u0027data\u0027 =\u003E $conference,\n    ], 201);\n}\n\n    #[OA\\Get(\n        path: \u0027\/api\/v1\/conferences\/{conference}\u0027,\n        summary: \u0027Get a conference by ID\u0027,\n',
-            'php',
-            false,
-            true,
-            179,
-            5
-        );
-    "
-    class="overflow-x-auto"
->
-    <div
-        x-cloak
-        x-html="highlightedCode"
-    ></div>
-    <div x-show="!highlightedCode"><pre><code><span class="block px-4 py-1 h-7 even:bg-white odd:bg-white/2 even:dark:bg-white/2 odd:dark:bg-white/4 "><span class="mr-6 text-neutral-500! dark:text-neutral-600! ">179</span>    ]);</span><span class="block px-4 py-1 h-7 even:bg-white odd:bg-white/2 even:dark:bg-white/2 odd:dark:bg-white/4 "><span class="mr-6 text-neutral-500! dark:text-neutral-600! ">180</span></span><span class="block px-4 py-1 h-7 even:bg-white odd:bg-white/2 even:dark:bg-white/2 odd:dark:bg-white/4 "><span class="mr-6 text-neutral-500! dark:text-neutral-600! ">181</span>    // The authenticated user is the organiser</span><span class="block px-4 py-1 h-7 even:bg-white odd:bg-white/2 even:dark:bg-white/2 odd:dark:bg-white/4 "><span class="mr-6 text-neutral-500! dark:text-neutral-600! ">182</span>    $data[&#039;organiser_id&#039;] = $request-&gt;user()-&gt;id;</span><span class="block px-4 py-1 h-7 even:bg-white odd:bg-white/2 even:dark:bg-white/2 odd:dark:bg-white/4 "><span class="mr-6 text-neutral-500! dark:text-neutral-600! ">183</span></span><span class="block px-4 py-1 h-7 even:bg-white odd:bg-white/2 even:dark:bg-white/2 odd:dark:bg-white/4 bg-rose-200! dark:bg-rose-900!"><span class="mr-6 text-neutral-500! dark:text-neutral-600! dark:text-white!">184</span>    $conference = $action-&gt;execute($data);</span><span class="block px-4 py-1 h-7 even:bg-white odd:bg-white/2 even:dark:bg-white/2 odd:dark:bg-white/4 "><span class="mr-6 text-neutral-500! dark:text-neutral-600! ">185</span></span><span class="block px-4 py-1 h-7 even:bg-white odd:bg-white/2 even:dark:bg-white/2 odd:dark:bg-white/4 "><span class="mr-6 text-neutral-500! dark:text-neutral-600! ">186</span>    return response()-&gt;json([</span><span class="block px-4 py-1 h-7 even:bg-white odd:bg-white/2 even:dark:bg-white/2 odd:dark:bg-white/4 "><span class="mr-6 text-neutral-500! dark:text-neutral-600! ">187</span>        &#039;success&#039; =&gt; true,</span><span class="block px-4 py-1 h-7 even:bg-white odd:bg-white/2 even:dark:bg-white/2 odd:dark:bg-white/4 "><span class="mr-6 text-neutral-500! dark:text-neutral-600! ">188</span>        &#039;message&#039; =&gt; &#039;Conference created successfully.&#039;,</span><span class="block px-4 py-1 h-7 even:bg-white odd:bg-white/2 even:dark:bg-white/2 odd:dark:bg-white/4 "><span class="mr-6 text-neutral-500! dark:text-neutral-600! ">189</span>        &#039;data&#039; =&gt; $conference,</span><span class="block px-4 py-1 h-7 even:bg-white odd:bg-white/2 even:dark:bg-white/2 odd:dark:bg-white/4 "><span class="mr-6 text-neutral-500! dark:text-neutral-600! ">190</span>    ], 201);</span><span class="block px-4 py-1 h-7 even:bg-white odd:bg-white/2 even:dark:bg-white/2 odd:dark:bg-white/4 "><span class="mr-6 text-neutral-500! dark:text-neutral-600! ">191</span>}</span><span class="block px-4 py-1 h-7 even:bg-white odd:bg-white/2 even:dark:bg-white/2 odd:dark:bg-white/4 "><span class="mr-6 text-neutral-500! dark:text-neutral-600! ">192</span></span><span class="block px-4 py-1 h-7 even:bg-white odd:bg-white/2 even:dark:bg-white/2 odd:dark:bg-white/4 "><span class="mr-6 text-neutral-500! dark:text-neutral-600! ">193</span>    #[OA\Get(</span><span class="block px-4 py-1 h-7 even:bg-white odd:bg-white/2 even:dark:bg-white/2 odd:dark:bg-white/4 "><span class="mr-6 text-neutral-500! dark:text-neutral-600! ">194</span>        path: &#039;/api/v1/conferences/{conference}&#039;,</span><span class="block px-4 py-1 h-7 even:bg-white odd:bg-white/2 even:dark:bg-white/2 odd:dark:bg-white/4 "><span class="mr-6 text-neutral-500! dark:text-neutral-600! ">195</span>        summary: &#039;Get a conference by ID&#039;,</span><span class="block px-4 py-1 h-7 even:bg-white odd:bg-white/2 even:dark:bg-white/2 odd:dark:bg-white/4 "><span class="mr-6 text-neutral-500! dark:text-neutral-600! ">196</span></span></code></pre></div>
-</div>
-</div>
-    </div>
-                                                                <div
-    x-data="{ expanded: false }"
-    class="group rounded-lg border border-neutral-200 dark:border-white/5"
-    :class="{
-        'bg-white dark:bg-white/5 shadow-xs': expanded,
-        'border-dashed border-neutral-300 bg-neutral-50 opacity-90 dark:border-white/10 dark:bg-white/1': !expanded,
-    }"
->
-    <div
-        class="flex h-11 cursor-pointer items-center gap-3 rounded-lg pr-2.5 pl-4 hover:bg-white/50 dark:hover:bg-white/2"
-        @click="expanded = !expanded"
-    >
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 text-neutral-400" x-show="!expanded" x-cloak="x-cloak">
-    <path d="M2.75 2.75H5.614L5.316 2.114C5.069 1.587 4.54 1.25 3.958 1.25H2.25C1.422 1.25 0.75 1.922 0.75 2.75V4.75C0.75 3.645 1.645 2.75 2.75 2.75Z" />
-    <path d="M0.75 4.75V2.75C0.75 1.922 1.422 1.25 2.25 1.25H3.958C4.54 1.25 5.069 1.587 5.316 2.114L5.614 2.75" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="M2.75 2.75H9.25C10.355 2.75 11.25 3.645 11.25 4.75V8.25C11.25 9.355 10.355 10.25 9.25 10.25H2.75C1.645 10.25 0.75 9.355 0.75 8.25V4.75C0.75 3.645 1.645 2.75 2.75 2.75Z" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
-</svg>
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 text-blue-500 dark:text-emerald-500" x-show="expanded">
-    <g clip-path="url(#clip0_14732_6211)">
-        <path d="M1.75 5.25V2.75C1.75 1.922 2.422 1.25 3.25 1.25H4.202C4.808 1.25 5.381 1.525 5.761 1.998L6.364 2.75H8.25C9.355 2.75 10.25 3.645 10.25 4.75V5.25" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M2.46801 5.25H9.53101C10.44 5.25 11.14 6.052 11.017 6.953L10.735 9.021C10.6 10.012 9.75301 10.751 8.75301 10.751H3.24601C2.24601 10.751 1.39901 10.012 1.26401 9.021L0.982011 6.953C0.859011 6.052 1.55901 5.25 2.46801 5.25Z" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
-    </g>
-    <defs>
-        <clipPath id="clip0_14732_6211">
-            <rect width="12" height="12" />
-        </clipPath>
-    </defs>
-</svg>
-
-        <div class="flex-1 font-mono text-xs leading-3 text-neutral-900 dark:text-neutral-400">
-            38 vendor frames
-        </div>
-
-        <button
-            x-cloak
-            type="button"
-            class="flex h-6 w-6 cursor-pointer items-center justify-center rounded-md dark:border dark:border-white/8 group-hover:text-blue-500 group-hover:dark:text-emerald-500"
-            :class="{
-                'text-blue-500 dark:text-emerald-500 dark:bg-white/5': expanded,
-                'text-neutral-500 dark:text-neutral-500 dark:bg-white/3': !expanded,
-            }"
-        >
-            <svg xmlns="http://www.w3.org/2000/svg" width="8" height="12" viewBox="0 0 8 12" fill="none" x-show="expanded">
-  <g clip-path="url(#clip0_14550_6168)">
-    <path d="M6.75 11.0001L4 8.25012L1.25 11.0001" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="M6.75 1.50012L4 4.25012L1.25 1.50012" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
-  </g>
-  <defs>
-    <clipPath id="clip0_14550_6168">
-      <rect width="8" height="11" fill="white" style="fill:white;fill-opacity:1;" transform="translate(0 0.500122)"/>
-    </clipPath>
-  </defs>
-</svg>
-            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12" fill="none" x-show="!expanded">
-  <g clip-path="url(#clip0_14550_6155)">
-    <path d="M8.75 8.25012L6 11.0001L3.25 8.25012" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="M8.75 3.75012L6 1.00012L3.25 3.75012" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
-  </g>
-  <defs>
-    <clipPath id="clip0_14550_6155">
-      <rect width="12" height="12" fill="white" style="fill:white;fill-opacity:1;"/>
-    </clipPath>
-  </defs>
-</svg>
-        </button>
-    </div>
-
-    <div x-cloak class="flex flex-col rounded-b-lg divide-y divide-neutral-200 border-t border-neutral-200 dark:divide-white/5 dark:border-white/5" x-show="expanded">
-                    <div class="flex flex-col divide-y divide-neutral-200 dark:divide-white/5">
-                <div class="grid gap-3 p-4 bg-neutral-50 dark:bg-transparent overflow-x-auto rounded-lg">
-            <div class="flex">
-            <div
-    x-data="{ highlightedCode: null }"
-    x-init="
-        highlightedCode = window.highlight(
-            'App\\Modules\\Conferences\\Controllers\\ConferenceController-\u003Estore(object(Illuminate\\Http\\Request), object(App\\Modules\\Conferences\\Actions\\CreateConference))',
-            'php',
-            true,
-            false,
-            1,
-            null
-        );
-    "
-    class="text-xs min-w-0" data-tippy-content="App\Modules\Conferences\Controllers\ConferenceController-&gt;store(object(Illuminate\Http\Request), object(App\Modules\Conferences\Actions\CreateConference))"
->
-    <div
-        x-cloak
-        x-html="highlightedCode"
-    ></div>
-    <div x-show="!highlightedCode"><pre class="truncate"><code>App\Modules\Conferences\Controllers\ConferenceController-&gt;store(object(Illuminate\Http\Request), object(App\Modules\Conferences\Actions\CreateConference))</code></pre></div>
-</div>
-        </div>
-    
-    <div
-    class="truncate font-mono text-xs text-neutral-500 dark:text-neutral-400 text-xs"
-    dir="ltr"
->
-    <span data-tippy-content="vendor\laravel\framework\src\Illuminate\Routing\ControllerDispatcher.php:46">
-                    vendor\laravel\framework\src\Illuminate\Routing\ControllerDispatcher.php<span class="text-neutral-500">:46</span>
-            </span>
-</div>
-</div>
-            </div>
-                    <div class="flex flex-col divide-y divide-neutral-200 dark:divide-white/5">
-                <div class="grid gap-3 p-4 bg-neutral-50 dark:bg-transparent overflow-x-auto rounded-lg">
-            <div class="flex">
-            <div
-    x-data="{ highlightedCode: null }"
-    x-init="
-        highlightedCode = window.highlight(
-            'Illuminate\\Routing\\ControllerDispatcher-\u003Edispatch(object(Illuminate\\Routing\\Route), object(App\\Modules\\Conferences\\Controllers\\ConferenceController), string)',
-            'php',
-            true,
-            false,
-            1,
-            null
-        );
-    "
-    class="text-xs min-w-0" data-tippy-content="Illuminate\Routing\ControllerDispatcher-&gt;dispatch(object(Illuminate\Routing\Route), object(App\Modules\Conferences\Controllers\ConferenceController), string)"
->
-    <div
-        x-cloak
-        x-html="highlightedCode"
-    ></div>
-    <div x-show="!highlightedCode"><pre class="truncate"><code>Illuminate\Routing\ControllerDispatcher-&gt;dispatch(object(Illuminate\Routing\Route), object(App\Modules\Conferences\Controllers\ConferenceController), string)</code></pre></div>
-</div>
-        </div>
-    
-    <div
-    class="truncate font-mono text-xs text-neutral-500 dark:text-neutral-400 text-xs"
-    dir="ltr"
->
-    <span data-tippy-content="vendor\laravel\framework\src\Illuminate\Routing\Route.php:265">
-                    vendor\laravel\framework\src\Illuminate\Routing\Route.php<span class="text-neutral-500">:265</span>
-            </span>
-</div>
-</div>
-            </div>
-                    <div class="flex flex-col divide-y divide-neutral-200 dark:divide-white/5">
-                <div class="grid gap-3 p-4 bg-neutral-50 dark:bg-transparent overflow-x-auto rounded-lg">
-            <div class="flex">
-            <div
-    x-data="{ highlightedCode: null }"
-    x-init="
-        highlightedCode = window.highlight(
-            'Illuminate\\Routing\\Route-\u003ErunController()',
-            'php',
-            true,
-            false,
-            1,
-            null
-        );
-    "
-    class="text-xs min-w-0" data-tippy-content="Illuminate\Routing\Route-&gt;runController()"
->
-    <div
-        x-cloak
-        x-html="highlightedCode"
-    ></div>
-    <div x-show="!highlightedCode"><pre class="truncate"><code>Illuminate\Routing\Route-&gt;runController()</code></pre></div>
-</div>
-        </div>
-    
-    <div
-    class="truncate font-mono text-xs text-neutral-500 dark:text-neutral-400 text-xs"
-    dir="ltr"
->
-    <span data-tippy-content="vendor\laravel\framework\src\Illuminate\Routing\Route.php:211">
-                    vendor\laravel\framework\src\Illuminate\Routing\Route.php<span class="text-neutral-500">:211</span>
-            </span>
-</div>
-</div>
-            </div>
-                    <div class="flex flex-col divide-y divide-neutral-200 dark:divide-white/5">
-                <div class="grid gap-3 p-4 bg-neutral-50 dark:bg-transparent overflow-x-auto rounded-lg">
-            <div class="flex">
-            <div
-    x-data="{ highlightedCode: null }"
-    x-init="
-        highlightedCode = window.highlight(
-            'Illuminate\\Routing\\Route-\u003Erun()',
-            'php',
-            true,
-            false,
-            1,
-            null
-        );
-    "
-    class="text-xs min-w-0" data-tippy-content="Illuminate\Routing\Route-&gt;run()"
->
-    <div
-        x-cloak
-        x-html="highlightedCode"
-    ></div>
-    <div x-show="!highlightedCode"><pre class="truncate"><code>Illuminate\Routing\Route-&gt;run()</code></pre></div>
-</div>
-        </div>
-    
-    <div
-    class="truncate font-mono text-xs text-neutral-500 dark:text-neutral-400 text-xs"
-    dir="ltr"
->
-    <span data-tippy-content="vendor\laravel\framework\src\Illuminate\Routing\Router.php:822">
-                    vendor\laravel\framework\src\Illuminate\Routing\Router.php<span class="text-neutral-500">:822</span>
-            </span>
-</div>
-</div>
-            </div>
-                    <div class="flex flex-col divide-y divide-neutral-200 dark:divide-white/5">
-                <div class="grid gap-3 p-4 bg-neutral-50 dark:bg-transparent overflow-x-auto rounded-lg">
-            <div class="flex">
-            <div
-    x-data="{ highlightedCode: null }"
-    x-init="
-        highlightedCode = window.highlight(
-            'Illuminate\\Routing\\Router-\u003E{closure:Illuminate\\Routing\\Router::runRouteWithinStack():821}(object(Illuminate\\Http\\Request))',
-            'php',
-            true,
-            false,
-            1,
-            null
-        );
-    "
-    class="text-xs min-w-0" data-tippy-content="Illuminate\Routing\Router-&gt;{closure:Illuminate\Routing\Router::runRouteWithinStack():821}(object(Illuminate\Http\Request))"
->
-    <div
-        x-cloak
-        x-html="highlightedCode"
-    ></div>
-    <div x-show="!highlightedCode"><pre class="truncate"><code>Illuminate\Routing\Router-&gt;{closure:Illuminate\Routing\Router::runRouteWithinStack():821}(object(Illuminate\Http\Request))</code></pre></div>
-</div>
-        </div>
-    
-    <div
-    class="truncate font-mono text-xs text-neutral-500 dark:text-neutral-400 text-xs"
-    dir="ltr"
->
-    <span data-tippy-content="vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php:180">
-                    vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php<span class="text-neutral-500">:180</span>
-            </span>
-</div>
-</div>
-            </div>
-                    <div class="flex flex-col divide-y divide-neutral-200 dark:divide-white/5">
-                <div class="grid gap-3 p-4 bg-neutral-50 dark:bg-transparent overflow-x-auto rounded-lg">
-            <div class="flex">
-            <div
-    x-data="{ highlightedCode: null }"
-    x-init="
-        highlightedCode = window.highlight(
-            'Illuminate\\Pipeline\\Pipeline-\u003E{closure:Illuminate\\Pipeline\\Pipeline::prepareDestination():178}(object(Illuminate\\Http\\Request))',
-            'php',
-            true,
-            false,
-            1,
-            null
-        );
-    "
-    class="text-xs min-w-0" data-tippy-content="Illuminate\Pipeline\Pipeline-&gt;{closure:Illuminate\Pipeline\Pipeline::prepareDestination():178}(object(Illuminate\Http\Request))"
->
-    <div
-        x-cloak
-        x-html="highlightedCode"
-    ></div>
-    <div x-show="!highlightedCode"><pre class="truncate"><code>Illuminate\Pipeline\Pipeline-&gt;{closure:Illuminate\Pipeline\Pipeline::prepareDestination():178}(object(Illuminate\Http\Request))</code></pre></div>
-</div>
-        </div>
-    
-    <div
-    class="truncate font-mono text-xs text-neutral-500 dark:text-neutral-400 text-xs"
-    dir="ltr"
->
-    <span data-tippy-content="vendor\laravel\framework\src\Illuminate\Routing\Middleware\SubstituteBindings.php:50">
-                    vendor\laravel\framework\src\Illuminate\Routing\Middleware\SubstituteBindings.php<span class="text-neutral-500">:50</span>
-            </span>
-</div>
-</div>
-            </div>
-                    <div class="flex flex-col divide-y divide-neutral-200 dark:divide-white/5">
-                <div class="grid gap-3 p-4 bg-neutral-50 dark:bg-transparent overflow-x-auto rounded-lg">
-            <div class="flex">
-            <div
-    x-data="{ highlightedCode: null }"
-    x-init="
-        highlightedCode = window.highlight(
-            'Illuminate\\Routing\\Middleware\\SubstituteBindings-\u003Ehandle(object(Illuminate\\Http\\Request), object(Closure))',
-            'php',
-            true,
-            false,
-            1,
-            null
-        );
-    "
-    class="text-xs min-w-0" data-tippy-content="Illuminate\Routing\Middleware\SubstituteBindings-&gt;handle(object(Illuminate\Http\Request), object(Closure))"
->
-    <div
-        x-cloak
-        x-html="highlightedCode"
-    ></div>
-    <div x-show="!highlightedCode"><pre class="truncate"><code>Illuminate\Routing\Middleware\SubstituteBindings-&gt;handle(object(Illuminate\Http\Request), object(Closure))</code></pre></div>
-</div>
-        </div>
-    
-    <div
-    class="truncate font-mono text-xs text-neutral-500 dark:text-neutral-400 text-xs"
-    dir="ltr"
->
-    <span data-tippy-content="vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php:219">
-                    vendor\laravel\framework\src\Illuminate\Pipeline\Pipeline.php<span class="text-neutral-500">:219</span>
-            </span>
-</div>
-</div>
-            </div>
-                    <div class="flex flex-col divide-y divide-neutral-200 dark:divide-white/5">
-                <div class="grid gap-3 p-4 bg-neutral-50 dark:bg-transparent overflow-x-auto rounded-lg">
-            <div class="flex">
-            <div
-    x-data="{ highlightedCode: null }"
-    x-init="
-        highlightedCode = window.highlight(
-            'Illuminate\\Pipeline\\Pipeline-\u003E{closure:{closure:Illuminate\\Pipeline\\Pipeline::carry():194}:195}(object(Illuminate\\Http\\Request))',
-            'php',
-            true,
-            false,
-            1,
-            null
-        );
-    "
-    class="text-xs min-w-0" data-tippy-content="Illuminate\Pipeline\Pipeline-&gt;{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}(object(Illuminate\Http\Request))"
->
-    <div
-        x-cloak
-        x-html="highlightedCode"
-    ></div>
-    <div x-show="!highlightedCode"><pre class="truncate"><code>Illuminate\Pipeline\Pipeline-&gt;{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}(object(Illuminate\Http\Request))</code></pre></div>
-</div>
-        </div>
-    
-    <div
-    class="truncate font-mono text-xs text-neutral-500 dark:text-neutral-400 text-xs"
-    dir="ltr"
->
-    <span data-tippy-content="vendor\laravel\framework\src\Illuminate\Auth\Middleware\Authenticate.php:63">
-                    vendor\laravel\framework\src\Illuminate\Auth\Middleware\Authenticate.php<span class="text-neutral-500">:63</span>
+    <span data-tippy-content="vendor\laravel\framework\src\Illuminate\Auth\Middleware\Authenticate.php:61">
+                    vendor\laravel\framework\src\Illuminate\Auth\Middleware\Authenticate.php<span class="text-neutral-500">:61</span>
             </span>
 </div>
 </div>
@@ -2491,7 +1583,7 @@ DETAIL:  Failing row contains (2, 16, CMT2026, CMT Annual Conference, Annual con
 </div>
                                                                     <div
     x-data="{
-        expanded: false,
+        expanded: true,
         hasCode: true
     }"
     class="group rounded-lg border border-neutral-200 dark:border-white/10 overflow-hidden shadow-xs"
@@ -2586,7 +1678,7 @@ DETAIL:  Failing row contains (2, 16, CMT2026, CMT Annual Conference, Annual con
 
             <div
     class="text-sm rounded-b-lg bg-neutral-50 border-t border-neutral-100 dark:bg-neutral-900 dark:border-white/10"
-    x-show="expanded" x-cloak="x-cloak"
+    x-show="expanded"
 >
     <div
     x-data="{ highlightedCode: null }"
@@ -2700,7 +1792,7 @@ DETAIL:  Failing row contains (2, 16, CMT2026, CMT Annual Conference, Annual con
         <div
     class="flex flex-col gap-2.5 bg-neutral-50 dark:bg-white/1 border border-neutral-200 dark:border-neutral-800 rounded-xl p-2.5 shadow-xs"
     x-data="{
-        totalQueries: 4,
+        totalQueries: 0,
         currentPage: 1,
         perPage: 10,
         get totalPages() {
@@ -2788,142 +1880,9 @@ DETAIL:  Failing row contains (2, 16, CMT2026, CMT Annual Conference, Annual con
     </div>
 
     <div class="flex flex-col gap-1">
-                <div
-            class="border border-neutral-200 dark:border-none bg-white dark:bg-white/[3%] rounded-md h-10 flex items-center justify-between gap-4 px-4 text-xs font-mono shadow-xs"
-            x-show="Math.floor(0 / perPage) === (currentPage - 1)"
-        >
-            <div class="flex items-center gap-2 truncate">
-                <div class="flex items-center gap-2">
-                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 text-neutral-500 dark:text-neutral-400">
-    <path d="M9.75 2.56944C9.75 3.29815 8.07107 3.88889 6 3.88889C3.92893 3.88889 2.25 3.29815 2.25 2.56944M9.75 2.56944C9.75 1.84074 8.07107 1.25 6 1.25C3.92893 1.25 2.25 1.84074 2.25 2.56944M9.75 2.56944V9.43056C9.75 10.1593 8.07107 10.75 6 10.75C3.92893 10.75 2.25 10.1593 2.25 9.43056V2.56944M9.75 5.94434C9.75 6.67304 8.07107 7.26378 6 7.26378C3.92893 7.26378 2.25 6.67304 2.25 5.94434" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
-</svg>
-                    <span class="text-neutral-500 dark:text-neutral-400">pgsql</span>
-                </div>
-                <div
-    x-data="{ highlightedCode: null }"
-    x-init="
-        highlightedCode = window.highlight(
-            'select * from \u0022personal_access_tokens\u0022 where \u0022personal_access_tokens\u0022.\u0022id\u0022 = \u00274\u0027 limit 1',
-            'sql',
-            true,
-            false,
-            1,
-            null
-        );
-    "
-    class="min-w-0" data-tippy-content="select * from &quot;personal_access_tokens&quot; where &quot;personal_access_tokens&quot;.&quot;id&quot; = &#039;4&#039; limit 1"
->
-    <div
-        x-cloak
-        x-html="highlightedCode"
-    ></div>
-    <div x-show="!highlightedCode"><pre class="truncate"><code>select * from &quot;personal_access_tokens&quot; where &quot;personal_access_tokens&quot;.&quot;id&quot; = &#039;4&#039; limit 1</code></pre></div>
+                <div class="bg-white/[2%] border border-neutral-200 dark:border-neutral-800 rounded-md w-full p-5 uppercase text-sm text-center font-mono shadow-xs text-neutral-600 dark:text-neutral-400">
+    <span class="text-neutral-400 dark:text-neutral-600">// </span>No queries executed
 </div>
-            </div>
-            <div class="text-neutral-500 dark:text-neutral-200 text-right flex-shrink-0">51.82ms</div>
-        </div>
-                <div
-            class="border border-neutral-200 dark:border-none bg-white dark:bg-white/[3%] rounded-md h-10 flex items-center justify-between gap-4 px-4 text-xs font-mono shadow-xs"
-            x-show="Math.floor(1 / perPage) === (currentPage - 1)"
-        >
-            <div class="flex items-center gap-2 truncate">
-                <div class="flex items-center gap-2">
-                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 text-neutral-500 dark:text-neutral-400">
-    <path d="M9.75 2.56944C9.75 3.29815 8.07107 3.88889 6 3.88889C3.92893 3.88889 2.25 3.29815 2.25 2.56944M9.75 2.56944C9.75 1.84074 8.07107 1.25 6 1.25C3.92893 1.25 2.25 1.84074 2.25 2.56944M9.75 2.56944V9.43056C9.75 10.1593 8.07107 10.75 6 10.75C3.92893 10.75 2.25 10.1593 2.25 9.43056V2.56944M9.75 5.94434C9.75 6.67304 8.07107 7.26378 6 7.26378C3.92893 7.26378 2.25 6.67304 2.25 5.94434" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
-</svg>
-                    <span class="text-neutral-500 dark:text-neutral-400">pgsql</span>
-                </div>
-                <div
-    x-data="{ highlightedCode: null }"
-    x-init="
-        highlightedCode = window.highlight(
-            'select * from \u0022users\u0022 where \u0022users\u0022.\u0022id\u0022 = 16 limit 1',
-            'sql',
-            true,
-            false,
-            1,
-            null
-        );
-    "
-    class="min-w-0" data-tippy-content="select * from &quot;users&quot; where &quot;users&quot;.&quot;id&quot; = 16 limit 1"
->
-    <div
-        x-cloak
-        x-html="highlightedCode"
-    ></div>
-    <div x-show="!highlightedCode"><pre class="truncate"><code>select * from &quot;users&quot; where &quot;users&quot;.&quot;id&quot; = 16 limit 1</code></pre></div>
-</div>
-            </div>
-            <div class="text-neutral-500 dark:text-neutral-200 text-right flex-shrink-0">6.38ms</div>
-        </div>
-                <div
-            class="border border-neutral-200 dark:border-none bg-white dark:bg-white/[3%] rounded-md h-10 flex items-center justify-between gap-4 px-4 text-xs font-mono shadow-xs"
-            x-show="Math.floor(2 / perPage) === (currentPage - 1)"
-        >
-            <div class="flex items-center gap-2 truncate">
-                <div class="flex items-center gap-2">
-                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 text-neutral-500 dark:text-neutral-400">
-    <path d="M9.75 2.56944C9.75 3.29815 8.07107 3.88889 6 3.88889C3.92893 3.88889 2.25 3.29815 2.25 2.56944M9.75 2.56944C9.75 1.84074 8.07107 1.25 6 1.25C3.92893 1.25 2.25 1.84074 2.25 2.56944M9.75 2.56944V9.43056C9.75 10.1593 8.07107 10.75 6 10.75C3.92893 10.75 2.25 10.1593 2.25 9.43056V2.56944M9.75 5.94434C9.75 6.67304 8.07107 7.26378 6 7.26378C3.92893 7.26378 2.25 6.67304 2.25 5.94434" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
-</svg>
-                    <span class="text-neutral-500 dark:text-neutral-400">pgsql</span>
-                </div>
-                <div
-    x-data="{ highlightedCode: null }"
-    x-init="
-        highlightedCode = window.highlight(
-            'update \u0022personal_access_tokens\u0022 set \u0022last_used_at\u0022 = \u00272026-08-25 13:33:11\u0027, \u0022updated_at\u0022 = \u00272026-08-25 13:33:11\u0027 where \u0022id\u0022 = 4',
-            'sql',
-            true,
-            false,
-            1,
-            null
-        );
-    "
-    class="min-w-0" data-tippy-content="update &quot;personal_access_tokens&quot; set &quot;last_used_at&quot; = &#039;2026-08-25 13:33:11&#039;, &quot;updated_at&quot; = &#039;2026-08-25 13:33:11&#039; where &quot;id&quot; = 4"
->
-    <div
-        x-cloak
-        x-html="highlightedCode"
-    ></div>
-    <div x-show="!highlightedCode"><pre class="truncate"><code>update &quot;personal_access_tokens&quot; set &quot;last_used_at&quot; = &#039;2026-08-25 13:33:11&#039;, &quot;updated_at&quot; = &#039;2026-08-25 13:33:11&#039; where &quot;id&quot; = 4</code></pre></div>
-</div>
-            </div>
-            <div class="text-neutral-500 dark:text-neutral-200 text-right flex-shrink-0">2.57ms</div>
-        </div>
-                <div
-            class="border border-neutral-200 dark:border-none bg-white dark:bg-white/[3%] rounded-md h-10 flex items-center justify-between gap-4 px-4 text-xs font-mono shadow-xs"
-            x-show="Math.floor(3 / perPage) === (currentPage - 1)"
-        >
-            <div class="flex items-center gap-2 truncate">
-                <div class="flex items-center gap-2">
-                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 text-neutral-500 dark:text-neutral-400">
-    <path d="M9.75 2.56944C9.75 3.29815 8.07107 3.88889 6 3.88889C3.92893 3.88889 2.25 3.29815 2.25 2.56944M9.75 2.56944C9.75 1.84074 8.07107 1.25 6 1.25C3.92893 1.25 2.25 1.84074 2.25 2.56944M9.75 2.56944V9.43056C9.75 10.1593 8.07107 10.75 6 10.75C3.92893 10.75 2.25 10.1593 2.25 9.43056V2.56944M9.75 5.94434C9.75 6.67304 8.07107 7.26378 6 7.26378C3.92893 7.26378 2.25 6.67304 2.25 5.94434" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
-</svg>
-                    <span class="text-neutral-500 dark:text-neutral-400">pgsql</span>
-                </div>
-                <div
-    x-data="{ highlightedCode: null }"
-    x-init="
-        highlightedCode = window.highlight(
-            'select count(*) as aggregate from \u0022conferences\u0022 where \u0022code\u0022 = \u0027CMT2026\u0027',
-            'sql',
-            true,
-            false,
-            1,
-            null
-        );
-    "
-    class="min-w-0" data-tippy-content="select count(*) as aggregate from &quot;conferences&quot; where &quot;code&quot; = &#039;CMT2026&#039;"
->
-    <div
-        x-cloak
-        x-html="highlightedCode"
-    ></div>
-    <div x-show="!highlightedCode"><pre class="truncate"><code>select count(*) as aggregate from &quot;conferences&quot; where &quot;code&quot; = &#039;CMT2026&#039;</code></pre></div>
-</div>
-            </div>
-            <div class="text-neutral-500 dark:text-neutral-200 text-right flex-shrink-0">7.79ms</div>
-        </div>
             </div>
 
     <!-- Pagination Controls -->
@@ -3027,29 +1986,11 @@ DETAIL:  Failing row contains (2, 16, CMT2026, CMT Annual Conference, Annual con
             </div>
         </div>
                 <div class="flex max-w-full items-baseline gap-2 h-10 text-sm font-mono">
-            <div class="uppercase text-neutral-500 dark:text-neutral-400 shrink-0">content-length</div>
-            <div class="min-w-6 grow h-3 border-b-2 border-dotted border-neutral-300 dark:border-white/20"></div>
-            <div class="truncate text-neutral-900 dark:text-white">
-                <span data-tippy-content="573">
-                    573
-                </span>
-            </div>
-        </div>
-                <div class="flex max-w-full items-baseline gap-2 h-10 text-sm font-mono">
             <div class="uppercase text-neutral-500 dark:text-neutral-400 shrink-0">sec-ch-ua-platform</div>
             <div class="min-w-6 grow h-3 border-b-2 border-dotted border-neutral-300 dark:border-white/20"></div>
             <div class="truncate text-neutral-900 dark:text-white">
                 <span data-tippy-content="&quot;Windows&quot;">
                     &quot;Windows&quot;
-                </span>
-            </div>
-        </div>
-                <div class="flex max-w-full items-baseline gap-2 h-10 text-sm font-mono">
-            <div class="uppercase text-neutral-500 dark:text-neutral-400 shrink-0">authorization</div>
-            <div class="min-w-6 grow h-3 border-b-2 border-dotted border-neutral-300 dark:border-white/20"></div>
-            <div class="truncate text-neutral-900 dark:text-white">
-                <span data-tippy-content="Bearer 4|EGWKeXSOGGgaQX4aFHfK4EalNKwigS9KU1OeMdeW74f784f5">
-                    Bearer 4|EGWKeXSOGGgaQX4aFHfK4EalNKwigS9KU1OeMdeW74f784f5
                 </span>
             </div>
         </div>
@@ -3063,29 +2004,11 @@ DETAIL:  Failing row contains (2, 16, CMT2026, CMT Annual Conference, Annual con
             </div>
         </div>
                 <div class="flex max-w-full items-baseline gap-2 h-10 text-sm font-mono">
-            <div class="uppercase text-neutral-500 dark:text-neutral-400 shrink-0">sec-ch-ua</div>
-            <div class="min-w-6 grow h-3 border-b-2 border-dotted border-neutral-300 dark:border-white/20"></div>
-            <div class="truncate text-neutral-900 dark:text-white">
-                <span data-tippy-content="&quot;Not=A?Brand&quot;;v=&quot;99&quot;, &quot;Microsoft Edge&quot;;v=&quot;151&quot;, &quot;Chromium&quot;;v=&quot;151&quot;">
-                    &quot;Not=A?Brand&quot;;v=&quot;99&quot;, &quot;Microsoft Edge&quot;;v=&quot;151&quot;, &quot;Chromium&quot;;v=&quot;151&quot;
-                </span>
-            </div>
-        </div>
-                <div class="flex max-w-full items-baseline gap-2 h-10 text-sm font-mono">
-            <div class="uppercase text-neutral-500 dark:text-neutral-400 shrink-0">sec-ch-ua-mobile</div>
-            <div class="min-w-6 grow h-3 border-b-2 border-dotted border-neutral-300 dark:border-white/20"></div>
-            <div class="truncate text-neutral-900 dark:text-white">
-                <span data-tippy-content="?0">
-                    ?0
-                </span>
-            </div>
-        </div>
-                <div class="flex max-w-full items-baseline gap-2 h-10 text-sm font-mono">
             <div class="uppercase text-neutral-500 dark:text-neutral-400 shrink-0">user-agent</div>
             <div class="min-w-6 grow h-3 border-b-2 border-dotted border-neutral-300 dark:border-white/20"></div>
             <div class="truncate text-neutral-900 dark:text-white">
-                <span data-tippy-content="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36 Edg/151.0.0.0">
-                    Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36 Edg/151.0.0.0
+                <span data-tippy-content="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36 Edg/152.0.0.0">
+                    Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36 Edg/152.0.0.0
                 </span>
             </div>
         </div>
@@ -3099,20 +2022,20 @@ DETAIL:  Failing row contains (2, 16, CMT2026, CMT Annual Conference, Annual con
             </div>
         </div>
                 <div class="flex max-w-full items-baseline gap-2 h-10 text-sm font-mono">
-            <div class="uppercase text-neutral-500 dark:text-neutral-400 shrink-0">content-type</div>
+            <div class="uppercase text-neutral-500 dark:text-neutral-400 shrink-0">sec-ch-ua</div>
             <div class="min-w-6 grow h-3 border-b-2 border-dotted border-neutral-300 dark:border-white/20"></div>
             <div class="truncate text-neutral-900 dark:text-white">
-                <span data-tippy-content="application/json">
-                    application/json
+                <span data-tippy-content="&quot;Chromium&quot;;v=&quot;152&quot;, &quot;Not?A_Brand&quot;;v=&quot;24&quot;, &quot;Microsoft Edge&quot;;v=&quot;152&quot;">
+                    &quot;Chromium&quot;;v=&quot;152&quot;, &quot;Not?A_Brand&quot;;v=&quot;24&quot;, &quot;Microsoft Edge&quot;;v=&quot;152&quot;
                 </span>
             </div>
         </div>
                 <div class="flex max-w-full items-baseline gap-2 h-10 text-sm font-mono">
-            <div class="uppercase text-neutral-500 dark:text-neutral-400 shrink-0">origin</div>
+            <div class="uppercase text-neutral-500 dark:text-neutral-400 shrink-0">sec-ch-ua-mobile</div>
             <div class="min-w-6 grow h-3 border-b-2 border-dotted border-neutral-300 dark:border-white/20"></div>
             <div class="truncate text-neutral-900 dark:text-white">
-                <span data-tippy-content="http://127.0.0.1:8000">
-                    http://127.0.0.1:8000
+                <span data-tippy-content="?0">
+                    ?0
                 </span>
             </div>
         </div>
@@ -3175,48 +2098,9 @@ DETAIL:  Failing row contains (2, 16, CMT2026, CMT Annual Conference, Annual con
 
         <div class="flex flex-col gap-3">
     <h2 class="text-lg font-semibold">Body</h2>
-        <div class="bg-white dark:bg-white/[2%] border border-neutral-200 dark:border-neutral-800 rounded-md overflow-x-auto p-5 text-sm font-mono shadow-xs">
-        <div
-    x-data="{ highlightedCode: null }"
-    x-init="
-        highlightedCode = window.highlight(
-            '{\n    \u0022organiser_id\u0022: 16,\n    \u0022code\u0022: \u0022CMT2026\u0022,\n    \u0022name\u0022: \u0022CMT Annual Conference\u0022,\n    \u0022description\u0022: \u0022Annual conference for technology and software development.\u0022,\n    \u0022category\u0022: \u0022Technology\u0022,\n    \u0022topics\u0022: [\n        \u0022Artificial Intelligence\u0022,\n        \u0022Software Engineering\u0022,\n        \u0022Cybersecurity\u0022\n    ],\n    \u0022format\u0022: \u0022virtual\u0022,\n    \u0022submission_status\u0022: \u0022open\u0022,\n    \u0022start_date\u0022: \u00222026-10-01\u0022,\n    \u0022end_date\u0022: \u00222026-10-03\u0022,\n    \u0022submission_deadline\u0022: \u00222026-09-01\u0022,\n    \u0022venue_name\u0022: \u0022CMT Convention Centre\u0022,\n    \u0022city\u0022: \u0022Johannesburg\u0022,\n    \u0022country\u0022: \u0022South Africa\u0022,\n    \u0022website_link\u0022: \u0022https:\/\/example.com\u0022\n}',
-            'json',
-            false,
-            false,
-            1,
-            null
-        );
-    "
-    
->
-    <div
-        x-cloak
-        x-html="highlightedCode"
-    ></div>
-    <div x-show="!highlightedCode"><pre><code>{
-    &quot;organiser_id&quot;: 16,
-    &quot;code&quot;: &quot;CMT2026&quot;,
-    &quot;name&quot;: &quot;CMT Annual Conference&quot;,
-    &quot;description&quot;: &quot;Annual conference for technology and software development.&quot;,
-    &quot;category&quot;: &quot;Technology&quot;,
-    &quot;topics&quot;: [
-        &quot;Artificial Intelligence&quot;,
-        &quot;Software Engineering&quot;,
-        &quot;Cybersecurity&quot;
-    ],
-    &quot;format&quot;: &quot;virtual&quot;,
-    &quot;submission_status&quot;: &quot;open&quot;,
-    &quot;start_date&quot;: &quot;2026-10-01&quot;,
-    &quot;end_date&quot;: &quot;2026-10-03&quot;,
-    &quot;submission_deadline&quot;: &quot;2026-09-01&quot;,
-    &quot;venue_name&quot;: &quot;CMT Convention Centre&quot;,
-    &quot;city&quot;: &quot;Johannesburg&quot;,
-    &quot;country&quot;: &quot;South Africa&quot;,
-    &quot;website_link&quot;: &quot;https://example.com&quot;
-}</code></pre></div>
+        <div class="bg-white/[2%] border border-neutral-200 dark:border-neutral-800 rounded-md w-full p-5 uppercase text-sm text-center font-mono shadow-xs text-neutral-600 dark:text-neutral-400">
+    <span class="text-neutral-400 dark:text-neutral-600">// </span>No request body
 </div>
-    </div>
     </div>
 
         <div class="flex flex-col gap-3">
@@ -3226,8 +2110,8 @@ DETAIL:  Failing row contains (2, 16, CMT2026, CMT Annual Conference, Annual con
             <div class="uppercase text-neutral-500 dark:text-neutral-400 shrink-0">controller</div>
             <div class="min-w-6 grow h-3 border-b-2 border-dotted border-neutral-300 dark:border-white/20"></div>
             <div class="truncate text-neutral-900 dark:text-white">
-                <span data-tippy-content="App\Modules\Conferences\Controllers\ConferenceController@store">
-                    App\Modules\Conferences\Controllers\ConferenceController@store
+                <span data-tippy-content="App\Modules\Account\Controllers\UserController@index">
+                    App\Modules\Account\Controllers\UserController@index
                 </span>
             </div>
         </div>
@@ -3235,8 +2119,8 @@ DETAIL:  Failing row contains (2, 16, CMT2026, CMT Annual Conference, Annual con
             <div class="uppercase text-neutral-500 dark:text-neutral-400 shrink-0">middleware</div>
             <div class="min-w-6 grow h-3 border-b-2 border-dotted border-neutral-300 dark:border-white/20"></div>
             <div class="truncate text-neutral-900 dark:text-white">
-                <span data-tippy-content="api, auth:sanctum">
-                    api, auth:sanctum
+                <span data-tippy-content="api, auth:sanctum, role:admin">
+                    api, auth:sanctum, role:admin
                 </span>
             </div>
         </div>

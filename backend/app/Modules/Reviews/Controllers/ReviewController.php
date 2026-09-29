@@ -12,6 +12,7 @@ use App\Modules\Reviews\Actions\SubmitReviewAction;
 use App\Modules\Reviews\Models\SubmissionReview;
 use App\Modules\Reviews\Requests\CreateReviewRequest;
 use App\Modules\Reviews\Requests\SubmitReviewRequest;
+use App\Modules\Submissions\Models\Submission;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -44,7 +45,7 @@ class ReviewController extends Controller
         $filters = $request->only(['submission_id', 'reviewer_id', 'recommendation', 'locked']);
         $perPage = $request->input('per_page', 15);
 
-        $reviews = $action->execute($filters, $perPage);
+        $reviews = $action->execute($filters, $perPage, $request->user());
 
         return response()->json([
             'success' => true,
@@ -55,6 +56,27 @@ class ReviewController extends Controller
                 'total' => $reviews->total(),
                 'last_page' => $reviews->lastPage(),
             ],
+        ]);
+    }
+
+    /**
+     * Return the authenticated reviewer's assignments that have not yet been submitted.
+     */
+    public function pending(Request $request): JsonResponse
+    {
+        abort_unless($request->user()->role === 'reviewer', 403, 'Only reviewers can access pending reviews.');
+
+        $reviews = SubmissionReview::query()
+            ->with(['submission', 'reviewer'])
+            ->where('reviewer_id', $request->user()->id)
+            ->whereNull('submitted_at')
+            ->where('locked', false)
+            ->latest('assigned_at')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $reviews,
         ]);
     }
 
@@ -106,9 +128,21 @@ class ReviewController extends Controller
     )]
     public function store(CreateReviewRequest $request, CreateReviewAction $action): JsonResponse
     {
-        $this->authorize('create', SubmissionReview::class);
-
         $data = $request->validated();
+
+        $submission = Submission::with('conference')->findOrFail($data['submission_id']);
+        $reviewDraft = new SubmissionReview($data);
+        $reviewDraft->setRelation('submission', $submission);
+        $this->authorize('create', $reviewDraft);
+
+        // Never assign a non-reviewer account, even if the user ID exists.
+        if ($reviewDraft->reviewer && $reviewDraft->reviewer->role !== 'reviewer') {
+            return response()->json([
+                'success' => false,
+                'message' => 'The selected user is not a reviewer.',
+                'errors' => ['reviewer_id' => ['The selected user must have the reviewer role.']],
+            ], 422);
+        }
 
         try {
             $review = $action->execute($data);

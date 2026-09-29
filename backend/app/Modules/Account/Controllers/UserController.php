@@ -5,6 +5,7 @@ namespace App\Modules\Account\Controllers;
 use App\Http\Controllers\Controller;
 use App\Modules\Account\Actions\GetUserAction;
 use App\Modules\Account\Actions\GetUsersAction;
+use App\Modules\Account\Actions\GetReviewersAction;
 use Illuminate\Http\JsonResponse;
 use OpenApi\Attributes as OA;
 
@@ -28,6 +29,15 @@ class UserController extends Controller
         return response()->json([
             'success' => true,
             'data' => $users,
+        ]);
+    }
+
+    public function reviewers(
+        GetReviewersAction $action
+    ): JsonResponse {
+        return response()->json([
+            'success' => true,
+            'data' => $action->execute(),
         ]);
     }
 

@@ -1,0 +1,9 @@
+:{$PORT} {
+    root * /app/public
+
+    encode gzip
+
+    php_server
+
+    file_server
+}

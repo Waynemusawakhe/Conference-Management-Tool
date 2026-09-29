@@ -17,11 +17,11 @@ class SubmitReviewAction
             ]);
         }
 
-        $review->score = $data['score'];
-        $review->comments = $data['comments'];
-        $review->recommendation = $data['recommendation'];
-        $review->submitted_at = now();
-        $review->save();
+        $review->submit(
+            (int) $data['score'],
+            $data['comments'],
+            $data['recommendation']
+        );
 
         return $review->fresh(['submission', 'reviewer']);
     }

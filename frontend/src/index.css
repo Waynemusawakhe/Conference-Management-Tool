@@ -745,3 +745,68 @@ html.dark [class*="border-[#dfe4ed]"] { border-color: rgba(255,255,255,.12); }
   font-size: .875rem;
   margin-top: 4px;
 }
+
+
+.settings-page { padding: 96px 0 90px; background: var(--bg); }
+.settings-title {
+  font-size: clamp(32px, 4vw, 46px);
+  font-weight: 800;
+  letter-spacing: -.045em;
+  background: linear-gradient(135deg, var(--navy-2), var(--purple));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  margin: 0 0 10px;
+}
+.settings-subtitle { color: var(--muted); font-size: 14px; margin: 0 0 32px; }
+
+.settings-card {
+  width: min(560px, 100%);
+  margin: 0 0 28px;
+  padding: 32px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 18px 45px rgba(15, 28, 65, .07);
+}
+.settings-card-heading { margin: 0 0 20px; color: var(--ink); font-size: 19px; letter-spacing: -.03em; }
+
+.settings-form { display: grid; gap: 20px; }
+.settings-submit { justify-self: start; min-width: 168px; min-height: 46px; }
+.settings-success {
+  padding: 10px 12px;
+  border-radius: 9px;
+  background: #e8faf2;
+  color: #159b64;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.settings-danger { border-color: #f3d8dc; }
+.settings-danger-text { color: var(--muted); font-size: 13px; line-height: 1.7; margin: 0 0 18px; }
+.settings-confirm p { color: #d9455f; font-size: 13px; font-weight: 600; margin: 0 0 12px; }
+.settings-confirm-actions { display: flex; gap: 10px; }
+.settings-delete-confirm-btn { background: #d9455f; color: #fff; }
+.settings-delete-confirm-btn:hover { background: #c53a52; }
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-field input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #dfe4ed;
+  border-radius: 10px;
+  outline: none;
+  background: #fff;
+  font-size: 13px;
+  box-sizing: border-box;
+}
+
+.form-field input:focus {
+  border-color: #7568f7;
+  box-shadow: 0 0 0 3px rgba(117, 104, 247, .12);
+}

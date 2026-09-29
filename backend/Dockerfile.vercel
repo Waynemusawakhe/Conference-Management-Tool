@@ -1,0 +1,26 @@
+FROM dunglas/frankenphp:php8.4-bookworm
+
+WORKDIR /app
+
+RUN install-php-extensions \
+    pdo_pgsql \
+    pgsql \
+    pcntl
+
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
+COPY . .
+
+RUN composer install \
+    --no-dev \
+    --optimize-autoloader \
+    --no-interaction \
+    --prefer-dist
+
+RUN php artisan config:cache
+RUN php artisan route:cache
+RUN php artisan view:cache
+
+COPY docker/Caddyfile /etc/frankenphp/Caddyfile
+
+CMD ["frankenphp", "run", "--config", "/etc/frankenphp/Caddyfile"]

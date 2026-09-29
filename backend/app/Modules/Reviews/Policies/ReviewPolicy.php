@@ -28,10 +28,14 @@ class ReviewPolicy
         return $review->reviewer_id === $user->id;
     }
 
-    public function create(User $user): bool
+    public function create(User $user, SubmissionReview $review): bool
     {
-        // Only admins/organisers assign reviewers to submissions.
-        return in_array($user->role, ['admin', 'organiser']);
+        if ($user->role === 'admin') {
+            return true;
+        }
+
+        return $user->role === 'organiser'
+            && $review->submission?->conference?->organiser_id === $user->id;
     }
 
     /**

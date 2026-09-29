@@ -65,3 +65,54 @@ export function sortConferences(list, sortBy = "deadline") {
     (a.shortTitle || a.title).localeCompare(b.shortTitle || b.title)
   );
 }
+
+
+
+export const reviewerService = {
+    getPendingReviews: async () => {
+        const response = await fetch('http://127.0.0.1:8000/api/v1/reviewer/pending', {
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                'Accept': 'application/json'
+            }
+        });
+        const data = await response.json();
+        return data.data; 
+    },
+
+    approveReview: async (id, comments = '') => {
+        const response = await fetch(`http://127.0.0.1:8000/api/v1/reviewer/items/${id}/approve`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                score: 10,
+                comments: comments,
+                recommendation: 'accept'
+            })
+        });
+        const data = await response.json();
+        return data.data;
+    },
+
+    rejectReview: async (id, reason = '') => {
+        const response = await fetch(`http://127.0.0.1:8000/api/v1/reviewer/items/${id}/reject`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                score: 0,
+                comments: reason,
+                recommendation: 'reject'
+            })
+        });
+        const data = await response.json();
+        return data.data;
+    },
+  };

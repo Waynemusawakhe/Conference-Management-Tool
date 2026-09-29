@@ -2,14 +2,23 @@
 
 namespace App\Modules\Reviews\Actions;
 
+use App\Models\User;
 use App\Modules\Reviews\Models\SubmissionReview;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class GetReviewsAction
 {
-    public function execute(array $filters, int $perPage = 15): LengthAwarePaginator
+    public function execute(array $filters, int $perPage = 15, ?User $requester = null): LengthAwarePaginator
     {
         $query = SubmissionReview::query()->with(['submission', 'reviewer']);
+
+        if ($requester?->role === 'reviewer') {
+            $query->where('reviewer_id', $requester->id);
+        } elseif ($requester?->role === 'organiser') {
+            $query->whereHas('submission.conference', function ($conferenceQuery) use ($requester) {
+                $conferenceQuery->where('organiser_id', $requester->id);
+            });
+        }
 
         if (! empty($filters['submission_id'])) {
             $query->where('submission_id', $filters['submission_id']);
