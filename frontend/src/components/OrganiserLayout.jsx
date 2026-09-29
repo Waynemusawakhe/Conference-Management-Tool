@@ -1,3 +1,4 @@
+// src/components/OrganiserLayout.jsx
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
@@ -11,10 +12,12 @@ import {
   Menu,
   MessageSquareQuote,
   Moon,
+  Plus,
   Search,
   Settings as SettingsIcon,
   Sun,
   UserRound,
+  Users,
   X,
 } from "lucide-react";
 import Logo from "./Logo";
@@ -22,17 +25,37 @@ import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
 import { submissionsApi } from "../api/submissionsApi";
 
-/* ------------------------------------------------------------------ *
- * Organiser navigation — matches RoleChrome's organiser menu exactly.
- * Derived from:
- *  • Requirements doc (page 1): "An Organiser can create a conference…"
- *  • Wireframe page 13 (Organiser Dashboard): manage submissions on
- *    the Overview page itself, not a separate route
- * ------------------------------------------------------------------ */
 const PRIMARY_NAV = [
-  { label: "Overview", to: "/organiser-dashboard", icon: LayoutDashboard },
-  { label: "Create conference", to: "/create-conference", icon: CalendarDays },
-  { label: "Browse conferences", to: "/conferences", icon: Search },
+  {
+    label: "Overview",
+    to: "/organiser-dashboard",
+    icon: LayoutDashboard,
+  },
+  {
+    label: "My conferences",
+    to: "/organiser/conferences",
+    icon: CalendarDays,
+  },
+  {
+    label: "Reviews",
+    to: "/organiser/reviews",
+    icon: CheckCheck,
+  },
+  {
+    label: "Attendees",
+    to: "/organiser/registrations",
+    icon: Users,
+  },
+  {
+    label: "Create conference",
+    to: "/create-conference",
+    icon: Plus,
+  },
+  {
+    label: "Browse conferences",
+    to: "/conferences",
+    icon: Search,
+  },
 ];
 
 const DISMISSED_KEY = "cmt_organiser_dismissed_notifications";
@@ -198,7 +221,7 @@ export default function OrganiserLayout({ children }) {
 
   return (
     <div className="min-h-screen bg-[#f7f9fc] text-[#0d1b3d] transition-colors dark:bg-[#0a0f1f] dark:text-white">
-      {/* ============ Header (matches RoleChrome) ============ */}
+      {/* ============ Header ============ */}
       <header className="sticky top-0 z-50 border-b border-white/10 bg-[#07132f]/95 text-white backdrop-blur-xl">
         <div className="mx-auto flex min-h-[76px] w-[min(1400px,calc(100%-32px))] items-center gap-4">
           <button
@@ -357,7 +380,7 @@ export default function OrganiserLayout({ children }) {
           />
         )}
 
-        {/* Sidebar — visually identical to RoleChrome's organiser sidebar */}
+        {/* Sidebar — byte-identical to RoleChrome's desktop sidebar */}
         <aside
           className={`fixed inset-y-0 left-0 z-50 w-[235px] shrink-0 transform bg-white p-3 shadow-2xl transition-transform duration-300 dark:bg-[#0f172a] lg:sticky lg:top-[100px] lg:block lg:h-[calc(100vh-124px)] lg:translate-x-0 lg:overflow-y-auto lg:rounded-2xl lg:border lg:border-[#e4e8f0] lg:shadow-none lg:dark:border-[#1e293b] lg:dark:bg-[#0f172a] ${
             sidebarOpen ? "translate-x-0" : "-translate-x-full"
@@ -382,7 +405,7 @@ export default function OrganiserLayout({ children }) {
             </button>
           </div>
 
-          {/* Primary nav — Overview · Create conference · Browse conferences */}
+          {/* Primary nav */}
           <nav className="space-y-1">
             {PRIMARY_NAV.map((item) => {
               const Icon = item.icon;
