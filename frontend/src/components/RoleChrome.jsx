@@ -17,23 +17,16 @@ import Logo from "./Logo";
 import { useAuth } from "../context/AuthContext";
 import AdminLayout from "./AdminLayout";
 import ReviewerLayout from "./ReviewerLayout";
+import OrganiserLayout from "./OrganiserLayout";
 
 /* ------------------------------------------------------------------ *
- * Sidebar items per role — matches each role's dedicated layout.
+ * Sidebar items per role (used by GenericShell fallback).
  * ------------------------------------------------------------------ */
 const NAV_BY_ROLE = {
   author: [
     { label: "Overview", to: "/author-dashboard", icon: LayoutDashboard },
     { label: "My proposals", to: "/author-dashboard#my-proposals", icon: BookOpen },
     { label: "Deadlines", to: "/author-dashboard#deadlines", icon: CalendarDays },
-    { label: "Browse conferences", to: "/conferences", icon: Search },
-  ],
-  organiser: [
-    { label: "Overview", to: "/organiser-dashboard", icon: LayoutDashboard },
-    { label: "My conferences", to: "/organiser/conferences", icon: CalendarDays },
-    { label: "Reviews", to: "/organiser/reviews", icon: CheckCheck },
-    { label: "Attendees", to: "/organiser/registrations", icon: Users },
-    { label: "Create conference", to: "/create-conference", icon: Plus },
     { label: "Browse conferences", to: "/conferences", icon: Search },
   ],
   attendee: [
@@ -199,5 +192,6 @@ export default function RoleChrome({ children }) {
 
   if (role === "admin") return <AdminLayout>{children}</AdminLayout>;
   if (role === "reviewer") return <ReviewerLayout>{children}</ReviewerLayout>;
+  if (role === "organiser") return <OrganiserLayout>{children}</OrganiserLayout>;
   return <GenericShell>{children}</GenericShell>;
 }
