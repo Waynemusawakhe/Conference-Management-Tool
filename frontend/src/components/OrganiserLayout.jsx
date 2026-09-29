@@ -1,4 +1,3 @@
-// src/components/OrganiserLayout.jsx
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
