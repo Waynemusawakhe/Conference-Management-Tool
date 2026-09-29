@@ -6,20 +6,22 @@ import { toArray } from "../api/normalize";
 import { submissionsApi } from "../api/submissionsApi";
 import { usersApi } from "../api/usersApi";
 import { reviewsApi } from "../api/reviewsApi";
+import { useAuth } from "../hooks/useAuth";
 
 export default function AssignReviewersPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { role } = useAuth();
   const [selectedReviewer, setSelectedReviewer] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
 
   const submissionRes = useApiResource(() => submissionsApi.getById(id), [id]);
-  const usersRes = useApiResource(() => usersApi.getAll(), []);
+  const usersRes = useApiResource(() => usersApi.getReviewers(), []);
   const reviewsRes = useApiResource(() => reviewsApi.getAll({ submission_id: id }), [id]);
 
   const submission = submissionRes.data?.data || submissionRes.data;
-  const reviewers = toArray(usersRes.data).filter((u) => u.role?.toLowerCase() === "reviewer" || u.role?.toLowerCase() === "admin");
+  const reviewers = toArray(usersRes.data).filter((u) => u.role?.toLowerCase() === "reviewer");
   const currentReviews = toArray(reviewsRes.data);
 
   const handleAssign = async (e) => {
@@ -52,7 +54,7 @@ export default function AssignReviewersPage() {
 
   return (
     <div className="rounded-[20px] border border-[#e4e8f0] bg-white p-6 shadow-[0_10px_30px_rgba(15,28,65,.035)]">
-      <button onClick={() => navigate("/admin-dashboard")} className="mb-6 flex items-center gap-2 text-[11px] font-bold text-[#6655f6] hover:underline">
+      <button onClick={() => navigate(role === "organiser" ? "/organiser-dashboard" : "/admin-dashboard")} className="mb-6 flex items-center gap-2 text-[11px] font-bold text-[#6655f6] hover:underline">
         <ArrowLeft size={14} /> Back to Dashboard
       </button>
 
