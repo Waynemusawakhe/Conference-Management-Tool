@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
+import AttendeeHeader from "../components/AttendeeHeader";
 import ConferenceCard from "../components/ConferenceCard";
 import SectionHeading from "../components/SectionHeading";
 import { conferencesApi } from "../api/conferencesApi";
@@ -277,6 +278,7 @@ function sortConferences(conferences, sortBy) {
 export default function Conferences() {
   const navigate = useNavigate();
   const { user, status: authStatus } = useAuth();
+  const isAttendee = authStatus === "authenticated" && user?.role === "attendee";
 
   const [query, setQuery] = useState("");
 
@@ -583,25 +585,31 @@ export default function Conferences() {
 
   return (
     <div className="min-h-screen overflow-clip bg-[#f7f9fc] text-[#0d1b3d]">
-      <Navbar />
+      {isAttendee ? (
+        <AttendeeHeader name={user?.name || user?.full_name} />
+      ) : (
+        <Navbar />
+      )}
 
       <main>
         <section className="relative overflow-hidden bg-[radial-gradient(circle_at_75%_32%,rgba(98,83,245,.2),transparent_27%),linear-gradient(135deg,#07132f_0%,#0a1740_52%,#15165a_100%)] px-5 py-24 text-white">
-          <div className="relative z-[2] mx-auto w-[min(1200px,100%)]">
-            <span className="inline-flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-[.1em] text-[#b9b3ff]">
-              <Sparkles size={15} />
-              Browse conferences
-            </span>
+          <div className="relative z-[2] mx-auto flex w-[min(1200px,100%)] flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <span className="inline-flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-[.1em] text-[#b9b3ff]">
+                <Sparkles size={15} />
+                Browse conferences
+              </span>
 
-            <h1 className="my-4 max-w-[720px] text-[clamp(34px,4.4vw,54px)] font-bold leading-tight tracking-[-.05em]">
-              Find the right conference for your research.
-            </h1>
+              <h1 className="my-4 max-w-[720px] text-[clamp(34px,4.4vw,54px)] font-bold leading-tight tracking-[-.05em]">
+                Find the right conference for your research.
+              </h1>
 
-            <p className="max-w-[620px] text-[15px] leading-7 text-white/75">
-              Search by topic, filter by status and format,
-              and find conferences created by organisers on
-              the platform.
-            </p>
+              <p className="max-w-[620px] text-[15px] leading-7 text-white/75">
+                Search by topic, filter by status and format,
+                and find conferences created by organisers on
+                the platform.
+              </p>
+            </div>
           </div>
         </section>
 
