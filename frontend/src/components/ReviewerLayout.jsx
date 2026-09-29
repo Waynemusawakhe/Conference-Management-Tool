@@ -14,6 +14,8 @@ import {
   Moon,
   Sun,
   X,
+  Settings,
+  UserRound
 } from "lucide-react";
 import Logo from "./Logo";
 import { useTheme } from "../context/ThemeContext";
@@ -463,30 +465,60 @@ export default function ReviewerLayout({ children }) {
 
           <div className="my-4 border-t border-[#edf0f5] dark:border-[#1e293b]" />
 
-          {/* ---- Public site links ---- */}
-          <nav className="space-y-1" aria-label="Public site">
-            <Link
-              to="/testimonials"
-              onClick={() => setSidebarOpen(false)}
-              className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] font-semibold transition-colors ${
-                location.pathname === "/testimonials"
-                  ? "bg-[#efedff] font-extrabold text-[#5649dc] dark:bg-[#2a2354] dark:text-[#a9a2ff]"
-                  : "text-[#66728b] hover:bg-[#f5f6fa] hover:text-[#1c2a4a] dark:text-[#94a3b8] dark:hover:bg-[#111c33] dark:hover:text-white"
-              }`}
-            >
-              <MessageSquareQuote size={16} />
-              <span className="truncate flex-1">Testimonials</span>
-            </Link>
-          </nav>
-
-          <div className="my-4 border-t border-[#edf0f5] dark:border-[#1e293b]" />
-
-          <button
-            onClick={handleSignOut}
-            className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] font-semibold text-[#9a6470] transition hover:bg-[#fff4f5] dark:text-[#f08a9a] dark:hover:bg-[#2a1218]"
+        {/* ---- Public site links ---- */}
+        <nav className="space-y-1" aria-label="Public site">
+          <Link
+            to="/testimonials"
+            onClick={() => setSidebarOpen(false)}
+            className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] font-semibold transition-colors ${
+              location.pathname === "/testimonials"
+                ? "bg-[#efedff] font-extrabold text-[#5649dc] dark:bg-[#2a2354] dark:text-[#a9a2ff]"
+                : "text-[#66728b] hover:bg-[#f5f6fa] hover:text-[#1c2a4a] dark:text-[#94a3b8] dark:hover:bg-[#111c33] dark:hover:text-white"
+            }`}
           >
-            <LogOut size={16} /> Sign out
-          </button>
+            <MessageSquareQuote size={16} />
+            <span className="truncate flex-1">Testimonials</span>
+          </Link>
+        </nav>
+
+        <div className="my-4 border-t border-[#edf0f5] dark:border-[#1e293b]" />
+
+        {/* ---- Account links ---- */}
+        <nav className="space-y-1" aria-label="Account">
+          <Link
+            to="/profile"
+            onClick={() => setSidebarOpen(false)}
+            className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] font-semibold transition-colors ${
+              location.pathname === "/profile"
+                ? "bg-[#efedff] font-extrabold text-[#5649dc] dark:bg-[#2a2354] dark:text-[#a9a2ff]"
+                : "text-[#66728b] hover:bg-[#f5f6fa] hover:text-[#1c2a4a] dark:text-[#94a3b8] dark:hover:bg-[#111c33] dark:hover:text-white"
+            }`}
+          >
+            <UserRound size={16} />
+            <span className="truncate flex-1">Profile</span>
+          </Link>
+          <Link
+            to="/settings"
+            onClick={() => setSidebarOpen(false)}
+            className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] font-semibold transition-colors ${
+              location.pathname === "/settings"
+                ? "bg-[#efedff] font-extrabold text-[#5649dc] dark:bg-[#2a2354] dark:text-[#a9a2ff]"
+                : "text-[#66728b] hover:bg-[#f5f6fa] hover:text-[#1c2a4a] dark:text-[#94a3b8] dark:hover:bg-[#111c33] dark:hover:text-white"
+            }`}
+          >
+            <Settings size={16} />
+            <span className="truncate flex-1">Settings</span>
+          </Link>
+        </nav>
+
+        <div className="my-4 border-t border-[#edf0f5] dark:border-[#1e293b]" />
+
+        <button
+          onClick={handleSignOut}
+          className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] font-semibold text-[#9a6470] transition hover:bg-[#fff4f5] dark:text-[#f08a9a] dark:hover:bg-[#2a1218]"
+        >
+          <LogOut size={16} /> Sign out
+        </button>
         </aside>
 
         <main className="min-w-0 flex-1 space-y-5">{children}</main>

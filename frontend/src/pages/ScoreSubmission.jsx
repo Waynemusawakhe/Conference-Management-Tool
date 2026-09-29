@@ -5,6 +5,7 @@ import {
   AlertCircle,
   ArrowLeft,
   CheckCircle2,
+  ClipboardCheck,
   Download,
   ExternalLink,
   FileText,
@@ -18,6 +19,7 @@ import {
 import ReviewerLayout from "../components/ReviewerLayout";
 import { useAuth } from "../context/AuthContext";
 import { reviewsApi } from "../api/reviewsApi";
+import { tokenStore } from "../api/client";
 
 const SCORE_OPTIONS = [1, 2, 3, 4, 5];
 const SCORE_LABELS = ["Poor", "Fair", "Good", "Great", "Excellent"];
@@ -88,6 +90,9 @@ function resolveFileUrl(raw) {
   return `${origin}/storage/${clean}`;
 }
 
+/* ------------------------------------------------------------------ *
+ * Page
+ * ------------------------------------------------------------------ */
 export default function ScoreSubmission() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -104,6 +109,11 @@ export default function ScoreSubmission() {
   const [score, setScore] = useState(3);
   const [comments, setComments] = useState("");
   const [recommendation, setRecommendation] = useState("accept");
+
+  /* File preview state */
+  const [blobUrl, setBlobUrl] = useState(null);
+  const [fileState, setFileState] = useState("idle"); // idle | loading | ready | error
+  const [fileError, setFileError] = useState("");
 
   const displayName = user?.name ?? user?.full_name ?? "Reviewer";
 
@@ -153,6 +163,66 @@ export default function ScoreSubmission() {
     setDirty(true);
   }, [score, comments, recommendation, locked]);
 
+  const submission = paper?.submission ?? {};
+  const title = submission?.title ?? paper?.title ?? `Review #${id}`;
+  const abstract = submission?.abstract ?? paper?.abstract ?? "";
+  const rawFileUrl = extractFileUrl(submission) ?? extractFileUrl(paper) ?? null;
+  const fileUrl = resolveFileUrl(rawFileUrl);
+
+  const fileName = (() => {
+    if (!rawFileUrl) return `submission-${id}`;
+    const clean = String(rawFileUrl).split("?")[0].split("#")[0];
+    const last = clean.substring(clean.lastIndexOf("/") + 1);
+    return last || `submission-${id}`;
+  })();
+
+  /* ------------------------------------------------------------------ *
+   * Fetch the paper with the bearer token and turn it into a blob URL.
+   * Plain iframes / <a download> can't send Authorization headers, so
+   * we proxy the request through fetch + object URLs.
+   * ------------------------------------------------------------------ */
+  useEffect(() => {
+    if (!fileUrl) {
+      setFileState("idle");
+      setBlobUrl(null);
+      setFileError("");
+      return;
+    }
+
+    let objectUrl = null;
+    let cancelled = false;
+
+    (async () => {
+      setFileState("loading");
+      setFileError("");
+      try {
+        const token = tokenStore.get();
+        const response = await fetch(fileUrl, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        const blob = await response.blob();
+        if (cancelled) return;
+        objectUrl = URL.createObjectURL(blob);
+        setBlobUrl(objectUrl);
+        setFileState("ready");
+      } catch (err) {
+        if (cancelled) return;
+        console.error("[ScoreSubmission] file fetch failed:", err);
+        setFileError(err?.message ?? "Could not load the document.");
+        setFileState("error");
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [fileUrl]);
+
+  /* ---- Submit ---- */
   async function handleSubmit(e) {
     e.preventDefault();
     if (locked) return;
@@ -177,6 +247,7 @@ export default function ScoreSubmission() {
     }
   }
 
+  /* ---- Lock ---- */
   async function handleLock() {
     if (!window.confirm("Lock this review? This cannot be undone.")) return;
     setLocking(true);
@@ -194,20 +265,6 @@ export default function ScoreSubmission() {
       setLocking(false);
     }
   }
-
-  const submission = paper?.submission ?? {};
-  const title = submission?.title ?? paper?.title ?? `Review #${id}`;
-  const abstract = submission?.abstract ?? paper?.abstract ?? "";
-  const rawFileUrl = extractFileUrl(submission) ?? extractFileUrl(paper) ?? null;
-  const fileUrl = resolveFileUrl(rawFileUrl);
-
-  // Derive download filename from the URL, keeping its original extension
-  const fileName = (() => {
-    if (!rawFileUrl) return `submission-${id}`;
-    const clean = String(rawFileUrl).split("?")[0].split("#")[0];
-    const last = clean.substring(clean.lastIndexOf("/") + 1);
-    return last || `submission-${id}`;
-  })();
 
   const wordCount = comments.trim() ? comments.trim().split(/\s+/).length : 0;
 
@@ -228,14 +285,9 @@ export default function ScoreSubmission() {
           70%  { transform: scale(.92); }
           100% { transform: scale(1); }
         }
-        @keyframes cmtRing {
-          0%   { transform: scale(.5); opacity: .6; }
-          100% { transform: scale(1.4); opacity: 0; }
-        }
         .cmt-fade-up   { animation: cmtFadeUp .5s cubic-bezier(.22,1,.36,1) both; }
         .cmt-scale-in  { animation: cmtScaleIn .35s cubic-bezier(.22,1,.36,1) both; }
         .cmt-star-pop  { animation: cmtStarPop .45s cubic-bezier(.34,1.56,.64,1); }
-        .cmt-ring      { animation: cmtRing 1.1s ease-out infinite; }
       `}</style>
 
       {/* Back + heading */}
@@ -245,10 +297,13 @@ export default function ScoreSubmission() {
             onClick={() => navigate("/reviewer-dashboard")}
             className="group inline-flex items-center gap-2 rounded-xl bg-[#2563eb] px-4 py-2.5 text-[11px] font-extrabold text-white shadow-[0_12px_28px_rgba(37,99,235,.28)] transition hover:-translate-y-px hover:bg-[#1d4ed8]"
           >
-            <ArrowLeft size={14} className="transition group-hover:-translate-x-0.5" />
+            <ArrowLeft
+              size={14}
+              className="transition group-hover:-translate-x-0.5"
+            />
             Back to queue
           </button>
-          <h1 className="m-0 mt-3 text-[22px] font-bold tracking-[-.03em] text-[#1c2a4a] dark:text-white">
+          <h1 className="m-0 mt-3 text-[22px] font-bold tracking-[-.03em] text-[#1c2a4a]">
             {title}
           </h1>
         </div>
@@ -256,7 +311,7 @@ export default function ScoreSubmission() {
 
       {/* Unsaved changes banner */}
       {dirty && !locked && alreadySubmitted && (
-        <div className="cmt-fade-up flex items-center gap-2 rounded-xl border border-[#dbeafe] bg-[#eff6ff] px-4 py-2.5 text-[11px] font-semibold text-[#1d4ed8] dark:border-[#1e3a8a] dark:bg-[#0c1a35] dark:text-[#93c5fd]">
+        <div className="cmt-fade-up flex items-center gap-2 rounded-xl border border-[#dbeafe] bg-[#eff6ff] px-4 py-2.5 text-[11px] font-semibold text-[#1d4ed8]">
           <Zap size={13} className="animate-pulse" />
           You have unsaved changes — remember to update your review.
         </div>
@@ -291,14 +346,15 @@ export default function ScoreSubmission() {
 
           {locked && (
             <div className="cmt-fade-up flex items-center gap-2 rounded-xl border border-[#bfe5d1] bg-[#effaf4] p-4 text-[12px] font-semibold text-[#18794e]">
-              <Lock size={16} /> This review is locked. No further changes are possible.
+              <Lock size={16} /> This review is locked. No further changes are
+              possible.
             </div>
           )}
 
           <div className="grid gap-6 lg:grid-cols-2">
             {/* ============ Submission ============ */}
             <section
-              className="cmt-fade-up flex flex-col gap-5 rounded-2xl border border-[#e4e8f0] bg-white p-6 shadow-[0_10px_30px_rgba(15,28,65,.035)] transition hover:shadow-[0_14px_40px_rgba(15,28,65,.06)] dark:border-[#1e293b] dark:bg-[#0f172a]"
+              className="cmt-fade-up flex flex-col gap-5 rounded-2xl border border-[#e4e8f0] bg-white p-6 shadow-[0_10px_30px_rgba(15,28,65,.035)] transition hover:shadow-[0_14px_40px_rgba(15,28,65,.06)]"
               style={{ animationDelay: "60ms" }}
             >
               <div>
@@ -311,7 +367,7 @@ export default function ScoreSubmission() {
                 <strong className="mb-2 block text-[10px] font-extrabold uppercase tracking-[.1em] text-[#9ba4b5]">
                   Abstract
                 </strong>
-                <p className="m-0 rounded-xl border border-[#eef1f7] bg-gradient-to-br from-[#fafbff] to-[#f4f6fb] p-4 text-[12px] leading-6 text-[#374151] dark:border-[#1e293b] dark:from-[#0b1224] dark:to-[#0d1527] dark:text-[#cbd5e1]">
+                <p className="m-0 rounded-xl border border-[#eef1f7] bg-gradient-to-br from-[#fafbff] to-[#f4f6fb] p-4 text-[12px] leading-6 text-[#374151]">
                   {abstract || "No abstract available for this submission."}
                 </p>
               </div>
@@ -321,22 +377,20 @@ export default function ScoreSubmission() {
                   <strong className="block text-[10px] font-extrabold uppercase tracking-[.1em] text-[#9ba4b5]">
                     Paper document
                   </strong>
-                  {fileUrl && (
+                  {fileState === "ready" && blobUrl && (
                     <div className="flex items-center gap-1.5">
                       <a
-                        href={fileUrl}
+                        href={blobUrl}
                         download={fileName}
-                        target="_blank"
-                        rel="noreferrer"
                         className="inline-flex items-center gap-1.5 rounded-lg bg-[#2563eb] px-3 py-1.5 text-[10px] font-extrabold text-white shadow-[0_8px_18px_-6px_rgba(37,99,235,.55)] transition hover:-translate-y-px hover:bg-[#1d4ed8]"
                       >
                         <Download size={12} /> Download
                       </a>
                       <a
-                        href={fileUrl}
+                        href={blobUrl}
                         target="_blank"
                         rel="noreferrer"
-                        className="inline-flex items-center gap-1.5 rounded-lg border border-[#e4e8f0] bg-white px-3 py-1.5 text-[10px] font-bold text-[#43506a] transition hover:bg-[#fafbff] dark:border-[#1e293b] dark:bg-[#0f172a] dark:text-white dark:hover:bg-[#111c33]"
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-[#e4e8f0] bg-white px-3 py-1.5 text-[10px] font-bold text-[#43506a] transition hover:bg-[#fafbff]"
                       >
                         <ExternalLink size={12} /> Open
                       </a>
@@ -344,20 +398,43 @@ export default function ScoreSubmission() {
                   )}
                 </div>
 
-                {fileUrl ? (
-                  <iframe
-                    src={fileUrl}
-                    title="Paper Document"
-                    className="h-[400px] w-full rounded-xl border border-[#e5e7eb] dark:border-[#1e293b]"
-                  />
-                ) : (
-                  <div className="flex h-[300px] flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-[#e5e7eb] bg-[#f9fafb] p-6 text-center dark:border-[#1e293b] dark:bg-[#0b1224]">
+                {!fileUrl && (
+                  <div className="flex h-[400px] flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-[#e5e7eb] bg-[#f9fafb] p-6 text-center">
                     <FileText size={28} className="text-[#aeb6c6]" />
-                    <strong className="text-[12px] font-bold text-[#43506a] dark:text-white">
+                    <strong className="text-[12px] font-bold text-[#43506a]">
                       No document attached
                     </strong>
                     <span className="max-w-[280px] text-[11px] leading-5 text-[#8993a6]">
-                      The submission doesn't have a file, or the backend hasn't exposed it yet.
+                      This submission doesn't have a file attached.
+                    </span>
+                  </div>
+                )}
+
+                {fileUrl && fileState === "loading" && (
+                  <div className="flex h-[400px] items-center justify-center rounded-xl border border-[#e5e7eb] bg-[#f9fafb] text-[12px] font-semibold text-[#8a95a8]">
+                    Loading document…
+                  </div>
+                )}
+
+                {fileUrl && fileState === "ready" && blobUrl && (
+                  <iframe
+                    src={blobUrl}
+                    title="Paper Document"
+                    className="h-[500px] w-full rounded-xl border border-[#e5e7eb]"
+                  />
+                )}
+
+                {fileUrl && fileState === "error" && (
+                  <div className="flex h-[400px] flex-col items-center justify-center gap-3 rounded-xl border border-[#e9d9a7] bg-[#fff9e9] p-6 text-center">
+                    <AlertCircle size={28} className="text-[#9b7414]" />
+                    <strong className="text-[12px] font-bold text-[#7a5c10]">
+                      Document is protected
+                    </strong>
+                    <span className="max-w-[380px] text-[11px] leading-5 text-[#7a5c10]/85">
+                      The backend rejected the request ({fileError}). Ask the
+                      backend team to expose this file — either via a download
+                      endpoint (e.g. <code>GET /submissions/{id}/file</code>) or
+                      by making it public on the <code>public</code> disk.
                     </span>
                   </div>
                 )}
@@ -366,10 +443,10 @@ export default function ScoreSubmission() {
 
             {/* ============ Form ============ */}
             <section
-              className="cmt-fade-up flex flex-col rounded-2xl border border-[#e4e8f0] bg-white p-6 shadow-[0_10px_30px_rgba(15,28,65,.035)] transition hover:shadow-[0_14px_40px_rgba(15,28,65,.06)] dark:border-[#1e293b] dark:bg-[#0f172a]"
+              className="cmt-fade-up flex flex-col rounded-2xl border border-[#e4e8f0] bg-white p-6 shadow-[0_10px_30px_rgba(15,28,65,.035)] transition hover:shadow-[0_14px_40px_rgba(15,28,65,.06)]"
               style={{ animationDelay: "140ms" }}
             >
-              <h3 className="m-0 mb-6 flex items-center gap-2 border-b border-[#edf0f5] pb-4 text-[16px] font-bold dark:border-[#1e293b]">
+              <h3 className="m-0 mb-6 flex items-center gap-2 border-b border-[#edf0f5] pb-4 text-[16px] font-bold">
                 <span className="grid h-7 w-7 place-items-center rounded-lg bg-gradient-to-br from-[#2563eb] to-[#60a5fa] text-white shadow-[0_8px_18px_-6px_rgba(37,99,235,.55)]">
                   <Star size={13} />
                 </span>
@@ -382,7 +459,7 @@ export default function ScoreSubmission() {
               >
                 {/* Score */}
                 <div>
-                  <label className="mb-3 block text-[10px] font-extrabold uppercase tracking-[.1em] text-[#6b7280] dark:text-[#94a3b8]">
+                  <label className="mb-3 block text-[10px] font-extrabold uppercase tracking-[.1em] text-[#6b7280]">
                     Score — 1 Poor to 5 Excellent
                   </label>
                   <div className="flex gap-2.5">
@@ -397,7 +474,7 @@ export default function ScoreSubmission() {
                           className={`group relative flex flex-1 flex-col items-center justify-center gap-0.5 rounded-xl border py-3 text-sm font-bold transition-all duration-200 ${
                             active
                               ? "scale-[1.05] border-transparent bg-gradient-to-br from-[#2563eb] to-[#3b82f6] text-white shadow-[0_14px_30px_-8px_rgba(37,99,235,.6)]"
-                              : "border-[#d1d5db] bg-white text-[#374151] hover:-translate-y-0.5 hover:border-[#2563eb] hover:bg-[#eff6ff] dark:border-[#1e293b] dark:bg-[#0b1224] dark:text-[#cbd5e1] dark:hover:bg-[#152b52]"
+                              : "border-[#d1d5db] bg-white text-[#374151] hover:-translate-y-0.5 hover:border-[#2563eb] hover:bg-[#eff6ff]"
                           } disabled:cursor-not-allowed disabled:opacity-60`}
                         >
                           <Star
@@ -408,7 +485,9 @@ export default function ScoreSubmission() {
                                 : "text-[#9ca3af] group-hover:text-[#2563eb]"
                             }`}
                           />
-                          <span className="text-[13px] font-extrabold">{num}</span>
+                          <span className="text-[13px] font-extrabold">
+                            {num}
+                          </span>
                           <span
                             className={`text-[8px] font-bold uppercase tracking-wider ${
                               active ? "text-white/85" : "text-[#9ca3af]"
@@ -424,7 +503,7 @@ export default function ScoreSubmission() {
 
                 {/* Recommendation */}
                 <div>
-                  <label className="mb-3 block text-[10px] font-extrabold uppercase tracking-[.1em] text-[#6b7280] dark:text-[#94a3b8]">
+                  <label className="mb-3 block text-[10px] font-extrabold uppercase tracking-[.1em] text-[#6b7280]">
                     Final recommendation
                   </label>
                   <div className="grid grid-cols-3 gap-2.5">
@@ -440,7 +519,7 @@ export default function ScoreSubmission() {
                           className={`group relative flex flex-col items-center gap-1.5 rounded-xl border px-2 py-3 text-center transition-all duration-200 ${
                             active
                               ? `scale-[1.03] border-transparent bg-gradient-to-br ${r.accent} text-white shadow-[0_14px_30px_-8px_rgba(15,28,65,.4)]`
-                              : "border-[#d1d5db] bg-white text-[#374151] hover:-translate-y-0.5 hover:border-[#93c5fd] dark:border-[#1e293b] dark:bg-[#0b1224] dark:text-[#cbd5e1]"
+                              : "border-[#d1d5db] bg-white text-[#374151] hover:-translate-y-0.5 hover:border-[#93c5fd]"
                           } disabled:cursor-not-allowed disabled:opacity-60`}
                         >
                           <Icon
@@ -472,7 +551,7 @@ export default function ScoreSubmission() {
                   <div className="mb-2 flex items-center justify-between">
                     <label
                       htmlFor="comments"
-                      className="text-[10px] font-extrabold uppercase tracking-[.1em] text-[#6b7280] dark:text-[#94a3b8]"
+                      className="text-[10px] font-extrabold uppercase tracking-[.1em] text-[#6b7280]"
                     >
                       Review comments
                     </label>
@@ -492,7 +571,7 @@ export default function ScoreSubmission() {
                     onChange={(e) => setComments(e.target.value)}
                     disabled={locked}
                     placeholder="Explain your reasoning, strengths, and areas for improvement…"
-                    className="w-full resize-y rounded-xl border border-[#d1d5db] bg-white p-3 text-sm text-[#111827] outline-none transition focus:border-[#2563eb] focus:bg-white focus:ring-4 focus:ring-[#2563eb]/10 disabled:bg-[#f7f8fc] disabled:text-[#8a95a8] dark:border-[#1e293b] dark:bg-[#0b1224] dark:text-white"
+                    className="w-full resize-y rounded-xl border border-[#d1d5db] bg-white p-3 text-sm text-[#111827] outline-none transition focus:border-[#2563eb] focus:bg-white focus:ring-4 focus:ring-[#2563eb]/10 disabled:bg-[#f7f8fc] disabled:text-[#8a95a8]"
                   />
                 </div>
 
@@ -517,7 +596,7 @@ export default function ScoreSubmission() {
                     type="button"
                     onClick={handleLock}
                     disabled={locking}
-                    className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-xl border-2 border-[#bfdbfe] bg-[#eff6ff] py-3.5 text-sm font-extrabold text-[#1d4ed8] transition-all duration-200 hover:-translate-y-0.5 hover:border-[#93c5fd] hover:bg-[#dbeafe] disabled:opacity-50 dark:border-[#1e3a8a] dark:bg-[#0c1a35] dark:text-[#93c5fd] dark:hover:bg-[#152b52]"
+                    className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-xl border-2 border-[#bfdbfe] bg-[#eff6ff] py-3.5 text-sm font-extrabold text-[#1d4ed8] transition-all duration-200 hover:-translate-y-0.5 hover:border-[#93c5fd] hover:bg-[#dbeafe] disabled:opacity-50"
                   >
                     <Lock size={15} /> {locking ? "Locking…" : "Lock review"}
                   </button>
@@ -592,7 +671,7 @@ function SuccessOverlay({ kind, onDismiss }) {
       `}</style>
 
       <div
-        className="cmt-card-in relative w-full max-w-[500px] overflow-hidden rounded-[28px] bg-white p-10 text-center shadow-[0_40px_100px_rgba(7,19,47,.45)] dark:bg-[#0f172a]"
+        className="cmt-card-in relative w-full max-w-[500px] overflow-hidden rounded-[28px] bg-white p-10 text-center shadow-[0_40px_100px_rgba(7,19,47,.45)]"
         onClick={(e) => e.stopPropagation()}
       >
         {Array.from({ length: 22 }).map((_, i) => {
@@ -603,11 +682,19 @@ function SuccessOverlay({ kind, onDismiss }) {
               key={i}
               className="pointer-events-none absolute left-1/2 top-[140px] h-2 w-2 rounded-full"
               style={{
-                background: ["#2563eb", "#10b981", "#f59e0b", "#ec4899", "#8b5cf6"][i % 5],
+                background: [
+                  "#2563eb",
+                  "#10b981",
+                  "#f59e0b",
+                  "#ec4899",
+                  "#8b5cf6",
+                ][i % 5],
                 "--tx": `${Math.cos(angle) * distance}px`,
                 "--ty": `${Math.sin(angle) * distance}px`,
                 "--rot": `${Math.random() * 720 - 360}deg`,
-                animation: `cmtConfetti ${1.4 + Math.random() * 0.6}s cubic-bezier(.22,1,.36,1) forwards`,
+                animation: `cmtConfetti ${
+                  1.4 + Math.random() * 0.6
+                }s cubic-bezier(.22,1,.36,1) forwards`,
                 animationDelay: `${Math.random() * 0.15}s`,
               }}
             />
@@ -634,17 +721,18 @@ function SuccessOverlay({ kind, onDismiss }) {
                 style={{
                   strokeDasharray: 60,
                   strokeDashoffset: 60,
-                  animation: "cmtBigTick .7s .3s cubic-bezier(.65,0,.35,1) forwards",
+                  animation:
+                    "cmtBigTick .7s .3s cubic-bezier(.65,0,.35,1) forwards",
                 }}
               />
             </svg>
           </div>
         </div>
 
-        <h2 className="mt-7 text-[26px] font-extrabold tracking-[-.035em] text-[#1c2a4a] dark:text-white">
+        <h2 className="mt-7 text-[26px] font-extrabold tracking-[-.035em] text-[#1c2a4a]">
           {headline}
         </h2>
-        <p className="mx-auto mt-2 max-w-[360px] text-[13px] leading-6 text-[#66728b] dark:text-[#94a3b8]">
+        <p className="mx-auto mt-2 max-w-[360px] text-[13px] leading-6 text-[#66728b]">
           {subtext}
         </p>
 

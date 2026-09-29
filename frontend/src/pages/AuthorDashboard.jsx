@@ -10,6 +10,7 @@ import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
 import { submissionsApi } from "../api/submissionsApi";
 import { conferencesApi } from "../api/conferencesApi";
+import { http } from "../api/client";
 
 const STATUS_LABELS = {
   pending: "Pending",
@@ -45,6 +46,29 @@ function unwrapList(response) {
   return Array.isArray(response) ? response : response?.data || [];
 }
 
+function extractFilePath(obj) {
+  if (!obj) return null;
+  return (
+    obj.file_path ??
+    obj.file_url ??
+    obj.fileUrl ??
+    obj.document_url ??
+    obj.documentUrl ??
+    obj.attachment_url ??
+    obj.attachmentUrl ??
+    obj.file ??
+    obj.document ??
+    obj.attachment ??
+    null
+  );
+}
+
+function fileNameFromPath(path) {
+  if (!path) return null;
+  const clean = String(path).split("?")[0].split("#")[0];
+  return clean.substring(clean.lastIndexOf("/") + 1);
+}
+
 function Modal({ title, children, onClose, wide = false }) {
   return (
     <div className="fixed inset-0 z-[100] grid place-items-center bg-[#07132f]/55 p-4 backdrop-blur-sm" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
@@ -77,7 +101,14 @@ export default function AuthorDashboard() {
   const [formError, setFormError] = useState("");
   const [selected, setSelected] = useState(null);
 
-  const emptyForm = { conference_id: "", title: "", track: "", abstract: "", file: null };
+  const emptyForm = {
+    conference_id: "",
+    title: "",
+    track: "",
+    abstract: "",
+    file: null,
+    existingFile: null,
+  };
   const [form, setForm] = useState(emptyForm);
 
   const loadData = useCallback(async () => {
@@ -134,7 +165,15 @@ export default function AuthorDashboard() {
 
   const openEdit = (proposal) => {
     setSelected(proposal);
-    setForm({ conference_id: proposal.conference_id || proposal.conference?.id || "", title: proposal.title || "", track: proposal.track || "", abstract: proposal.abstract || "", file: null });
+    const existingFile = extractFilePath(proposal);
+    setForm({
+      conference_id: proposal.conference_id || proposal.conference?.id || "",
+      title: proposal.title || "",
+      track: proposal.track || "",
+      abstract: proposal.abstract || "",
+      file: null,
+      existingFile,
+    });
     setFormError("");
     setModal("edit");
   };
@@ -142,10 +181,12 @@ export default function AuthorDashboard() {
   const submitForm = async (e) => {
     e.preventDefault();
     setFormError("");
+
     if (!form.conference_id || !form.title.trim() || !form.abstract.trim()) {
       setFormError("Conference, title and abstract are required.");
       return;
     }
+
     if (form.file) {
       const allowedTypes = [
         "application/pdf",
@@ -157,25 +198,33 @@ export default function AuthorDashboard() {
         setFormError("Only PDF, DOC or DOCX files are allowed.");
         return;
       }
-    }
-    if (form.file && form.file.size > 10 * 1024 * 1024) {
-      setFormError("The PDF must be 10MB or smaller.");
-      return;
+      if (form.file.size > 10 * 1024 * 1024) {
+        setFormError("The file must be 10MB or smaller.");
+        return;
+      }
     }
 
     const body = new FormData();
-    if (modal === "create") body.append("conference_id", String(form.conference_id));
+    if (modal === "create") {
+      body.append("conference_id", String(form.conference_id));
+    }
     body.append("title", form.title.trim());
     body.append("track", form.track.trim());
     body.append("abstract", form.abstract.trim());
-    if (form.file) body.append("file", form.file);
+
+    if (form.file) {
+      body.append("file", form.file);
+    }
 
     setSaving(true);
     try {
       if (modal === "create") {
         await submissionsApi.create(body);
       } else {
-        await submissionsApi.update(selected.id, body);
+        // Laravel can't parse multipart PUT bodies. Use POST + _method=PUT
+        // (method spoofing) so the file actually reaches the backend.
+        body.append("_method", "PUT");
+        await http.post(`/submissions/${selected.id}`, body);
       }
       setModal(null);
       await loadData();
@@ -302,7 +351,32 @@ export default function AuthorDashboard() {
       {modal === "create" || modal === "edit" ? <Modal title={modal === "create" ? "Submit a proposal" : "Edit proposal"} onClose={()=>setModal(null)} wide>
         <form onSubmit={submitForm} className="grid gap-4">
           {modal === "create" && <label className="grid gap-1.5 text-[11px] font-bold text-[#43506a]">Conference<select value={form.conference_id} onChange={(e)=>setForm((v)=>({...v,conference_id:e.target.value}))} className="h-11 rounded-xl border border-[#dfe4ed] bg-white px-3 text-sm font-normal outline-none focus:border-[#7568f7]"><option value="">Select a conference</option>{conferences.filter((c)=>c.submission_status !== "closed").map((c)=><option key={c.id} value={c.id}>{c.name}</option>)}</select></label>}
-          <div className="grid gap-4 sm:grid-cols-2"><label className="grid gap-1.5 text-[11px] font-bold text-[#43506a] sm:col-span-2">Title<input value={form.title} onChange={(e)=>setForm((v)=>({...v,title:e.target.value}))} maxLength={255} className="h-11 rounded-xl border border-[#dfe4ed] px-3 text-sm font-normal outline-none focus:border-[#7568f7]" placeholder="Research proposal title" /></label><label className="grid gap-1.5 text-[11px] font-bold text-[#43506a]">Track<input value={form.track} onChange={(e)=>setForm((v)=>({...v,track:e.target.value}))} maxLength={255} className="h-11 rounded-xl border border-[#dfe4ed] px-3 text-sm font-normal outline-none focus:border-[#7568f7]" placeholder="e.g. Artificial Intelligence" /></label><label className="grid gap-1.5 text-[11px] font-bold text-[#43506a]">Proposal file<input type="file" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" onChange={(e)=>setForm((v)=>({...v,file:e.target.files?.[0] || null}))} className="block h-11 w-full rounded-xl border border-[#dfe4ed] bg-white px-2 py-2 text-[11px]" /><span className="font-normal text-[9px] text-[#8a95a8]">Optional · PDF, DOC or DOCX · maximum 10MB</span></label></div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <label className="grid gap-1.5 text-[11px] font-bold text-[#43506a] sm:col-span-2">Title<input value={form.title} onChange={(e)=>setForm((v)=>({...v,title:e.target.value}))} maxLength={255} className="h-11 rounded-xl border border-[#dfe4ed] px-3 text-sm font-normal outline-none focus:border-[#7568f7]" placeholder="Research proposal title" /></label>
+            <label className="grid gap-1.5 text-[11px] font-bold text-[#43506a]">Track<input value={form.track} onChange={(e)=>setForm((v)=>({...v,track:e.target.value}))} maxLength={255} className="h-11 rounded-xl border border-[#dfe4ed] px-3 text-sm font-normal outline-none focus:border-[#7568f7]" placeholder="e.g. Artificial Intelligence" /></label>
+            <label className="grid gap-1.5 text-[11px] font-bold text-[#43506a]">
+              {modal === "edit" && form.existingFile ? "Replace file (optional)" : "Proposal file"}
+              <input
+                type="file"
+                accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                onChange={(e)=>setForm((v)=>({...v,file:e.target.files?.[0] || null}))}
+                className="block h-11 w-full rounded-xl border border-[#dfe4ed] bg-white px-2 py-2 text-[11px]"
+              />
+              <span className="font-normal text-[9px] text-[#8a95a8]">Optional · PDF, DOC or DOCX · maximum 10MB</span>
+              {modal === "edit" && form.existingFile && (
+                <span className="mt-1 flex items-center gap-1.5 rounded-md bg-[#f0efff] px-2 py-1 text-[10px] font-medium text-[#5548d7]">
+                  <FileText size={11} />
+                  Current: {fileNameFromPath(form.existingFile) || "attached file"}
+                </span>
+              )}
+              {form.file && (
+                <span className="mt-1 flex items-center gap-1.5 rounded-md bg-[#effaf4] px-2 py-1 text-[10px] font-medium text-[#18794e]">
+                  <Upload size={11} />
+                  New: {form.file.name} ({(form.file.size / 1024).toFixed(1)} KB)
+                </span>
+              )}
+            </label>
+          </div>
           <label className="grid gap-1.5 text-[11px] font-bold text-[#43506a]">Abstract<textarea value={form.abstract} onChange={(e)=>setForm((v)=>({...v,abstract:e.target.value}))} maxLength={5000} rows={8} className="resize-y rounded-xl border border-[#dfe4ed] p-3 text-sm font-normal leading-6 outline-none focus:border-[#7568f7]" placeholder="Write the research abstract…" /><span className="text-right text-[9px] font-normal text-[#8a95a8]">{form.abstract.length}/5000</span></label>
           {formError && <p role="alert" className="m-0 rounded-xl bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">{formError}</p>}
           <div className="flex flex-wrap justify-end gap-2 border-t border-[#edf0f5] pt-4"><button type="button" onClick={()=>setModal(null)} className="rounded-xl border border-[#dfe4ed] px-4 py-2.5 text-xs font-bold text-[#66728b]">Cancel</button><button disabled={saving} type="submit" className="rounded-xl bg-gradient-to-br from-[#6655f6] to-[#7869ff] px-5 py-2.5 text-xs font-extrabold text-white disabled:opacity-60">{saving ? "Saving…" : modal === "create" ? "Submit proposal" : "Save changes"}</button></div>
