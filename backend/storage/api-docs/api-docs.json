@@ -412,6 +412,65 @@
                 ]
             }
         },
+        "/api/v1/users/{id}/role": {
+            "patch": {
+                "tags": [
+                    "User Management"
+                ],
+                "summary": "Assign a role to a user",
+                "description": "Updates a user role. Admin only.",
+                "operationId": "2d16aa629f8cfcce07a1dfa4792bdea5",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "User ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "role"
+                                ],
+                                "properties": {
+                                    "role": {
+                                        "type": "string",
+                                        "example": "organiser"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Role assigned successfully"
+                    },
+                    "403": {
+                        "description": "Forbidden — admin role required"
+                    },
+                    "404": {
+                        "description": "User not found"
+                    },
+                    "422": {
+                        "description": "Validation Error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/v1/conferences": {
             "get": {
                 "tags": [
