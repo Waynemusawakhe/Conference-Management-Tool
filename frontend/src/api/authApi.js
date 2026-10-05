@@ -14,14 +14,39 @@ export const authApi = {
     http.get("/auth/me"),
 
   forgotPassword: (body) =>
-    http.post("/auth/forgot-password", body),
+    http.post(
+      "/auth/forgot-password",
+      body
+    ),
 
   resetPassword: (body) =>
-    http.post("/auth/reset-password", body),
+    http.post(
+      "/auth/reset-password",
+      body
+    ),
 
   updateProfile: (body) =>
-    http.patch("/auth/me", body),
+    http.patch(
+      "/auth/me",
+      body
+    ),
 
   changePassword: (body) =>
-    http.put("/auth/password", body),
+    http.put(
+      "/auth/password",
+      body
+    ),
+
+  deleteAccount: (
+    currentPassword
+  ) =>
+    http.delete(
+      "/auth/me",
+      {
+        body: {
+          current_password:
+            currentPassword,
+        },
+      }
+    ),
 };
