@@ -1,9 +1,11 @@
+import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   BookOpen,
   CalendarDays,
   CheckCheck,
   LayoutDashboard,
+  LoaderCircle,
   LogOut,
   MessageSquareQuote,
   Plus,
@@ -14,6 +16,8 @@ import {
   Users,
 } from "lucide-react";
 import Logo from "./Logo";
+import AttendeeHeader from "./AttendeeHeader";
+import AttendeeSidebar from "./AttendeeSidebar";
 import { useAuth } from "../context/AuthContext";
 import AdminLayout from "./AdminLayout";
 import ReviewerLayout from "./ReviewerLayout";
@@ -43,6 +47,7 @@ const WORKSPACE_LABEL = {
 
 function GenericShell({ children }) {
   const { user, role, logout } = useAuth();
+  const [signingOut, setSigningOut] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -59,6 +64,8 @@ function GenericShell({ children }) {
       .join("") || "•";
 
   const handleSignOut = async () => {
+    if (signingOut) return;
+    setSigningOut(true);
     await logout();
     navigate("/login", { replace: true });
   };
@@ -175,12 +182,37 @@ function GenericShell({ children }) {
 
           <button
             onClick={handleSignOut}
-            className="mt-1 flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] font-semibold text-[#9a6470] transition hover:bg-[#fff4f5] dark:hover:bg-[#2a1218]"
+            disabled={signingOut}
+            aria-busy={signingOut}
+            className="mt-1 flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] font-semibold text-[#9a6470] transition hover:bg-[#fff4f5] disabled:cursor-wait disabled:opacity-70 dark:hover:bg-[#2a1218]"
           >
-            <LogOut size={16} /> Sign out
+            {signingOut ? <LoaderCircle size={16} className="animate-spin" /> : <LogOut size={16} />}
+            {signingOut ? "Signing out..." : "Sign out"}
           </button>
         </aside>
 
+        <main className="min-w-0 flex-1 space-y-5">{children}</main>
+      </div>
+    </div>
+  );
+}
+
+function AttendeeWorkspaceShell({ children }) {
+  const { user } = useAuth();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  return (
+    <div className="min-h-screen bg-[#f7f9fc] text-[#0d1b3d]">
+      <AttendeeHeader
+        name={user?.name || user?.full_name || "Attendee"}
+        menuOpen={sidebarOpen}
+        onMenuToggle={() => setSidebarOpen((value) => !value)}
+      />
+      <div className="mx-auto flex w-[min(1400px,calc(100%-32px))] gap-6 py-6 lg:gap-7">
+        <AttendeeSidebar
+          open={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
+        />
         <main className="min-w-0 flex-1 space-y-5">{children}</main>
       </div>
     </div>
@@ -193,5 +225,6 @@ export default function RoleChrome({ children }) {
   if (role === "admin") return <AdminLayout>{children}</AdminLayout>;
   if (role === "reviewer") return <ReviewerLayout>{children}</ReviewerLayout>;
   if (role === "organiser") return <OrganiserLayout>{children}</OrganiserLayout>;
+  if (role === "attendee") return <AttendeeWorkspaceShell>{children}</AttendeeWorkspaceShell>;
   return <GenericShell>{children}</GenericShell>;
 }

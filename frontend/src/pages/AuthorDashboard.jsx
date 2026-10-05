@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  Bell, BookOpen, CalendarDays, ChevronRight, Clock3, FileCheck2, FileText,
-  Filter, LayoutDashboard, LogOut, Menu, Plus, Search, Settings, Sparkles,
+  BookOpen, CalendarDays, ChevronRight, Clock3, FileCheck2, FileText,
+  Filter, LayoutDashboard, LoaderCircle, LogOut, Menu, Plus, Search, Settings, Sparkles,
   Trash2, Upload, UserRound, X, Eye, Pencil, RotateCcw, AlertCircle
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -11,6 +11,7 @@ import { useAuth } from "../context/AuthContext";
 import { submissionsApi } from "../api/submissionsApi";
 import { conferencesApi } from "../api/conferencesApi";
 import { http } from "../api/client";
+import NotificationBell from "../components/NotificationBell";
 
 const STATUS_LABELS = {
   pending: "Pending",
@@ -89,13 +90,13 @@ export default function AuthorDashboard() {
   const { user, logout } = useAuth();
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [proposals, setProposals] = useState([]);
   const [conferences, setConferences] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [notice, setNotice] = useState(true);
   const [modal, setModal] = useState(null);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState("");
@@ -110,6 +111,13 @@ export default function AuthorDashboard() {
     existingFile: null,
   };
   const [form, setForm] = useState(emptyForm);
+
+  const handleSignOut = async () => {
+    if (signingOut) return;
+    setSigningOut(true);
+    await logout();
+    navigate("/login", { replace: true });
+  };
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -275,7 +283,7 @@ export default function AuthorDashboard() {
           <div className="hidden h-7 w-px bg-white/10 sm:block" />
           <div className="hidden sm:block"><p className="m-0 text-[10px] font-extrabold uppercase tracking-[.13em] text-[#a9a2ff]">Author workspace</p><p className="m-0 text-[12px] font-semibold text-white/65">Conference Management Tool</p></div>
           <div className="ml-auto flex items-center gap-2">
-            <button className="relative grid h-10 w-10 place-items-center rounded-[11px] border border-white/15 bg-white/[.05] text-white/80 hover:bg-white/10" onClick={() => setNotice((v) => !v)} aria-label="Notifications"><Bell size={17} />{notice && <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-[#7d6bff]" />}</button>
+            <NotificationBell dark />
             <button className="hidden h-10 w-10 place-items-center rounded-[11px] border border-white/15 bg-white/[.05] text-white/80 sm:grid" onClick={toggleTheme} aria-label="Toggle theme"><Sparkles size={16} /></button>
             <div className="ml-1 hidden items-center gap-2.5 border-l border-white/10 pl-3 sm:flex"><div className="grid h-9 w-9 place-items-center rounded-full bg-[#e8e6ff] text-[10px] font-extrabold text-[#4f46c7]">{initials}</div><div className="leading-tight"><strong className="block text-[11px] text-white">{displayName}</strong><span className="block text-[9px] text-white/45">Author</span></div></div>
           </div>
@@ -293,7 +301,15 @@ export default function AuthorDashboard() {
           <div className="my-4 border-t border-[#edf0f5]" />
           <button onClick={() => navigate("/profile")} className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] font-semibold text-[#66728b] hover:bg-[#f5f6fa]"><UserRound size={16} /> Profile</button>
           <button onClick={() => navigate("/settings")} className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] font-semibold text-[#66728b] hover:bg-[#f5f6fa]"><Settings size={16} /> Settings</button>
-          <button onClick={async () => { await logout(); navigate("/login", { replace: true }); }} className="mt-1 flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] font-semibold text-[#9a6470] hover:bg-[#fff4f5]"><LogOut size={16} /> Sign out</button>
+          <button
+            onClick={handleSignOut}
+            disabled={signingOut}
+            aria-busy={signingOut}
+            className="mt-1 flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] font-semibold text-[#9a6470] transition-colors hover:bg-[#fff4f5] disabled:cursor-wait disabled:opacity-70"
+          >
+            {signingOut ? <LoaderCircle size={16} className="animate-spin" /> : <LogOut size={16} />}
+            {signingOut ? "Signing out..." : "Sign out"}
+          </button>
         </aside>
 
         <main id="dashboard-overview" className="min-w-0 flex-1 scroll-mt-24">

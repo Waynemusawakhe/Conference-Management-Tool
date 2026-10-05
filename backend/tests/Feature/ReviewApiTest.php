@@ -3,10 +3,12 @@
 namespace Tests\Feature;
 
 use App\Models\User;
+use App\Notifications\CmtNotification;
 use App\Modules\Conferences\Models\Conference;
 use App\Modules\Reviews\Models\SubmissionReview;
 use App\Modules\Submissions\Models\Submission;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Notification;
 use Tests\TestCase;
 
 class ReviewApiTest extends TestCase
@@ -243,6 +245,7 @@ class ReviewApiTest extends TestCase
     public function test_assigned_reviewer_can_submit_review(): void
     {
         [, $submission] = $this->ownedSubmission();
+        Notification::fake();
 
         $reviewer = User::factory()->create(['role' => 'reviewer']);
         $review = $this->createReview($submission, $reviewer);
@@ -264,6 +267,14 @@ class ReviewApiTest extends TestCase
         ]);
 
         $this->assertNotNull($review->fresh()->submitted_at);
+
+        Notification::assertSentTo(
+            $submission->author,
+            CmtNotification::class,
+            fn (CmtNotification $notification) =>
+                $notification->kind === 'proposal_reviewed'
+                && $notification->metadata['submission_id'] === $submission->id
+        );
     }
 
     public function test_review_submission_validates_score_comments_and_recommendation(): void

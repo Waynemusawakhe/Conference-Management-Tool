@@ -2,6 +2,7 @@
 
 namespace App\Modules\Reviews\Actions;
 
+use App\Notifications\CmtNotification;
 use App\Modules\Reviews\Models\SubmissionReview;
 use Illuminate\Validation\ValidationException;
 
@@ -23,6 +24,26 @@ class SubmitReviewAction
             $data['recommendation']
         );
 
-        return $review->fresh(['submission', 'reviewer']);
+        $review = $review->fresh(['submission.author', 'reviewer']);
+        $author = $review->submission?->author;
+
+        if ($author) {
+            $actionUrl = $author->role === 'attendee'
+                ? '/attendee-proposals'
+                : '/author-dashboard';
+
+            $author->notify(new CmtNotification(
+                'Proposal reviewed',
+                'A reviewer has submitted a review for "'.$review->submission->title.'".',
+                $actionUrl,
+                'proposal_reviewed',
+                [
+                    'submission_id' => $review->submission_id,
+                    'review_id' => $review->id,
+                ],
+            ));
+        }
+
+        return $review;
     }
 }

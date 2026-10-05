@@ -7,6 +7,7 @@ import {
   CheckCheck,
   FileText,
   LayoutDashboard,
+  LoaderCircle,
   LogOut,
   Menu,
   MessageSquareQuote,
@@ -97,6 +98,7 @@ const statusKey = (raw) =>
 
 export default function OrganiserLayout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [dismissed, setDismissed] = useState(() => loadDismissed());
   const [pendingSubmissions, setPendingSubmissions] = useState([]);
@@ -211,7 +213,8 @@ export default function OrganiserLayout({ children }) {
   }, [location.pathname]);
 
   const handleSignOut = async () => {
-    setSidebarOpen(false);
+    if (signingOut) return;
+    setSigningOut(true);
     await logout();
     navigate("/login", { replace: true });
   };
@@ -474,9 +477,12 @@ export default function OrganiserLayout({ children }) {
 
           <button
             onClick={handleSignOut}
+            disabled={signingOut}
+            aria-busy={signingOut}
             className="mt-1 flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] font-semibold text-[#9a6470] transition hover:bg-[#fff4f5] dark:hover:bg-[#2a1218]"
           >
-            <LogOut size={16} /> Sign out
+            {signingOut ? <LoaderCircle size={16} className="animate-spin" /> : <LogOut size={16} />}
+            {signingOut ? "Signing out..." : "Sign out"}
           </button>
         </aside>
 
