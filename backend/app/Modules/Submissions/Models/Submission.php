@@ -28,6 +28,13 @@ class Submission extends Model
         'status',
         'final_decision_at',
     ];
+    protected $hidden = [
+    'file_path',
+    ];
+
+    protected $appends = [
+        'has_file',
+    ];
 
     protected function casts(): array
     {
@@ -77,6 +84,11 @@ class Submission extends Model
             'final_decision_by' => $decisionMaker->id,
             'final_decision_at' => now(),
         ]);
+    }
+
+    public function getHasFileAttribute(): bool
+    {
+        return ! empty($this->file_path);
     }
 
     protected static function newFactory(): SubmissionFactory

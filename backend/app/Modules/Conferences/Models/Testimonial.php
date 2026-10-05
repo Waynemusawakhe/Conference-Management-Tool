@@ -1,16 +1,14 @@
 <?php
 
-namespace App\Modules\Conferences\Models;
+namespace App\Modules\Reviews\Models;
 
 use App\Models\User;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Modules\Conferences\Models\Conference;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Testimonial extends Model
 {
-    use HasFactory;
-
     protected $fillable = [
         'user_id',
         'conference_id',
@@ -18,20 +16,23 @@ class Testimonial extends Model
         'content',
     ];
 
-    protected function casts(): array
-    {
-        return [
-            'rating' => 'integer',
-        ];
-    }
+    protected $casts = [
+        'rating' => 'integer',
+    ];
 
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(
+            User::class,
+            'user_id'
+        );
     }
 
     public function conference(): BelongsTo
     {
-        return $this->belongsTo(Conference::class);
+        return $this->belongsTo(
+            Conference::class,
+            'conference_id'
+        );
     }
 }

@@ -415,6 +415,15 @@ Route::prefix('v1')
 Route::prefix('v1')
     ->middleware('auth:sanctum')
     ->group(function () {
+
+        Route::get(
+            'submissions/{submission}/file',
+            [
+                SubmissionController::class,
+                'downloadFile',
+            ]
+        );
+
         Route::apiResource(
             'submissions',
             SubmissionController::class
@@ -422,12 +431,18 @@ Route::prefix('v1')
 
         Route::post(
             'submissions/{submission}/withdraw',
-            [SubmissionController::class, 'withdraw']
+            [
+                SubmissionController::class,
+                'withdraw',
+            ]
         );
 
         Route::patch(
             'submissions/{submission}/status',
-            [SubmissionController::class, 'updateStatus']
+            [
+                SubmissionController::class,
+                'updateStatus',
+            ]
         );
     });
 
