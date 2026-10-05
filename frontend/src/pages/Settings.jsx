@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   AlertCircle,
   Bell,
@@ -7,25 +8,36 @@ import {
   Eye,
   EyeOff,
   LockKeyhole,
+  Mail,
   Moon,
   Palette,
   ShieldCheck,
   Sun,
+  Trash2,
+  UserRound,
 } from "lucide-react";
 import RoleChrome from "../components/RoleChrome";
 import { useTheme } from "../context/ThemeContext";
-import { useAuth } from "../hooks/useAuth";
+import { useAuth } from "../hooks/useAuth";      
 import { authApi } from "../api/authApi";
 
 const MIN_PASSWORD_LENGTH = 8;
 
 export default function Settings() {
-  const { role } = useAuth();
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
   const { dark, toggleTheme } = useTheme();
 
+  
   const [notifications, setNotifications] = useState(
     localStorage.getItem("cmt_notifications") !== "off"
   );
+  const saveNotifications = (value) => {
+    setNotifications(value);
+    localStorage.setItem("cmt_notifications", value ? "on" : "off");
+  };
+
+  /* ---- Change password ---- */
   const [current, setCurrent] = useState("");
   const [next, setNext] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -33,17 +45,27 @@ export default function Settings() {
   const [showNext, setShowNext] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({});
   const [saving, setSaving] = useState(false);
 
-  const saveNotifications = (value) => {
-    setNotifications(value);
-    localStorage.setItem("cmt_notifications", value ? "on" : "off");
-  };
+  /* ---- Delete account ---- */
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
 
-  const changePassword = async (e) => {
+  /* ---- Auto-dismiss success message ---- */
+  useEffect(() => {
+    if (!message) return;
+    const t = setTimeout(() => setMessage(""), 4000);
+    return () => clearTimeout(t);
+  }, [message]);
+
+  /* ---- Change password submit ---- */
+  async function changePassword(e) {
     e.preventDefault();
     setError("");
     setMessage("");
+    setFieldErrors({});
 
     if (!current || !next || !confirm) {
       setError("Please complete all password fields.");
@@ -69,13 +91,56 @@ export default function Settings() {
       setNext("");
       setConfirm("");
       setMessage("Password updated successfully.");
-      setTimeout(() => setMessage(""), 4000);
     } catch (err) {
-      setError(err?.message || "Unable to update password.");
+      // 422 — field-level errors from Laravel
+      if (err?.errors && Object.keys(err.errors).length > 0) {
+        setFieldErrors(err.errors);
+        setError(err.message || "Please fix the highlighted fields.");
+      } else if (err?.status === 401) {
+        setError("Your session has expired. Please sign in again.");
+      } else {
+        setError(err?.message || "Unable to update password.");
+      }
     } finally {
       setSaving(false);
     }
-  };
+  }
+
+  /* ---- Delete account ---- */
+  async function confirmDelete() {
+    setDeleting(true);
+    setDeleteError("");
+    try {
+      await authApi.deleteAccount();
+      setDeleteConfirmOpen(false);
+      await logout();
+      navigate("/login", { replace: true });
+    } catch (err) {
+      setDeleteError(err?.message || "Could not delete your account.");
+    } finally {
+      setDeleting(false);
+    }
+  }
+
+  /* ---- Password strength indicator ---- */
+  const pwHint =
+    next.length === 0
+      ? null
+      : next.length < MIN_PASSWORD_LENGTH
+      ? `${MIN_PASSWORD_LENGTH - next.length} more character${
+          MIN_PASSWORD_LENGTH - next.length === 1 ? "" : "s"
+        } needed`
+      : confirm.length > 0 && next !== confirm
+      ? "Passwords don't match yet"
+      : "Looks good";
+
+  const initials =
+    (user?.name ?? user?.full_name ?? "U")
+      .split(" ")
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((p) => p[0]?.toUpperCase() ?? "")
+      .join("") || "U";
 
   return (
     <RoleChrome>
@@ -99,9 +164,31 @@ export default function Settings() {
         </div>
       </section>
 
+      {/* ============ Profile card ============ */}
+      {user && (
+        <section className="rounded-[24px] border border-[#e5e9f1] bg-white p-6 shadow-[0_10px_30px_-15px_rgba(15,28,65,.1)] dark:border-[#1e293b] dark:bg-[#0f172a]">
+          <div className="flex flex-wrap items-center gap-4">
+            <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-[#e8e6ff] to-[#d8d4ff] text-[16px] font-black text-[#4f46c7] dark:from-[#2a2354] dark:to-[#1e1a45] dark:text-[#a9a2ff]">
+              {initials}
+            </span>
+            <div className="min-w-0 flex-1">
+              <strong className="block truncate text-[15px] font-black text-[#102044] dark:text-white">
+                {user.name ?? user.full_name ?? "—"}
+              </strong>
+              <span className="mt-0.5 flex items-center gap-1.5 text-[11px] text-[#7c879c] dark:text-[#94a3b8]">
+                <Mail size={11} /> {user.email ?? "—"}
+              </span>
+            </div>
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-[#e4e8f0] bg-[#fafbff] px-3 py-1 text-[10px] font-extrabold uppercase tracking-[.06em] text-[#43506a] dark:border-[#1e293b] dark:bg-[#0b1224] dark:text-[#cbd5e1]">
+              <UserRound size={11} />
+              {user.role ?? "Member"}
+            </span>
+          </div>
+        </section>
+      )}
+
       {/* ============ Quick toggles ============ */}
       <section className="grid gap-4 sm:grid-cols-3">
-        {/* Notifications */}
         <button
           type="button"
           onClick={() => saveNotifications(!notifications)}
@@ -130,7 +217,6 @@ export default function Settings() {
           </span>
         </button>
 
-        {/* Appearance */}
         <button
           type="button"
           onClick={toggleTheme}
@@ -147,7 +233,6 @@ export default function Settings() {
           </span>
         </button>
 
-        {/* Theme info */}
         <div className="rounded-[20px] border border-[#e4e8f0] bg-white p-5 shadow-[0_10px_30px_-15px_rgba(15,28,65,.1)] dark:border-[#1e293b] dark:bg-[#0f172a]">
           <div className="grid h-11 w-11 place-items-center rounded-xl bg-[#eef5fd] text-[#1d5fa8] dark:bg-[#0c2340] dark:text-[#60a5fa]">
             <Palette size={19} />
@@ -207,6 +292,11 @@ export default function Settings() {
                   {showCurrent ? <EyeOff size={14} /> : <Eye size={14} />}
                 </button>
               </div>
+              {fieldErrors.current_password?.[0] && (
+                <span role="alert" className="text-[10px] font-semibold text-red-600 dark:text-[#f08a9a]">
+                  {fieldErrors.current_password[0]}
+                </span>
+              )}
             </label>
 
             {/* New password */}
@@ -232,6 +322,11 @@ export default function Settings() {
                   {showNext ? <EyeOff size={14} /> : <Eye size={14} />}
                 </button>
               </div>
+              {fieldErrors.password?.[0] && (
+                <span role="alert" className="text-[10px] font-semibold text-red-600 dark:text-[#f08a9a]">
+                  {fieldErrors.password[0]}
+                </span>
+              )}
             </label>
 
             {/* Confirm password */}
@@ -251,22 +346,13 @@ export default function Settings() {
           </div>
 
           {/* Password strength hint */}
-          {next.length > 0 && (
+          {pwHint && (
             <div className="flex items-center gap-2 rounded-xl border border-[#eef1f7] bg-[#fafbff] px-4 py-2.5 text-[10px] font-semibold text-[#7c879c] dark:border-[#1e293b] dark:bg-[#0b1224] dark:text-[#94a3b8]">
               <ShieldCheck size={12} className="text-[#6655f6] dark:text-[#a9a2ff]" />
-              <span>
-                {next.length < MIN_PASSWORD_LENGTH
-                  ? `${MIN_PASSWORD_LENGTH - next.length} more character${
-                      MIN_PASSWORD_LENGTH - next.length === 1 ? "" : "s"
-                    } needed`
-                  : next !== confirm && confirm.length > 0
-                  ? "Passwords don't match yet"
-                  : "Looks good"}
-              </span>
+              <span>{pwHint}</span>
             </div>
           )}
 
-          {/* Error */}
           {error && (
             <div
               role="alert"
@@ -277,7 +363,6 @@ export default function Settings() {
             </div>
           )}
 
-          {/* Success */}
           {message && (
             <div
               role="status"
@@ -297,6 +382,82 @@ export default function Settings() {
             </button>
           </div>
         </form>
+      </section>
+
+      {/* ============ Danger zone — delete account ============ */}
+      <section className="rounded-[24px] border border-red-200 bg-red-50/60 p-6 shadow-[0_10px_30px_-15px_rgba(220,38,38,.15)] dark:border-[#5b1e1e] dark:bg-[#2a1218]/40 sm:p-8">
+        <header className="flex items-start gap-3">
+          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-red-100 text-red-700 dark:bg-[#3a1515] dark:text-[#f08a9a]">
+            <Trash2 size={19} />
+          </span>
+          <div>
+            <p className="m-0 text-[10px] font-extrabold uppercase tracking-[.13em] text-red-700 dark:text-[#f08a9a]">
+              Danger zone
+            </p>
+            <h2 className="mt-1 text-xl font-black text-red-900 dark:text-[#f5c5c5]">
+              Delete account
+            </h2>
+            <p className="mt-1 max-w-[520px] text-[11px] leading-5 text-red-800/80 dark:text-[#f08a9a]/80">
+              Permanently remove your account and every submission, review,
+              registration, and testimonial tied to it. This cannot be undone.
+            </p>
+          </div>
+        </header>
+
+        {!deleteConfirmOpen ? (
+          <div className="mt-6 flex justify-end">
+            <button
+              type="button"
+              onClick={() => setDeleteConfirmOpen(true)}
+              className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-xl bg-red-600 px-6 text-[12px] font-extrabold text-white shadow-[0_12px_28px_-8px_rgba(220,38,38,.5)] transition hover:-translate-y-px hover:bg-red-700"
+            >
+              <Trash2 size={14} /> Delete my account
+            </button>
+          </div>
+        ) : (
+          <div className="mt-6 rounded-2xl border border-red-300 bg-white p-5 dark:border-[#5b1e1e] dark:bg-[#1a0e0e]">
+            <p className="m-0 text-[12px] font-bold text-red-900 dark:text-[#f5c5c5]">
+              Are you absolutely sure?
+            </p>
+            <p className="mt-1 text-[11px] leading-5 text-red-800/80 dark:text-[#f08a9a]/80">
+              This will immediately sign you out and erase all your data. You
+              cannot recover it.
+            </p>
+
+            {deleteError && (
+              <div
+                role="alert"
+                className="mt-3 flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-[10px] font-semibold text-red-700 dark:border-[#5b1e1e] dark:bg-[#2a1218] dark:text-[#f08a9a]"
+              >
+                <AlertCircle size={12} className="mt-0.5 shrink-0" />
+                <span>{deleteError}</span>
+              </div>
+            )}
+
+            <div className="mt-4 flex flex-wrap justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setDeleteConfirmOpen(false);
+                  setDeleteError("");
+                }}
+                disabled={deleting}
+                className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-[#e4e8f0] bg-white px-5 text-[12px] font-extrabold text-[#43506a] transition hover:-translate-y-px hover:border-[#c9cfe0] hover:bg-[#fafbff] disabled:opacity-50 dark:border-[#1e293b] dark:bg-[#0f172a] dark:text-white dark:hover:bg-[#111c33]"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmDelete}
+                disabled={deleting}
+                className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl bg-red-600 px-5 text-[12px] font-extrabold text-white shadow-[0_12px_28px_-8px_rgba(220,38,38,.5)] transition hover:-translate-y-px hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
+              >
+                <Trash2 size={13} />
+                {deleting ? "Deleting…" : "Yes, delete forever"}
+              </button>
+            </div>
+          </div>
+        )}
       </section>
     </RoleChrome>
   );

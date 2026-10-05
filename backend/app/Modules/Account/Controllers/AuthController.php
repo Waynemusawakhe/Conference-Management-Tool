@@ -16,6 +16,7 @@ use App\Modules\Account\Requests\ForgotPasswordRequest;
 use App\Modules\Account\Requests\LoginRequest;
 use App\Modules\Account\Requests\ResetPasswordRequest;
 use App\Modules\Account\Requests\UpdateProfileRequest;
+use App\Modules\Account\Actions\DeleteAccountAction;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use OpenApi\Attributes as OA;
@@ -348,6 +349,33 @@ class AuthController extends Controller
             ),
         ]
     )]
+    #[OA\Delete(
+    path: '/api/v1/auth/me',
+    tags: ['Authentication'],
+    summary: 'Delete the authenticated user account',
+    security: [['sanctum' => []]],
+    responses: [
+        new OA\Response(
+            response: 200,
+            description: 'Account deleted successfully'
+        ),
+        new OA\Response(
+            response: 401,
+            description: 'Unauthenticated'
+        ),
+    ]
+)]
+public function destroy(
+    Request $request,
+    DeleteAccountAction $action
+): JsonResponse {
+    $action->execute($request->user());
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Account deleted successfully.',
+    ]);
+}
     public function forgotPassword(
         ForgotPasswordRequest $request,
         ForgotPasswordAction $forgotPasswordAction

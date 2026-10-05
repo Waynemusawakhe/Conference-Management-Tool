@@ -72,6 +72,8 @@ Route::prefix('v1/auth')->group(function () {
         Route::patch('/me', [AuthController::class, 'updateProfile']);
         Route::put('/password', [AuthController::class, 'changePassword']);
         Route::post('/logout', [AuthController::class, 'logout']);
+        Route::delete('/me', [AuthController::class, 'destroy']);
+        
 
         Route::post('/email/verification-notification', function (
             Request $request
