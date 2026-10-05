@@ -2,13 +2,32 @@ import { http } from "./client";
 
 export const authApi = {
   register: (body) =>
-    http.post("/auth/register", body),
+    http.post(
+      "/auth/register",
+      body
+    ),
 
   login: (body) =>
-    http.post("/auth/login", body),
+    http.post(
+      "/auth/login",
+      body
+    ),
 
-  logout: () =>
-    http.post("/auth/logout", {}),
+  logout: (token = null) =>
+    http.post(
+      "/auth/logout",
+      {},
+      {
+        timeoutMs: 4000,
+
+        headers: token
+          ? {
+              Authorization:
+                `Bearer ${token}`,
+            }
+          : {},
+      }
+    ),
 
   me: () =>
     http.get("/auth/me"),

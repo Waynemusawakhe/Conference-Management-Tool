@@ -64,7 +64,7 @@ export default function ConferenceFormPage() {
       } else {
         await conferencesApi.create(formData);
       }
-      navigate("/admin-dashboard");
+      navigate(dashboardPath);
     } catch (err) {
       if (err.status === 422 && err.errors) {
         setFieldErrors(err.errors);
