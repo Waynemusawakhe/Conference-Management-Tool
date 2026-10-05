@@ -17,12 +17,16 @@ class SubmissionApiTest extends TestCase
         $this->getJson('/api/v1/submissions')->assertUnauthorized();
     }
 
-    public function test_author_can_create_submission(): void
+   public function test_author_can_create_submission(): void
     {
-        $author = User::factory()->create();
+        $author = User::factory()->create([
+            'role' => 'author',
+        ]);
+
         $conference = Conference::factory()->create();
 
-        $response = $this->actingAs($author, 'sanctum')
+        $response = $this
+            ->actingAs($author, 'sanctum')
             ->postJson('/api/v1/submissions', [
                 'conference_id' => $conference->id,
                 'title' => 'A Great Paper',
@@ -30,6 +34,7 @@ class SubmissionApiTest extends TestCase
             ]);
 
         $response->assertCreated();
+
         $this->assertDatabaseHas('submissions', [
             'title' => 'A Great Paper',
             'author_id' => $author->id,
@@ -37,7 +42,6 @@ class SubmissionApiTest extends TestCase
             'status' => 'pending',
         ]);
     }
-
     public function test_create_submission_requires_valid_conference(): void
     {
         $author = User::factory()->create();
