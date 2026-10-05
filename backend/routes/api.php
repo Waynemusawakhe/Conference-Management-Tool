@@ -201,6 +201,11 @@ Route::prefix('v1/auth')->group(function () {
             [AuthController::class, 'updateProfile']
         );
 
+        Route::delete(
+            '/me',
+            [AuthController::class, 'deleteAccount']
+        );
+
         /*
         |--------------------------------------------------------------------------
         | Password

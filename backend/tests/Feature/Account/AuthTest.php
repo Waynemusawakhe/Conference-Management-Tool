@@ -7,6 +7,9 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Password;
+use App\Modules\Conferences\Models\Conference;
+use App\Modules\Submissions\Models\Submission;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class AuthTest extends TestCase
@@ -377,5 +380,198 @@ class AuthTest extends TestCase
         $this->getJson(
             '/api/v1/users'
         )->assertUnauthorized();
+    }
+
+
+    public function test_authenticated_user_can_delete_own_account(): void
+{
+    $user = User::factory()->create([
+        'password' => Hash::make(
+            'password123'
+        ),
+    ]);
+
+    $user->createToken(
+        'test-session'
+    );
+
+    $response = $this
+        ->actingAs(
+            $user,
+            'sanctum'
+        )
+        ->deleteJson(
+            '/api/v1/auth/me',
+            [
+                'current_password' =>
+                    'password123',
+            ]
+        );
+
+    $response
+        ->assertOk()
+        ->assertJsonPath(
+            'success',
+            true
+        );
+
+    $this->assertDatabaseMissing(
+        'users',
+        [
+            'id' => $user->id,
+        ]
+    );
+
+    $this->assertDatabaseMissing(
+        'personal_access_tokens',
+        [
+            'tokenable_id' =>
+                $user->id,
+        ]
+    );
+}
+
+public function test_account_deletion_requires_correct_password(): void
+{
+    $user = User::factory()->create([
+        'password' => Hash::make(
+            'password123'
+        ),
+    ]);
+
+    $this
+        ->actingAs(
+            $user,
+            'sanctum'
+        )
+        ->deleteJson(
+            '/api/v1/auth/me',
+            [
+                'current_password' =>
+                    'wrong-password',
+            ]
+        )
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors([
+            'current_password',
+        ]);
+
+    $this->assertDatabaseHas(
+        'users',
+        [
+            'id' => $user->id,
+        ]
+    );
+}
+
+public function test_guest_cannot_delete_account(): void
+{
+    $this
+        ->deleteJson(
+            '/api/v1/auth/me',
+            [
+                'current_password' =>
+                    'password123',
+            ]
+        )
+        ->assertUnauthorized();
+}
+
+public function test_user_cannot_delete_account_while_owning_conference(): void
+{
+    $organiser = User::factory()->create([
+        'role' => 'organiser',
+        'password' => Hash::make(
+            'password123'
+        ),
+    ]);
+
+    Conference::factory()->create([
+        'organiser_id' =>
+            $organiser->id,
+    ]);
+
+    $this
+        ->actingAs(
+            $organiser,
+            'sanctum'
+        )
+        ->deleteJson(
+            '/api/v1/auth/me',
+            [
+                'current_password' =>
+                    'password123',
+            ]
+        )
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors([
+            'account',
+        ]);
+
+    $this->assertDatabaseHas(
+        'users',
+        [
+            'id' => $organiser->id,
+        ]
+    );
+}
+
+public function test_deleting_author_account_removes_private_submission_files(): void
+{
+    Storage::fake(
+        'private'
+    );
+
+    $author = User::factory()->create([
+        'role' => 'author',
+        'password' => Hash::make(
+            'password123'
+        ),
+    ]);
+
+    Storage::disk(
+        'private'
+    )->put(
+        'submissions/account-delete-test.pdf',
+        'test document'
+    );
+
+    Submission::factory()
+        ->for(
+            $author,
+            'author'
+        )
+        ->create([
+            'file_path' =>
+                'submissions/account-delete-test.pdf',
+            'file_size_bytes' => 13,
+        ]);
+
+    $this
+        ->actingAs(
+            $author,
+            'sanctum'
+        )
+        ->deleteJson(
+            '/api/v1/auth/me',
+            [
+                'current_password' =>
+                    'password123',
+            ]
+        )
+        ->assertOk();
+
+    Storage::disk(
+        'private'
+    )->assertMissing(
+        'submissions/account-delete-test.pdf'
+    );
+
+    $this->assertDatabaseMissing(
+        'users',
+        [
+            'id' => $author->id,
+        ]
+        );
     }
 }

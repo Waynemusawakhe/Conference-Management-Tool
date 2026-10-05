@@ -17,6 +17,8 @@ use App\Modules\Account\Requests\LoginRequest;
 use App\Modules\Account\Requests\ResetPasswordRequest;
 use App\Modules\Account\Requests\UpdateProfileRequest;
 use Illuminate\Support\Facades\Password;
+use App\Modules\Account\Actions\DeleteAccountAction;
+use App\Modules\Account\Requests\DeleteAccountRequest;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -199,6 +201,57 @@ class AuthController extends Controller
         return response()->json([
             'success' => true,
             'data' => $request->user(),
+        ]);
+    }
+
+    #[OA\Delete(
+    path: '/api/v1/auth/me',
+    tags: ['Authentication'],
+    summary: 'Delete the authenticated user account',
+    security: [['sanctum' => []]],
+    requestBody: new OA\RequestBody(
+        required: true,
+        content: new OA\JsonContent(
+            required: [
+                'current_password',
+            ],
+            properties: [
+                new OA\Property(
+                    property: 'current_password',
+                    type: 'string',
+                    format: 'password'
+                ),
+            ]
+        )
+    ),
+    responses: [
+        new OA\Response(
+            response: 200,
+            description: 'Account deleted successfully'
+        ),
+        new OA\Response(
+            response: 401,
+            description: 'Unauthenticated'
+        ),
+        new OA\Response(
+            response: 422,
+            description: 'Password incorrect or account cannot currently be deleted'
+        ),
+    ]
+    )]
+    public function deleteAccount(
+        DeleteAccountRequest $request,
+        DeleteAccountAction $action
+    ): JsonResponse {
+        $action->execute(
+            $request->user(),
+            $request->validated()
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' =>
+                'Your account has been deleted successfully.',
         ]);
     }
 
