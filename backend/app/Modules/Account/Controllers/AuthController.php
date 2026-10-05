@@ -421,17 +421,28 @@ class AuthController extends Controller
         ]
     )]
     public function resetPassword(
-        ResetPasswordRequest $request,
-        ResetPasswordAction $resetPasswordAction
+    ResetPasswordRequest $request,
+    ResetPasswordAction $resetPasswordAction
     ): JsonResponse {
-        $result = $resetPasswordAction->execute(
+        $status = $resetPasswordAction->execute(
             $request->validated()
         );
 
+        if (
+            $status !==
+            Password::PASSWORD_RESET
+        ) {
+            throw ValidationException::withMessages([
+                'email' => [
+                    __($status),
+                ],
+            ]);
+        }
+
         return response()->json([
             'success' => true,
-            'message' => $result['message']
-                ?? 'Password reset successfully.',
+            'message' =>
+                'Password reset successfully. You can now log in with your new password.',
         ]);
     }
 }
