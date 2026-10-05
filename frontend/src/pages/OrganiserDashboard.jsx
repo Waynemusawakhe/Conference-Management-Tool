@@ -1086,7 +1086,7 @@ export default function OrganiserDashboard() {
             </span>
           </div>
         </article>
-      </section>
+      </section> 
 
       {/* Assign reviewer modal */}
       {modal === "assign" && selectedSubmission ? (

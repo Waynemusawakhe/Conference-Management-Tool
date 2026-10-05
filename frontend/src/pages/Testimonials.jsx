@@ -17,33 +17,43 @@ import { testimonialsApi } from "../api/testimonialsApi";
 import { conferencesApi } from "../api/conferencesApi";
 import { getDashboardPath, normalizeRole } from "../utils/roleRoutes";
 
+
 const tBody = (t) =>
   t.content ?? t.body ?? t.message ?? t.text ?? t.quote ?? "";
 const tName = (t) =>
-  t.author?.name ??
   t.user?.name ??
-  t.author_name ??
+  t.author?.name ??
   t.user_name ??
+  t.author_name ??
   t.name ??
   "";
-const tRole = (t) =>
-  t.role ?? t.author?.role ?? t.user?.role ?? t.author_role ?? "";
 const tRating = (t) => {
   const n = Number(t.rating ?? t.score ?? t.stars ?? 0);
   return Number.isFinite(n) && n > 0 ? Math.min(Math.round(n), 5) : 0;
 };
 const tOwnerId = (t) =>
-  t.user_id ?? t.author_id ?? t.userId ?? t.authorId ?? t.user?.id ?? t.author?.id ?? null;
+  t.user_id ??
+  t.author_id ??
+  t.userId ??
+  t.authorId ??
+  t.user?.id ??
+  t.author?.id ??
+  null;
 const confName = (c) => c.name ?? c.title ?? `Conference #${c.id}`;
 
 function getInitials(name) {
   if (!name) return "?";
   const parts = String(name).trim().split(/\s+/).filter(Boolean);
   if (parts.length === 0) return "?";
-  return parts.slice(0, 2).map((p) => p[0]?.toUpperCase() ?? "").join("");
+  return parts
+    .slice(0, 2)
+    .map((p) => p[0]?.toUpperCase() ?? "")
+    .join("");
 }
 
-/* -- Card -- */
+/* ------------------------------------------------------------------ *
+ * Testimonial card
+ * ------------------------------------------------------------------ */
 function TestimonialCard({ item, isOwn, onEdit }) {
   const rating = item.rating ?? 0;
   return (
@@ -66,7 +76,6 @@ function TestimonialCard({ item, isOwn, onEdit }) {
         <span className="testimonial-initials">{item.initials}</span>
         <div>
           <p className="testimonial-name">{item.name || "CMT user"}</p>
-          {item.role && <p className="testimonial-role">{item.role}</p>}
         </div>
 
         {isOwn && (
@@ -83,7 +92,9 @@ function TestimonialCard({ item, isOwn, onEdit }) {
   );
 }
 
-/* -- Modal (create + edit) -- */
+/* ------------------------------------------------------------------ *
+ * Add / Edit dialog
+ * ------------------------------------------------------------------ */
 function AddTestimonialDialog({
   open,
   onClose,
@@ -94,7 +105,6 @@ function AddTestimonialDialog({
   existing,
 }) {
   const isEdit = Boolean(existing);
-  const userRole = currentUser?.role ? String(currentUser.role).toLowerCase() : "";
 
   const [content, setContent] = useState("");
   const [rating, setRating] = useState(0);
@@ -102,7 +112,6 @@ function AddTestimonialDialog({
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState("");
 
-  /* Pre-fill whenever the modal opens */
   useEffect(() => {
     if (!open) return;
     if (isEdit && existing) {
@@ -134,13 +143,10 @@ function AddTestimonialDialog({
 
     setSaving(true);
     try {
-      const displayName =
-        currentUser?.name ?? currentUser?.full_name ?? currentUser?.email ?? "";
-
+      // Only send what the backend accepts. `user_id` comes from the
+      // bearer token automatically — no need to send a name or role.
       const payload = {
         content: content.trim(),
-        name: displayName,
-        role: userRole,
       };
       if (rating > 0) payload.rating = rating;
       if (!isEdit) payload.conference_id = Number(conferenceId);
@@ -229,47 +235,32 @@ function AddTestimonialDialog({
             />
           </label>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            {/* Role — auto-filled and locked */}
-            <label className="grid gap-2">
-              <span className="text-[11px] font-bold text-[#3b4761]">
-                Role
-              </span>
-              <input
-                value={userRole}
-                readOnly
-                disabled
-                className="h-11 cursor-not-allowed rounded-xl border border-[#e4e8f0] bg-[#f7f8fc] px-3.5 text-[13px] capitalize text-[#5c6880] outline-none"
-              />
-              <span className="text-[10px] text-[#8a95a8]">
-                Set automatically from your account.
-              </span>
-            </label>
-
-            <label className="grid gap-2">
-              <span className="text-[11px] font-bold text-[#3b4761]">
-                Rating (optional)
-              </span>
-              <div className="flex items-center gap-1">
-                {[1, 2, 3, 4, 5].map((n) => (
-                  <button
-                    key={n}
-                    type="button"
-                    onClick={() => setRating(n === rating ? 0 : n)}
-                    className="grid h-11 w-11 place-items-center rounded-xl border border-[#e4e8f0] bg-white transition hover:border-[#d6dbe8] hover:bg-[#fafbff]"
-                    aria-label={`${n} star${n > 1 ? "s" : ""}`}
-                  >
-                    <Star
-                      size={15}
-                      className={
-                        n <= rating ? "fill-[#f59e0b] text-[#f59e0b]" : "text-[#dfe4ed]"
-                      }
-                    />
-                  </button>
-                ))}
-              </div>
-            </label>
-          </div>
+          {/* Rating only — role field removed */}
+          <label className="grid gap-2">
+            <span className="text-[11px] font-bold text-[#3b4761]">
+              Rating (optional)
+            </span>
+            <div className="flex items-center gap-1">
+              {[1, 2, 3, 4, 5].map((n) => (
+                <button
+                  key={n}
+                  type="button"
+                  onClick={() => setRating(n === rating ? 0 : n)}
+                  className="grid h-11 w-11 place-items-center rounded-xl border border-[#e4e8f0] bg-white transition hover:border-[#d6dbe8] hover:bg-[#fafbff]"
+                  aria-label={`${n} star${n > 1 ? "s" : ""}`}
+                >
+                  <Star
+                    size={15}
+                    className={
+                      n <= rating
+                        ? "fill-[#f59e0b] text-[#f59e0b]"
+                        : "text-[#dfe4ed]"
+                    }
+                  />
+                </button>
+              ))}
+            </div>
+          </label>
 
           {err && (
             <p
@@ -302,7 +293,9 @@ function AddTestimonialDialog({
   );
 }
 
-/* -- Page -- */
+/* ------------------------------------------------------------------ *
+ * Page
+ * ------------------------------------------------------------------ */
 export default function Testimonials() {
   const navigate = useNavigate();
   const { user, status } = useAuth();
@@ -321,12 +314,10 @@ export default function Testimonials() {
         const body = tBody(t);
         if (!body) return null;
         const name = tName(t);
-        const role = tRole(t);
         return {
           id: t.id,
           quote: body,
           name,
-          role,
           initials: getInitials(name),
           rating: tRating(t),
           ownerId: tOwnerId(t),
@@ -343,7 +334,6 @@ export default function Testimonials() {
 
   const currentUserId = user?.id ?? null;
 
-  /* Find the user's own testimonial (if any) */
   const myTestimonial = useMemo(() => {
     if (!currentUserId) return null;
     return (
@@ -376,7 +366,6 @@ export default function Testimonials() {
     setTimeout(() => setSuccessFlash(false), 4000);
   };
 
-  /* -- Button state -- */
   const addButtonLabel = isInitializing
     ? "Loading…"
     : userHasPosted

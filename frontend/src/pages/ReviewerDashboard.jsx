@@ -7,8 +7,12 @@ import {
   FileText,
   Filter,
   LayoutDashboard,
+  Lightbulb,
   Lock,
   Search,
+  Star,
+  ThumbsDown,
+  ThumbsUp,
   X,
 } from "lucide-react";
 import ReviewerLayout from "../components/ReviewerLayout";
@@ -21,15 +25,12 @@ import { reviewsApi } from "../api/reviewsApi";
 function reviewIsLocked(r) {
   return Boolean(r.locked ?? r.is_locked);
 }
+
+// Only submitted_at is a reliable "was submitted" signal.
 function reviewIsSubmitted(r) {
-  return Boolean(
-    r.submitted_at ??
-      r.submittedAt ??
-      r.comments ??
-      r.comment ??
-      r.recommendation
-  );
+  return Boolean(r.submitted_at ?? r.submittedAt);
 }
+
 function reviewState(r) {
   if (reviewIsLocked(r)) return "locked";
   if (reviewIsSubmitted(r)) return "submitted";
@@ -54,6 +55,24 @@ const STATE_META = {
   },
 };
 
+const RECOMMENDATION_META = {
+  accept: {
+    label: "Accept",
+    icon: ThumbsUp,
+    className: "border-[#bfe5d1] bg-[#effaf4] text-[#18794e]",
+  },
+  revise: {
+    label: "Revise",
+    icon: Lightbulb,
+    className: "border-[#e9d9a7] bg-[#fff9e9] text-[#9b7414]",
+  },
+  reject: {
+    label: "Reject",
+    icon: ThumbsDown,
+    className: "border-[#f1c8c8] bg-[#fff2f2] text-[#b13a3a]",
+  },
+};
+
 const itemReviewId = (r) => r.id;
 const itemSubmissionId = (r) => r.submission_id ?? r.submission?.id ?? null;
 const itemTitle = (r) =>
@@ -70,6 +89,9 @@ const itemTrack = (r) =>
   r.submission?.track ?? r.track ?? r.submission?.category ?? "";
 const itemAbstract = (r) => r.submission?.abstract ?? r.abstract ?? "";
 
+/* ------------------------------------------------------------------ *
+ * Presentation
+ * ------------------------------------------------------------------ */
 function StatCard({ icon, value, label, tint }) {
   return (
     <div className="rounded-[16px] border border-[#e4e8f0] bg-white p-4 shadow-[0_10px_28px_rgba(15,28,65,.04)] transition hover:-translate-y-px hover:shadow-[0_14px_36px_rgba(15,28,65,.07)] dark:border-[#1e293b] dark:bg-[#0f172a]">
@@ -82,6 +104,33 @@ function StatCard({ icon, value, label, tint }) {
       <p className="m-0 mt-1.5 text-[11px] font-bold text-[#35415f] dark:text-[#94a3b8]">
         {label}
       </p>
+    </div>
+  );
+}
+
+function ScoreChip({ review }) {
+  if (review.score == null && !review.recommendation) return null;
+  const rec = review.recommendation
+    ? RECOMMENDATION_META[String(review.recommendation).toLowerCase()]
+    : null;
+  const RecIcon = rec?.icon;
+
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      {review.score != null && (
+        <span className="inline-flex items-center gap-1 rounded-full border border-[#dbeafe] bg-[#eff6ff] px-2.5 py-1 text-[10px] font-extrabold text-[#1d4ed8]">
+          <Star size={11} className="fill-[#1d4ed8]" />
+          Score {review.score}
+        </span>
+      )}
+      {rec && RecIcon && (
+        <span
+          className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[10px] font-extrabold ${rec.className}`}
+        >
+          <RecIcon size={11} />
+          {rec.label}
+        </span>
+      )}
     </div>
   );
 }
@@ -140,6 +189,13 @@ function ReviewCard({ review, onEvaluate }) {
         </span>
       </div>
 
+      {/* Score + recommendation chips — only when already scored */}
+      {reviewIsSubmitted(review) && (
+        <div className="border-t border-[#f2f4f9] pt-3 dark:border-[#1e293b]">
+          <ScoreChip review={review} />
+        </div>
+      )}
+
       <div className="flex items-center justify-between gap-3 border-t border-[#f2f4f9] pt-4 dark:border-[#1e293b]">
         <span className="text-[10px] font-semibold text-[#8a95a8]">
           {state === "pending"
@@ -193,52 +249,143 @@ function LoadingCards({ rows = 4 }) {
   );
 }
 
-const FILTERS = [
+/* ------------------------------------------------------------------ *
+ * Filters
+ * ------------------------------------------------------------------ */
+const STATE_FILTERS = [
   { key: "all", label: "All" },
   { key: "pending", label: "Pending" },
   { key: "submitted", label: "Submitted" },
   { key: "locked", label: "Locked" },
 ];
 
+const RECOMMENDATION_FILTERS = [
+  { key: "any", label: "Any recommendation" },
+  { key: "accept", label: "Accept" },
+  { key: "revise", label: "Revise" },
+  { key: "reject", label: "Reject" },
+];
+
+const PAGE_SIZE = 20;
+
+/* ------------------------------------------------------------------ *
+ * Page
+ * ------------------------------------------------------------------ */
 export default function ReviewerDashboard() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
 
-  const filter = searchParams.get("filter") ?? "all";
+  // Read filters from URL (so navigation preserves them)
+  const rawFilter = searchParams.get("filter") ?? "all";
+  const filter = STATE_FILTERS.some((f) => f.key === rawFilter) ? rawFilter : "all";
+
+  const rawRec = searchParams.get("recommendation") ?? "any";
+  const recommendation = RECOMMENDATION_FILTERS.some((r) => r.key === rawRec)
+    ? rawRec
+    : "any";
+
   const [query, setQuery] = useState("");
 
+  // Data state
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState(null);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
 
   const displayName = user?.name ?? user?.full_name ?? "Reviewer";
+  const reviewerId = user?.id ?? null;
 
+  /* ---- Initial load + reload on role/id change ------------------- */
   useEffect(() => {
+    if (!reviewerId) {
+      setReviews([]);
+      setLoading(false);
+      return;
+    }
+
     let cancelled = false;
-    setLoading(true);
-    setError(null);
-    reviewsApi
-      .getAll()
-      .then((response) => {
+
+    (async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        // Pass reviewer_id so we don't rely solely on the backend policy.
+        const response = await reviewsApi.getAll({
+          reviewer_id: reviewerId,
+          per_page: PAGE_SIZE,
+          page: 1,
+        });
+
         if (cancelled) return;
+
         const payload = response?.data ?? response ?? [];
-        setReviews(Array.isArray(payload) ? payload : payload?.data ?? []);
-      })
-      .catch((err) => {
+        const items = Array.isArray(payload) ? payload : payload?.data ?? [];
+
+        setReviews(items);
+
+        // Tolerant pagination check — envelope is unconfirmed.
+        const meta = payload?.meta ?? null;
+        if (meta?.last_page != null) {
+          setHasMore(meta.current_page < meta.last_page);
+        } else if (payload?.last_page != null) {
+          setHasMore((payload.current_page ?? 1) < payload.last_page);
+        } else {
+          setHasMore(items.length === PAGE_SIZE);
+        }
+        setPage(1);
+      } catch (err) {
         if (cancelled) return;
         console.error("Failed to load reviews:", err);
         setError(err?.message ?? "Unable to load your assigned reviews.");
         setReviews([]);
-      })
-      .finally(() => {
+        setHasMore(false);
+      } finally {
         if (!cancelled) setLoading(false);
-      });
+      }
+    })();
+
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [reviewerId, reloadKey]);
 
+  /* ---- Load more ------------------------------------------------- */
+  async function handleLoadMore() {
+    if (!reviewerId || loadingMore || !hasMore) return;
+    setLoadingMore(true);
+    const nextPage = page + 1;
+    try {
+      const response = await reviewsApi.getAll({
+        reviewer_id: reviewerId,
+        per_page: PAGE_SIZE,
+        page: nextPage,
+      });
+      const payload = response?.data ?? response ?? [];
+      const items = Array.isArray(payload) ? payload : payload?.data ?? [];
+      setReviews((prev) => [...prev, ...items]);
+      setPage(nextPage);
+
+      const meta = payload?.meta ?? null;
+      if (meta?.last_page != null) {
+        setHasMore(meta.current_page < meta.last_page);
+      } else if (payload?.last_page != null) {
+        setHasMore(nextPage < payload.last_page);
+      } else {
+        setHasMore(items.length === PAGE_SIZE);
+      }
+    } catch (err) {
+      console.error("Failed to load more reviews:", err);
+      setError(err?.message ?? "Unable to load more reviews.");
+    } finally {
+      setLoadingMore(false);
+    }
+  }
+
+  /* ---- Client-side filter counts --------------------------------- */
   const counts = useMemo(() => {
     const c = { all: reviews.length, pending: 0, submitted: 0, locked: 0 };
     reviews.forEach((r) => {
@@ -248,11 +395,18 @@ export default function ReviewerDashboard() {
     return c;
   }, [reviews]);
 
+  /* ---- Client-side filtering ------------------------------------ */
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return reviews.filter((r) => {
       const state = reviewState(r);
       if (filter !== "all" && state !== filter) return false;
+
+      if (recommendation !== "any") {
+        const rec = String(r.recommendation ?? "").toLowerCase();
+        if (rec !== recommendation) return false;
+      }
+
       if (!q) return true;
       return [
         itemTitle(r),
@@ -265,19 +419,28 @@ export default function ReviewerDashboard() {
         .toLowerCase()
         .includes(q);
     });
-  }, [reviews, query, filter]);
+  }, [reviews, query, filter, recommendation]);
 
-  const handleFilterChange = (key) => {
+  /* ---- URL filter helpers ---------------------------------------- */
+  function updateParam(key, value, defaultValue) {
     const next = new URLSearchParams(searchParams);
-    if (key === "all") next.delete("filter");
-    else next.set("filter", key);
+    if (value === defaultValue) next.delete(key);
+    else next.set(key, value);
     setSearchParams(next, { replace: true });
-  };
+  }
 
-  const handleEvaluate = (review) => {
+  function handleFilterChange(key) {
+    updateParam("filter", key, "all");
+  }
+  function handleRecommendationChange(key) {
+    updateParam("recommendation", key, "any");
+  }
+
+  function handleEvaluate(review) {
     navigate(`/reviewer/evaluate/${itemReviewId(review)}`);
-  };
+  }
 
+  /* ---- Render ---------------------------------------------------- */
   return (
     <ReviewerLayout>
       {/* Hero */}
@@ -311,10 +474,16 @@ export default function ReviewerDashboard() {
         <div role="alert" className="rounded-2xl border border-[#f1c8c8] bg-[#fff2f2] p-5 text-[12px] text-[#b13a3a]">
           <strong className="block text-[12px] font-extrabold">Couldn't load your reviews</strong>
           <span className="mt-1 block text-[11px]">{error}</span>
+          <button
+            onClick={() => setReloadKey((k) => k + 1)}
+            className="mt-3 rounded-lg bg-[#b13a3a] px-3 py-1.5 text-[11px] font-extrabold text-white hover:bg-[#8f2d2d]"
+          >
+            Retry
+          </button>
         </div>
       )}
 
-      {/* Search + filter */}
+      {/* Search + filters */}
       {!error && (
         <div className="flex flex-col gap-3 rounded-2xl border border-[#e4e8f0] bg-white p-4 shadow-[0_6px_18px_rgba(15,28,65,.03)] dark:border-[#1e293b] dark:bg-[#0f172a] sm:flex-row sm:items-center sm:gap-3">
           <div className="relative flex-1">
@@ -337,16 +506,28 @@ export default function ReviewerDashboard() {
             )}
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Filter size={15} className="text-[#98a1b3]" />
             <select
               value={filter}
               onChange={(e) => handleFilterChange(e.target.value)}
               className="h-11 rounded-xl border border-[#e2e6ee] bg-white px-3 text-[12px] font-semibold text-[#43506a] outline-none focus:border-[#8175ef] focus:ring-2 focus:ring-[#8175ef]/10 dark:border-[#1e293b] dark:bg-[#0b1224] dark:text-white"
             >
-              {FILTERS.map((f) => (
+              {STATE_FILTERS.map((f) => (
                 <option key={f.key} value={f.key}>
                   {f.label} ({counts[f.key] ?? 0})
+                </option>
+              ))}
+            </select>
+
+            <select
+              value={recommendation}
+              onChange={(e) => handleRecommendationChange(e.target.value)}
+              className="h-11 rounded-xl border border-[#e2e6ee] bg-white px-3 text-[12px] font-semibold text-[#43506a] outline-none focus:border-[#8175ef] focus:ring-2 focus:ring-[#8175ef]/10 dark:border-[#1e293b] dark:bg-[#0b1224] dark:text-white"
+            >
+              {RECOMMENDATION_FILTERS.map((r) => (
+                <option key={r.key} value={r.key}>
+                  {r.label}
                 </option>
               ))}
             </select>
@@ -377,6 +558,16 @@ export default function ReviewerDashboard() {
           {filtered.map((review) => (
             <ReviewCard key={itemReviewId(review)} review={review} onEvaluate={handleEvaluate} />
           ))}
+
+          {hasMore && (
+            <button
+              onClick={handleLoadMore}
+              disabled={loadingMore}
+              className="mx-auto mt-2 inline-flex items-center gap-2 rounded-xl border border-[#d6dbe8] bg-white px-5 py-3 text-[12px] font-extrabold text-[#43506a] shadow-[0_6px_18px_rgba(15,28,65,.04)] transition hover:-translate-y-px hover:border-[#8175ef] hover:text-[#4f46c7] disabled:opacity-50 dark:border-[#1e293b] dark:bg-[#0f172a] dark:text-white"
+            >
+              {loadingMore ? "Loading…" : "Load more"}
+            </button>
+          )}
         </section>
       )}
     </ReviewerLayout>

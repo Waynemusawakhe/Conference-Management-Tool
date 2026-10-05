@@ -175,6 +175,10 @@ class TestimonialController extends Controller
             $request->validated()
         );
 
+        // 👇 ADDED LINE 👇
+        // Ensure the updated response includes the user relation
+        $testimonial->load('user:id,name,email');
+
         return response()->json([
             'success' => true,
             'message' => 'Testimonial updated successfully.',
@@ -210,7 +214,11 @@ class TestimonialController extends Controller
     ): JsonResponse {
         $testimonial = $getAction->execute($id);
 
-        if ($testimonial->user_id !== $request->user()->id) {
+        $user = $request->user();
+        $isOwner = $testimonial->user_id === $user->id;
+        $isAdmin = $user->role === 'admin';
+
+        if (! $isOwner && ! $isAdmin) {
             return response()->json([
                 'success' => false,
                 'message' => 'You do not have permission to delete this testimonial.',

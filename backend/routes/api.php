@@ -187,15 +187,18 @@ Route::prefix('v1/contact-messages')->group(function () {
 |--------------------------------------------------------------------------
 */
 
-Route::prefix('v1/testimonials')
-    ->middleware('auth:sanctum')
-    ->group(function () {
-        Route::get('/', [TestimonialController::class, 'index']);
+Route::prefix('v1/testimonials')->group(function () {
+    
+    Route::get('/', [TestimonialController::class, 'index']);
+    Route::get('/{id}', [TestimonialController::class, 'show']);
+
+    
+    Route::middleware('auth:sanctum')->group(function () {
         Route::post('/', [TestimonialController::class, 'store']);
-        Route::get('/{id}', [TestimonialController::class, 'show']);
         Route::put('/{id}', [TestimonialController::class, 'update']);
         Route::delete('/{id}', [TestimonialController::class, 'destroy']);
     });
+});
 
 /*
 |--------------------------------------------------------------------------
@@ -225,6 +228,12 @@ Route::prefix('v1')
             'submissions',
             SubmissionController::class
         );
+
+        Route::get(
+            'submissions/{submission}/file',
+            [SubmissionController::class, 'file']
+        );
+       
 
         Route::post(
             'submissions/{submission}/withdraw',

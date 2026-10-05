@@ -16,6 +16,10 @@ use App\Modules\Submissions\Requests\UpdateSubmissionRequest;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpFoundation\StreamedResponse;
+
+
 use OpenApi\Attributes as OA;
 
 class SubmissionController
@@ -191,6 +195,61 @@ class SubmissionController
 
         return response()->json($model);
     }
+
+    
+    #[OA\Get(
+        path: '/api/v1/submissions/{submission}/file',
+        tags: ['Submissions'],
+        summary: 'Download the submission file (author / reviewer / organiser / admin)',
+        security: [['sanctum' => []]],
+        parameters: [
+            new OA\Parameter(
+                name: 'submission',
+                in: 'path',
+                required: true,
+                schema: new OA\Schema(type: 'integer')
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'File streamed as a download'
+            ),
+            new OA\Response(
+                response: 403,
+                description: 'Forbidden — not authorized to view this submission'
+            ),
+            new OA\Response(
+                response: 404,
+                description: 'Submission or file not found'
+            ),
+        ]
+    )]
+    public function file(Submission $submission): StreamedResponse
+    {
+        
+        Gate::authorize('view', $submission);
+
+        
+        $path = $submission->file_path;
+
+        if (! $path) {
+            abort(404, 'No file attached to this submission.');
+        }
+
+        
+        if (! Storage::disk('local')->exists($path)) {
+            abort(404, 'File missing on server.');
+        }
+
+        
+        $filename = $submission->original_filename
+            ?? basename($path);
+
+       
+        return Storage::disk('local')->download($path, $filename);
+    }
+    
 
     #[OA\Put(
         path: '/api/v1/submissions/{submission}',
