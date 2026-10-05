@@ -12,61 +12,92 @@ class ReviewPolicy
 
     public function viewAny(User $user): bool
     {
-        return in_array($user->role, ['admin', 'organiser', 'reviewer']);
+        return in_array(
+            $user->role,
+            [
+                'admin',
+                'organiser',
+                'reviewer',
+            ],
+            true
+        );
     }
 
-    public function view(User $user, SubmissionReview $review): bool
-    {
+    public function view(
+        User $user,
+        SubmissionReview $review
+    ): bool {
         if ($user->role === 'admin') {
             return true;
         }
 
         if ($user->role === 'organiser') {
-            return $review->submission->conference->organiser_id === $user->id;
+            return $review->submission
+                ?->conference
+                ?->organiser_id === $user->id;
         }
 
-        return $review->reviewer_id === $user->id;
+        if ($user->role === 'reviewer') {
+            return $review->reviewer_id === $user->id;
+        }
+
+        return false;
     }
 
-    public function create(User $user, SubmissionReview $review): bool
-    {
+    public function create(
+        User $user,
+        SubmissionReview $review
+    ): bool {
         if ($user->role === 'admin') {
             return true;
         }
 
         return $user->role === 'organiser'
-            && $review->submission?->conference?->organiser_id === $user->id;
+            && $review->submission
+                ?->conference
+                ?->organiser_id === $user->id;
     }
 
-    /**
-     * Submit a review's score/comments/recommendation.
-     * Only the assigned reviewer, and only while unlocked.
-     */
-    public function submit(User $user, SubmissionReview $review): bool
-    {
-        return $review->reviewer_id === $user->id && ! $review->locked;
+    public function submit(
+        User $user,
+        SubmissionReview $review
+    ): bool {
+        return $review->reviewer_id === $user->id
+            && ! $review->locked;
     }
 
-    /**
-     * Lock a review so it can no longer be edited.
-     * The assigned reviewer or an admin/organiser can lock it,
-     * but only after it has been submitted.
-     */
-    public function lock(User $user, SubmissionReview $review): bool
-    {
-        if ($review->locked || is_null($review->submitted_at)) {
+    public function lock(
+        User $user,
+        SubmissionReview $review
+    ): bool {
+        if (
+            $review->locked ||
+            is_null($review->submitted_at)
+        ) {
             return false;
         }
 
-        if (in_array($user->role, ['admin', 'organiser'])) {
+        if ($user->role === 'admin') {
             return true;
         }
 
-        return $review->reviewer_id === $user->id;
+        if ($user->role === 'organiser') {
+            return $review->submission
+                ?->conference
+                ?->organiser_id === $user->id;
+        }
+
+        if ($user->role === 'reviewer') {
+            return $review->reviewer_id === $user->id;
+        }
+
+        return false;
     }
 
-    public function delete(User $user, SubmissionReview $review): bool
-    {
+    public function delete(
+        User $user,
+        SubmissionReview $review
+    ): bool {
         if ($review->locked) {
             return false;
         }
@@ -75,6 +106,9 @@ class ReviewPolicy
             return true;
         }
 
-        return $user->role === 'organiser' && $review->submission->conference->organiser_id === $user->id;
+        return $user->role === 'organiser'
+            && $review->submission
+                ?->conference
+                ?->organiser_id === $user->id;
     }
 }
