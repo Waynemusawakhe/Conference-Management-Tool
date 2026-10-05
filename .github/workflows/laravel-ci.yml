@@ -1,7 +1,8 @@
-name: Laravel CI
+name: CMT CI
 
 on:
   pull_request:
+
   push:
     branches:
       - main
@@ -10,8 +11,27 @@ permissions:
   contents: read
 
 jobs:
-  laravel-ci:
+  backend:
+    name: Backend Tests
     runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+
+        env:
+          POSTGRES_DB: conference_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: root
+
+        ports:
+          - 5432:5432
+
+        options: >-
+          --health-cmd="pg_isready -U postgres -d conference_test"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
 
     defaults:
       run:
@@ -24,8 +44,8 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.4'
-          extensions: mbstring, pdo, sqlite, pdo_sqlite
+          php-version: "8.4"
+          extensions: mbstring, pdo, pgsql, pdo_pgsql
           coverage: none
 
       - name: Check PHP version
@@ -35,12 +55,19 @@ jobs:
         run: composer validate --no-check-publish
 
       - name: Install Composer dependencies
-        run: composer install --prefer-dist --no-interaction --no-progress
+        run: |
+          composer install \
+            --prefer-dist \
+            --no-interaction \
+            --no-progress
 
       - name: Prepare Laravel environment
         run: |
           cp .env.example .env
           php artisan key:generate
+
+      - name: Clear Laravel caches
+        run: php artisan optimize:clear
 
       - name: Validate Laravel configuration
         run: php artisan config:cache
@@ -50,3 +77,28 @@ jobs:
 
       - name: Run Laravel Pint
         run: ./vendor/bin/pint --test
+
+  frontend:
+    name: Frontend Build
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Build frontend
+        run: npm run build
