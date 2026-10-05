@@ -16,6 +16,8 @@ use App\Modules\Account\Requests\ForgotPasswordRequest;
 use App\Modules\Account\Requests\LoginRequest;
 use App\Modules\Account\Requests\ResetPasswordRequest;
 use App\Modules\Account\Requests\UpdateProfileRequest;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use OpenApi\Attributes as OA;
@@ -349,19 +351,23 @@ class AuthController extends Controller
         ]
     )]
     public function forgotPassword(
-        ForgotPasswordRequest $request,
-        ForgotPasswordAction $forgotPasswordAction
-    ): JsonResponse {
-        $result = $forgotPasswordAction->execute(
-            $request->validated()
-        );
+    ForgotPasswordRequest $request,
+    ForgotPasswordAction $forgotPasswordAction
+        ): JsonResponse {
+            $forgotPasswordAction->execute(
+                $request->validated()
+            );
 
-        return response()->json([
-            'success' => true,
-            'message' => $result['message']
-                ?? 'Password reset link sent successfully.',
-        ]);
-    }
+            /*
+            * Always return a generic response.
+            * This prevents account enumeration.
+            */
+            return response()->json([
+                'success' => true,
+                'message' =>
+                    'If an account exists for that email, a password reset link will be sent.',
+            ]);
+        }
 
     #[OA\Post(
         path: '/api/v1/auth/reset-password',
