@@ -353,14 +353,42 @@ Route::prefix('v1/contact-messages')->group(function () {
 |--------------------------------------------------------------------------
 */
 
-Route::prefix('v1/testimonials')
-    ->middleware('auth:sanctum')
-    ->group(function () {
-        Route::get('/', [TestimonialController::class, 'index']);
-        Route::post('/', [TestimonialController::class, 'store']);
-        Route::get('/{id}', [TestimonialController::class, 'show']);
-        Route::put('/{id}', [TestimonialController::class, 'update']);
-        Route::delete('/{id}', [TestimonialController::class, 'destroy']);
+Route::prefix('v1/testimonials')->group(function () {
+
+    /*
+     * Public read access.
+     */
+    Route::get(
+        '/',
+        [TestimonialController::class, 'index']
+    );
+
+    Route::get(
+        '/{id}',
+        [TestimonialController::class, 'show']
+    );
+
+    /*
+     * Creating, updating and deleting testimonials
+     * requires authentication.
+     */
+    Route::middleware('auth:sanctum')
+            ->group(function () {
+                Route::post(
+                    '/',
+                    [TestimonialController::class, 'store']
+                );
+
+                Route::put(
+                    '/{id}',
+                    [TestimonialController::class, 'update']
+                );
+
+                Route::delete(
+                    '/{id}',
+                    [TestimonialController::class, 'destroy']
+                );
+            });
     });
 
 /*

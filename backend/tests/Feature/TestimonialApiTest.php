@@ -12,23 +12,45 @@ class TestimonialApiTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_testimonial_endpoints_require_authentication(): void
-    {
-        $this->getJson('/api/v1/testimonials')
-            ->assertUnauthorized();
+    public function test_testimonial_reads_are_public(): void
+{
+    $testimonial = Testimonial::create([
+        'user_id' => User::factory()->create()->id,
+        'conference_id' => Conference::factory()->create()->id,
+        'rating' => 5,
+        'content' => 'Excellent conference.',
+    ]);
 
-        $this->postJson('/api/v1/testimonials', [])
-            ->assertUnauthorized();
+    $this->getJson('/api/v1/testimonials')
+        ->assertOk()
+        ->assertJsonCount(1, 'data');
 
-        $this->getJson('/api/v1/testimonials/1')
-            ->assertUnauthorized();
+    $this->getJson(
+        "/api/v1/testimonials/{$testimonial->id}"
+    )
+        ->assertOk()
+        ->assertJsonPath(
+            'data.id',
+            $testimonial->id
+        );
+}
 
-        $this->putJson('/api/v1/testimonials/1', [])
-            ->assertUnauthorized();
+public function test_testimonial_writes_require_authentication(): void
+{
+    $this->postJson(
+        '/api/v1/testimonials',
+        []
+    )->assertUnauthorized();
 
-        $this->deleteJson('/api/v1/testimonials/1')
-            ->assertUnauthorized();
-    }
+    $this->putJson(
+        '/api/v1/testimonials/1',
+        []
+    )->assertUnauthorized();
+
+    $this->deleteJson(
+        '/api/v1/testimonials/1'
+    )->assertUnauthorized();
+}
 
     public function test_authenticated_user_can_list_testimonials(): void
     {
