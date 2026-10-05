@@ -45,7 +45,7 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: "8.4"
-          extensions: mbstring, pdo, pgsql, pdo_pgsql
+          extensions: mbstring, fileinfo, pdo, pgsql, pdo_pgsql
           coverage: none
 
       - name: Check PHP version
