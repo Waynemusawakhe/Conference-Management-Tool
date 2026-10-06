@@ -323,7 +323,7 @@ class RegistrationController extends Controller
         int $id,
         UpdateRegistrationAction $action
     ): JsonResponse {
-        $registration = (new GetRegistrationAction())->execute($id);
+        $registration = (new GetRegistrationAction)->execute($id);
 
         $this->authorize('update', $registration);
 
@@ -377,7 +377,7 @@ class RegistrationController extends Controller
         int $id,
         DeleteRegistrationAction $action
     ): JsonResponse {
-        $registration = (new GetRegistrationAction())->execute($id);
+        $registration = (new GetRegistrationAction)->execute($id);
 
         $this->authorize('delete', $registration);
 

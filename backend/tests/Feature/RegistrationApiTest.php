@@ -3,8 +3,8 @@
 namespace Tests\Feature;
 
 use App\Models\User;
-use App\Modules\Registrations\Actions\SendConferenceRemindersAction;
 use App\Modules\Conferences\Models\Conference;
+use App\Modules\Registrations\Actions\SendConferenceRemindersAction;
 use App\Modules\Registrations\Models\Registration;
 use App\Notifications\CmtNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -82,8 +82,7 @@ class RegistrationApiTest extends TestCase
         Notification::assertSentTo(
             $attendee,
             CmtNotification::class,
-            fn (CmtNotification $notification) =>
-                $notification->kind === 'conference_reminder'
+            fn (CmtNotification $notification) => $notification->kind === 'conference_reminder'
                 && $notification->metadata['registration_id'] === $registration->id
         );
 

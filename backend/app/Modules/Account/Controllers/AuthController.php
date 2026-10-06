@@ -5,6 +5,7 @@ namespace App\Modules\Account\Controllers;
 use App\Http\Controllers\Controller;
 use App\Modules\Account\Actions\ChangePasswordAction;
 use App\Modules\Account\Actions\CreateUserAction;
+use App\Modules\Account\Actions\DeleteAccountAction;
 use App\Modules\Account\Actions\ForgotPasswordAction;
 use App\Modules\Account\Actions\LoginAction;
 use App\Modules\Account\Actions\LogoutAction;
@@ -12,13 +13,15 @@ use App\Modules\Account\Actions\ResetPasswordAction;
 use App\Modules\Account\Actions\UpdateProfileAction;
 use App\Modules\Account\Requests\ChangePasswordRequest;
 use App\Modules\Account\Requests\CreateUserRequest;
+use App\Modules\Account\Requests\DeleteAccountRequest;
 use App\Modules\Account\Requests\ForgotPasswordRequest;
 use App\Modules\Account\Requests\LoginRequest;
 use App\Modules\Account\Requests\ResetPasswordRequest;
 use App\Modules\Account\Requests\UpdateProfileRequest;
-use App\Modules\Account\Actions\DeleteAccountAction;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Validation\ValidationException;
 use OpenApi\Attributes as OA;
 
 class AuthController extends Controller
@@ -201,6 +204,56 @@ class AuthController extends Controller
         ]);
     }
 
+    #[OA\Delete(
+        path: '/api/v1/auth/me',
+        tags: ['Authentication'],
+        summary: 'Delete the authenticated user account',
+        security: [['sanctum' => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: [
+                    'current_password',
+                ],
+                properties: [
+                    new OA\Property(
+                        property: 'current_password',
+                        type: 'string',
+                        format: 'password'
+                    ),
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Account deleted successfully'
+            ),
+            new OA\Response(
+                response: 401,
+                description: 'Unauthenticated'
+            ),
+            new OA\Response(
+                response: 422,
+                description: 'Password incorrect or account cannot currently be deleted'
+            ),
+        ]
+    )]
+    public function deleteAccount(
+        DeleteAccountRequest $request,
+        DeleteAccountAction $action
+    ): JsonResponse {
+        $action->execute(
+            $request->user(),
+            $request->validated()
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Your account has been deleted successfully.',
+        ]);
+    }
+
     #[OA\Patch(
         path: '/api/v1/auth/me',
         tags: ['Authentication'],
@@ -349,45 +402,21 @@ class AuthController extends Controller
             ),
         ]
     )]
-    #[OA\Delete(
-    path: '/api/v1/auth/me',
-    tags: ['Authentication'],
-    summary: 'Delete the authenticated user account',
-    security: [['sanctum' => []]],
-    responses: [
-        new OA\Response(
-            response: 200,
-            description: 'Account deleted successfully'
-        ),
-        new OA\Response(
-            response: 401,
-            description: 'Unauthenticated'
-        ),
-    ]
-)]
-public function destroy(
-    Request $request,
-    DeleteAccountAction $action
-): JsonResponse {
-    $action->execute($request->user());
-
-    return response()->json([
-        'success' => true,
-        'message' => 'Account deleted successfully.',
-    ]);
-}
     public function forgotPassword(
         ForgotPasswordRequest $request,
         ForgotPasswordAction $forgotPasswordAction
     ): JsonResponse {
-        $result = $forgotPasswordAction->execute(
+        $forgotPasswordAction->execute(
             $request->validated()
         );
 
+        /*
+        * Always return a generic response.
+        * This prevents account enumeration.
+        */
         return response()->json([
             'success' => true,
-            'message' => $result['message']
-                ?? 'Password reset link sent successfully.',
+            'message' => 'If an account exists for that email, a password reset link will be sent.',
         ]);
     }
 
@@ -446,14 +475,24 @@ public function destroy(
         ResetPasswordRequest $request,
         ResetPasswordAction $resetPasswordAction
     ): JsonResponse {
-        $result = $resetPasswordAction->execute(
+        $status = $resetPasswordAction->execute(
             $request->validated()
         );
 
+        if (
+            $status !==
+            Password::PASSWORD_RESET
+        ) {
+            throw ValidationException::withMessages([
+                'email' => [
+                    __($status),
+                ],
+            ]);
+        }
+
         return response()->json([
             'success' => true,
-            'message' => $result['message']
-                ?? 'Password reset successfully.',
+            'message' => 'Password reset successfully. You can now log in with your new password.',
         ]);
     }
 }

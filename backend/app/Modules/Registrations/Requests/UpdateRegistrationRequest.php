@@ -2,36 +2,34 @@
 
 namespace App\Modules\Registrations\Requests;
 
-use App\Models\User;
-use App\Modules\Conferences\Models\Conference;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 
 class UpdateRegistrationRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return Auth::check();
+        return $this->user() !== null;
     }
 
     public function rules(): array
     {
         return [
-            'conference_id' => [
-                'sometimes',
-                'integer',
-                Rule::exists(Conference::class, 'id'),
-            ],
             'user_id' => [
-                'sometimes',
-                'integer',
-                Rule::exists(User::class, 'id'),
+                'prohibited',
             ],
+
+            'conference_id' => [
+                'prohibited',
+            ],
+
             'status' => [
-                'sometimes',
+                'required',
                 'string',
-                Rule::in(['registered', 'cancelled']),
+                Rule::in([
+                    'registered',
+                    'cancelled',
+                ]),
             ],
         ];
     }
@@ -39,8 +37,12 @@ class UpdateRegistrationRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'conference_id.exists' => 'The selected conference does not exist.',
-            'user_id.exists' => 'The selected user does not exist.',
+            'user_id.prohibited' => 'The registration owner cannot be changed.',
+
+            'conference_id.prohibited' => 'The registration conference cannot be changed.',
+
+            'status.required' => 'A registration status is required.',
+
             'status.in' => 'Status must be either registered or cancelled.',
         ];
     }

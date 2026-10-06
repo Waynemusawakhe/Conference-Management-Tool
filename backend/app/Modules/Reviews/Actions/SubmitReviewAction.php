@@ -2,8 +2,8 @@
 
 namespace App\Modules\Reviews\Actions;
 
-use App\Notifications\CmtNotification;
 use App\Modules\Reviews\Models\SubmissionReview;
+use App\Notifications\CmtNotification;
 use Illuminate\Validation\ValidationException;
 
 class SubmitReviewAction

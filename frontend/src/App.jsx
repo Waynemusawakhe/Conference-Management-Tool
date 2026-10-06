@@ -10,11 +10,12 @@ import HelpFAQ from "./pages/HelpFAQ";
 import About from "./pages/About";
 import ForgotPassword from "./pages/ForgotPassword";
 import Testimonials from "./pages/Testimonials";
+import EmailVerified from "./pages/EmailVerified";
+import ResetPassword from "./pages/ResetPassword";
 
 import ReviewerDashboard from "./pages/ReviewerDashboard";
 import OrganiserDashboard from "./pages/OrganiserDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
-
 
 import AccountSettings from "./pages/AccountSettings";
 import Profile from "./pages/Profile";
@@ -27,7 +28,6 @@ import AssignReviewersPage from "./pages/AssignReviewersPage";
 import ScoreSubmission from "./pages/ScoreSubmission";
 import AttendeeDashboard from "./pages/AttendeeDashboard";
 import MyConferences from "./pages/MyConferences";
-import AttendeeProposalStatus from "./pages/AttendeeProposalStatus";
 import UsersPage from "./pages/UsersPage";
 
 /* ---------- Admin pages ---------- */
@@ -62,7 +62,7 @@ export default function App() {
         <Routes>
           {/* ==================== PUBLIC ROUTES ==================== */}
 
-          <Route path="/" element={<Navigate to="/login" replace />} />
+          <Route path="/" element={<Home />} />
           <Route path="/home" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
@@ -72,6 +72,8 @@ export default function App() {
           <Route path="/help-faq" element={<HelpFAQ />} />
           <Route path="/about" element={<About />} />
           <Route path="/testimonials" element={<Testimonials />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/email-verified" element={<EmailVerified />} />
 
           {/* ==================== AUTHOR ==================== */}
 
@@ -87,7 +89,7 @@ export default function App() {
           <Route
             path="/submit-proposal"
             element={
-              <ProtectedRoute roles={["author", "attendee"]}>
+              <ProtectedRoute roles={["author"]}>
                 <SubmitProposal />
               </ProtectedRoute>
             }
@@ -96,7 +98,7 @@ export default function App() {
           <Route
             path="/submit-proposal/:conferenceId"
             element={
-              <ProtectedRoute roles={["author", "attendee"]}>
+              <ProtectedRoute roles={["author"]}>
                 <SubmitProposal />
               </ProtectedRoute>
             }
@@ -130,20 +132,23 @@ export default function App() {
               </ProtectedRoute>
             }
           />
-          
-         <Route
+
+          <Route
             path="/user-testimonials"
             element={
-              <ProtectedRoute roles={["author", "reviewer", "organiser", "attendee", "admin"]}>
+              <ProtectedRoute
+                roles={["author", "reviewer", "organiser", "attendee", "admin"]}
+              >
                 <Testimonials />
               </ProtectedRoute>
             }
           />
-        
+
           <Route
             path="/reviewer/pending"
             element={<Navigate to="/reviewer-dashboard?filter=pending" replace />}
           />
+
           <Route
             path="/reviewer/history"
             element={<Navigate to="/reviewer-dashboard?filter=locked" replace />}
@@ -167,15 +172,6 @@ export default function App() {
                 roles={["author", "reviewer", "organiser", "attendee", "admin"]}
               >
                 <MyConferences />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/attendee-proposals"
-            element={
-              <ProtectedRoute roles={["attendee"]}>
-                <AttendeeProposalStatus />
               </ProtectedRoute>
             }
           />
@@ -220,7 +216,6 @@ export default function App() {
 
           {/* ==================== ADMIN ==================== */}
 
-          {/* Dashboard */}
           <Route
             path="/admin-dashboard"
             element={
@@ -230,7 +225,6 @@ export default function App() {
             }
           />
 
-          {/* Reports */}
           <Route
             path="/admin/reports"
             element={
@@ -240,7 +234,6 @@ export default function App() {
             }
           />
 
-          {/* Conferences — list + edit */}
           <Route
             path="/admin/conferences"
             element={
@@ -249,6 +242,7 @@ export default function App() {
               </ProtectedRoute>
             }
           />
+
           <Route
             path="/admin/conferences/:id/edit"
             element={
@@ -258,7 +252,6 @@ export default function App() {
             }
           />
 
-          {/* Submissions (read-only oversight) */}
           <Route
             path="/admin/submissions"
             element={
@@ -268,7 +261,6 @@ export default function App() {
             }
           />
 
-          {/* Reviews — assign, lock, remove */}
           <Route
             path="/admin/reviews"
             element={
@@ -278,7 +270,6 @@ export default function App() {
             }
           />
 
-          {/* Registrations */}
           <Route
             path="/admin/registrations"
             element={
@@ -288,7 +279,6 @@ export default function App() {
             }
           />
 
-          {/* Users directory + detail */}
           <Route
             path="/users"
             element={
@@ -297,6 +287,7 @@ export default function App() {
               </ProtectedRoute>
             }
           />
+
           <Route
             path="/admin/users/:id"
             element={
@@ -306,7 +297,6 @@ export default function App() {
             }
           />
 
-          {/* Contact messages + detail */}
           <Route
             path="/admin/contact-messages"
             element={
@@ -315,6 +305,7 @@ export default function App() {
               </ProtectedRoute>
             }
           />
+
           <Route
             path="/admin/contact-messages/:id"
             element={
@@ -324,7 +315,6 @@ export default function App() {
             }
           />
 
-          {/* Testimonials */}
           <Route
             path="/admin/testimonials"
             element={
@@ -334,7 +324,6 @@ export default function App() {
             }
           />
 
-          {/* FAQs — list + create + edit */}
           <Route
             path="/admin/faqs"
             element={
@@ -343,6 +332,7 @@ export default function App() {
               </ProtectedRoute>
             }
           />
+
           <Route
             path="/admin/faqs/new"
             element={
@@ -351,6 +341,7 @@ export default function App() {
               </ProtectedRoute>
             }
           />
+
           <Route
             path="/admin/faqs/:id/edit"
             element={

@@ -220,4 +220,163 @@ class ConferenceApiTest extends TestCase
             ])
             ->assertOk();
     }
+
+    public function test_conference_cannot_be_created_with_past_start_date(): void
+    {
+        $organiser = User::factory()->create([
+            'role' => 'organiser',
+        ]);
+
+        $this
+            ->actingAs(
+                $organiser,
+                'sanctum'
+            )
+            ->postJson(
+                '/api/v1/conferences',
+                $this->validPayload([
+                    'start_date' => now()
+                        ->subDay()
+                        ->toDateString(),
+
+                    'end_date' => now()
+                        ->addDay()
+                        ->toDateString(),
+                ])
+            )
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors([
+                'start_date',
+            ]);
+    }
+
+    public function test_conference_update_cannot_move_start_date_into_past(): void
+    {
+        $organiser = User::factory()->create([
+            'role' => 'organiser',
+        ]);
+
+        $conference =
+            Conference::factory()
+                ->for(
+                    $organiser,
+                    'organiser'
+                )
+                ->create([
+                    'start_date' => now()
+                        ->addMonth()
+                        ->toDateString(),
+
+                    'end_date' => now()
+                        ->addMonth()
+                        ->addDays(2)
+                        ->toDateString(),
+                ]);
+
+        $this
+            ->actingAs(
+                $organiser,
+                'sanctum'
+            )
+            ->putJson(
+                "/api/v1/conferences/{$conference->id}",
+                [
+                    'start_date' => now()
+                        ->subDay()
+                        ->toDateString(),
+                ]
+            )
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors([
+                'start_date',
+            ]);
+    }
+
+    public function test_conference_update_cannot_make_end_date_before_start_date(): void
+    {
+        $organiser = User::factory()->create([
+            'role' => 'organiser',
+        ]);
+
+        $conference =
+            Conference::factory()
+                ->for(
+                    $organiser,
+                    'organiser'
+                )
+                ->create([
+                    'start_date' => now()
+                        ->addMonth()
+                        ->toDateString(),
+
+                    'end_date' => now()
+                        ->addMonth()
+                        ->addDays(3)
+                        ->toDateString(),
+                ]);
+
+        $this
+            ->actingAs(
+                $organiser,
+                'sanctum'
+            )
+            ->putJson(
+                "/api/v1/conferences/{$conference->id}",
+                [
+                    'end_date' => now()
+                        ->addWeek()
+                        ->toDateString(),
+                ]
+            )
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors([
+                'end_date',
+            ]);
+    }
+
+    public function test_conference_update_cannot_put_submission_deadline_after_start_date(): void
+    {
+        $organiser = User::factory()->create([
+            'role' => 'organiser',
+        ]);
+
+        $conference =
+            Conference::factory()
+                ->for(
+                    $organiser,
+                    'organiser'
+                )
+                ->create([
+                    'start_date' => now()
+                        ->addMonth()
+                        ->toDateString(),
+
+                    'end_date' => now()
+                        ->addMonth()
+                        ->addDays(3)
+                        ->toDateString(),
+
+                    'submission_deadline' => now()
+                        ->addWeeks(2)
+                        ->toDateString(),
+                ]);
+
+        $this
+            ->actingAs(
+                $organiser,
+                'sanctum'
+            )
+            ->putJson(
+                "/api/v1/conferences/{$conference->id}",
+                [
+                    'submission_deadline' => now()
+                        ->addMonths(2)
+                        ->toDateString(),
+                ]
+            )
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors([
+                'submission_deadline',
+            ]);
+    }
 }

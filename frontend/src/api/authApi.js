@@ -1,12 +1,71 @@
 import { http } from "./client";
 
 export const authApi = {
-  register: (body) => http.post("/auth/register", body),
-  login: (body) => http.post("/auth/login", body),
-  logout: () => http.post("/auth/logout", {}),
-  me: () => http.get("/auth/me"),
-  forgotPassword: (body) => http.post("/auth/forgot-password", body),
-  resetPassword: (body) => http.post("/auth/reset-password", body),
-  changePassword: (body) => http.put("/auth/password", body),
-  deleteAccount: () => http.delete("/auth/me"),
+  register: (body) =>
+    http.post(
+      "/auth/register",
+      body
+    ),
+
+  login: (body) =>
+    http.post(
+      "/auth/login",
+      body
+    ),
+
+  logout: (token = null) =>
+    http.post(
+      "/auth/logout",
+      {},
+      {
+        timeoutMs: 4000,
+
+        headers: token
+          ? {
+              Authorization:
+                `Bearer ${token}`,
+            }
+          : {},
+      }
+    ),
+
+  me: () =>
+    http.get("/auth/me"),
+
+  forgotPassword: (body) =>
+    http.post(
+      "/auth/forgot-password",
+      body
+    ),
+
+  resetPassword: (body) =>
+    http.post(
+      "/auth/reset-password",
+      body
+    ),
+
+  updateProfile: (body) =>
+    http.patch(
+      "/auth/me",
+      body
+    ),
+
+  changePassword: (body) =>
+    http.put(
+      "/auth/password",
+      body
+    ),
+
+  deleteAccount: (
+    currentPassword
+  ) =>
+    http.delete(
+      "/auth/me",
+      {
+        body: {
+          current_password:
+            currentPassword,
+        },
+      }
+    ),
 };

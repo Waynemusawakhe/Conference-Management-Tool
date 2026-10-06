@@ -14,11 +14,17 @@ class ResetPasswordAction
     {
         return Password::reset(
             $data,
-            function (User $user, string $password) {
+            function (
+                User $user,
+                string $password
+            ) {
                 $user->forceFill([
                     'password' => Hash::make($password),
                     'remember_token' => Str::random(60),
                 ])->save();
+
+                // Revoke every active Sanctum token after reset.
+                $user->tokens()->delete();
 
                 event(new PasswordReset($user));
             }

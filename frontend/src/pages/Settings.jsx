@@ -50,6 +50,7 @@ export default function Settings() {
 
   /* ---- Delete account ---- */
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [deletePassword, setDeletePassword] = useState("");
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
 
@@ -108,19 +109,39 @@ export default function Settings() {
 
   /* ---- Delete account ---- */
   async function confirmDelete() {
-    setDeleting(true);
-    setDeleteError("");
-    try {
-      await authApi.deleteAccount();
-      setDeleteConfirmOpen(false);
-      await logout();
-      navigate("/login", { replace: true });
-    } catch (err) {
-      setDeleteError(err?.message || "Could not delete your account.");
-    } finally {
-      setDeleting(false);
-    }
+  if (!deletePassword.trim()) {
+    setDeleteError("Please enter your current password.");
+    return;
   }
+
+  setDeleting(true);
+  setDeleteError("");
+
+  try {
+    await authApi.deleteAccount(deletePassword);
+
+    setDeleteConfirmOpen(false);
+    setDeletePassword("");
+
+    await logout();
+
+    navigate("/login", {
+      replace: true,
+    });
+  } catch (err) {
+    const firstError = Object.values(
+      err?.errors || {}
+    ).flat()[0];
+
+    setDeleteError(
+      firstError ||
+        err?.message ||
+        "Could not delete your account."
+    );
+  } finally {
+    setDeleting(false);
+  }
+}
 
   /* ---- Password strength indicator ---- */
   const pwHint =
@@ -420,9 +441,28 @@ export default function Settings() {
               Are you absolutely sure?
             </p>
             <p className="mt-1 text-[11px] leading-5 text-red-800/80 dark:text-[#f08a9a]/80">
-              This will immediately sign you out and erase all your data. You
+              This will permanently delete your account and related account data. You
               cannot recover it.
             </p>
+
+            <label className="mt-4 grid gap-2">
+              <span className="text-[10px] font-extrabold uppercase tracking-[.08em] text-red-800 dark:text-[#f08a9a]">
+                Current password
+              </span>
+
+              <input
+                type="password"
+                value={deletePassword}
+                onChange={(event) => {
+                  setDeletePassword(event.target.value);
+                  setDeleteError("");
+                }}
+                autoComplete="current-password"
+                placeholder="Enter your current password"
+                disabled={deleting}
+                className="h-11 rounded-xl border border-red-200 bg-white px-3 text-sm text-[#1c2a4a] outline-none focus:border-red-400 focus:ring-4 focus:ring-red-100 dark:border-[#5b1e1e] dark:bg-[#0f172a] dark:text-white"
+              />
+            </label>
 
             {deleteError && (
               <div
@@ -439,9 +479,10 @@ export default function Settings() {
                 type="button"
                 onClick={() => {
                   setDeleteConfirmOpen(false);
+                  setDeletePassword("");
                   setDeleteError("");
                 }}
-                disabled={deleting}
+                disabled={deleting || !deletePassword.trim()}
                 className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-[#e4e8f0] bg-white px-5 text-[12px] font-extrabold text-[#43506a] transition hover:-translate-y-px hover:border-[#c9cfe0] hover:bg-[#fafbff] disabled:opacity-50 dark:border-[#1e293b] dark:bg-[#0f172a] dark:text-white dark:hover:bg-[#111c33]"
               >
                 Cancel

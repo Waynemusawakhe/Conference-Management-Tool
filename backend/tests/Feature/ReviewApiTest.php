@@ -3,10 +3,10 @@
 namespace Tests\Feature;
 
 use App\Models\User;
-use App\Notifications\CmtNotification;
 use App\Modules\Conferences\Models\Conference;
 use App\Modules\Reviews\Models\SubmissionReview;
 use App\Modules\Submissions\Models\Submission;
+use App\Notifications\CmtNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 use Tests\TestCase;
@@ -271,8 +271,7 @@ class ReviewApiTest extends TestCase
         Notification::assertSentTo(
             $submission->author,
             CmtNotification::class,
-            fn (CmtNotification $notification) =>
-                $notification->kind === 'proposal_reviewed'
+            fn (CmtNotification $notification) => $notification->kind === 'proposal_reviewed'
                 && $notification->metadata['submission_id'] === $submission->id
         );
     }

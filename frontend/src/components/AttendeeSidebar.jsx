@@ -1,7 +1,5 @@
 import {
   Compass,
-  ClipboardCheck,
-  FilePlus2,
   LayoutDashboard,
   LoaderCircle,
   LogOut,
@@ -43,9 +41,13 @@ export default function AttendeeSidebar({ open, onClose }) {
 
   const handleLogout = async () => {
     if (signingOut) return;
+
     setSigningOut(true);
     await logout();
-    navigate("/login", { replace: true });
+
+    navigate("/login", {
+      replace: true,
+    });
   };
 
   return (
@@ -68,42 +70,39 @@ export default function AttendeeSidebar({ open, onClose }) {
           <span className="mb-2 grid h-9 w-9 place-items-center rounded-lg bg-white/10">
             <TicketCheck size={17} />
           </span>
-          <strong className="block text-[13px]">Your conference hub</strong>
+
+          <strong className="block text-[13px]">
+            Your conference hub
+          </strong>
+
           <p className="mt-1 text-[10px] leading-5 text-white/60">
             Track your registrations and discover upcoming conferences.
           </p>
         </div>
 
-        <nav className="space-y-1" aria-label="Attendee dashboard navigation">
+        <nav
+          className="space-y-1"
+          aria-label="Attendee dashboard navigation"
+        >
           <NavItem
             icon={<LayoutDashboard size={16} />}
             label="Overview"
             active={location.pathname === "/attendee-dashboard"}
             onClick={() => goTo("/attendee-dashboard")}
           />
+
           <NavItem
             icon={<TicketCheck size={16} />}
             label="My registrations"
             active={location.pathname === "/my-conferences"}
             onClick={() => goTo("/my-conferences")}
           />
+
           <NavItem
             icon={<Compass size={16} />}
             label="Browse conferences"
             active={location.pathname === "/conferences"}
             onClick={() => goTo("/conferences")}
-          />
-          <NavItem
-            icon={<FilePlus2 size={16} />}
-            label="Submit a proposal"
-            active={location.pathname.startsWith("/submit-proposal")}
-            onClick={() => goTo("/submit-proposal")}
-          />
-          <NavItem
-            icon={<ClipboardCheck size={16} />}
-            label="Proposal status"
-            active={location.pathname === "/attendee-proposals"}
-            onClick={() => goTo("/attendee-proposals")}
           />
         </nav>
 
@@ -115,12 +114,14 @@ export default function AttendeeSidebar({ open, onClose }) {
           active={location.pathname === "/profile"}
           onClick={() => goTo("/profile")}
         />
+
         <NavItem
           icon={<Settings size={16} />}
           label="Settings"
           active={location.pathname === "/settings"}
           onClick={() => goTo("/settings")}
         />
+
         <button
           type="button"
           onClick={handleLogout}
@@ -133,6 +134,7 @@ export default function AttendeeSidebar({ open, onClose }) {
           ) : (
             <LogOut size={16} />
           )}
+
           {signingOut ? "Signing out..." : "Sign out"}
         </button>
       </aside>

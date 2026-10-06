@@ -30,8 +30,7 @@ class CreateTestimonialAction
                 )
             ) {
                 throw ValidationException::withMessages([
-                    'conference_id' =>
-                        'You have already submitted a testimonial for this conference.',
+                    'conference_id' => 'You have already submitted a testimonial for this conference.',
                 ]);
             }
 

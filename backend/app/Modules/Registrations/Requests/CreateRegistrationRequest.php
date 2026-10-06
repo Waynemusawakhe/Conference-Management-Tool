@@ -34,14 +34,11 @@ class CreateRegistrationRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'conference_id.required' =>
-                'Conference ID is required.',
+            'conference_id.required' => 'Conference ID is required.',
 
-            'conference_id.exists' =>
-                'The selected conference does not exist.',
+            'conference_id.exists' => 'The selected conference does not exist.',
 
-            'conference_id.unique' =>
-                'You are already registered for this conference.',
+            'conference_id.unique' => 'You are already registered for this conference.',
         ];
     }
 }
