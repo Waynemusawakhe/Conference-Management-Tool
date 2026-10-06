@@ -1,9 +1,30 @@
-import { http } from './client';
+import { http } from "./client";
 
 export const registrationsApi = {
-  getAll: () => http.get('/registrations'),
-  getById: (id) => http.get(`/registrations/${id}`),
-  create: (body) => http.post('/registrations', body),
-  update: (id, body) => http.put(`/registrations/${id}`, body),
-  remove: (id) => http.delete(`/registrations/${id}`),
+  getAll: (params = {}) =>
+    http.get("/registrations", {
+      params,
+    }),
+
+  getById: (id) =>
+    http.get(
+      `/registrations/${encodeURIComponent(id)}`
+    ),
+
+  create: (body) =>
+    http.post(
+      "/registrations",
+      body
+    ),
+
+  update: (id, body) =>
+    http.put(
+      `/registrations/${encodeURIComponent(id)}`,
+      body
+    ),
+
+  remove: (id) =>
+    http.delete(
+      `/registrations/${encodeURIComponent(id)}`
+    ),
 };

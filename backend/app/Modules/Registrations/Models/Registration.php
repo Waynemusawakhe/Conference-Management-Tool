@@ -61,9 +61,23 @@ class Registration extends Model
 
     public function cancel(): void
     {
+        if ($this->isCancelled()) {
+            return;
+        }
+
         $this->update([
             'status' => 'cancelled',
             'cancelled_at' => now(),
+        ]);
+    }
+
+    public function reactivate(): void
+    {
+        $this->update([
+            'status' => 'registered',
+            'registered_at' => now(),
+            'cancelled_at' => null,
+            'reminder_sent_at' => null,
         ]);
     }
 }

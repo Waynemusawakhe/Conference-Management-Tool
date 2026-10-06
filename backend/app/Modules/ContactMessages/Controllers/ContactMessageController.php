@@ -14,6 +14,7 @@ use App\Modules\ContactMessages\Requests\UpdateContactMessageStatusRequest;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use OpenApi\Attributes as OA;
 
 class ContactMessageController extends Controller
@@ -25,30 +26,111 @@ class ContactMessageController extends Controller
         summary: 'Get all contact messages (admin only)',
         tags: ['Contact Messages'],
         parameters: [
-            new OA\Parameter(name: 'status', in: 'query', schema: new OA\Schema(type: 'string', enum: ['new', 'in_progress', 'resolved'])),
-            new OA\Parameter(name: 'per_page', in: 'query', schema: new OA\Schema(type: 'integer', default: 15)),
+            new OA\Parameter(
+                name: 'status',
+                in: 'query',
+                schema: new OA\Schema(
+                    type: 'string',
+                    enum: [
+                        'new',
+                        'in_progress',
+                        'resolved',
+                    ]
+                )
+            ),
+            new OA\Parameter(
+                name: 'page',
+                in: 'query',
+                schema: new OA\Schema(
+                    type: 'integer',
+                    minimum: 1
+                )
+            ),
+            new OA\Parameter(
+                name: 'per_page',
+                in: 'query',
+                schema: new OA\Schema(
+                    type: 'integer',
+                    minimum: 1,
+                    maximum: 100,
+                    default: 15
+                )
+            ),
         ],
         responses: [
-            new OA\Response(response: 200, description: 'List of contact messages'),
-            new OA\Response(response: 401, description: 'Unauthenticated'),
-            new OA\Response(response: 403, description: 'Forbidden'),
+            new OA\Response(
+                response: 200,
+                description: 'List of contact messages'
+            ),
+            new OA\Response(
+                response: 401,
+                description: 'Unauthenticated'
+            ),
+            new OA\Response(
+                response: 403,
+                description: 'Forbidden'
+            ),
+            new OA\Response(
+                response: 422,
+                description: 'Invalid filter or pagination parameter'
+            ),
         ]
     )]
-    public function index(Request $request, GetContactMessagesAction $action): JsonResponse
-    {
-        $this->authorize('viewAny', ContactMessage::class);
+    public function index(
+        Request $request,
+        GetContactMessagesAction $action
+    ): JsonResponse {
+        $this->authorize(
+            'viewAny',
+            ContactMessage::class
+        );
 
-        $filters = $request->only(['status']);
-        $perPage = $request->input('per_page', 15);
-        $messages = $action->execute($filters, $perPage);
+        $validated = $request->validate([
+            'status' => [
+                'nullable',
+                Rule::in([
+                    'new',
+                    'in_progress',
+                    'resolved',
+                ]),
+            ],
+            'page' => [
+                'nullable',
+                'integer',
+                'min:1',
+            ],
+            'per_page' => [
+                'nullable',
+                'integer',
+                'min:1',
+                'max:100',
+            ],
+        ]);
+
+        $filters = [
+            'status' => $validated['status']
+                ?? null,
+        ];
+
+        $perPage =
+            $validated['per_page']
+            ?? 15;
+
+        $messages = $action->execute(
+            $filters,
+            $perPage
+        );
 
         return response()->json([
             'success' => true,
             'data' => $messages->items(),
             'meta' => [
                 'current_page' => $messages->currentPage(),
+
                 'per_page' => $messages->perPage(),
+
                 'total' => $messages->total(),
+
                 'last_page' => $messages->lastPage(),
             ],
         ]);
@@ -59,19 +141,44 @@ class ContactMessageController extends Controller
         summary: 'Get a specific contact message (admin only)',
         tags: ['Contact Messages'],
         parameters: [
-            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
+            new OA\Parameter(
+                name: 'id',
+                in: 'path',
+                required: true,
+                schema: new OA\Schema(
+                    type: 'integer'
+                )
+            ),
         ],
         responses: [
-            new OA\Response(response: 200, description: 'Contact message details'),
-            new OA\Response(response: 401, description: 'Unauthenticated'),
-            new OA\Response(response: 403, description: 'Forbidden'),
-            new OA\Response(response: 404, description: 'Contact message not found'),
+            new OA\Response(
+                response: 200,
+                description: 'Contact message details'
+            ),
+            new OA\Response(
+                response: 401,
+                description: 'Unauthenticated'
+            ),
+            new OA\Response(
+                response: 403,
+                description: 'Forbidden'
+            ),
+            new OA\Response(
+                response: 404,
+                description: 'Contact message not found'
+            ),
         ]
     )]
-    public function show(int $id, GetContactMessageAction $action): JsonResponse
-    {
+    public function show(
+        int $id,
+        GetContactMessageAction $action
+    ): JsonResponse {
         $message = $action->execute($id);
-        $this->authorize('view', $message);
+
+        $this->authorize(
+            'view',
+            $message
+        );
 
         return response()->json([
             'success' => true,
@@ -86,26 +193,59 @@ class ContactMessageController extends Controller
         requestBody: new OA\RequestBody(
             required: true,
             content: new OA\JsonContent(
-                required: ['name', 'email', 'message'],
+                required: [
+                    'name',
+                    'email',
+                    'message',
+                ],
                 properties: [
-                    new OA\Property(property: 'name', type: 'string', example: 'Jane Doe'),
-                    new OA\Property(property: 'email', type: 'string', example: 'jane@example.com'),
-                    new OA\Property(property: 'message', type: 'string', example: 'How do I register for the conference?'),
+                    new OA\Property(
+                        property: 'name',
+                        type: 'string',
+                        example: 'Jane Doe'
+                    ),
+                    new OA\Property(
+                        property: 'email',
+                        type: 'string',
+                        example: 'jane@example.com'
+                    ),
+                    new OA\Property(
+                        property: 'message',
+                        type: 'string',
+                        example: 'How do I register for the conference?'
+                    ),
                 ]
             )
         ),
         responses: [
-            new OA\Response(response: 201, description: 'Message submitted successfully'),
-            new OA\Response(response: 422, description: 'Validation error'),
-            new OA\Response(response: 429, description: 'Too many requests'),
+            new OA\Response(
+                response: 201,
+                description: 'Message submitted successfully'
+            ),
+            new OA\Response(
+                response: 422,
+                description: 'Validation error'
+            ),
+            new OA\Response(
+                response: 429,
+                description: 'Too many requests'
+            ),
         ]
     )]
-    public function store(CreateContactMessageRequest $request, CreateContactMessageAction $action): JsonResponse
-    {
+    public function store(
+        CreateContactMessageRequest $request,
+        CreateContactMessageAction $action
+    ): JsonResponse {
         $data = $request->validated();
-        $userId = $request->user('sanctum')?->id;
 
-        $message = $action->execute($data, $userId);
+        $userId = $request
+            ->user('sanctum')
+            ?->id;
+
+        $message = $action->execute(
+            $data,
+            $userId
+        );
 
         return response()->json([
             'success' => true,
@@ -119,31 +259,73 @@ class ContactMessageController extends Controller
         summary: 'Update a contact message status (admin only)',
         tags: ['Contact Messages'],
         parameters: [
-            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
+            new OA\Parameter(
+                name: 'id',
+                in: 'path',
+                required: true,
+                schema: new OA\Schema(
+                    type: 'integer'
+                )
+            ),
         ],
         requestBody: new OA\RequestBody(
             required: true,
             content: new OA\JsonContent(
                 required: ['status'],
                 properties: [
-                    new OA\Property(property: 'status', type: 'string', enum: ['new', 'in_progress', 'resolved'], example: 'resolved'),
+                    new OA\Property(
+                        property: 'status',
+                        type: 'string',
+                        enum: [
+                            'new',
+                            'in_progress',
+                            'resolved',
+                        ],
+                        example: 'resolved'
+                    ),
                 ]
             )
         ),
         responses: [
-            new OA\Response(response: 200, description: 'Status updated successfully'),
-            new OA\Response(response: 401, description: 'Unauthenticated'),
-            new OA\Response(response: 403, description: 'Forbidden'),
-            new OA\Response(response: 404, description: 'Contact message not found'),
-            new OA\Response(response: 422, description: 'Validation error'),
+            new OA\Response(
+                response: 200,
+                description: 'Status updated successfully'
+            ),
+            new OA\Response(
+                response: 401,
+                description: 'Unauthenticated'
+            ),
+            new OA\Response(
+                response: 403,
+                description: 'Forbidden'
+            ),
+            new OA\Response(
+                response: 404,
+                description: 'Contact message not found'
+            ),
+            new OA\Response(
+                response: 422,
+                description: 'Validation error'
+            ),
         ]
     )]
-    public function updateStatus(UpdateContactMessageStatusRequest $request, int $id, UpdateContactMessageStatusAction $action): JsonResponse
-    {
-        $this->authorize('updateStatus', ContactMessage::class);
+    public function updateStatus(
+        UpdateContactMessageStatusRequest $request,
+        int $id,
+        UpdateContactMessageStatusAction $action
+    ): JsonResponse {
+        $this->authorize(
+            'updateStatus',
+            ContactMessage::class
+        );
 
-        $status = $request->validated('status');
-        $message = $action->execute($id, $status);
+        $status =
+            $request->validated('status');
+
+        $message = $action->execute(
+            $id,
+            $status
+        );
 
         return response()->json([
             'success' => true,
@@ -157,19 +339,46 @@ class ContactMessageController extends Controller
         summary: 'Delete a contact message (admin only)',
         tags: ['Contact Messages'],
         parameters: [
-            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
+            new OA\Parameter(
+                name: 'id',
+                in: 'path',
+                required: true,
+                schema: new OA\Schema(
+                    type: 'integer'
+                )
+            ),
         ],
         responses: [
-            new OA\Response(response: 200, description: 'Contact message deleted successfully'),
-            new OA\Response(response: 401, description: 'Unauthenticated'),
-            new OA\Response(response: 403, description: 'Forbidden'),
-            new OA\Response(response: 404, description: 'Contact message not found'),
+            new OA\Response(
+                response: 200,
+                description: 'Contact message deleted successfully'
+            ),
+            new OA\Response(
+                response: 401,
+                description: 'Unauthenticated'
+            ),
+            new OA\Response(
+                response: 403,
+                description: 'Forbidden'
+            ),
+            new OA\Response(
+                response: 404,
+                description: 'Contact message not found'
+            ),
         ]
     )]
-    public function destroy(int $id, DeleteContactMessageAction $action): JsonResponse
-    {
-        $message = (new GetContactMessageAction)->execute($id);
-        $this->authorize('delete', $message);
+    public function destroy(
+        int $id,
+        DeleteContactMessageAction $action
+    ): JsonResponse {
+        $message =
+            (new GetContactMessageAction)
+                ->execute($id);
+
+        $this->authorize(
+            'delete',
+            $message
+        );
 
         $action->execute($id);
 

@@ -146,7 +146,7 @@ class ReportingApiTest extends TestCase
         SubmissionReview::create([
             'submission_id' => $submissionOne->id,
             'reviewer_id' => $reviewer->id,
-            'score' => 8,
+            'score' => 4,
             'comments' => 'Good submission.',
             'recommendation' => 'accept',
             'submitted_at' => now(),

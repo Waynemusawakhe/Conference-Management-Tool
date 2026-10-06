@@ -201,7 +201,7 @@ class ReviewApiTest extends TestCase
             Submission::factory()->create(),
             $reviewer,
             [
-                'score' => 8,
+                'score' => 4,
                 'comments' => 'Already submitted review.',
                 'recommendation' => 'accept',
                 'submitted_at' => now(),
@@ -252,17 +252,17 @@ class ReviewApiTest extends TestCase
 
         $this->actingAs($reviewer, 'sanctum')
             ->postJson("/api/v1/reviews/{$review->id}/submit", [
-                'score' => 8,
+                'score' => 4,
                 'comments' => 'A well-written submission.',
                 'recommendation' => 'accept',
             ])
             ->assertOk()
-            ->assertJsonPath('data.score', 8)
+            ->assertJsonPath('data.score', 4)
             ->assertJsonPath('data.recommendation', 'accept');
 
         $this->assertDatabaseHas('submission_reviews', [
             'id' => $review->id,
-            'score' => 8,
+            'score' => 4,
             'recommendation' => 'accept',
         ]);
 
@@ -285,7 +285,7 @@ class ReviewApiTest extends TestCase
 
         $this->actingAs($reviewer, 'sanctum')
             ->postJson("/api/v1/reviews/{$review->id}/submit", [
-                'score' => 11,
+                'score' => 6,
                 'comments' => 'No',
                 'recommendation' => 'maybe',
             ])
@@ -316,7 +316,7 @@ class ReviewApiTest extends TestCase
 
         $this->actingAs($otherReviewer, 'sanctum')
             ->postJson("/api/v1/reviews/{$review->id}/submit", [
-                'score' => 8,
+                'score' => 4,
                 'comments' => 'Unauthorized review.',
                 'recommendation' => 'accept',
             ])
@@ -342,7 +342,7 @@ class ReviewApiTest extends TestCase
         $reviewer = User::factory()->create(['role' => 'reviewer']);
 
         $review = $this->createReview($submission, $reviewer, [
-            'score' => 8,
+            'score' => 4,
             'comments' => 'Submitted review.',
             'recommendation' => 'accept',
             'submitted_at' => now(),
@@ -366,7 +366,7 @@ class ReviewApiTest extends TestCase
         $reviewer = User::factory()->create(['role' => 'reviewer']);
 
         $review = $this->createReview($submission, $reviewer, [
-            'score' => 7,
+            'score' => 3,
             'comments' => 'Locked review.',
             'recommendation' => 'revise',
             'submitted_at' => now(),
@@ -375,7 +375,7 @@ class ReviewApiTest extends TestCase
 
         $this->actingAs($reviewer, 'sanctum')
             ->postJson("/api/v1/reviews/{$review->id}/submit", [
-                'score' => 9,
+                'score' => 5,
                 'comments' => 'Attempted change.',
                 'recommendation' => 'accept',
             ])

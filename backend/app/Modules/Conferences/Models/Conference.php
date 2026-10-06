@@ -3,6 +3,7 @@
 namespace App\Modules\Conferences\Models;
 
 use App\Models\User;
+use App\Modules\Registrations\Models\Registration;
 use App\Modules\Reviews\Models\Testimonial;
 use App\Modules\Submissions\Models\ConferenceSession;
 use App\Modules\Submissions\Models\Submission;
@@ -62,13 +63,18 @@ class Conference extends Model
 
     public function registrations(): HasMany
     {
-        return $this->hasMany(ConferenceRegistration::class);
+        return $this->hasMany(Registration::class);
     }
 
     public function attendees(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'conference_registrations')
-            ->withPivot(['status', 'registered_at', 'cancelled_at'])
+            ->withPivot([
+                'status',
+                'registered_at',
+                'cancelled_at',
+                'reminder_sent_at',
+            ])
             ->withTimestamps();
     }
 

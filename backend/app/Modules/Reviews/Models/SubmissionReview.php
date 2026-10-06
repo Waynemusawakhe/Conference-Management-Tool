@@ -44,18 +44,26 @@ class SubmissionReview extends Model
     }
 
     /**
-     * Submits and locks the review in one step. The DB trigger
-     * (submission_reviews_lock_guard) rejects any further UPDATE once
-     * locked is true, so this should be the last write to a review.
+     * Submit or update an unlocked review.
+     *
+     * Submission and locking are separate lifecycle steps:
+     *
+     * assigned -> submitted/editable -> locked
+     *
+     * The dedicated lock endpoint is responsible for permanently
+     * preventing further reviewer edits.
      */
-    public function submit(int $score, string $comments, string $recommendation): void
-    {
+    public function submit(
+        int $score,
+        string $comments,
+        string $recommendation
+    ): void {
         $this->update([
             'score' => $score,
             'comments' => $comments,
             'recommendation' => $recommendation,
             'submitted_at' => now(),
-            'locked' => true,
+            'locked' => false,
         ]);
     }
 }

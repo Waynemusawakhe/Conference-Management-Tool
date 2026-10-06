@@ -8,9 +8,13 @@ use Illuminate\Validation\ValidationException;
 
 class SubmitReviewAction
 {
-    public function execute(int $id, array $data): SubmissionReview
-    {
-        $review = SubmissionReview::findOrFail($id);
+    public function execute(
+        int $id,
+        array $data
+    ): SubmissionReview {
+        $review = SubmissionReview::findOrFail(
+            $id
+        );
 
         if ($review->locked) {
             throw ValidationException::withMessages([
@@ -18,30 +22,46 @@ class SubmitReviewAction
             ]);
         }
 
+        $isFirstSubmission =
+            is_null($review->submitted_at);
+
         $review->submit(
             (int) $data['score'],
             $data['comments'],
             $data['recommendation']
         );
 
-        $review = $review->fresh(['submission.author', 'reviewer']);
-        $author = $review->submission?->author;
+        $review = $review->fresh([
+            'submission.author',
+            'reviewer',
+        ]);
 
-        if ($author) {
-            $actionUrl = $author->role === 'attendee'
-                ? '/attendee-proposals'
-                : '/author-dashboard';
+        /*
+         * Notify only on the first submission.
+         * Reviewers may edit/resubmit until the review is explicitly
+         * locked, so repeat submissions should not generate duplicate
+         * "review submitted" notifications.
+         */
+        if ($isFirstSubmission) {
+            $author =
+                $review->submission?->author;
 
-            $author->notify(new CmtNotification(
-                'Proposal reviewed',
-                'A reviewer has submitted a review for "'.$review->submission->title.'".',
-                $actionUrl,
-                'proposal_reviewed',
-                [
-                    'submission_id' => $review->submission_id,
-                    'review_id' => $review->id,
-                ],
-            ));
+            if ($author) {
+                $author->notify(
+                    new CmtNotification(
+                        'Proposal reviewed',
+                        'A reviewer has submitted a review for "'.
+                            $review->submission->title.
+                            '".',
+                        '/author-dashboard',
+                        'proposal_reviewed',
+                        [
+                            'submission_id' => $review->submission_id,
+                            'review_id' => $review->id,
+                        ],
+                    )
+                );
+            }
         }
 
         return $review;
