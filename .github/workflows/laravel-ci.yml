@@ -33,6 +33,25 @@ jobs:
           --health-timeout=5s
           --health-retries=5
 
+    env:
+      APP_ENV: testing
+      APP_DEBUG: "true"
+
+      DB_URL: ""
+      DB_CONNECTION: pgsql
+      DB_HOST: 127.0.0.1
+      DB_PORT: 5432
+      DB_DATABASE: conference_test
+      DB_USERNAME: postgres
+      DB_PASSWORD: root
+      DB_SSLMODE: disable
+
+      CACHE_STORE: array
+      SESSION_DRIVER: array
+      QUEUE_CONNECTION: sync
+      MAIL_MAILER: array
+      FILESYSTEM_DISK: local
+
     defaults:
       run:
         working-directory: backend
