@@ -114,7 +114,11 @@ class UserController extends Controller
         $user = $getUserAction->execute($id);
 
         // Apply the new role
-        $updatedUser = $action->execute($user, $request->validated());
+        $updatedUser = $action->execute(
+            $user,
+            $request->validated(),
+            $request->user()
+        );
 
         return response()->json([
             'success' => true,
