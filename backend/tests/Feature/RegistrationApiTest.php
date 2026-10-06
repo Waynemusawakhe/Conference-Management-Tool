@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Modules\Conferences\Models\Conference;
 use App\Modules\Registrations\Actions\SendConferenceRemindersAction;
 use App\Modules\Registrations\Models\Registration;
+use App\Modules\Registrations\Notifications\RegistrationCancelledNotification;
 use App\Notifications\CmtNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
@@ -58,6 +59,45 @@ class RegistrationApiTest extends TestCase
             'conference_id' => $conference->id,
             'user_id' => $user->id,
             'status' => 'registered',
+        ]);
+    }
+
+    public function test_cancelled_registration_can_be_reactivated_without_creating_duplicate_row(): void
+    {
+        $user = User::factory()->create();
+        $conference = Conference::factory()->create();
+
+        $registration = Registration::create([
+            'conference_id' => $conference->id,
+            'user_id' => $user->id,
+            'status' => 'cancelled',
+            'registered_at' => now()->subDays(2),
+            'cancelled_at' => now()->subDay(),
+            'reminder_sent_at' => now()->subDay(),
+        ]);
+
+        $this->actingAs($user, 'sanctum')
+            ->postJson('/api/v1/registrations', [
+                'conference_id' => $conference->id,
+            ])
+            ->assertCreated()
+            ->assertJsonPath('data.id', $registration->id)
+            ->assertJsonPath('data.status', 'registered')
+            ->assertJsonPath('data.cancelled_at', null)
+            ->assertJsonPath('data.reminder_sent_at', null);
+
+        $this->assertDatabaseCount(
+            'conference_registrations',
+            1
+        );
+
+        $this->assertDatabaseHas('conference_registrations', [
+            'id' => $registration->id,
+            'conference_id' => $conference->id,
+            'user_id' => $user->id,
+            'status' => 'registered',
+            'cancelled_at' => null,
+            'reminder_sent_at' => null,
         ]);
     }
 
@@ -317,6 +357,52 @@ class RegistrationApiTest extends TestCase
             'id' => $registration->id,
             'status' => 'cancelled',
         ]);
+    }
+
+    public function test_cancelling_an_already_cancelled_registration_is_idempotent(): void
+    {
+        $user = User::factory()->create();
+
+        $registration = Registration::create([
+            'conference_id' => Conference::factory()->create()->id,
+            'user_id' => $user->id,
+            'status' => 'registered',
+        ]);
+
+        $this->actingAs($user, 'sanctum')
+            ->deleteJson("/api/v1/registrations/{$registration->id}")
+            ->assertOk();
+
+        $firstCancelledAt = Registration::findOrFail(
+            $registration->id
+        )->cancelled_at;
+
+        $this->actingAs($user, 'sanctum')
+            ->deleteJson("/api/v1/registrations/{$registration->id}")
+            ->assertOk();
+
+        $this->assertDatabaseHas('conference_registrations', [
+            'id' => $registration->id,
+            'status' => 'cancelled',
+        ]);
+
+        $this->assertDatabaseCount(
+            'conference_registrations',
+            1
+        );
+
+        $this->assertEquals(
+            $firstCancelledAt,
+            Registration::findOrFail($registration->id)->cancelled_at
+        );
+
+        $this->assertCount(
+            1,
+            Notification::sent(
+                $user,
+                RegistrationCancelledNotification::class
+            )
+        );
     }
 
     public function test_non_owner_cannot_update_or_cancel_registration(): void

@@ -20,13 +20,6 @@ class CreateRegistrationRequest extends FormRequest
                 'required',
                 'integer',
                 Rule::exists(Conference::class, 'id'),
-                Rule::unique(
-                    'conference_registrations',
-                    'conference_id'
-                )->where(
-                    'user_id',
-                    $this->user()?->id
-                ),
             ],
         ];
     }
@@ -35,10 +28,7 @@ class CreateRegistrationRequest extends FormRequest
     {
         return [
             'conference_id.required' => 'Conference ID is required.',
-
             'conference_id.exists' => 'The selected conference does not exist.',
-
-            'conference_id.unique' => 'You are already registered for this conference.',
         ];
     }
 }
