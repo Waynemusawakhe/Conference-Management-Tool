@@ -4,6 +4,7 @@ import {
   Clock,
   MapPin,
 } from "lucide-react";
+import { useAuth } from "../hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 
 const accentClasses = {
@@ -66,6 +67,7 @@ export default function ConferenceCard({
   layout = "grid",
 }) {
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const isList = layout === "list";
 
@@ -209,13 +211,13 @@ export default function ConferenceCard({
 
           {conferenceStatus && (
             <span className="rounded-full bg-[#eaf9f2] px-2 py-1 text-[9px] font-bold text-[#159b64]">
-              {conferenceStatus}
+              {{ open: "Open for submissions", closed: "Closed" }[conferenceStatus] || conferenceStatus}
             </span>
           )}
 
           {conferenceFormat && (
             <span className="rounded-full bg-[#f2f1ff] px-2 py-1 text-[9px] font-bold text-[#5c50ec]">
-              {conferenceFormat}
+              {{ in_person: "In-person", virtual: "Online", hybrid: "Hybrid" }[conferenceFormat] || conferenceFormat}
             </span>
           )}
         </div>
@@ -295,7 +297,7 @@ export default function ConferenceCard({
           )}
         </div>
 
-        <button
+        {user?.role === "author" && <button
           className="mt-5 inline-flex items-center gap-1.5 border-0 bg-transparent p-0 text-[11px] font-extrabold text-[#5a4df1]"
           type="button"
           onClick={handleSubmitProposal}
@@ -303,7 +305,7 @@ export default function ConferenceCard({
         >
           Submit a proposal
           <ArrowUpRight size={17} />
-        </button>
+        </button>}
       </div>
     </article>
   );

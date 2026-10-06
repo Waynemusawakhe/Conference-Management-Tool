@@ -322,7 +322,7 @@ export default function AdminDashboard() {
                     </span>
                   }
                   meta={formatDate(sub.created_at ?? sub.submitted_at)}
-                  onClick={() => navigate("/admin-dashboard")}
+                  onClick={() => navigate("/admin/submissions")}
                 />
               );
             })

@@ -20,7 +20,7 @@ import { useAuth } from "../context/AuthContext";
 import { reviewsApi } from "../api/reviewsApi";
 import { tokenStore } from "../api/client";
 
-/* Score range — provisional until the backend confirms the range. */
+// The review API accepts integer scores from 1 to 5.
 const SCORE_OPTIONS = [1, 2, 3, 4, 5];
 const SCORE_LABELS = ["Poor", "Fair", "Good", "Great", "Excellent"];
 
@@ -120,7 +120,7 @@ export default function ScoreSubmission() {
   const [fileState, setFileState] = useState("idle");
   const [fileError, setFileError] = useState("");
 
-  // 🔴 NEW — controls the custom confirm modal
+  // controls the custom confirm modal
   const [confirmState, setConfirmState] = useState(null);
   // confirmState shape:
   // { kind: "submit" | "lock", title, message, confirmLabel, tone, onConfirm }
@@ -292,7 +292,7 @@ export default function ScoreSubmission() {
   }, [fileUrl]);
 
   /* ============================================================== *
-   * 🔴 CHANGED — Submit flow now opens a styled modal first.
+   * Submit flow now opens a styled modal first.
    *    Actual network call is in doSubmit().
    * ============================================================== */
   function handleSubmit(e) {
@@ -364,7 +364,7 @@ export default function ScoreSubmission() {
   }
 
   /* ============================================================== *
-   * 🔴 CHANGED — Lock flow also uses the modal.
+   * Lock flow also uses the modal.
    * ============================================================== */
   function handleLock() {
     if (locking) return;
@@ -405,7 +405,6 @@ export default function ScoreSubmission() {
       setLocking(false);
     }
   }
-  /* 🔴 END CHANGED */
 
   const wordCount = comments.trim()
     ? comments.trim().split(/\s+/).length
@@ -838,7 +837,7 @@ export default function ScoreSubmission() {
         onDismiss={() => setSuccessKind(null)}
       />
 
-      {/* 🔴 NEW — custom confirm modal (replaces window.confirm) */}
+      {/* custom confirm modal (replaces window.confirm) */}
       <ConfirmDialog
         state={confirmState}
         onCancel={() => setConfirmState(null)}
@@ -848,7 +847,7 @@ export default function ScoreSubmission() {
 }
 
 /* ------------------------------------------------------------------ *
- * 🔴 NEW — ConfirmDialog
+ * ConfirmDialog
  *
  * Replaces window.confirm() with a styled modal that matches the app.
  * Driven by confirmState: { kind, title, message, confirmLabel, tone,
@@ -950,7 +949,6 @@ function ConfirmDialog({ state, onCancel }) {
     </div>
   );
 }
-/* 🔴 END NEW */
 
 /* ------------------------------------------------------------------ *
  * Success overlay

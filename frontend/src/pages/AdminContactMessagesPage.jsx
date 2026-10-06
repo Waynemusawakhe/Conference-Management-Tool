@@ -1,3 +1,4 @@
+import { pageMeta } from "../utils/pagination";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -105,7 +106,9 @@ export default function ContactMessagesPage() {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("all");
 
-  const messagesRes = useApiResource(() => contactMessagesApi.getAll(), []);
+  const [page, setPage] = useState(1);
+  const messagesRes = useApiResource(() => contactMessagesApi.getAll({ page, per_page: 25, status: filter === "all" ? undefined : filter }), [page, filter]);
+  const meta = pageMeta(messagesRes.data);
   const messages = useMemo(() => toArray(messagesRes.data), [messagesRes.data]);
 
   const counts = useMemo(() => {
@@ -166,7 +169,7 @@ export default function ContactMessagesPage() {
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search name, email, message…"
+                placeholder="Search this page…"
                 className="h-10 w-full rounded-[10px] border border-[#e2e6ee] bg-[#fafbfe] pl-9 pr-9 text-[11px] outline-none transition focus:border-[#8175ef] focus:bg-white focus:ring-2 focus:ring-[#8175ef]/10"
               />
               {query && (
@@ -188,7 +191,7 @@ export default function ContactMessagesPage() {
             return (
               <button
                 key={f.key}
-                onClick={() => setFilter(f.key)}
+                onClick={() => { setFilter(f.key); setPage(1); }}
                 className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[10px] font-extrabold transition ${
                   isActive
                     ? "border-transparent bg-[#07132f] text-white shadow-[0_6px_18px_rgba(7,19,47,.18)]"
@@ -306,6 +309,11 @@ export default function ContactMessagesPage() {
           </table>
         </div>
       </Card>
+      <nav aria-label="Contact message pages" className="flex items-center justify-end gap-3 text-xs">
+        <button disabled={page <= 1 || messagesRes.loading} onClick={() => setPage((value) => value - 1)}>Previous</button>
+        <span>Page {meta.current_page || page} of {meta.last_page || 1} · {meta.total || 0} messages</span>
+        <button disabled={page >= Number(meta.last_page || 1) || messagesRes.loading} onClick={() => setPage((value) => value + 1)}>Next</button>
+      </nav>
     </AdminLayout>
   );
 }

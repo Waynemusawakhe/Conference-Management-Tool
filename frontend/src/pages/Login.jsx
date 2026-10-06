@@ -1,12 +1,21 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import Logo from "../components/Logo";
 import Navbar from "../components/Navbar";
-import { ArrowRight, LockKeyhole, Mail, ShieldCheck, Sparkles } from "lucide-react";
+import {
+  ArrowRight,
+  LockKeyhole,
+  Mail,
+  ShieldCheck,
+  Sparkles,
+} from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
+
+import { safeReturnPath } from "../utils/navigation";
 
 function Login() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { login } = useAuth();
 
   const [formData, setFormData] = useState({ email: "", password: "" });
@@ -30,40 +39,44 @@ function Login() {
 
     try {
       const response = await login(formData);
-      console.log("Full login response object:", response);
 
       const user = response?.user || response?.data?.user || response;
       const role = user?.role || user?.user_type || user?.account_type;
-      console.log("Extracted user:", user, "Extracted role:", role);
 
-      const normalizedRole = String(role || "").trim().toLowerCase();
+      const normalizedRole = String(role || "")
+        .trim()
+        .toLowerCase();
 
-switch (normalizedRole) {
-  case "author":
-    navigate("/author-dashboard", { replace: true });
-    break;
+      const requested = safeReturnPath(location.state?.from);
+      if (requested) {
+        navigate(requested, { replace: true });
+        return;
+      }
+      switch (normalizedRole) {
+        case "author":
+          navigate("/author-dashboard", { replace: true });
+          break;
 
-  case "reviewer":
-    navigate("/reviewer-dashboard", { replace: true });
-    break;
+        case "reviewer":
+          navigate("/reviewer-dashboard", { replace: true });
+          break;
 
-  case "organiser":
-    navigate("/organiser-dashboard", { replace: true });
-    break;
+        case "organiser":
+          navigate("/organiser-dashboard", { replace: true });
+          break;
 
-  case "admin":
-    navigate("/admin-dashboard", { replace: true });
-    break;
+        case "admin":
+          navigate("/admin-dashboard", { replace: true });
+          break;
 
-  case "attendee":
-    navigate("/attendee-dashboard", { replace: true });
-    break;
+        case "attendee":
+          navigate("/attendee-dashboard", { replace: true });
+          break;
 
-  default:
-    throw new Error(`Unsupported user role: ${role || "unknown"}`);
-}
+        default:
+          throw new Error(`Unsupported user role: ${role || "unknown"}`);
+      }
     } catch (err) {
-      console.error("Login caught error:", err);
       if (err.status === 422 && err.errors) {
         const details = Object.values(err.errors).flat().join(" ");
         setError(details || err.message);
@@ -88,7 +101,8 @@ switch (normalizedRole) {
               Continue your research journey.
             </h1>
             <p className="mt-5 max-w-[430px] text-sm leading-7 text-white/65">
-              Access your conferences, submissions, reviews and professional network from one focused workspace.
+              Access your conferences, submissions, reviews and professional
+              network from one focused workspace.
             </p>
             <div className="cmt-float mt-10 flex w-fit items-center gap-3 rounded-2xl border border-white/15 bg-white/10 px-4 py-3 backdrop-blur">
               <ShieldCheck className="text-[#8b7eff]" size={20} />
@@ -106,14 +120,19 @@ switch (normalizedRole) {
             <span className="text-[10px] font-extrabold uppercase tracking-[.12em] text-[#5c50ec]">
               Member access
             </span>
-            <h2 className="mt-2 text-3xl font-bold tracking-[-.04em]">Log in to CMT</h2>
+            <h2 className="mt-2 text-3xl font-bold tracking-[-.04em]">
+              Log in to CMT
+            </h2>
             <p className="mt-2 text-xs leading-6 text-[#788398]">
               Pick up where your conference work left off.
             </p>
 
             <form onSubmit={handleSubmit} className="grid gap-5">
               <div className="grid gap-2">
-                <label className="text-xs font-bold text-[#43506a]" htmlFor="email">
+                <label
+                  className="text-xs font-bold text-[#43506a]"
+                  htmlFor="email"
+                >
                   <span className="mb-2 flex items-center gap-2">
                     <Mail size={14} className="text-[#5c50ec]" /> Email
                   </span>
@@ -130,9 +149,13 @@ switch (normalizedRole) {
               </div>
 
               <div className="grid gap-2">
-                <label className="text-xs font-bold text-[#43506a]" htmlFor="password">
+                <label
+                  className="text-xs font-bold text-[#43506a]"
+                  htmlFor="password"
+                >
                   <span className="mb-2 flex items-center gap-2">
-                    <LockKeyhole size={14} className="text-[#5c50ec]" /> Password
+                    <LockKeyhole size={14} className="text-[#5c50ec]" />{" "}
+                    Password
                   </span>
                   <input
                     id="password"
@@ -169,7 +192,10 @@ switch (normalizedRole) {
 
               <p className="text-center text-xs text-[#788398]">
                 Don't have an account?{" "}
-                <Link to="/register" className="font-bold text-[#5c50ec] hover:underline">
+                <Link
+                  to="/register"
+                  className="font-bold text-[#5c50ec] hover:underline"
+                >
                   Register
                 </Link>
               </p>
@@ -182,4 +208,3 @@ switch (normalizedRole) {
 }
 
 export default Login;
-

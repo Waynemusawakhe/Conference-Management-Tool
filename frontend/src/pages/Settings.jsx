@@ -482,7 +482,7 @@ export default function Settings() {
                   setDeletePassword("");
                   setDeleteError("");
                 }}
-                disabled={deleting || !deletePassword.trim()}
+                disabled={deleting}
                 className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-[#e4e8f0] bg-white px-5 text-[12px] font-extrabold text-[#43506a] transition hover:-translate-y-px hover:border-[#c9cfe0] hover:bg-[#fafbff] disabled:opacity-50 dark:border-[#1e293b] dark:bg-[#0f172a] dark:text-white dark:hover:bg-[#111c33]"
               >
                 Cancel

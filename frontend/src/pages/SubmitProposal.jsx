@@ -3,13 +3,14 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { CalendarDays, FilePlus2, MapPin } from "lucide-react";
 import { submissionsApi } from "../api/submissionsApi";
 import { conferencesApi } from "../api/conferencesApi";
-import AttendeeHeader from "../components/AttendeeHeader";
-import AttendeeSidebar from "../components/AttendeeSidebar";
-import { useAuth } from "../context/AuthContext";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
-const ALLOWED_EXTENSIONS = ["pdf"];
-const ALLOWED_MIME_TYPES = ["application/pdf"];
+const ALLOWED_EXTENSIONS = ["pdf", "doc", "docx"];
+const ALLOWED_MIME_TYPES = [
+  "application/pdf",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+];
 
 function unwrapList(response) {
   if (Array.isArray(response)) return response;
@@ -22,8 +23,7 @@ function validateFile(file) {
   if (!file) return null;
   const ext = String(file.name).toLowerCase().split(".").pop();
   const typeOk =
-    ALLOWED_MIME_TYPES.includes(file.type) ||
-    ALLOWED_EXTENSIONS.includes(ext);
+    ALLOWED_MIME_TYPES.includes(file.type) || ALLOWED_EXTENSIONS.includes(ext);
   if (!typeOk) {
     return "Only PDF, DOC, or DOCX files are allowed.";
   }
@@ -43,8 +43,7 @@ function formatBytes(bytes) {
 function SubmitProposal() {
   const { conferenceId } = useParams();
   const navigate = useNavigate();
-  const { role, user } = useAuth();
-  const isAttendee = role === "attendee";
+
   const [conference, setConference] = useState(null);
   const [loadingConference, setLoadingConference] = useState(true);
   const [availableConferences, setAvailableConferences] = useState([]);
@@ -52,7 +51,7 @@ function SubmitProposal() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [selectionPage, setSelectionPage] = useState(1);
   const [hasMoreConferences, setHasMoreConferences] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+
   const [loadError, setLoadError] = useState("");
   const [formData, setFormData] = useState({
     title: "",
@@ -80,9 +79,7 @@ function SubmitProposal() {
           if (cancelled) return;
           setAvailableConferences(unwrapList(response));
           setSelectionPage(1);
-          setHasMoreConferences(
-            Number(response?.meta?.last_page ?? 1) > 1
-          );
+          setHasMoreConferences(Number(response?.meta?.last_page ?? 1) > 1);
         })
         .catch((err) => {
           if (!cancelled) {
@@ -135,7 +132,7 @@ function SubmitProposal() {
       ]);
       setSelectionPage(nextPage);
       setHasMoreConferences(
-        nextPage < Number(response?.meta?.last_page ?? nextPage)
+        nextPage < Number(response?.meta?.last_page ?? nextPage),
       );
     } catch (err) {
       setLoadError(err?.message || "Couldn't load more conferences.");
@@ -144,28 +141,7 @@ function SubmitProposal() {
     }
   };
 
-  const renderPage = (content) => {
-    if (!isAttendee) {
-      return <div className="auth-page">{content}</div>;
-    }
-
-    return (
-      <div className="min-h-screen bg-[#f7f9fc] text-[#0d1b3d]">
-        <AttendeeHeader
-          name={user?.name || user?.full_name || "Attendee"}
-          menuOpen={sidebarOpen}
-          onMenuToggle={() => setSidebarOpen((value) => !value)}
-        />
-        <div className="mx-auto flex w-[min(1400px,calc(100%-32px))] gap-6 py-6 lg:gap-7">
-          <AttendeeSidebar
-            open={sidebarOpen}
-            onClose={() => setSidebarOpen(false)}
-          />
-          <main className="min-w-0 flex-1 py-2 sm:py-4">{content}</main>
-        </div>
-      </div>
-    );
-  };
+  const renderPage = (content) => <div className="auth-page">{content}</div>;
 
   const trackOptions =
     conference?.tracks ?? conference?.topics ?? conference?.track_options ?? [];
@@ -205,7 +181,11 @@ function SubmitProposal() {
     e.preventDefault();
     setError("");
 
-    if (!formData.title.trim() || !formData.track.trim() || !formData.abstract.trim()) {
+    if (
+      !formData.title.trim() ||
+      !formData.track.trim() ||
+      !formData.abstract.trim()
+    ) {
       setError("Title, track, and abstract are required.");
       return;
     }
@@ -220,7 +200,6 @@ function SubmitProposal() {
     setSubmitting(true);
     try {
       // Use FormData so the file is uploaded as multipart/form-data.
-      // Axios automatically sets the Content-Type + boundary.
       const payload = new FormData();
       payload.append("conference_id", String(conferenceId));
       payload.append("title", formData.title.trim());
@@ -257,20 +236,15 @@ function SubmitProposal() {
   if (submitted) {
     return renderPage(
       <div className="auth-card" style={{ textAlign: "center" }}>
-          <h1 className="auth-title">Proposal Submitted</h1>
-          <p style={{ color: "var(--muted)", marginBottom: "24px" }}>
-            Your proposal status is now <strong>pending</strong>.{" "}
-            {isAttendee
-              ? "The conference organisers can now review your proposal."
-              : "You can track it any time from My Proposals."}
-          </p>
-          <Link
-            to={isAttendee ? "/attendee-dashboard" : "/author-dashboard"}
-            className="btn btn-primary auth-submit"
-          >
-            {isAttendee ? "Back to attendee dashboard" : "Go to My Proposals"}
-          </Link>
-        </div>
+        <h1 className="auth-title">Proposal Submitted</h1>
+        <p style={{ color: "var(--muted)", marginBottom: "24px" }}>
+          Your proposal status is now <strong>pending</strong>. You can track it
+          any time from My Proposals.
+        </p>
+        <Link to="/author-dashboard" className="btn btn-primary auth-submit">
+          Go to My Proposals
+        </Link>
+      </div>,
     );
   }
 
@@ -279,7 +253,7 @@ function SubmitProposal() {
       return renderPage(
         <div className="auth-card" style={{ textAlign: "center" }}>
           <p style={{ color: "var(--muted)" }}>Loading conferences...</p>
-        </div>
+        </div>,
       );
     }
 
@@ -296,7 +270,10 @@ function SubmitProposal() {
         </p>
 
         {loadError && (
-          <div role="alert" className="mb-4 rounded-xl bg-red-50 p-3 text-xs text-red-700">
+          <div
+            role="alert"
+            className="mb-4 rounded-xl bg-red-50 p-3 text-xs text-red-700"
+          >
             {loadError}
           </div>
         )}
@@ -353,7 +330,7 @@ function SubmitProposal() {
             </button>
           </div>
         )}
-      </section>
+      </section>,
     );
   }
 
@@ -361,8 +338,8 @@ function SubmitProposal() {
   if (loadingConference) {
     return renderPage(
       <div className="auth-card" style={{ textAlign: "center" }}>
-          <p style={{ color: "var(--muted)" }}>Loading conference details...</p>
-        </div>
+        <p style={{ color: "var(--muted)" }}>Loading conference details...</p>
+      </div>,
     );
   }
 
@@ -370,9 +347,9 @@ function SubmitProposal() {
   if (loadError) {
     return renderPage(
       <div className="auth-card" style={{ textAlign: "center" }}>
-          <h1 className="auth-title">Couldn't load conference</h1>
-          <p className="auth-error">{loadError}</p>
-        </div>
+        <h1 className="auth-title">Couldn't load conference</h1>
+        <p className="auth-error">{loadError}</p>
+      </div>,
     );
   }
 
@@ -450,7 +427,7 @@ function SubmitProposal() {
             name="file"
             type="file"
             onChange={handleFileChange}
-            accept=".pdf,application/pdf"
+            accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
           />
           <p
             style={{
@@ -460,7 +437,7 @@ function SubmitProposal() {
               marginBottom: 0,
             }}
           >
-            PDF, maximum 10MB
+            PDF, DOC or DOCX, maximum 10MB
           </p>
 
           {file && (
@@ -477,9 +454,20 @@ function SubmitProposal() {
                 fontSize: "12px",
               }}
             >
-              <span style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              <span
+                style={{
+                  flex: 1,
+                  minWidth: 0,
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+              >
                 <strong>{file.name}</strong>
-                <span style={{ color: "var(--muted)" }}> · {formatBytes(file.size)}</span>
+                <span style={{ color: "var(--muted)" }}>
+                  {" "}
+                  · {formatBytes(file.size)}
+                </span>
               </span>
               <button
                 type="button"
@@ -509,7 +497,7 @@ function SubmitProposal() {
           {submitting ? "Submitting..." : "Submit Proposal"}
         </button>
       </form>
-    </div>
+    </div>,
   );
 }
 
