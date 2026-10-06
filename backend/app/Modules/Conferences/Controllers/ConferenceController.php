@@ -20,23 +20,287 @@ class ConferenceController
     #[OA\Get(
         path: '/api/v1/conferences',
         summary: 'Get all conferences',
+        description: 'Browse, search, filter, sort and paginate public conferences.',
         tags: ['Conferences'],
+        parameters: [
+            new OA\Parameter(
+                name: 'search',
+                in: 'query',
+                description: 'Search conference name, code, description, category, venue, city, country or topic.',
+                schema: new OA\Schema(
+                    type: 'string'
+                )
+            ),
+            new OA\Parameter(
+                name: 'category',
+                in: 'query',
+                schema: new OA\Schema(
+                    type: 'string'
+                )
+            ),
+            new OA\Parameter(
+                name: 'country',
+                in: 'query',
+                schema: new OA\Schema(
+                    type: 'string'
+                )
+            ),
+            new OA\Parameter(
+                name: 'format',
+                in: 'query',
+                schema: new OA\Schema(
+                    type: 'string',
+                    enum: [
+                        'in_person',
+                        'virtual',
+                        'hybrid',
+                    ]
+                )
+            ),
+            new OA\Parameter(
+                name: 'submission_status',
+                in: 'query',
+                schema: new OA\Schema(
+                    type: 'string',
+                    enum: [
+                        'open',
+                        'closed',
+                    ]
+                )
+            ),
+            new OA\Parameter(
+                name: 'sort',
+                in: 'query',
+                description: 'Sort conferences by newest, date, deadline or name.',
+                schema: new OA\Schema(
+                    type: 'string',
+                    enum: [
+                        'newest',
+                        'date',
+                        'deadline',
+                        'name',
+                    ],
+                    default: 'newest'
+                )
+            ),
+            new OA\Parameter(
+                name: 'page',
+                in: 'query',
+                schema: new OA\Schema(
+                    type: 'integer',
+                    minimum: 1
+                )
+            ),
+            new OA\Parameter(
+                name: 'per_page',
+                in: 'query',
+                schema: new OA\Schema(
+                    type: 'integer',
+                    minimum: 1,
+                    maximum: 100,
+                    default: 15
+                )
+            ),
+        ],
         responses: [
             new OA\Response(
                 response: 200,
                 description: 'List of conferences'
             ),
+            new OA\Response(
+                response: 422,
+                description: 'Invalid filter or pagination parameter'
+            ),
         ]
     )]
     public function index(Request $request): JsonResponse
     {
-        $perPage = (int) $request->input('per_page', 15);
+        $validated = $request->validate([
+            'search' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
+            'category' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
+            'country' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
+            'format' => [
+                'nullable',
+                Rule::in([
+                    'in_person',
+                    'virtual',
+                    'hybrid',
+                ]),
+            ],
+            'submission_status' => [
+                'nullable',
+                Rule::in([
+                    'open',
+                    'closed',
+                ]),
+            ],
+            'sort' => [
+                'nullable',
+                Rule::in([
+                    'newest',
+                    'date',
+                    'deadline',
+                    'name',
+                ]),
+            ],
+            'page' => [
+                'nullable',
+                'integer',
+                'min:1',
+            ],
+            'per_page' => [
+                'nullable',
+                'integer',
+                'min:1',
+                'max:100',
+            ],
+        ]);
 
-        $perPage = max(1, min($perPage, 100));
+        $query = Conference::query()
+            ->with('organiser:id,name');
 
-        $conferences = Conference::query()
-            ->with('organiser:id,name')
-            ->orderByDesc('created_at')
+        if (
+            isset($validated['search']) &&
+            trim($validated['search']) !== ''
+        ) {
+            $search = trim(
+                $validated['search']
+            );
+
+            $like = '%'.strtolower($search).'%';
+
+            $query->where(
+                function ($conferenceQuery) use (
+                    $like,
+                    $search
+                ): void {
+                    $conferenceQuery
+                        ->whereRaw(
+                            'LOWER(name) LIKE ?',
+                            [$like]
+                        )
+                        ->orWhereRaw(
+                            'LOWER(code) LIKE ?',
+                            [$like]
+                        )
+                        ->orWhereRaw(
+                            'LOWER(description) LIKE ?',
+                            [$like]
+                        )
+                        ->orWhereRaw(
+                            'LOWER(category) LIKE ?',
+                            [$like]
+                        )
+                        ->orWhereRaw(
+                            'LOWER(venue_name) LIKE ?',
+                            [$like]
+                        )
+                        ->orWhereRaw(
+                            'LOWER(city) LIKE ?',
+                            [$like]
+                        )
+                        ->orWhereRaw(
+                            'LOWER(country) LIKE ?',
+                            [$like]
+                        )
+                        ->orWhereJsonContains(
+                            'topics',
+                            $search
+                        );
+                }
+            );
+        }
+
+        if (
+            isset($validated['category']) &&
+            trim($validated['category']) !== ''
+        ) {
+            $query->whereRaw(
+                'LOWER(category) = ?',
+                [
+                    strtolower(
+                        trim(
+                            $validated['category']
+                        )
+                    ),
+                ]
+            );
+        }
+
+        if (
+            isset($validated['country']) &&
+            trim($validated['country']) !== ''
+        ) {
+            $query->whereRaw(
+                'LOWER(country) = ?',
+                [
+                    strtolower(
+                        trim(
+                            $validated['country']
+                        )
+                    ),
+                ]
+            );
+        }
+
+        if (isset($validated['format'])) {
+            $query->where(
+                'format',
+                $validated['format']
+            );
+        }
+
+        if (
+            isset(
+                $validated['submission_status']
+            )
+        ) {
+            $query->where(
+                'submission_status',
+                $validated['submission_status']
+            );
+        }
+
+        $sort = $validated['sort']
+            ?? 'newest';
+
+        match ($sort) {
+            'name' => $query
+                ->orderBy('name')
+                ->orderBy('id'),
+
+            'date' => $query
+                ->orderBy('start_date')
+                ->orderBy('name'),
+
+            'deadline' => $query
+                ->orderByRaw(
+                    'CASE WHEN submission_deadline IS NULL THEN 1 ELSE 0 END'
+                )
+                ->orderBy('submission_deadline')
+                ->orderBy('start_date'),
+
+            default => $query
+                ->orderByDesc('created_at')
+                ->orderByDesc('id'),
+        };
+
+        $perPage = $validated['per_page']
+            ?? 15;
+
+        $conferences = $query
             ->paginate($perPage);
 
         return response()->json([
@@ -44,221 +308,429 @@ class ConferenceController
             'data' => $conferences->items(),
             'meta' => [
                 'current_page' => $conferences->currentPage(),
+
                 'per_page' => $conferences->perPage(),
+
                 'total' => $conferences->total(),
+
                 'last_page' => $conferences->lastPage(),
             ],
         ]);
     }
 
     #[OA\Post(
+
         path: '/api/v1/conferences',
+
         summary: 'Create a conference',
+
         description: 'The authenticated organiser or admin becomes the conference organiser.',
+
         tags: ['Conferences'],
+
         security: [['sanctum' => []]],
+
         requestBody: new OA\RequestBody(
+
             required: true,
+
             content: new OA\JsonContent(
+
                 required: [
+
                     'code',
+
                     'name',
+
                     'format',
+
                     'start_date',
+
                     'end_date',
+
                 ],
+
                 properties: [
+
                     new OA\Property(
+
                         property: 'code',
+
                         type: 'string',
+
                         example: 'CMT2026'
+
                     ),
+
                     new OA\Property(
+
                         property: 'name',
+
                         type: 'string',
+
                         example: 'CMT Annual Conference'
+
                     ),
+
                     new OA\Property(
+
                         property: 'description',
+
                         type: 'string',
+
                         nullable: true,
+
                         example: 'Annual conference'
+
                     ),
+
                     new OA\Property(
+
                         property: 'category',
+
                         type: 'string',
+
                         nullable: true,
+
                         example: 'Technology'
+
                     ),
+
                     new OA\Property(
+
                         property: 'topics',
+
                         type: 'array',
+
                         items: new OA\Items(type: 'string'),
+
                         example: ['AI', 'Software Engineering']
+
                     ),
+
                     new OA\Property(
+
                         property: 'format',
+
                         type: 'string',
+
                         enum: ['in_person', 'virtual', 'hybrid'],
+
                         example: 'virtual'
+
                     ),
+
                     new OA\Property(
+
                         property: 'submission_status',
+
                         type: 'string',
+
                         enum: ['open', 'closed'],
+
                         example: 'open'
+
                     ),
+
                     new OA\Property(
+
                         property: 'start_date',
+
                         type: 'string',
+
                         format: 'date',
+
                         example: '2026-10-01'
+
                     ),
+
                     new OA\Property(
+
                         property: 'end_date',
+
                         type: 'string',
+
                         format: 'date',
+
                         example: '2026-10-03'
+
                     ),
+
                     new OA\Property(
+
                         property: 'submission_deadline',
+
                         type: 'string',
+
                         format: 'date',
+
                         nullable: true,
+
                         example: '2026-09-01'
+
                     ),
+
                     new OA\Property(
+
                         property: 'venue_name',
+
                         type: 'string',
+
                         nullable: true,
+
                         example: 'CMT Convention Centre'
+
                     ),
+
                     new OA\Property(
+
                         property: 'city',
+
                         type: 'string',
+
                         nullable: true,
+
                         example: 'Johannesburg'
+
                     ),
+
                     new OA\Property(
+
                         property: 'country',
+
                         type: 'string',
+
                         nullable: true,
+
                         example: 'South Africa'
+
                     ),
+
                     new OA\Property(
+
                         property: 'website_link',
+
                         type: 'string',
+
                         format: 'uri',
+
                         nullable: true,
+
                         example: 'https://example.com'
+
                     ),
+
                 ]
+
             )
+
         ),
+
         responses: [
+
             new OA\Response(
+
                 response: 201,
+
                 description: 'Conference created successfully'
+
             ),
+
             new OA\Response(
+
                 response: 401,
+
                 description: 'Unauthenticated'
+
             ),
+
             new OA\Response(
+
                 response: 403,
+
                 description: 'Organiser or admin role required'
+
             ),
+
             new OA\Response(
+
                 response: 422,
+
                 description: 'Validation error'
+
             ),
+
         ]
+
     )]
     public function store(
+
         Request $request,
+
         CreateConference $action
+
     ): JsonResponse {
+
         Gate::authorize('create', Conference::class);
 
         $data = $request->validate([
+
             'code' => [
+
                 'required',
+
                 'string',
+
                 'max:255',
+
                 'unique:conferences,code',
+
             ],
+
             'name' => [
+
                 'required',
+
                 'string',
+
                 'max:255',
+
             ],
+
             'description' => [
+
                 'nullable',
+
                 'string',
+
             ],
+
             'category' => [
+
                 'nullable',
+
                 'string',
+
                 'max:255',
+
             ],
+
             'topics' => [
+
                 'nullable',
+
                 'array',
+
             ],
-            'topics.*' => [
+
+            'topics.\*' => [
+
                 'string',
+
                 'max:255',
+
             ],
+
             'format' => [
+
                 'required',
+
                 Rule::in([
+
                     'in_person',
+
                     'virtual',
+
                     'hybrid',
+
                 ]),
+
             ],
+
             'submission_status' => [
+
                 'nullable',
+
                 Rule::in([
+
                     'open',
+
                     'closed',
+
                 ]),
+
             ],
+
             'start_date' => [
+
                 'required',
+
                 'date',
+
                 'after_or_equal:today',
+
             ],
+
             'end_date' => [
+
                 'required',
+
                 'date',
+
                 'after_or_equal:start_date',
+
             ],
+
             'submission_deadline' => [
+
                 'nullable',
+
                 'date',
+
                 'before_or_equal:start_date',
+
             ],
+
             'venue_name' => [
+
                 'nullable',
+
                 'string',
+
                 'max:255',
+
             ],
+
             'city' => [
+
                 'nullable',
+
                 'string',
+
                 'max:255',
+
             ],
+
             'country' => [
+
                 'nullable',
+
                 'string',
+
                 'max:255',
+
             ],
+
             'website_link' => [
+
                 'nullable',
+
                 'url',
+
                 'max:255',
+
             ],
+
         ]);
 
         $data['organiser_id'] = $request->user()->id;
@@ -266,606 +738,1139 @@ class ConferenceController
         $conference = $action->execute($data);
 
         return response()->json([
+
             'success' => true,
+
             'message' => 'Conference created successfully.',
+
             'data' => $conference,
+
         ], 201);
+
     }
 
     #[OA\Get(
+
         path: '/api/v1/conferences/{conference}',
+
         summary: 'Get a conference by ID',
+
         tags: ['Conferences'],
+
         parameters: [
+
             new OA\Parameter(
+
                 name: 'conference',
+
                 description: 'Conference ID',
+
                 in: 'path',
+
                 required: true,
+
                 schema: new OA\Schema(type: 'integer'),
+
                 example: 1
+
             ),
+
         ],
+
         responses: [
+
             new OA\Response(
+
                 response: 200,
+
                 description: 'Conference details'
+
             ),
+
             new OA\Response(
+
                 response: 404,
+
                 description: 'Conference not found'
+
             ),
+
         ]
+
     )]
     public function show(Conference $conference): JsonResponse
     {
+
         $conference->load('organiser:id,name');
 
         return response()->json([
+
             'data' => $conference,
+
         ]);
+
     }
 
     #[OA\Put(
+
         path: '/api/v1/conferences/{conference}',
+
         summary: 'Update a conference',
+
         tags: ['Conferences'],
+
         security: [['sanctum' => []]],
+
         parameters: [
+
             new OA\Parameter(
+
                 name: 'conference',
+
                 description: 'Conference ID',
+
                 in: 'path',
+
                 required: true,
+
                 schema: new OA\Schema(type: 'integer'),
+
                 example: 1
+
             ),
+
         ],
+
         requestBody: new OA\RequestBody(
+
             required: true,
+
             content: new OA\JsonContent(
+
                 properties: [
+
                     new OA\Property(
+
                         property: 'code',
+
                         type: 'string',
+
                         example: 'CMT2026'
+
                     ),
+
                     new OA\Property(
+
                         property: 'name',
+
                         type: 'string',
+
                         example: 'Updated Conference Name'
+
                     ),
+
                     new OA\Property(
+
                         property: 'description',
+
                         type: 'string',
+
                         nullable: true
+
                     ),
+
                     new OA\Property(
+
                         property: 'category',
+
                         type: 'string',
+
                         nullable: true
+
                     ),
+
                     new OA\Property(
+
                         property: 'topics',
+
                         type: 'array',
+
                         items: new OA\Items(type: 'string')
+
                     ),
+
                     new OA\Property(
+
                         property: 'format',
+
                         type: 'string',
+
                         enum: ['in_person', 'virtual', 'hybrid']
+
                     ),
+
                     new OA\Property(
+
                         property: 'submission_status',
+
                         type: 'string',
+
                         enum: ['open', 'closed']
+
                     ),
+
                     new OA\Property(
+
                         property: 'start_date',
+
                         type: 'string',
+
                         format: 'date'
+
                     ),
+
                     new OA\Property(
+
                         property: 'end_date',
+
                         type: 'string',
+
                         format: 'date'
+
                     ),
+
                     new OA\Property(
+
                         property: 'submission_deadline',
+
                         type: 'string',
+
                         format: 'date',
+
                         nullable: true
+
                     ),
+
                     new OA\Property(
+
                         property: 'venue_name',
+
                         type: 'string',
+
                         nullable: true
+
                     ),
+
                     new OA\Property(
+
                         property: 'city',
+
                         type: 'string',
+
                         nullable: true
+
                     ),
+
                     new OA\Property(
+
                         property: 'country',
+
                         type: 'string',
+
                         nullable: true
+
                     ),
+
                     new OA\Property(
+
                         property: 'website_link',
+
                         type: 'string',
+
                         format: 'uri',
+
                         nullable: true
+
                     ),
+
                 ]
+
             )
+
         ),
+
         responses: [
+
             new OA\Response(
+
                 response: 200,
+
                 description: 'Conference updated successfully'
+
             ),
+
             new OA\Response(
+
                 response: 401,
+
                 description: 'Unauthenticated'
+
             ),
+
             new OA\Response(
+
                 response: 403,
+
                 description: 'Forbidden'
+
             ),
+
             new OA\Response(
+
                 response: 404,
+
                 description: 'Conference not found'
+
             ),
+
             new OA\Response(
+
                 response: 422,
+
                 description: 'Validation error'
+
             ),
+
         ]
+
     )]
     public function update(
+
         Request $request,
+
         Conference $conference,
+
         UpdateConference $action
+
     ): JsonResponse {
+
         Gate::authorize('update', $conference);
 
         $data = $request->validate([
+
             'code' => [
+
                 'sometimes',
+
                 'string',
+
                 'max:255',
+
                 Rule::unique('conferences', 'code')
+
                     ->ignore($conference->id),
+
             ],
+
             'name' => [
+
                 'sometimes',
+
                 'string',
+
                 'max:255',
+
             ],
+
             'description' => [
+
                 'nullable',
+
                 'string',
+
             ],
+
             'category' => [
+
                 'nullable',
+
                 'string',
+
                 'max:255',
+
             ],
+
             'topics' => [
+
                 'nullable',
+
                 'array',
+
             ],
-            'topics.*' => [
+
+            'topics.\*' => [
+
                 'string',
+
                 'max:255',
+
             ],
+
             'format' => [
+
                 'sometimes',
+
                 Rule::in([
+
                     'in_person',
+
                     'virtual',
+
                     'hybrid',
+
                 ]),
+
             ],
+
             'submission_status' => [
+
                 'sometimes',
+
                 Rule::in([
+
                     'open',
+
                     'closed',
+
                 ]),
+
             ],
+
             'start_date' => [
+
                 'sometimes',
+
                 'date',
+
             ],
+
             'end_date' => [
+
                 'sometimes',
+
                 'date',
+
             ],
+
             'submission_deadline' => [
+
                 'nullable',
+
                 'date',
+
             ],
+
             'venue_name' => [
+
                 'nullable',
+
                 'string',
+
                 'max:255',
+
             ],
+
             'city' => [
+
                 'nullable',
+
                 'string',
+
                 'max:255',
+
             ],
+
             'country' => [
+
                 'nullable',
+
                 'string',
+
                 'max:255',
+
             ],
+
             'website_link' => [
+
                 'nullable',
+
                 'url',
+
                 'max:255',
+
             ],
+
         ]);
 
         $effectiveStartDate = Carbon::parse(
+
             $data['start_date']
+
                 ?? $conference->start_date
+
         )->startOfDay();
 
         $effectiveEndDate = Carbon::parse(
+
             $data['end_date']
+
                 ?? $conference->end_date
+
         )->startOfDay();
 
         $effectiveSubmissionDeadline = null;
 
         if (
+
             array_key_exists(
+
                 'submission_deadline',
+
                 $data
+
             )
+
         ) {
+
             if (
+
                 $data['submission_deadline']
+
                 !== null
+
             ) {
+
                 $effectiveSubmissionDeadline =
+
                     Carbon::parse(
+
                         $data['submission_deadline']
+
                     )->startOfDay();
+
             }
+
         } elseif (
+
             $conference->submission_deadline
+
         ) {
+
             $effectiveSubmissionDeadline =
+
                 Carbon::parse(
+
                     $conference->submission_deadline
+
                 )->startOfDay();
+
         }
 
         /*
+
          * Only prevent a past start date when
+
          * the client is actively changing it.
+
          *
+
          * This still allows an organiser to edit
+
          * the name/description of an already-started
+
          * conference.
+
          */
+
         if (
+
             array_key_exists(
+
                 'start_date',
+
                 $data
+
             ) &&
+
             $effectiveStartDate->lt(
+
                 today()
+
             )
+
         ) {
+
             throw ValidationException::withMessages([
                 'start_date' => 'The conference start date cannot be in the past.',
+
             ]);
+
         }
 
         if (
+
             $effectiveEndDate->lt(
+
                 $effectiveStartDate
+
             )
+
         ) {
+
             throw ValidationException::withMessages([
                 'end_date' => 'The conference end date cannot be before the start date.',
+
             ]);
+
         }
 
         if (
+
             $effectiveSubmissionDeadline &&
+
             $effectiveSubmissionDeadline->gt(
+
                 $effectiveStartDate
+
             )
+
         ) {
+
             throw ValidationException::withMessages([
                 'submission_deadline' => 'The submission deadline cannot be after the conference start date.',
+
             ]);
+
         }
 
         $updated = $action->execute($conference, $data);
 
         return response()->json([
+
             'message' => 'Conference updated successfully.',
+
             'data' => $updated,
+
         ]);
+
     }
 
     #[OA\Delete(
+
         path: '/api/v1/conferences/{conference}',
+
         summary: 'Delete a conference',
+
         tags: ['Conferences'],
+
         security: [['sanctum' => []]],
+
         parameters: [
+
             new OA\Parameter(
+
                 name: 'conference',
+
                 description: 'Conference ID',
+
                 in: 'path',
+
                 required: true,
+
                 schema: new OA\Schema(type: 'integer'),
+
                 example: 1
+
             ),
+
         ],
+
         responses: [
+
             new OA\Response(
+
                 response: 200,
+
                 description: 'Conference deleted successfully'
+
             ),
+
             new OA\Response(
+
                 response: 401,
+
                 description: 'Unauthenticated'
+
             ),
+
             new OA\Response(
+
                 response: 403,
+
                 description: 'Forbidden'
+
             ),
+
             new OA\Response(
+
                 response: 404,
+
                 description: 'Conference not found'
+
             ),
+
         ]
+
     )]
     public function destroy(
+
         Conference $conference,
+
         DeleteConference $action
+
     ): JsonResponse {
+
         Gate::authorize('delete', $conference);
 
         $action->execute($conference);
 
         return response()->json([
+
             'message' => 'Conference deleted successfully.',
+
         ]);
+
     }
 
     #[OA\Patch(
+
         path: '/api/v1/conferences/{conference}/status',
+
         summary: 'Update conference submission status',
+
         tags: ['Conferences'],
+
         security: [['sanctum' => []]],
+
         parameters: [
+
             new OA\Parameter(
+
                 name: 'conference',
+
                 description: 'Conference ID',
+
                 in: 'path',
+
                 required: true,
+
                 schema: new OA\Schema(type: 'integer'),
+
                 example: 1
+
             ),
+
         ],
+
         requestBody: new OA\RequestBody(
+
             required: true,
+
             content: new OA\JsonContent(
+
                 required: ['status'],
+
                 properties: [
+
                     new OA\Property(
+
                         property: 'status',
+
                         type: 'string',
+
                         enum: ['open', 'closed'],
+
                         example: 'closed'
+
                     ),
+
                 ]
+
             )
+
         ),
+
         responses: [
+
             new OA\Response(
+
                 response: 200,
+
                 description: 'Status updated successfully'
+
             ),
+
             new OA\Response(
+
                 response: 401,
+
                 description: 'Unauthenticated'
+
             ),
+
             new OA\Response(
+
                 response: 403,
+
                 description: 'Forbidden'
+
             ),
+
             new OA\Response(
+
                 response: 404,
+
                 description: 'Conference not found'
+
             ),
+
             new OA\Response(
+
                 response: 422,
+
                 description: 'Validation error'
+
             ),
+
         ]
+
     )]
     public function updateStatus(
+
         Request $request,
+
         Conference $conference,
+
         UpdateConferenceStatus $action
+
     ): JsonResponse {
+
         Gate::authorize('updateStatus', $conference);
 
         $data = $request->validate([
+
             'status' => [
+
                 'required',
+
                 Rule::in([
+
                     'open',
+
                     'closed',
+
                 ]),
+
             ],
+
         ]);
 
         $updated = $action->execute(
+
             $conference,
+
             $data['status']
+
         );
 
         return response()->json([
+
             'message' => 'Conference status updated successfully.',
+
             'data' => $updated,
+
         ]);
+
     }
 
     #[OA\Get(
+
         path: '/api/v1/conferences/{conference}/submissions',
+
         summary: 'Get submissions belonging to a conference',
+
         description: 'Only an admin or the organiser who owns the conference may access these submissions.',
+
         tags: ['Conferences'],
+
         security: [['sanctum' => []]],
+
         parameters: [
+
             new OA\Parameter(
+
                 name: 'conference',
+
                 description: 'Conference ID',
+
                 in: 'path',
+
                 required: true,
+
                 schema: new OA\Schema(type: 'integer'),
+
                 example: 1
+
             ),
+
         ],
+
         responses: [
+
             new OA\Response(
+
                 response: 200,
+
                 description: 'Conference submissions'
+
             ),
+
             new OA\Response(
+
                 response: 401,
+
                 description: 'Unauthenticated'
+
             ),
+
             new OA\Response(
+
                 response: 403,
+
                 description: 'Forbidden'
+
             ),
+
             new OA\Response(
+
                 response: 404,
+
                 description: 'Conference not found'
+
             ),
+
         ]
+
     )]
     public function submissions(
+
         Conference $conference
+
     ): JsonResponse {
+
         Gate::authorize('viewRelated', $conference);
 
         $submissions = $conference->submissions()
+
             ->with('author:id,name,email')
+
             ->orderByDesc('created_at')
+
             ->paginate(15);
 
         return response()->json($submissions);
+
     }
 
     #[OA\Get(
+
         path: '/api/v1/conferences/{conference}/registrations',
+
         summary: 'Get registrations belonging to a conference',
+
         description: 'Only an admin or the organiser who owns the conference may access these registrations.',
+
         tags: ['Conferences'],
+
         security: [['sanctum' => []]],
+
         parameters: [
+
             new OA\Parameter(
+
                 name: 'conference',
+
                 description: 'Conference ID',
+
                 in: 'path',
+
                 required: true,
+
                 schema: new OA\Schema(type: 'integer'),
+
                 example: 1
+
             ),
+
         ],
+
         responses: [
+
             new OA\Response(
+
                 response: 200,
+
                 description: 'Conference registrations'
+
             ),
+
             new OA\Response(
+
                 response: 401,
+
                 description: 'Unauthenticated'
+
             ),
+
             new OA\Response(
+
                 response: 403,
+
                 description: 'Forbidden'
+
             ),
+
             new OA\Response(
+
                 response: 404,
+
                 description: 'Conference not found'
+
             ),
+
         ]
+
     )]
     public function registrations(
+
         Conference $conference
+
     ): JsonResponse {
+
         Gate::authorize('viewRelated', $conference);
 
         $registrations = $conference->registrations()
+
             ->with('user:id,name,email')
+
             ->orderByDesc('registered_at')
+
             ->paginate(15);
 
         return response()->json($registrations);
+
     }
 
     #[OA\Get(
+
         path: '/api/v1/conferences/{conference}/sessions',
+
         summary: 'Get sessions belonging to a conference',
+
         description: 'Only an admin or the organiser who owns the conference may access these sessions.',
+
         tags: ['Conferences'],
+
         security: [['sanctum' => []]],
+
         parameters: [
+
             new OA\Parameter(
+
                 name: 'conference',
+
                 description: 'Conference ID',
+
                 in: 'path',
+
                 required: true,
+
                 schema: new OA\Schema(type: 'integer'),
+
                 example: 1
+
             ),
+
         ],
+
         responses: [
+
             new OA\Response(
+
                 response: 200,
+
                 description: 'Conference sessions'
+
             ),
+
             new OA\Response(
+
                 response: 401,
+
                 description: 'Unauthenticated'
+
             ),
+
             new OA\Response(
+
                 response: 403,
+
                 description: 'Forbidden'
+
             ),
+
             new OA\Response(
+
                 response: 404,
+
                 description: 'Conference not found'
+
             ),
+
         ]
+
     )]
     public function sessions(
+
         Conference $conference
+
     ): JsonResponse {
+
         Gate::authorize('viewRelated', $conference);
 
         $sessions = $conference->sessions()
+
             ->with(
+
                 'submission:id,conference_id,title,track,status'
+
             )
+
             ->orderBy('scheduled_time')
+
             ->paginate(15);
 
         return response()->json($sessions);
+
     }
 }
