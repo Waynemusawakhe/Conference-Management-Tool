@@ -108,8 +108,7 @@ class ContactMessageController extends Controller
         ]);
 
         $filters = [
-            'status' =>
-                $validated['status']
+            'status' => $validated['status']
                 ?? null,
         ];
 
@@ -126,17 +125,13 @@ class ContactMessageController extends Controller
             'success' => true,
             'data' => $messages->items(),
             'meta' => [
-                'current_page' =>
-                    $messages->currentPage(),
+                'current_page' => $messages->currentPage(),
 
-                'per_page' =>
-                    $messages->perPage(),
+                'per_page' => $messages->perPage(),
 
-                'total' =>
-                    $messages->total(),
+                'total' => $messages->total(),
 
-                'last_page' =>
-                    $messages->lastPage(),
+                'last_page' => $messages->lastPage(),
             ],
         ]);
     }
