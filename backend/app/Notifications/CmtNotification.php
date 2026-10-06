@@ -14,6 +14,7 @@ class CmtNotification extends Notification
         public string $message,
         public ?string $actionUrl = null,
         public string $kind = 'system',
+        public array $metadata = [],
     ) {}
 
     public function via(object $notifiable): array
@@ -23,11 +24,11 @@ class CmtNotification extends Notification
 
     public function toDatabase(object $notifiable): array
     {
-        return [
+        return array_merge([
             'title' => $this->title,
             'message' => $this->message,
             'action_url' => $this->actionUrl,
             'kind' => $this->kind,
-        ];
+        ], $this->metadata);
     }
 }

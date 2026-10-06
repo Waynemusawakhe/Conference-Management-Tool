@@ -4,7 +4,9 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use App\Modules\Conferences\Models\Conference;
+use App\Modules\Registrations\Actions\SendConferenceRemindersAction;
 use App\Modules\Registrations\Models\Registration;
+use App\Notifications\CmtNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 use Tests\TestCase;
@@ -57,6 +59,37 @@ class RegistrationApiTest extends TestCase
             'user_id' => $user->id,
             'status' => 'registered',
         ]);
+    }
+
+    public function test_sends_one_reminder_for_each_active_registration_starting_tomorrow(): void
+    {
+        $attendee = User::factory()->create(['role' => 'attendee']);
+        $conference = Conference::factory()->create([
+            'start_date' => now()->addDay()->toDateString(),
+            'end_date' => now()->addDays(2)->toDateString(),
+        ]);
+        $registration = Registration::create([
+            'conference_id' => $conference->id,
+            'user_id' => $attendee->id,
+            'status' => 'registered',
+        ]);
+
+        $action = app(SendConferenceRemindersAction::class);
+
+        $this->assertSame(1, $action->execute());
+        $this->assertSame(0, $action->execute());
+
+        Notification::assertSentTo(
+            $attendee,
+            CmtNotification::class,
+            fn (CmtNotification $notification) => $notification->kind === 'conference_reminder'
+                && $notification->metadata['registration_id'] === $registration->id
+        );
+
+        $this->assertCount(
+            1,
+            Notification::sent($attendee, CmtNotification::class)
+        );
     }
 
     public function test_client_cannot_register_another_user_or_set_status(): void

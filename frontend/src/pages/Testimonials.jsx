@@ -1,7 +1,9 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ArrowRight,
+  CalendarDays,
+  Pencil,
   Plus,
   Quote,
   Star,
@@ -9,10 +11,8 @@ import {
 } from "lucide-react";
 
 import Navbar from "../components/Navbar";
-
 import { useAuth } from "../context/AuthContext";
 import { useApiResource } from "../hooks/useApiResource";
-
 import { toArray } from "../api/normalize";
 import { testimonialsApi } from "../api/testimonialsApi";
 import { conferencesApi } from "../api/conferencesApi";
@@ -26,19 +26,28 @@ const tBody = (testimonial) =>
   "";
 
 const tName = (testimonial) =>
-  testimonial.author?.name ??
   testimonial.user?.name ??
-  testimonial.author_name ??
+  testimonial.author?.name ??
   testimonial.user_name ??
+  testimonial.author_name ??
   testimonial.name ??
   "";
 
 const tRole = (testimonial) =>
-  testimonial.role ??
-  testimonial.author?.role ??
   testimonial.user?.role ??
+  testimonial.author?.role ??
+  testimonial.role ??
   testimonial.author_role ??
   "";
+
+const tOwnerId = (testimonial) =>
+  testimonial.user_id ??
+  testimonial.author_id ??
+  testimonial.userId ??
+  testimonial.authorId ??
+  testimonial.user?.id ??
+  testimonial.author?.id ??
+  null;
 
 const tRating = (testimonial) => {
   const rating = Number(
@@ -48,54 +57,38 @@ const tRating = (testimonial) => {
       0
   );
 
-  return Number.isFinite(rating) &&
-    rating > 0
-    ? Math.min(
-        Math.round(rating),
-        5
-      )
+  return Number.isFinite(rating) && rating > 0
+    ? Math.min(Math.round(rating), 5)
     : 0;
 };
 
+const conferenceName = (conference) =>
+  conference.name ??
+  conference.title ??
+  conference.code ??
+  `Conference #${conference.id}`;
+
 function getInitials(name) {
-  if (!name) {
-    return "?";
-  }
+  if (!name) return "?";
 
   const parts = String(name)
     .trim()
     .split(/\s+/)
     .filter(Boolean);
 
-  if (parts.length === 0) {
-    return "?";
-  }
+  if (!parts.length) return "?";
 
   return parts
     .slice(0, 2)
-    .map(
-      (part) =>
-        part[0]?.toUpperCase() ??
-        ""
-    )
+    .map((part) => part[0]?.toUpperCase() ?? "")
     .join("");
-}
-
-function getConferenceName(conference) {
-  return (
-    conference.name ??
-    conference.title ??
-    conference.code ??
-    `Conference #${conference.id}`
-  );
 }
 
 function TestimonialCard({
   item,
+  isOwn,
+  onEdit,
 }) {
-  const rating =
-    item.rating ?? 0;
-
   return (
     <div className="testimonial-card">
       <Quote className="quote-icon" />
@@ -104,20 +97,20 @@ function TestimonialCard({
         {item.quote}
       </p>
 
-      {rating > 0 && (
+      {item.rating > 0 && (
         <div className="testimonial-stars">
-          {Array.from({
-            length: 5,
-          }).map((_, index) => (
-            <Star
-              key={index}
-              className={
-                index < rating
-                  ? "star-filled"
-                  : "star-empty"
-              }
-            />
-          ))}
+          {Array.from({ length: 5 }).map(
+            (_, index) => (
+              <Star
+                key={index}
+                className={
+                  index < item.rating
+                    ? "star-filled"
+                    : "star-empty"
+                }
+              />
+            )
+          )}
         </div>
       )}
 
@@ -126,10 +119,9 @@ function TestimonialCard({
           {item.initials}
         </span>
 
-        <div>
+        <div className="min-w-0">
           <p className="testimonial-name">
-            {item.name ||
-              "Anonymous"}
+            {item.name || "CMT user"}
           </p>
 
           {item.role && (
@@ -138,6 +130,18 @@ function TestimonialCard({
             </p>
           )}
         </div>
+
+        {isOwn && (
+          <button
+            type="button"
+            onClick={() => onEdit(item)}
+            className="ml-auto inline-flex items-center gap-1.5 rounded-lg bg-[#efedff] px-2.5 py-1.5 text-[10px] font-extrabold text-[#5649dc] transition hover:bg-[#e5e2ff]"
+            aria-label="Edit your testimonial"
+          >
+            <Pencil size={11} />
+            Edit yours
+          </button>
+        )}
       </div>
     </div>
   );
@@ -149,64 +153,56 @@ function AddTestimonialDialog({
   onSaved,
   conferences,
   conferencesLoading,
+  existing,
 }) {
-  const [
-    conferenceId,
-    setConferenceId,
-  ] = useState("");
+  const isEdit = Boolean(existing);
 
-  const [
-    content,
-    setContent,
-  ] = useState("");
+  const [conferenceId, setConferenceId] =
+    useState("");
+  const [content, setContent] =
+    useState("");
+  const [rating, setRating] =
+    useState(0);
+  const [saving, setSaving] =
+    useState(false);
+  const [error, setError] =
+    useState("");
 
-  const [
-    rating,
-    setRating,
-  ] = useState(0);
+  useEffect(() => {
+    if (!open) return;
 
-  const [
-    saving,
-    setSaving,
-  ] = useState(false);
-
-  const [
-    error,
-    setError,
-  ] = useState("");
-
-  if (!open) {
-    return null;
-  }
-
-  const resetForm = () => {
-    setConferenceId("");
-    setContent("");
-    setRating(0);
-    setError("");
-  };
-
-  const closeDialog = () => {
-    if (saving) {
-      return;
+    if (existing) {
+      setContent(tBody(existing));
+      setRating(tRating(existing));
+      setConferenceId(
+        String(existing.conference_id ?? "")
+      );
+    } else {
+      setConferenceId("");
+      setContent("");
+      setRating(0);
     }
 
-    resetForm();
+    setError("");
+  }, [open, existing]);
+
+  if (!open) return null;
+
+  const closeDialog = () => {
+    if (saving) return;
+
+    setError("");
     onClose();
   };
 
-  const submit = async (
-    event
-  ) => {
+  const submit = async (event) => {
     event.preventDefault();
-
     setError("");
 
-    if (!conferenceId) {
+    if (!isEdit && !conferenceId) {
       setError(
         "Please select a conference."
       );
-
       return;
     }
 
@@ -214,53 +210,49 @@ function AddTestimonialDialog({
       setError(
         "Please write your testimonial."
       );
-
       return;
     }
 
-    if (
-      rating < 1 ||
-      rating > 5
-    ) {
+    if (rating < 1 || rating > 5) {
       setError(
         "Please select a rating between 1 and 5 stars."
       );
-
       return;
     }
 
     setSaving(true);
 
     try {
-      await testimonialsApi.create({
-        conference_id:
-          Number(conferenceId),
-
+      const payload = {
         rating,
+        content: content.trim(),
+      };
 
-        content:
-          content.trim(),
-      });
+      if (isEdit) {
+        await testimonialsApi.update(
+          existing.id,
+          payload
+        );
+      } else {
+        await testimonialsApi.create({
+          conference_id:
+            Number(conferenceId),
+          ...payload,
+        });
+      }
 
       await onSaved();
-
-      resetForm();
-
       onClose();
     } catch (requestError) {
-      if (
-        requestError?.status ===
-        401
-      ) {
+      if (requestError?.status === 401) {
         setError(
-          "Please log in to post a testimonial."
+          "Your session expired. Please log in again."
         );
       } else if (
-        requestError?.status ===
-          422 &&
-        requestError.errors
+        requestError?.status === 422 &&
+        requestError?.errors
       ) {
-        const message =
+        const firstError =
           Object.values(
             requestError.errors
           )
@@ -268,14 +260,14 @@ function AddTestimonialDialog({
             .find(Boolean);
 
         setError(
-          message ||
+          firstError ||
             requestError.message ||
             "Please check your testimonial details."
         );
       } else {
         setError(
           requestError?.message ??
-            "Failed to submit testimonial."
+            "Failed to save testimonial."
         );
       }
     } finally {
@@ -296,7 +288,9 @@ function AddTestimonialDialog({
       >
         <div className="flex items-center justify-between gap-3 border-b border-[#edf0f5] px-5 py-4">
           <strong className="text-[13px] font-extrabold text-[#1c2a4a]">
-            Share your experience
+            {isEdit
+              ? "Edit your testimonial"
+              : "Share your experience"}
           </strong>
 
           <button
@@ -312,52 +306,53 @@ function AddTestimonialDialog({
 
         <form
           onSubmit={submit}
-          className="grid gap-5 p-5"
+          className="grid gap-4 p-5"
         >
-          <label className="grid gap-2">
-            <span className="text-[11px] font-bold text-[#3b4761]">
-              Conference
-            </span>
+          {!isEdit && (
+            <label className="grid gap-2">
+              <span className="flex items-center gap-1.5 text-[11px] font-bold text-[#3b4761]">
+                <CalendarDays
+                  size={12}
+                  className="text-[#7a6ef0]"
+                />
+                Conference
+              </span>
 
-            <select
-              value={
-                conferenceId
-              }
-              onChange={(event) =>
-                setConferenceId(
-                  event.target.value
-                )
-              }
-              disabled={
-                conferencesLoading
-              }
-              required
-              className="h-11 rounded-xl border border-[#e4e8f0] bg-white px-3.5 text-[13px] text-[#1c2a4a] outline-none transition focus:border-[#8878f8] focus:ring-4 focus:ring-[#8878f8]/10 disabled:cursor-not-allowed disabled:bg-[#f7f8fb]"
-            >
-              <option value="">
-                {conferencesLoading
-                  ? "Loading conferences..."
-                  : "Select a conference"}
-              </option>
+              <select
+                value={conferenceId}
+                onChange={(event) =>
+                  setConferenceId(
+                    event.target.value
+                  )
+                }
+                disabled={
+                  conferencesLoading ||
+                  saving
+                }
+                required
+                className="h-11 rounded-xl border border-[#e4e8f0] bg-white px-3.5 text-[13px] text-[#1c2a4a] outline-none transition focus:border-[#8878f8] focus:ring-4 focus:ring-[#8878f8]/10 disabled:cursor-not-allowed disabled:bg-[#f7f8fb]"
+              >
+                <option value="">
+                  {conferencesLoading
+                    ? "Loading conferences..."
+                    : "Select a conference"}
+                </option>
 
-              {conferences.map(
-                (conference) => (
-                  <option
-                    key={
-                      conference.id
-                    }
-                    value={
-                      conference.id
-                    }
-                  >
-                    {getConferenceName(
-                      conference
-                    )}
-                  </option>
-                )
-              )}
-            </select>
-          </label>
+                {conferences.map(
+                  (conference) => (
+                    <option
+                      key={conference.id}
+                      value={conference.id}
+                    >
+                      {conferenceName(
+                        conference
+                      )}
+                    </option>
+                  )
+                )}
+              </select>
+            </label>
+          )}
 
           <label className="grid gap-2">
             <span className="text-[11px] font-bold text-[#3b4761]">
@@ -374,7 +369,7 @@ function AddTestimonialDialog({
               rows={5}
               required
               placeholder="What has your experience with this conference been like?"
-              className="resize-y rounded-xl border border-[#e4e8f0] bg-white px-3.5 py-3 text-[13px] outline-none transition focus:border-[#8878f8] focus:ring-4 focus:ring-[#8878f8]/10"
+              className="resize-y rounded-xl border border-[#e4e8f0] bg-white px-3.5 py-3 text-[13px] text-[#1c2a4a] outline-none transition focus:border-[#8878f8] focus:ring-4 focus:ring-[#8878f8]/10"
             />
           </label>
 
@@ -384,25 +379,13 @@ function AddTestimonialDialog({
             </span>
 
             <div className="flex flex-wrap items-center gap-1">
-              {[
-                1,
-                2,
-                3,
-                4,
-                5,
-              ].map(
-                (
-                  number
-                ) => (
+              {[1, 2, 3, 4, 5].map(
+                (number) => (
                   <button
-                    key={
-                      number
-                    }
+                    key={number}
                     type="button"
                     onClick={() =>
-                      setRating(
-                        number
-                      )
+                      setRating(number)
                     }
                     className="grid h-11 w-11 place-items-center rounded-xl border border-[#e4e8f0] bg-white transition hover:border-[#d6dbe8] hover:bg-[#fafbff]"
                     aria-label={`${number} star${
@@ -414,8 +397,7 @@ function AddTestimonialDialog({
                     <Star
                       size={17}
                       className={
-                        number <=
-                        rating
+                        number <= rating
                           ? "fill-[#f59e0b] text-[#f59e0b]"
                           : "text-[#dfe4ed]"
                       }
@@ -432,9 +414,9 @@ function AddTestimonialDialog({
             </div>
           </div>
 
-          {conferences.length ===
-            0 &&
-            !conferencesLoading && (
+          {!isEdit &&
+            !conferencesLoading &&
+            conferences.length === 0 && (
               <p className="rounded-lg bg-[#fff8e8] px-3 py-2 text-[11px] font-semibold text-[#8b6514]">
                 There are currently no
                 conferences available
@@ -454,12 +436,8 @@ function AddTestimonialDialog({
           <div className="flex justify-end gap-2 border-t border-[#eef1f7] pt-4">
             <button
               type="button"
-              onClick={
-                closeDialog
-              }
-              disabled={
-                saving
-              }
+              onClick={closeDialog}
+              disabled={saving}
               className="inline-flex min-h-11 items-center justify-center rounded-xl border border-[#e4e8f0] bg-white px-4 text-[11px] font-bold text-[#5c6880] hover:bg-[#fafbff] disabled:cursor-not-allowed disabled:opacity-50"
             >
               Cancel
@@ -469,15 +447,19 @@ function AddTestimonialDialog({
               type="submit"
               disabled={
                 saving ||
-                conferencesLoading ||
-                conferences.length ===
-                  0
+                rating < 1 ||
+                (!isEdit &&
+                  (conferencesLoading ||
+                    conferences.length ===
+                      0))
               }
               className="inline-flex min-h-11 items-center justify-center rounded-xl bg-gradient-to-br from-[#6655f6] to-[#7869ff] px-5 text-[11px] font-extrabold text-white shadow-[0_12px_28px_rgba(103,87,245,.28)] transition hover:-translate-y-px disabled:cursor-not-allowed disabled:opacity-60"
             >
               {saving
-                ? "Posting..."
-                : "Post testimonial"}
+                ? "Saving..."
+                : isEdit
+                  ? "Save changes"
+                  : "Post testimonial"}
             </button>
           </div>
         </form>
@@ -487,23 +469,23 @@ function AddTestimonialDialog({
 }
 
 export default function Testimonials() {
-  const navigate =
-    useNavigate();
+  const navigate = useNavigate();
+  const { user, status } = useAuth();
 
-  const {
-    user,
-    status,
-  } = useAuth();
-
+  const [dialogOpen, setDialogOpen] =
+    useState(false);
   const [
-    dialogOpen,
-    setDialogOpen,
+    editingTestimonial,
+    setEditingTestimonial,
+  ] = useState(null);
+  const [
+    successFlash,
+    setSuccessFlash,
   ] = useState(false);
 
   const testimonialsRes =
     useApiResource(
-      () =>
-        testimonialsApi.getAll(),
+      () => testimonialsApi.getAll(),
       []
     );
 
@@ -517,87 +499,91 @@ export default function Testimonials() {
     );
 
   const isAuthenticated =
-    status ===
-      "authenticated" &&
+    status === "authenticated" &&
     Boolean(user);
+  const isInitializing =
+    status === "initializing";
 
-  const conferences =
-    useMemo(
-      () =>
-        toArray(
-          conferencesRes.data
-        ),
-      [
-        conferencesRes.data,
-      ]
-    );
+  const conferences = useMemo(
+    () =>
+      toArray(conferencesRes.data),
+    [conferencesRes.data]
+  );
 
-  const testimonials =
-    useMemo(() => {
-      return toArray(
-        testimonialsRes.data
-      )
-        .map(
-          (testimonial) => {
-            const body =
-              tBody(
-                testimonial
-              );
+  const testimonials = useMemo(
+    () =>
+      toArray(testimonialsRes.data)
+        .map((testimonial) => {
+          const body =
+            tBody(testimonial);
 
-            if (!body) {
-              return null;
-            }
+          if (!body) return null;
 
-            const name =
-              tName(
-                testimonial
-              );
+          const name =
+            tName(testimonial);
 
-            const role =
-              tRole(
-                testimonial
-              );
+          return {
+            id: testimonial.id,
+            quote: body,
+            name,
+            role:
+              tRole(testimonial),
+            initials:
+              getInitials(name),
+            rating:
+              tRating(testimonial),
+            ownerId:
+              tOwnerId(testimonial),
+            _raw: testimonial,
+          };
+        })
+        .filter(Boolean),
+    [testimonialsRes.data]
+  );
 
-            return {
-              id:
-                testimonial.id,
-
-              quote: body,
-
-              name,
-
-              role,
-
-              initials:
-                getInitials(
-                  name
-                ),
-
-              rating:
-                tRating(
-                  testimonial
-                ),
-            };
-          }
-        )
-        .filter(Boolean);
-    }, [
-      testimonialsRes.data,
-    ]);
+  const currentUserId =
+    user?.id ?? null;
 
   const handleAdd = () => {
-    if (
-      !isAuthenticated
-    ) {
-      navigate(
-        "/login"
-      );
+    if (isInitializing) return;
 
+    if (!isAuthenticated) {
+      navigate("/login");
       return;
     }
 
-    setDialogOpen(
-      true
+    setEditingTestimonial(null);
+    setDialogOpen(true);
+  };
+
+  const handleEdit = (item) => {
+    if (
+      !isAuthenticated ||
+      !item?._raw
+    ) {
+      return;
+    }
+
+    setEditingTestimonial(
+      item._raw
+    );
+    setDialogOpen(true);
+  };
+
+  const handleClose = () => {
+    setDialogOpen(false);
+    setEditingTestimonial(null);
+  };
+
+  const handleSaved = async () => {
+    await testimonialsRes.reload();
+
+    setSuccessFlash(true);
+
+    window.setTimeout(
+      () =>
+        setSuccessFlash(false),
+      4000
     );
   };
 
@@ -608,8 +594,7 @@ export default function Testimonials() {
       <main className="testimonials-page">
         <section className="testimonials-hero">
           <h1>
-            Trusted by
-            researchers,{" "}
+            Trusted by researchers,{" "}
             <span className="highlight">
               worldwide.
             </span>
@@ -617,65 +602,61 @@ export default function Testimonials() {
 
           <p>
             From first-time
-            presenters to
-            symposium organizers,
-            here's how CMT has
-            changed the way people
-            find, submit to, and
-            run conferences.
+            presenters to symposium
+            organizers, here's how CMT
+            has changed the way people
+            find, submit to, and run
+            conferences.
           </p>
         </section>
 
         <section className="mx-auto -mt-2 mb-6 flex w-[min(1200px,calc(100%-40px))] justify-end">
           <button
             type="button"
-            onClick={
-              handleAdd
-            }
-            className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-br from-[#6655f6] to-[#7869ff] px-4 py-2.5 text-[11px] font-extrabold text-white shadow-[0_12px_28px_rgba(103,87,245,.28)] transition hover:-translate-y-px"
+            onClick={handleAdd}
+            disabled={isInitializing}
+            className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-br from-[#6655f6] to-[#7869ff] px-4 py-2.5 text-[11px] font-extrabold text-white shadow-[0_12px_28px_rgba(103,87,245,.28)] transition hover:-translate-y-px disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
           >
-            <Plus
-              size={14}
-            />
-
-            Add yours
+            <Plus size={14} />
+            {isInitializing
+              ? "Loading..."
+              : "Add yours"}
           </button>
         </section>
+
+        {successFlash && (
+          <div
+            role="status"
+            className="mx-auto mb-6 flex w-[min(1200px,calc(100%-40px))] items-center gap-2 rounded-xl border border-[#bfe5d1] bg-[#effaf4] px-4 py-3 text-[11px] font-semibold text-[#18794e]"
+          >
+            <Quote size={13} />
+            Your testimonial was saved
+            successfully.
+          </div>
+        )}
 
         <section className="testimonials-grid">
           {testimonialsRes.loading &&
             Array.from({
               length: 6,
-            }).map(
-              (
-                _,
-                index
-              ) => (
-                <div
-                  key={
-                    index
-                  }
-                  className="testimonial-card"
-                  aria-hidden="true"
-                >
-                  <Quote className="quote-icon" />
-
-                  <div className="mb-2.5 h-3 w-[85%] animate-pulse rounded-full bg-[#eef1f7]" />
-
-                  <div className="mb-5 h-3 w-[60%] animate-pulse rounded-full bg-[#eef1f7]" />
-
-                  <div className="h-3 w-[45%] animate-pulse rounded-full bg-[#eef1f7]" />
-                </div>
-              )
-            )}
+            }).map((_, index) => (
+              <div
+                key={index}
+                className="testimonial-card"
+                aria-hidden="true"
+              >
+                <Quote className="quote-icon" />
+                <div className="mb-2.5 h-3 w-[85%] animate-pulse rounded-full bg-[#eef1f7]" />
+                <div className="mb-5 h-3 w-[60%] animate-pulse rounded-full bg-[#eef1f7]" />
+                <div className="h-3 w-[45%] animate-pulse rounded-full bg-[#eef1f7]" />
+              </div>
+            ))}
 
           {!testimonialsRes.loading &&
             testimonialsRes.error && (
               <div className="col-span-full flex flex-col items-center gap-3 py-16 text-center">
                 <span className="grid h-12 w-12 place-items-center rounded-2xl bg-[#fff2f2] text-[#b13a3a]">
-                  <Quote
-                    size={22}
-                  />
+                  <Quote size={22} />
                 </span>
 
                 <h3 className="m-0 text-[14px] font-bold text-[#1c2a4a]">
@@ -684,11 +665,9 @@ export default function Testimonials() {
                 </h3>
 
                 <p className="m-0 max-w-[420px] text-[11px] leading-5 text-[#8993a6]">
-                  {
-                    testimonialsRes
-                      .error
-                      .message
-                  }
+                  {testimonialsRes
+                    .error?.message ||
+                    "Please try again."}
                 </p>
 
                 <button
@@ -705,38 +684,28 @@ export default function Testimonials() {
 
           {!testimonialsRes.loading &&
             !testimonialsRes.error &&
-            testimonials.length ===
-              0 && (
+            testimonials.length === 0 && (
               <div className="col-span-full flex flex-col items-center gap-3 py-16 text-center">
                 <span className="grid h-12 w-12 place-items-center rounded-2xl bg-[#efedff] text-[#5c50ec]">
-                  <Quote
-                    size={22}
-                  />
+                  <Quote size={22} />
                 </span>
 
                 <h3 className="m-0 text-[14px] font-bold text-[#1c2a4a]">
-                  No testimonials
-                  yet
+                  No testimonials yet
                 </h3>
 
                 <p className="m-0 max-w-[420px] text-[11px] leading-5 text-[#8993a6]">
-                  Be the first to
-                  share your
-                  experience with
-                  CMT.
+                  Be the first to share
+                  your conference
+                  experience with CMT.
                 </p>
 
                 <button
                   type="button"
-                  onClick={
-                    handleAdd
-                  }
+                  onClick={handleAdd}
                   className="mt-1 inline-flex items-center gap-1.5 rounded-lg bg-[#efedff] px-3 py-1.5 text-[10px] font-extrabold text-[#5649dc] hover:bg-[#e5e2ff]"
                 >
-                  <Plus
-                    size={12}
-                  />
-
+                  <Plus size={12} />
                   Add yours
                 </button>
               </div>
@@ -745,49 +714,54 @@ export default function Testimonials() {
           {!testimonialsRes.loading &&
             !testimonialsRes.error &&
             testimonials.map(
-              (
-                item,
-                index
-              ) => (
-                <TestimonialCard
-                  key={
-                    item.id ??
-                    `testimonial-${index}`
-                  }
-                  item={
-                    item
-                  }
-                />
-              )
+              (item, index) => {
+                const isOwn =
+                  currentUserId != null &&
+                  item.ownerId != null &&
+                  String(
+                    item.ownerId
+                  ) ===
+                    String(
+                      currentUserId
+                    );
+
+                return (
+                  <TestimonialCard
+                    key={
+                      item.id ??
+                      `testimonial-${index}`
+                    }
+                    item={item}
+                    isOwn={isOwn}
+                    onEdit={
+                      handleEdit
+                    }
+                  />
+                );
+              }
             )}
         </section>
 
         <section className="cta-section">
           <h2>
-            Ready to join
-            them?
+            Ready to join them?
           </h2>
 
           <p>
-            Create a free
-            account and start
-            discovering
-            conferences matched
-            to your research in
-            minutes.
+            Create a free account and
+            start discovering
+            conferences matched to
+            your research in minutes.
           </p>
 
           <button
             type="button"
             className="cta-button"
             onClick={() =>
-              navigate(
-                "/register"
-              )
+              navigate("/register")
             }
           >
             Register for free
-
             <ArrowRight className="icon" />
           </button>
         </section>
@@ -795,19 +769,14 @@ export default function Testimonials() {
 
       <AddTestimonialDialog
         open={dialogOpen}
-        onClose={() =>
-          setDialogOpen(
-            false
-          )
-        }
-        onSaved={() =>
-          testimonialsRes.reload()
-        }
-        conferences={
-          conferences
-        }
+        onClose={handleClose}
+        onSaved={handleSaved}
+        conferences={conferences}
         conferencesLoading={
           conferencesRes.loading
+        }
+        existing={
+          editingTestimonial
         }
       />
     </div>

@@ -3,9 +3,10 @@ import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Logo from "./Logo";
 import { useTheme } from "../context/ThemeContext";
+import { useAuth } from "../context/AuthContext";
 
 const navItems = [
-  { label: "Home", target: "/", section: "top" },
+  { label: "Home", target: "/home", section: "top" },
   { label: "Conferences", target: "/conferences" },
   { label: "About", target: "/about" },
   { label: "Testimonials", target: "/testimonials" },
@@ -18,6 +19,7 @@ export default function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
   const { dark, toggleTheme } = useTheme();
+  const { status } = useAuth();
 
   const goTo = ({ target, section }) => {
     setOpen(false);
@@ -46,7 +48,7 @@ export default function Navbar() {
           {navItems.map((item) => (
             <button
               key={item.label}
-              className={`relative border-0 bg-transparent px-0 py-7 text-[13px] font-semibold text-white/80 transition hover:text-white ${item.target === "/" && location.pathname === "/" ? "text-white after:absolute after:inset-x-0 after:bottom-4 after:h-0.5 after:rounded-full after:bg-[#7d6bff] after:content-['']" : ""}`}
+              className={`relative border-0 bg-transparent px-0 py-7 text-[13px] font-semibold text-white/80 transition hover:text-white ${item.target === "/home" && location.pathname === "/home" ? "text-white after:absolute after:inset-x-0 after:bottom-4 after:h-0.5 after:rounded-full after:bg-[#7d6bff] after:content-['']" : ""}`}
               onClick={() => goTo(item)}
             >
               {item.label}
@@ -58,12 +60,16 @@ export default function Navbar() {
   <button className="grid h-10 w-10 place-items-center rounded-[11px] border border-white/20 bg-transparent text-white" onClick={toggleTheme} aria-label={dark ? "Switch to light mode" : "Switch to dark mode"} title={dark ? "Switch to light mode" : "Switch to dark mode"}>
     {dark ? <Sun size={17} /> : <Moon size={17} />}
   </button>
-  <button className="rounded-[11px] border border-white/20 bg-transparent px-[18px] py-[11px] text-[13px] font-bold text-white transition hover:-translate-y-px" onClick={() => navigate("/login")}>
-    Login
-  </button>
-  <button className="rounded-[11px] bg-gradient-to-br from-[#6655f6] to-[#7869ff] px-[18px] py-[11px] text-[13px] font-bold text-white shadow-[0_10px_26px_rgba(103,87,245,.26)] transition hover:-translate-y-px" onClick={() => navigate("/register")}>
-    Register
-  </button>
+  {status === "unauthenticated" ? (
+    <>
+      <button className="rounded-[11px] border border-white/20 bg-transparent px-[18px] py-[11px] text-[13px] font-bold text-white transition hover:-translate-y-px" onClick={() => navigate("/login")}>
+        Login
+      </button>
+      <button className="rounded-[11px] bg-gradient-to-br from-[#6655f6] to-[#7869ff] px-[18px] py-[11px] text-[13px] font-bold text-white shadow-[0_10px_26px_rgba(103,87,245,.26)] transition hover:-translate-y-px" onClick={() => navigate("/register")}>
+        Register
+      </button>
+    </>
+  ) : null}
 </div>
 
         <button
@@ -87,12 +93,16 @@ export default function Navbar() {
           <button className="grid h-11 w-11 place-items-center rounded-[11px] border border-white/20 bg-transparent text-white" onClick={toggleTheme} aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}>
             {dark ? <Sun size={17} /> : <Moon size={17} />}
           </button>
-          <button className="flex-1 rounded-[11px] border border-white/20 bg-transparent px-[18px] py-[11px] text-[13px] font-bold text-white" onClick={() => { setOpen(false); navigate("/login"); }}>
-    Login
-  </button>
-  <button className="flex-1 rounded-[11px] bg-gradient-to-br from-[#6655f6] to-[#7869ff] px-[18px] py-[11px] text-[13px] font-bold text-white" onClick={() => { setOpen(false); navigate("/register"); }}>
-    Register
-  </button>
+          {status === "unauthenticated" ? (
+            <>
+              <button className="flex-1 rounded-[11px] border border-white/20 bg-transparent px-[18px] py-[11px] text-[13px] font-bold text-white" onClick={() => { setOpen(false); navigate("/login"); }}>
+                Login
+              </button>
+              <button className="flex-1 rounded-[11px] bg-gradient-to-br from-[#6655f6] to-[#7869ff] px-[18px] py-[11px] text-[13px] font-bold text-white" onClick={() => { setOpen(false); navigate("/register"); }}>
+                Register
+              </button>
+            </>
+          ) : null}
 </div>
         </div>
       )}

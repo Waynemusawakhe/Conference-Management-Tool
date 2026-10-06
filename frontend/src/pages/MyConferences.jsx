@@ -1,63 +1,294 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowLeft, CalendarDays, FileText, MapPin, Plus, Users } from "lucide-react";
+import { AlertCircle, CalendarDays, Search, TicketCheck } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import Logo from "../components/Logo";
+import AttendeeHeader from "../components/AttendeeHeader";
+import AttendeeSidebar from "../components/AttendeeSidebar";
 import { useAuth } from "../context/AuthContext";
 import { conferencesApi } from "../api/conferencesApi";
-import { submissionsApi } from "../api/submissionsApi";
 import { registrationsApi } from "../api/registrationsApi";
 
-const unwrap = (r) => { if (Array.isArray(r)) return r; if (Array.isArray(r?.data)) return r.data; if (Array.isArray(r?.data?.data)) return r.data.data; return Array.isArray(r?.data?.items) ? r.data.items : []; };
-const dateLabel = (v) => { if (!v) return "Date TBA"; const d=new Date(v); return Number.isNaN(d.getTime())?String(v):d.toLocaleDateString("en-ZA",{day:"2-digit",month:"short",year:"numeric"}); };
+const REGISTRATION_STATUS_LABELS = {
+  pending: "Pending",
+  confirmed: "Confirmed",
+  registered: "Registered",
+  approved: "Approved",
+  cancelled: "Cancelled",
+  canceled: "Cancelled",
+  rejected: "Rejected",
+  completed: "Completed",
+};
+
+const REGISTRATION_STATUS_STYLES = {
+  pending: "border-[#e9d9a7] bg-[#fff9e9] text-[#9b7414]",
+  confirmed: "border-[#bfe5d1] bg-[#effaf4] text-[#18794e]",
+  registered: "border-[#bfe5d1] bg-[#effaf4] text-[#18794e]",
+  approved: "border-[#bfe5d1] bg-[#effaf4] text-[#18794e]",
+  cancelled: "border-[#d7dce5] bg-[#f4f6f9] text-[#68748b]",
+  canceled: "border-[#d7dce5] bg-[#f4f6f9] text-[#68748b]",
+  rejected: "border-[#f1c8c8] bg-[#fff2f2] text-[#b13a3a]",
+  completed: "border-[#cfd0ff] bg-[#f0efff] text-[#5548d7]",
+};
+
+function unwrapList(response) {
+  if (Array.isArray(response)) return response;
+  if (Array.isArray(response?.data)) return response.data;
+  if (Array.isArray(response?.data?.data)) return response.data.data;
+  if (Array.isArray(response?.data?.items)) return response.data.items;
+  return [];
+}
+
+function normalizeStatus(value) {
+  return String(value ?? "pending")
+    .trim()
+    .toLowerCase()
+    .replace(/[\s-]+/g, "_");
+}
+
+function dateLabel(value) {
+  if (!value) return "Date not set";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value);
+  return date.toLocaleDateString(undefined, {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+function conferenceName(conference) {
+  return conference?.name ?? conference?.title ?? "Conference details pending";
+}
 
 export default function MyConferences() {
-  const navigate=useNavigate();
-  const { user, role }=useAuth();
-  const [conferences,setConferences]=useState([]);
-  const [submissions,setSubmissions]=useState([]);
-  const [registrations,setRegistrations]=useState([]);
-  const [tab,setTab]=useState("attending");
-  const [loading,setLoading]=useState(true);
-  const [error,setError]=useState("");
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [registrations, setRegistrations] = useState([]);
+  const [conferences, setConferences] = useState([]);
+  const [query, setQuery] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const dashboard = role==="author"?"/author-dashboard":role==="reviewer"?"/reviewer-dashboard":role==="organiser"?"/organiser-dashboard":role==="admin"?"/admin-dashboard":"/my-conferences";
+  const loadData = useCallback(async () => {
+    setLoading(true);
+    setError("");
 
-  const load=useCallback(async()=>{
-    setLoading(true); setError("");
     try {
-      const [c,s,r]=await Promise.all([
-        conferencesApi.getAll({per_page:100}),
-        submissionsApi.getAll({per_page:100}),
-        registrationsApi.getAll(),
+      const [registrationResponse, conferenceResponse] = await Promise.all([
+        registrationsApi.getAll({ per_page: 100 }),
+        conferencesApi.getAll({ per_page: 100 }),
       ]);
-      setConferences(unwrap(c)); setSubmissions(unwrap(s)); setRegistrations(unwrap(r));
-    } catch(e) { setError(e?.message || "Unable to load My Conferences."); }
-    finally { setLoading(false); }
-  },[]);
-  useEffect(()=>{load();},[load]);
 
-  const attending=useMemo(()=>registrations.filter(r=>Number(r.user_id??r.user?.id??r.attendee_id)===Number(user?.id)&&r.status!=="cancelled").map(r=>conferences.find(c=>Number(c.id)===Number(r.conference_id??r.conference?.id))||r.conference).filter(Boolean),[registrations,conferences,user?.id]);
-  const proposed=useMemo(()=>submissions.filter(s=>Number(s.author_id??s.author?.id??s.user_id)===Number(user?.id)),[submissions,user?.id]);
-  const organising=useMemo(()=>conferences.filter(c=>Number(c.organiser_id??c.organiser?.id)===Number(user?.id)),[conferences,user?.id]);
+      setRegistrations(unwrapList(registrationResponse));
+      setConferences(unwrapList(conferenceResponse));
+    } catch (requestError) {
+      if (requestError?.status === 401) {
+        await logout();
+        navigate("/login", { replace: true });
+        return;
+      }
 
-  const tabs=[["attending","Attending",attending.length],["proposals","My Proposals",proposed.length],["organising","Organising",organising.length]];
-  const current=tab==="attending"?attending:tab==="proposals"?proposed:organising;
+      setError(requestError?.message || "Unable to load your registrations.");
+    } finally {
+      setLoading(false);
+    }
+  }, [logout, navigate]);
 
-  return <div className="min-h-screen bg-[#f7f9fc] text-[#0d1b3d]">
-    <header className="border-b border-white/10 bg-[#07132f] text-white"><div className="mx-auto flex min-h-[76px] w-[min(1180px,calc(100%-28px))] items-center gap-4"><button onClick={()=>navigate(dashboard)} className="grid h-9 w-9 place-items-center rounded-lg border border-white/10 hover:bg-white/10"><ArrowLeft size={16}/></button><Logo/><div className="ml-auto text-right"><p className="m-0 text-[10px] font-extrabold uppercase tracking-[.12em] text-[#aaa2ff]">My Conferences</p><p className="m-0 text-[10px] text-white/50">Your CMT activity in one place</p></div></div></header>
-    <main className="mx-auto w-[min(1100px,calc(100%-28px))] py-8">
-      <section className="rounded-[24px] bg-[radial-gradient(circle_at_80%_20%,rgba(121,104,255,.22),transparent_28%),linear-gradient(135deg,#07132f,#17165b)] p-7 text-white sm:p-9"><span className="text-[10px] font-extrabold uppercase tracking-[.13em] text-[#b9b3ff]">Conference activity</span><h1 className="mt-2 text-3xl font-bold">Everything connected to your account.</h1><p className="mt-2 max-w-2xl text-sm leading-6 text-white/65">See conferences you attend, proposals you submitted, and conferences you organise from one workspace.</p></section>
-      {error&&<div className="mt-5 rounded-xl bg-red-50 p-4 text-xs font-semibold text-red-700">{error}</div>}
-      <section className="mt-6 rounded-[22px] border border-[#e4e8f0] bg-white shadow-sm">
-        <div className="flex flex-wrap gap-2 border-b border-[#edf0f5] p-4">{tabs.map(([key,label,count])=><button key={key} onClick={()=>setTab(key)} className={`rounded-xl px-4 py-2.5 text-xs font-extrabold ${tab===key?"bg-[#efedff] text-[#5649dc]":"text-[#66728b] hover:bg-[#f6f7fa]"}`}>{label} <span className="ml-1 opacity-60">{count}</span></button>)}</div>
-        {loading?<div className="p-12 text-center text-sm text-[#8993a6]">Loading your activity…</div>:<div className="divide-y divide-[#edf0f5]">
-          {current.map((item)=><article key={item.id} className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex gap-3"><span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#efedff] text-[#5c50ec]">{tab==="proposals"?<FileText size={17}/>:tab==="organising"?<Users size={17}/>:<CalendarDays size={17}/>}</span><div><h3 className="m-0 text-sm font-bold">{tab==="proposals"?item.title:(item.name||item.conference?.name||`Conference #${item.id}`)}</h3><p className="m-0 mt-1 text-[10px] text-[#8993a6]">{tab==="proposals"?`${item.status||"pending"} · ${item.track||"General track"}`:`${dateLabel(item.start_date||item.conference?.start_date)} · ${[item.venue_name,item.city,item.country].filter(Boolean).join(", ")||"Location TBA"}`}</p></div></div>
-            {tab==="proposals"?<button onClick={()=>navigate("/author-dashboard")} className="rounded-xl border border-[#dfe4ed] px-3 py-2 text-[10px] font-extrabold text-[#59657d]">Open proposals</button>:tab==="organising"?<button onClick={()=>navigate("/organiser-dashboard")} className="rounded-xl border border-[#dfe4ed] px-3 py-2 text-[10px] font-extrabold text-[#59657d]">Manage conference</button>:<span className="inline-flex items-center gap-1 text-[10px] font-extrabold text-emerald-700"><MapPin size={13}/> Attending</span>}
-          </article>)}
-          {!current.length&&<div className="p-12 text-center"><Plus size={22} className="mx-auto text-[#aab2c0]"/><h3 className="mt-3 text-sm font-bold">Nothing here yet</h3><p className="mt-1 text-xs text-[#8993a6]">Browse conferences to start building your CMT activity.</p><button onClick={()=>navigate("/conferences")} className="mt-4 rounded-xl bg-[#6655f6] px-4 py-2.5 text-xs font-extrabold text-white">Browse conferences</button></div>}
-        </div>}
-      </section>
-    </main>
-  </div>;
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  const registrationRows = useMemo(() => {
+    return registrations
+      .map((registration) => {
+        const conferenceId =
+          registration.conference_id ?? registration.conference?.id;
+        const conference =
+          registration.conference ??
+          conferences.find(
+            (item) => String(item.id) === String(conferenceId)
+          );
+
+        return {
+          ...registration,
+          resolvedConference: conference,
+          normalizedStatus: normalizeStatus(registration.status),
+        };
+      })
+      .filter((registration) => {
+        const registrationUserId =
+          registration.user_id ??
+          registration.user?.id ??
+          registration.attendee_id;
+
+        return (
+          registrationUserId == null ||
+          Number(registrationUserId) === Number(user?.id)
+        );
+      });
+  }, [registrations, conferences, user?.id]);
+
+  const filteredRegistrations = useMemo(() => {
+    const search = query.trim().toLowerCase();
+    if (!search) return registrationRows;
+
+    return registrationRows.filter((registration) =>
+      [
+        registration.id,
+        registration.reference,
+        registration.registration_code,
+        conferenceName(registration.resolvedConference),
+        registration.status,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase()
+        .includes(search)
+    );
+  }, [registrationRows, query]);
+
+  return (
+    <div className="min-h-screen bg-[#f7f9fc] text-[#0d1b3d]">
+      <AttendeeHeader
+        name={user?.name || user?.full_name || "Attendee"}
+        menuOpen={sidebarOpen}
+        onMenuToggle={() => setSidebarOpen((value) => !value)}
+      />
+
+      <div className="mx-auto flex w-[min(1400px,calc(100%-32px))] gap-6 py-6 lg:gap-7">
+        <AttendeeSidebar
+          open={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
+        />
+
+        <main className="min-w-0 flex-1">
+          <section className="relative overflow-hidden rounded-[22px] bg-[radial-gradient(circle_at_78%_18%,rgba(121,104,255,.22),transparent_25%),radial-gradient(circle_at_100%_100%,rgba(27,94,255,.18),transparent_36%),linear-gradient(135deg,#07132f_0%,#0a1740_52%,#15165a_100%)] p-6 text-white shadow-[0_18px_55px_rgba(15,28,65,.12)] sm:p-8">
+            <span className="inline-flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-[.12em] text-[#b9b3ff]">
+              <TicketCheck size={14} /> Attendance
+            </span>
+            <h1 className="mb-2 mt-3 text-3xl font-bold leading-tight">
+              My registrations
+            </h1>
+            <p className="m-0 max-w-[620px] text-[12px] leading-6 text-white/65">
+              View the conferences you have registered to attend.
+            </p>
+          </section>
+
+          {error && (
+            <div
+              role="alert"
+              className="mt-5 flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-xs font-semibold text-red-700"
+            >
+              <AlertCircle size={17} className="mt-0.5 shrink-0" />
+              <span className="flex-1">{error}</span>
+              <button
+                type="button"
+                onClick={loadData}
+                className="font-extrabold underline"
+              >
+                Retry
+              </button>
+            </div>
+          )}
+
+          <section className="mt-6 rounded-[20px] border border-[#e4e8f0] bg-white shadow-[0_10px_30px_rgba(15,28,65,.035)]">
+            <div className="flex flex-col items-start justify-between gap-4 border-b border-[#edf0f5] p-5 sm:flex-row sm:items-center sm:p-6">
+              <div>
+                <span className="text-[10px] font-extrabold uppercase tracking-[.1em] text-[#6655f6]">
+                  Attendance
+                </span>
+                <h2 className="mb-0 mt-1 text-[20px] font-bold">
+                  {loading
+                    ? "Your registrations"
+                    : `${registrationRows.length} registration${registrationRows.length === 1 ? "" : "s"}`}
+                </h2>
+              </div>
+              <label className="relative w-full sm:w-[260px]">
+                <Search
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-[#98a1b3]"
+                  size={15}
+                />
+                <input
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  placeholder="Search registrations..."
+                  aria-label="Search registrations"
+                  className="h-10 w-full rounded-[10px] border border-[#e2e6ee] bg-[#fafbfe] pl-9 pr-3 text-[11px] outline-none transition focus:border-[#8175ef] focus:ring-2 focus:ring-[#8175ef]/10"
+                />
+              </label>
+            </div>
+
+            {loading ? (
+              <div className="grid place-items-center p-12 text-xs font-semibold text-[#7c879a]">
+                Loading your registrations...
+              </div>
+            ) : filteredRegistrations.length === 0 ? (
+              <div className="p-12 text-center">
+                <TicketCheck size={22} className="mx-auto text-[#aeb6c6]" />
+                <h3 className="mb-1 mt-3 text-[13px] font-bold">
+                  {registrationRows.length
+                    ? "No registrations found"
+                    : "No registrations yet"}
+                </h3>
+                <p className="m-0 text-[10px] text-[#8993a6]">
+                  Browse conferences and register for an event to see it here.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => navigate("/conferences")}
+                  className="mt-4 rounded-xl bg-[#efedff] px-4 py-2.5 text-[10px] font-extrabold text-[#5548d7]"
+                >
+                  Browse conferences
+                </button>
+              </div>
+            ) : (
+              <div className="divide-y divide-[#edf0f5]">
+                {filteredRegistrations.map((registration) => {
+                  const conference = registration.resolvedConference;
+                  const status = registration.normalizedStatus;
+
+                  return (
+                    <article
+                      key={registration.id}
+                      className="flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between"
+                    >
+                      <div className="flex min-w-0 items-center gap-3">
+                        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-[10px] bg-[#f1efff] text-[#5b4fe3]">
+                          <CalendarDays size={17} />
+                        </span>
+                        <div className="min-w-0">
+                          <strong className="block truncate text-[12px] text-[#1c2a4a]">
+                            {conferenceName(conference)}
+                          </strong>
+                          <span className="text-[10px] text-[#8c96a9]">
+                            {dateLabel(
+                              conference?.start_date ??
+                                conference?.starts_at ??
+                                conference?.date
+                            )}
+                            {registration.id != null &&
+                              ` · Registration #${registration.id}`}
+                          </span>
+                        </div>
+                      </div>
+                      <span
+                        className={`inline-flex w-fit rounded-full border px-2.5 py-1 text-[9px] font-extrabold ${
+                          REGISTRATION_STATUS_STYLES[status] ||
+                          REGISTRATION_STATUS_STYLES.pending
+                        }`}
+                      >
+                        {REGISTRATION_STATUS_LABELS[status] ||
+                          registration.status ||
+                          "Pending"}
+                      </span>
+                    </article>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+        </main>
+      </div>
+    </div>
+  );
 }

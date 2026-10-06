@@ -63,6 +63,7 @@ export default function App() {
           {/* ==================== PUBLIC ROUTES ==================== */}
 
           <Route path="/" element={<Home />} />
+          <Route path="/home" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -71,8 +72,8 @@ export default function App() {
           <Route path="/help-faq" element={<HelpFAQ />} />
           <Route path="/about" element={<About />} />
           <Route path="/testimonials" element={<Testimonials />} />
-          <Route path="/reset-password" element={<ResetPassword />}/>
-          <Route path="/email-verified" element={<EmailVerified />}/>
+          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/email-verified" element={<EmailVerified />} />
 
           {/* ==================== AUTHOR ==================== */}
 
@@ -81,6 +82,15 @@ export default function App() {
             element={
               <ProtectedRoute roles={["author"]}>
                 <AuthorDashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/submit-proposal"
+            element={
+              <ProtectedRoute roles={["author"]}>
+                <SubmitProposal />
               </ProtectedRoute>
             }
           />
@@ -121,6 +131,27 @@ export default function App() {
                 <ScoreSubmission />
               </ProtectedRoute>
             }
+          />
+
+          <Route
+            path="/user-testimonials"
+            element={
+              <ProtectedRoute
+                roles={["author", "reviewer", "organiser", "attendee", "admin"]}
+              >
+                <Testimonials />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/reviewer/pending"
+            element={<Navigate to="/reviewer-dashboard?filter=pending" replace />}
+          />
+
+          <Route
+            path="/reviewer/history"
+            element={<Navigate to="/reviewer-dashboard?filter=locked" replace />}
           />
 
           {/* ==================== ATTENDEE ==================== */}
@@ -185,7 +216,6 @@ export default function App() {
 
           {/* ==================== ADMIN ==================== */}
 
-          {/* Dashboard */}
           <Route
             path="/admin-dashboard"
             element={
@@ -195,7 +225,6 @@ export default function App() {
             }
           />
 
-          {/* Reports */}
           <Route
             path="/admin/reports"
             element={
@@ -205,7 +234,6 @@ export default function App() {
             }
           />
 
-          {/* Conferences — list + edit */}
           <Route
             path="/admin/conferences"
             element={
@@ -214,6 +242,7 @@ export default function App() {
               </ProtectedRoute>
             }
           />
+
           <Route
             path="/admin/conferences/:id/edit"
             element={
@@ -223,7 +252,6 @@ export default function App() {
             }
           />
 
-          {/* Submissions (read-only oversight) */}
           <Route
             path="/admin/submissions"
             element={
@@ -233,7 +261,6 @@ export default function App() {
             }
           />
 
-          {/* Reviews — assign, lock, remove */}
           <Route
             path="/admin/reviews"
             element={
@@ -243,7 +270,6 @@ export default function App() {
             }
           />
 
-          {/* Registrations */}
           <Route
             path="/admin/registrations"
             element={
@@ -253,7 +279,6 @@ export default function App() {
             }
           />
 
-          {/* Users directory + detail */}
           <Route
             path="/users"
             element={
@@ -262,6 +287,7 @@ export default function App() {
               </ProtectedRoute>
             }
           />
+
           <Route
             path="/admin/users/:id"
             element={
@@ -271,7 +297,6 @@ export default function App() {
             }
           />
 
-          {/* Contact messages + detail */}
           <Route
             path="/admin/contact-messages"
             element={
@@ -280,6 +305,7 @@ export default function App() {
               </ProtectedRoute>
             }
           />
+
           <Route
             path="/admin/contact-messages/:id"
             element={
@@ -289,7 +315,6 @@ export default function App() {
             }
           />
 
-          {/* Testimonials */}
           <Route
             path="/admin/testimonials"
             element={
@@ -299,7 +324,6 @@ export default function App() {
             }
           />
 
-          {/* FAQs — list + create + edit */}
           <Route
             path="/admin/faqs"
             element={
@@ -308,6 +332,7 @@ export default function App() {
               </ProtectedRoute>
             }
           />
+
           <Route
             path="/admin/faqs/new"
             element={
@@ -316,6 +341,7 @@ export default function App() {
               </ProtectedRoute>
             }
           />
+
           <Route
             path="/admin/faqs/:id/edit"
             element={

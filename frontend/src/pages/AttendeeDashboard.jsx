@@ -1,25 +1,20 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  Bell,
   CalendarCheck2,
   CalendarDays,
   ChevronRight,
   CircleCheckBig,
   Compass,
-  LayoutDashboard,
-  LogOut,
-  Menu,
   Search,
-  Settings,
   Sparkles,
   TicketCheck,
-  UserRound,
   X,
   AlertCircle,
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 
-import Logo from "../components/Logo";
+import AttendeeHeader from "../components/AttendeeHeader";
+import AttendeeSidebar from "../components/AttendeeSidebar";
 import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
 import { conferencesApi } from "../api/conferencesApi";
@@ -140,32 +135,13 @@ function isFutureConference(conference) {
   return date.getTime() >= new Date().setHours(0, 0, 0, 0);
 }
 
-function NavItem({ icon, label, active, onClick }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] transition-colors ${
-        active
-          ? "bg-[#efedff] font-extrabold text-[#5649dc]"
-          : "font-semibold text-[#66728b] hover:bg-[#f5f6fa] hover:text-[#1c2a4a]"
-      }`}
-    >
-      {icon}
-      <span>{label}</span>
-    </button>
-  );
-}
-
 export default function AttendeeDashboard() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const { toggleTheme } = useTheme();
   const { user, logout } = useAuth();
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [notice, setNotice] = useState(true);
   const [query, setQuery] = useState("");
   const [registrations, setRegistrations] = useState([]);
   const [conferences, setConferences] = useState([]);
@@ -205,13 +181,6 @@ export default function AttendeeDashboard() {
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      if (location.pathname === "/attendee/registrations") {
-        document.getElementById("my-registrations")?.scrollIntoView({
-          behavior: "smooth",
-          block: "start",
-        });
-      }
-
       if (location.pathname === "/attendee-dashboard") {
         window.scrollTo({
           top: 0,
@@ -224,15 +193,6 @@ export default function AttendeeDashboard() {
   }, [location.pathname]);
 
   const displayName = user?.name || "Attendee";
-
-  const initials =
-    displayName
-      .split(/\s+/)
-      .filter(Boolean)
-      .slice(0, 2)
-      .map((part) => part.charAt(0))
-      .join("")
-      .toUpperCase() || "AT";
 
   const registrationRows = useMemo(() => {
     return registrations.map((registration) => {
@@ -328,11 +288,6 @@ export default function AttendeeDashboard() {
     },
   ];
 
-  const handleLogout = async () => {
-    await logout();
-    navigate("/login", { replace: true });
-  };
-
   const handleCancelRegistration = async (registration) => {
     const conference = registration.resolvedConference;
 
@@ -360,165 +315,17 @@ export default function AttendeeDashboard() {
 
   return (
     <div className="min-h-screen bg-[#f7f9fc] text-[#0d1b3d]">
-      <header className="sticky top-0 z-50 border-b border-white/10 bg-[#07132f]/95 text-white shadow-[0_8px_30px_rgba(7,19,47,.12)] backdrop-blur-xl">
-        <div className="mx-auto flex min-h-[76px] w-[min(1400px,calc(100%-32px))] items-center gap-5">
-          <button
-            type="button"
-            className="text-white/80 hover:text-white lg:hidden"
-            onClick={() => setSidebarOpen((value) => !value)}
-            aria-label="Toggle attendee navigation"
-          >
-            {sidebarOpen ? <X size={22} /> : <Menu size={22} />}
-          </button>
-
-          <button
-            type="button"
-            className="border-0 bg-transparent p-0"
-            onClick={() => navigate("/")}
-            aria-label="CMT home"
-          >
-            <Logo />
-          </button>
-
-          <div className="hidden h-7 w-px bg-white/10 sm:block" />
-
-          <div className="hidden sm:block">
-            <p className="m-0 text-[10px] font-extrabold uppercase tracking-[.13em] text-[#a9a2ff]">
-              Attendee workspace
-            </p>
-            <p className="m-0 mt-0.5 text-[12px] font-semibold text-white/65">
-              Conference Management Tool
-            </p>
-          </div>
-
-          <div className="ml-auto flex items-center gap-2">
-            <button
-              type="button"
-              className="relative grid h-10 w-10 place-items-center rounded-[11px] border border-white/15 bg-white/[.05] text-white/80 hover:bg-white/10"
-              onClick={() => setNotice((value) => !value)}
-              aria-label="Notifications"
-            >
-              <Bell size={17} />
-              {notice && (
-                <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-[#7d6bff]" />
-              )}
-            </button>
-
-            <button
-              type="button"
-              className="hidden h-10 w-10 place-items-center rounded-[11px] border border-white/15 bg-white/[.05] text-white/80 hover:bg-white/10 sm:grid"
-              onClick={toggleTheme}
-              aria-label="Toggle theme"
-            >
-              <Sparkles size={16} />
-            </button>
-
-            <div className="ml-1 hidden items-center gap-2.5 border-l border-white/10 pl-3 sm:flex">
-              <div className="grid h-9 w-9 place-items-center rounded-full bg-[#e8e6ff] text-[10px] font-extrabold text-[#4f46c7]">
-                {initials}
-              </div>
-
-              <div className="leading-tight">
-                <strong className="block text-[11px] text-white">
-                  {displayName}
-                </strong>
-                <span className="block text-[9px] text-white/45">
-                  Attendee
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
+      <AttendeeHeader
+        name={displayName}
+        menuOpen={sidebarOpen}
+        onMenuToggle={() => setSidebarOpen((value) => !value)}
+      />
 
       <div className="mx-auto flex w-[min(1400px,calc(100%-32px))] gap-6 py-6 lg:gap-7">
-        {sidebarOpen && (
-          <button
-            type="button"
-            className="fixed inset-0 z-30 bg-[#07132f]/45 backdrop-blur-sm lg:hidden"
-            onClick={() => setSidebarOpen(false)}
-            aria-label="Close attendee navigation"
-          />
-        )}
-
-        <aside
-          className={`${
-            sidebarOpen
-              ? "fixed left-4 top-[88px] z-40 block"
-              : "hidden"
-          } w-[250px] shrink-0 rounded-2xl border border-[#e4e8f0] bg-white p-3 shadow-[0_18px_45px_rgba(15,28,65,.12)] lg:sticky lg:top-[100px] lg:block lg:h-[calc(100vh-124px)] lg:shadow-none`}
-        >
-          <div className="mb-3 rounded-xl bg-gradient-to-br from-[#111e4b] to-[#342b87] p-4 text-white">
-            <span className="mb-2 grid h-9 w-9 place-items-center rounded-lg bg-white/10">
-              <TicketCheck size={17} />
-            </span>
-
-            <strong className="block text-[13px]">
-              Your conference hub
-            </strong>
-
-            <p className="mt-1 text-[10px] leading-5 text-white/60">
-              Track your registrations and discover upcoming conferences.
-            </p>
-          </div>
-
-          <nav className="space-y-1" aria-label="Attendee dashboard navigation">
-            <NavItem
-              icon={<LayoutDashboard size={16} />}
-              label="Overview"
-              active={location.pathname === "/attendee-dashboard"}
-              onClick={() => {
-                setSidebarOpen(false);
-                navigate("/attendee-dashboard");
-              }}
-            />
-
-            <NavItem
-              icon={<TicketCheck size={16} />}
-              label="My registrations"
-              active={location.pathname === "/attendee/registrations"}
-              onClick={() => {
-                setSidebarOpen(false);
-                navigate("/attendee/registrations");
-              }}
-            />
-
-            <NavItem
-              icon={<Compass size={16} />}
-              label="Browse conferences"
-              active={false}
-              onClick={() => {
-                setSidebarOpen(false);
-                navigate("/conferences");
-              }}
-            />
-          </nav>
-
-          <div className="my-4 border-t border-[#edf0f5]" />
-
-          <NavItem
-            icon={<UserRound size={16} />}
-            label="Profile"
-            active={false}
-            onClick={() => navigate("/profile")}
-          />
-
-          <NavItem
-            icon={<Settings size={16} />}
-            label="Settings"
-            active={false}
-            onClick={() => navigate("/settings")}
-          />
-
-          <button
-            type="button"
-            onClick={handleLogout}
-            className="mt-1 flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] font-semibold text-[#9a6470] hover:bg-[#fff4f5]"
-          >
-            <LogOut size={16} />
-            Sign out
-          </button>
-        </aside>
+        <AttendeeSidebar
+          open={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
+        />
 
         <main
           id="attendee-overview"

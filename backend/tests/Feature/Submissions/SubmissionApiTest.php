@@ -44,6 +44,31 @@ class SubmissionApiTest extends TestCase
         ]);
     }
 
+    public function test_attendee_cannot_create_submission(): void
+    {
+        $attendee = User::factory()->create([
+            'role' => 'attendee',
+        ]);
+
+        $conference = Conference::factory()->create();
+
+        $response = $this
+            ->actingAs($attendee, 'sanctum')
+            ->postJson('/api/v1/submissions', [
+                'conference_id' => $conference->id,
+                'title' => 'An Attendee Proposal',
+                'abstract' => 'This proposal explores an attendee topic.',
+            ]);
+
+        $response->assertForbidden();
+
+        $this->assertDatabaseMissing('submissions', [
+            'author_id' => $attendee->id,
+            'conference_id' => $conference->id,
+            'title' => 'An Attendee Proposal',
+        ]);
+    }
+
     public function test_create_submission_requires_valid_conference(): void
     {
         $author = User::factory()->create();

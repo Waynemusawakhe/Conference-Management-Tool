@@ -159,6 +159,14 @@ The backend will be available at:
 http://127.0.0.1:8000
 ```
 
+The `composer dev` command also starts Laravel's scheduler so conference reminders can run locally. In production, configure a scheduler to invoke Laravel every minute:
+
+```cron
+* * * * * cd /path/to/backend && php artisan schedule:run >> /dev/null 2>&1
+```
+
+Conference records store a start date without a time, so reminders are sent at midnight (application timezone) on the preceding day.
+
 ---
 
 # API

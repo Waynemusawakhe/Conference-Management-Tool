@@ -12,6 +12,8 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
+import AttendeeHeader from "../components/AttendeeHeader";
+import AttendeeSidebar from "../components/AttendeeSidebar";
 import ConferenceCard from "../components/ConferenceCard";
 import SectionHeading from "../components/SectionHeading";
 import { conferencesApi } from "../api/conferencesApi";
@@ -277,6 +279,7 @@ function sortConferences(conferences, sortBy) {
 export default function Conferences() {
   const navigate = useNavigate();
   const { user, status: authStatus } = useAuth();
+  const isAttendee = authStatus === "authenticated" && user?.role === "attendee";
 
   const [query, setQuery] = useState("");
 
@@ -293,6 +296,10 @@ export default function Conferences() {
   const [conferences, setConferences] = useState([]);
 
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+  const [totalConferences, setTotalConferences] = useState(0);
   const [error, setError] = useState("");
 
   const [registeredConferenceIds, setRegisteredConferenceIds] = useState(
@@ -305,19 +312,30 @@ export default function Conferences() {
 
   const [showMobileFilters, setShowMobileFilters] =
     useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const loadConferences = useCallback(async () => {
-    setLoading(true);
+  const loadConferences = useCallback(async ({ page = 1, append = false } = {}) => {
+    if (append) {
+      setLoadingMore(true);
+    } else {
+      setLoading(true);
+    }
     setError("");
 
     try {
       const response = await conferencesApi.getAll({
-        per_page: 100,
+        page,
+        per_page: 12,
       });
 
       const data = unwrapList(response);
 
-      setConferences(data);
+      setConferences((current) =>
+        append ? [...current, ...data] : data
+      );
+      setCurrentPage(page);
+      setHasMore(page < Number(response?.meta?.last_page ?? page));
+      setTotalConferences(Number(response?.meta?.total ?? data.length));
     } catch (err) {
       console.error("Failed to load conferences:", err);
 
@@ -327,9 +345,15 @@ export default function Conferences() {
           "Unable to load conferences. Please try again."
       );
 
-      setConferences([]);
+      if (!append) {
+        setConferences([]);
+      }
     } finally {
-      setLoading(false);
+      if (append) {
+        setLoadingMore(false);
+      } else {
+        setLoading(false);
+      }
     }
   }, []);
 
@@ -583,25 +607,49 @@ export default function Conferences() {
 
   return (
     <div className="min-h-screen overflow-clip bg-[#f7f9fc] text-[#0d1b3d]">
-      <Navbar />
+      {isAttendee ? (
+        <AttendeeHeader
+          name={user?.name || user?.full_name}
+          menuOpen={sidebarOpen}
+          onMenuToggle={() => setSidebarOpen((value) => !value)}
+        />
+      ) : (
+        <Navbar />
+      )}
 
-      <main>
+      <div
+        className={
+          isAttendee
+            ? "mx-auto flex w-[min(1400px,calc(100%-32px))] gap-6 py-6 lg:gap-7"
+            : ""
+        }
+      >
+        {isAttendee && (
+          <AttendeeSidebar
+            open={sidebarOpen}
+            onClose={() => setSidebarOpen(false)}
+          />
+        )}
+
+      <main className={isAttendee ? "min-w-0 flex-1" : ""}>
         <section className="relative overflow-hidden bg-[radial-gradient(circle_at_75%_32%,rgba(98,83,245,.2),transparent_27%),linear-gradient(135deg,#07132f_0%,#0a1740_52%,#15165a_100%)] px-5 py-24 text-white">
-          <div className="relative z-[2] mx-auto w-[min(1200px,100%)]">
-            <span className="inline-flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-[.1em] text-[#b9b3ff]">
-              <Sparkles size={15} />
-              Browse conferences
-            </span>
+          <div className="relative z-[2] mx-auto flex w-[min(1200px,100%)] flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <span className="inline-flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-[.1em] text-[#b9b3ff]">
+                <Sparkles size={15} />
+                Browse conferences
+              </span>
 
-            <h1 className="my-4 max-w-[720px] text-[clamp(34px,4.4vw,54px)] font-bold leading-tight tracking-[-.05em]">
-              Find the right conference for your research.
-            </h1>
+              <h1 className="my-4 max-w-[720px] text-[clamp(34px,4.4vw,54px)] font-bold leading-tight tracking-[-.05em]">
+                Find the right conference for your research.
+              </h1>
 
-            <p className="max-w-[620px] text-[15px] leading-7 text-white/75">
-              Search by topic, filter by status and format,
-              and find conferences created by organisers on
-              the platform.
-            </p>
+              <p className="max-w-[620px] text-[15px] leading-7 text-white/75">
+                Search by topic, filter by status and format,
+                and find conferences created by organisers on
+                the platform.
+              </p>
+            </div>
           </div>
         </section>
 
@@ -798,7 +846,7 @@ export default function Conferences() {
 
                     <button
                       type="button"
-                      onClick={loadConferences}
+                      onClick={() => loadConferences()}
                       className="mt-5 rounded-[11px] border-0 bg-gradient-to-br from-[#6655f6] to-[#7869ff] px-[18px] py-[11px] text-[13px] font-bold text-white"
                     >
                       Try again
@@ -807,7 +855,6 @@ export default function Conferences() {
                 )}
 
                 {!loading &&
-                  !error &&
                   displayConferences.length > 0 && (
                     <div
                       className={
@@ -918,18 +965,34 @@ export default function Conferences() {
                       </span>
 
                       <span>
-                        {displayConferences.length} conference
-                        {displayConferences.length === 1
-                          ? ""
-                          : "s"} available
+                        {conferences.length} of {totalConferences} conferences loaded
                       </span>
                     </div>
                   )}
+
+                {!loading && hasMore && (
+                  <div className="mt-6 flex justify-center">
+                    <button
+                      type="button"
+                      disabled={loadingMore}
+                      onClick={() =>
+                        loadConferences({
+                          page: currentPage + 1,
+                          append: true,
+                        })
+                      }
+                      className="inline-flex min-h-10 items-center justify-center gap-2 rounded-[10px] border border-[#dfe4ed] bg-white px-5 text-[11px] font-extrabold text-[#5649dc] transition hover:bg-[#f7f6ff] disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {loadingMore ? "Loading..." : "Load more conferences"}
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </div>
         </section>
       </main>
+      </div>
 
       <footer className="bg-[#07132f] text-white/60">
         <div className="mx-auto flex min-h-[100px] w-[min(1200px,calc(100%-40px))] items-center justify-between gap-5 text-[10px] max-[560px]:block max-[560px]:py-6">
