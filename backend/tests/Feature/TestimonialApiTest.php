@@ -202,7 +202,10 @@ class TestimonialApiTest extends TestCase
                 'content' => null,
             ])
             ->assertUnprocessable()
-            ->assertJsonValidationErrors(['rating', 'content']);
+            ->assertJsonValidationErrors([
+                'rating',
+                'content',
+            ]);
     }
 
     public function test_non_owner_cannot_update_testimonial(): void
@@ -245,10 +248,15 @@ class TestimonialApiTest extends TestCase
         ]);
     }
 
-    public function test_non_owner_including_admin_cannot_delete_testimonial(): void
+    public function test_admin_can_delete_another_users_testimonial(): void
     {
-        $owner = User::factory()->create();
-        $admin = User::factory()->create(['role' => 'admin']);
+        $owner = User::factory()->create([
+            'role' => 'author',
+        ]);
+
+        $admin = User::factory()->create([
+            'role' => 'admin',
+        ]);
 
         $testimonial = Testimonial::create([
             'user_id' => $owner->id,
@@ -257,8 +265,58 @@ class TestimonialApiTest extends TestCase
             'content' => 'Good conference.',
         ]);
 
-        $this->actingAs($admin, 'sanctum')
-            ->deleteJson("/api/v1/testimonials/{$testimonial->id}")
+        $this->actingAs(
+            $admin,
+            'sanctum'
+        )
+            ->deleteJson(
+                "/api/v1/testimonials/{$testimonial->id}"
+            )
+            ->assertOk()
+            ->assertJsonPath(
+                'success',
+                true
+            );
+
+        $this->assertDatabaseMissing(
+            'testimonials',
+            [
+                'id' => $testimonial->id,
+            ]
+        );
+    }
+
+    public function test_non_owner_non_admin_cannot_delete_testimonial(): void
+    {
+        $owner = User::factory()->create([
+            'role' => 'author',
+        ]);
+
+        $otherUser = User::factory()->create([
+            'role' => 'attendee',
+        ]);
+
+        $testimonial = Testimonial::create([
+            'user_id' => $owner->id,
+            'conference_id' => Conference::factory()->create()->id,
+            'rating' => 4,
+            'content' => 'Good conference.',
+        ]);
+
+        $this->actingAs(
+            $otherUser,
+            'sanctum'
+        )
+            ->deleteJson(
+                "/api/v1/testimonials/{$testimonial->id}"
+            )
             ->assertForbidden();
+
+        $this->assertDatabaseHas(
+            'testimonials',
+            [
+                'id' => $testimonial->id,
+            ]
+        );
     }
 }

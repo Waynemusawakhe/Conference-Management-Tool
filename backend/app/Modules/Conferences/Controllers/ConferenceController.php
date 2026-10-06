@@ -35,7 +35,7 @@ class ConferenceController
         $perPage = max(1, min($perPage, 100));
 
         $conferences = Conference::query()
-            ->with('organiser:id,name,email')
+            ->with('organiser:id,name')
             ->orderByDesc('created_at')
             ->paginate($perPage);
 
@@ -299,7 +299,7 @@ class ConferenceController
     )]
     public function show(Conference $conference): JsonResponse
     {
-        $conference->load('organiser:id,name,email');
+        $conference->load('organiser:id,name');
 
         return response()->json([
             'data' => $conference,

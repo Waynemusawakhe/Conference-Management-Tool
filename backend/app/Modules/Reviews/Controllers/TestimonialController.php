@@ -235,6 +235,7 @@ class TestimonialController extends Controller
         path: '/api/v1/testimonials/{id}',
         tags: ['Testimonials'],
         summary: 'Delete a testimonial',
+        description: 'The testimonial owner or an administrator may delete a testimonial.',
         security: [['sanctum' => []]],
         parameters: [
             new OA\Parameter(
@@ -275,10 +276,16 @@ class TestimonialController extends Controller
         $testimonial =
             $getAction->execute($id);
 
-        if (
-            $testimonial->user_id !==
-            $request->user()->id
-        ) {
+        $user = $request->user();
+
+        $isOwner =
+            $testimonial->user_id ===
+            $user->id;
+
+        $isAdmin =
+            $user->role === 'admin';
+
+        if (! $isOwner && ! $isAdmin) {
             return response()->json([
                 'success' => false,
                 'message' => 'You do not have permission to delete this testimonial.',

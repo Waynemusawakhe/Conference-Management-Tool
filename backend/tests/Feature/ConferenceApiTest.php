@@ -379,4 +379,72 @@ class ConferenceApiTest extends TestCase
                 'submission_deadline',
             ]);
     }
+
+    public function test_public_conference_list_does_not_expose_organiser_email(): void
+    {
+        $organiser = User::factory()->create([
+            'role' => 'organiser',
+            'email' => 'private-organiser@example.com',
+        ]);
+
+        Conference::factory()
+            ->for(
+                $organiser,
+                'organiser'
+            )
+            ->create();
+
+        $response = $this
+            ->getJson(
+                '/api/v1/conferences'
+            )
+            ->assertOk();
+
+        $response
+            ->assertJsonPath(
+                'data.0.organiser.id',
+                $organiser->id
+            )
+            ->assertJsonPath(
+                'data.0.organiser.name',
+                $organiser->name
+            )
+            ->assertJsonMissingPath(
+                'data.0.organiser.email'
+            );
+    }
+
+    public function test_public_conference_details_do_not_expose_organiser_email(): void
+    {
+        $organiser = User::factory()->create([
+            'role' => 'organiser',
+            'email' => 'private-organiser@example.com',
+        ]);
+
+        $conference = Conference::factory()
+            ->for(
+                $organiser,
+                'organiser'
+            )
+            ->create();
+
+        $response = $this
+            ->getJson(
+                "/api/v1/conferences/{$conference->id}"
+            )
+            ->assertOk();
+
+        $response
+            ->assertJsonPath(
+                'data.organiser.id',
+                $organiser->id
+            )
+            ->assertJsonPath(
+                'data.organiser.name',
+                $organiser->name
+            )
+            ->assertJsonMissingPath(
+                'data.organiser.email'
+            );
+    }
 }
