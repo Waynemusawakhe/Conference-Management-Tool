@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\NotificationController;
 use App\Models\User;
 use App\Modules\Account\Controllers\AuthController;
 use App\Modules\Account\Controllers\UserController;
@@ -10,7 +11,6 @@ use App\Modules\Registrations\Controllers\RegistrationController;
 use App\Modules\Reporting\Controllers\ReportingController;
 use App\Modules\Reviews\Controllers\ReviewController;
 use App\Modules\Reviews\Controllers\TestimonialController;
-use App\Http\Controllers\NotificationController;
 use App\Modules\Sessions\Controllers\SessionController;
 use App\Modules\Submissions\Controllers\SubmissionController;
 use Illuminate\Auth\Events\Verified;
@@ -44,7 +44,6 @@ Route::prefix('v1/auth')->group(function () {
         '/reset-password',
         [AuthController::class, 'resetPassword']
     )->middleware('throttle:5,1');
-
 
     /*
     |--------------------------------------------------------------------------
@@ -80,7 +79,7 @@ Route::prefix('v1/auth')->group(function () {
                 )
             )) {
                 return redirect()->away(
-                    $frontendUrl .
+                    $frontendUrl.
                     '/email-verified?status=invalid'
                 );
             }
@@ -90,7 +89,7 @@ Route::prefix('v1/auth')->group(function () {
              */
             if ($user->hasVerifiedEmail()) {
                 return redirect()->away(
-                    $frontendUrl .
+                    $frontendUrl.
                     '/email-verified?status=success'
                 );
             }
@@ -105,7 +104,7 @@ Route::prefix('v1/auth')->group(function () {
             }
 
             return redirect()->away(
-                $frontendUrl .
+                $frontendUrl.
                 '/email-verified?status=success'
             );
         }
@@ -115,7 +114,6 @@ Route::prefix('v1/auth')->group(function () {
             'throttle:6,1',
         ])
         ->name('verification.verify');
-
 
     /*
     |--------------------------------------------------------------------------
@@ -159,8 +157,7 @@ Route::prefix('v1/auth')->group(function () {
             ) {
                 return response()->json([
                     'success' => true,
-                    'message' =>
-                        'If the account requires verification, a verification link will be sent.',
+                    'message' => 'If the account requires verification, a verification link will be sent.',
                 ]);
             }
 
@@ -168,12 +165,10 @@ Route::prefix('v1/auth')->group(function () {
 
             return response()->json([
                 'success' => true,
-                'message' =>
-                    'If the account requires verification, a verification link will be sent.',
+                'message' => 'If the account requires verification, a verification link will be sent.',
             ]);
         }
     )->middleware('throttle:6,1');
-
 
     /*
     |--------------------------------------------------------------------------
@@ -227,7 +222,6 @@ Route::prefix('v1/auth')->group(function () {
             '/logout',
             [AuthController::class, 'logout']
         );
-
 
         /*
         |--------------------------------------------------------------------------
@@ -378,23 +372,23 @@ Route::prefix('v1/testimonials')->group(function () {
      * requires authentication.
      */
     Route::middleware('auth:sanctum')
-            ->group(function () {
-                Route::post(
-                    '/',
-                    [TestimonialController::class, 'store']
-                );
+        ->group(function () {
+            Route::post(
+                '/',
+                [TestimonialController::class, 'store']
+            );
 
-                Route::put(
-                    '/{id}',
-                    [TestimonialController::class, 'update']
-                );
+            Route::put(
+                '/{id}',
+                [TestimonialController::class, 'update']
+            );
 
-                Route::delete(
-                    '/{id}',
-                    [TestimonialController::class, 'destroy']
-                );
-            });
-    });
+            Route::delete(
+                '/{id}',
+                [TestimonialController::class, 'destroy']
+            );
+        });
+});
 
 /*
 |--------------------------------------------------------------------------

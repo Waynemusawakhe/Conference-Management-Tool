@@ -34,7 +34,7 @@ class ForceHttps
             $uri = $request->getRequestUri();
 
             $target =
-                $configuredUrl .
+                $configuredUrl.
                 ($uri === '/' ? '' : $uri);
 
             /*

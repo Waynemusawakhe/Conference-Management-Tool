@@ -14,8 +14,8 @@ class ResetPasswordNotification extends BaseResetPassword
         );
 
         $expireMinutes = config(
-            'auth.passwords.' .
-            config('auth.defaults.passwords') .
+            'auth.passwords.'.
+            config('auth.defaults.passwords').
             '.expire',
             60
         );
@@ -65,9 +65,9 @@ class ResetPasswordNotification extends BaseResetPassword
             $this->token
         );
 
-        return $frontendUrl .
-            '/reset-password' .
-            '?token=' . $token .
-            '&email=' . $email;
+        return $frontendUrl.
+            '/reset-password'.
+            '?token='.$token.
+            '&email='.$email;
     }
 }

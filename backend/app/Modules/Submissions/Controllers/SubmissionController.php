@@ -288,14 +288,14 @@ class SubmissionController
         }
 
         $downloadName =
-            'submission-' .
-            $submission->id .
-            '-' .
+            'submission-'.
+            $submission->id.
+            '-'.
             $title;
 
         if ($extension !== '') {
             $downloadName .=
-                '.' . $extension;
+                '.'.$extension;
         }
 
         return Storage::disk(
@@ -460,8 +460,7 @@ class SubmissionController
             ->execute($submission);
 
         return response()->json([
-            'message' =>
-                'Submission withdrawn successfully.',
+            'message' => 'Submission withdrawn successfully.',
             'data' => $withdrawn,
         ]);
     }

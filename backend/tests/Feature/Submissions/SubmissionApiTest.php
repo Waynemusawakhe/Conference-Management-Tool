@@ -6,8 +6,8 @@ use App\Models\User;
 use App\Modules\Conferences\Models\Conference;
 use App\Modules\Submissions\Models\Submission;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\TestCase;
 use Illuminate\Support\Facades\Storage;
+use Tests\TestCase;
 
 class SubmissionApiTest extends TestCase
 {
@@ -18,7 +18,7 @@ class SubmissionApiTest extends TestCase
         $this->getJson('/api/v1/submissions')->assertUnauthorized();
     }
 
-   public function test_author_can_create_submission(): void
+    public function test_author_can_create_submission(): void
     {
         $author = User::factory()->create([
             'role' => 'author',
@@ -43,6 +43,7 @@ class SubmissionApiTest extends TestCase
             'status' => 'pending',
         ]);
     }
+
     public function test_create_submission_requires_valid_conference(): void
     {
         $author = User::factory()->create();
@@ -69,16 +70,16 @@ class SubmissionApiTest extends TestCase
     }
 
     public function test_guest_cannot_download_submission_file(): void
-{
-    $submission = Submission::factory()->create([
-        'file_path' => 'submissions/test.pdf',
-        'file_size_bytes' => 100,
-    ]);
+    {
+        $submission = Submission::factory()->create([
+            'file_path' => 'submissions/test.pdf',
+            'file_size_bytes' => 100,
+        ]);
 
-    $this->get(
-        "/api/v1/submissions/{$submission->id}/file"
-    )->assertUnauthorized();
-}
+        $this->get(
+            "/api/v1/submissions/{$submission->id}/file"
+        )->assertUnauthorized();
+    }
 
     public function test_author_can_download_own_submission_file(): void
     {
@@ -117,40 +118,39 @@ class SubmissionApiTest extends TestCase
     }
 
     public function test_submission_response_does_not_expose_private_file_path(): void
-{
-    $author = User::factory()->create([
-        'role' => 'author',
-    ]);
-
-    $submission = Submission::factory()
-        ->for($author, 'author')
-        ->create([
-            'file_path' =>
-                'submissions/secret-file.pdf',
-            'file_size_bytes' => 500,
+    {
+        $author = User::factory()->create([
+            'role' => 'author',
         ]);
 
-    $this
-        ->actingAs(
-            $author,
-            'sanctum'
-        )
-        ->getJson(
-            "/api/v1/submissions/{$submission->id}"
-        )
-        ->assertOk()
-        ->assertJsonMissingPath(
-            'file_path'
-        )
-        ->assertJsonPath(
-            'has_file',
-            true
-        )
-        ->assertJsonPath(
-            'file_size_bytes',
-            500
-        );
-}
+        $submission = Submission::factory()
+            ->for($author, 'author')
+            ->create([
+                'file_path' => 'submissions/secret-file.pdf',
+                'file_size_bytes' => 500,
+            ]);
+
+        $this
+            ->actingAs(
+                $author,
+                'sanctum'
+            )
+            ->getJson(
+                "/api/v1/submissions/{$submission->id}"
+            )
+            ->assertOk()
+            ->assertJsonMissingPath(
+                'file_path'
+            )
+            ->assertJsonPath(
+                'has_file',
+                true
+            )
+            ->assertJsonPath(
+                'file_size_bytes',
+                500
+            );
+    }
 
     public function test_author_cannot_download_another_authors_submission_file(): void
     {
@@ -172,8 +172,7 @@ class SubmissionApiTest extends TestCase
         $submission = Submission::factory()
             ->for($owner, 'author')
             ->create([
-                'file_path' =>
-                    'submissions/private-paper.pdf',
+                'file_path' => 'submissions/private-paper.pdf',
             ]);
 
         $this

@@ -37,17 +37,13 @@ class UpdateRegistrationRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'user_id.prohibited' =>
-                'The registration owner cannot be changed.',
+            'user_id.prohibited' => 'The registration owner cannot be changed.',
 
-            'conference_id.prohibited' =>
-                'The registration conference cannot be changed.',
+            'conference_id.prohibited' => 'The registration conference cannot be changed.',
 
-            'status.required' =>
-                'A registration status is required.',
+            'status.required' => 'A registration status is required.',
 
-            'status.in' =>
-                'Status must be either registered or cancelled.',
+            'status.in' => 'Status must be either registered or cancelled.',
         ];
     }
 }

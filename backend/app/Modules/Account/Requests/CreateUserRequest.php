@@ -67,8 +67,7 @@ class CreateUserRequest extends BaseApiRequest
     public function messages(): array
     {
         return [
-            'role.in' =>
-                'Public registration is only available for Author, Organiser, or Attendee accounts.',
+            'role.in' => 'Public registration is only available for Author, Organiser, or Attendee accounts.',
         ];
     }
 }

@@ -28,8 +28,9 @@ class Submission extends Model
         'status',
         'final_decision_at',
     ];
+
     protected $hidden = [
-    'file_path',
+        'file_path',
     ];
 
     protected $appends = [

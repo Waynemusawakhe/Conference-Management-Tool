@@ -13,28 +13,22 @@ class GetDashboardSummaryAction
     public function execute(): array
     {
         return [
-            'total_users' =>
-                User::query()->count(),
+            'total_users' => User::query()->count(),
 
-            'total_conferences' =>
-                Conference::query()->count(),
+            'total_conferences' => Conference::query()->count(),
 
-            'total_submissions' =>
-                Submission::query()->count(),
+            'total_submissions' => Submission::query()->count(),
 
-            'accepted_submissions' =>
-                Submission::query()
-                    ->where(
-                        'status',
-                        'accepted'
-                    )
-                    ->count(),
+            'accepted_submissions' => Submission::query()
+                ->where(
+                    'status',
+                    'accepted'
+                )
+                ->count(),
 
-            'total_reviews' =>
-                SubmissionReview::query()->count(),
+            'total_reviews' => SubmissionReview::query()->count(),
 
-            'total_registrations' =>
-                Registration::query()->count(),
+            'total_registrations' => Registration::query()->count(),
         ];
     }
 }

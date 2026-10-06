@@ -132,8 +132,7 @@ class TestimonialController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' =>
-                'Testimonial created successfully.',
+            'message' => 'Testimonial created successfully.',
             'data' => $testimonial,
         ], 201);
     }
@@ -172,8 +171,7 @@ class TestimonialController extends Controller
                     new OA\Property(
                         property: 'content',
                         type: 'string',
-                        example:
-                            'Very good conference.'
+                        example: 'Very good conference.'
                     ),
                 ]
             )
@@ -181,8 +179,7 @@ class TestimonialController extends Controller
         responses: [
             new OA\Response(
                 response: 200,
-                description:
-                    'Testimonial updated successfully'
+                description: 'Testimonial updated successfully'
             ),
             new OA\Response(
                 response: 401,
@@ -217,8 +214,7 @@ class TestimonialController extends Controller
         ) {
             return response()->json([
                 'success' => false,
-                'message' =>
-                    'You do not have permission to update this testimonial.',
+                'message' => 'You do not have permission to update this testimonial.',
             ], 403);
         }
 
@@ -230,8 +226,7 @@ class TestimonialController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' =>
-                'Testimonial updated successfully.',
+            'message' => 'Testimonial updated successfully.',
             'data' => $testimonial,
         ]);
     }
@@ -255,8 +250,7 @@ class TestimonialController extends Controller
         responses: [
             new OA\Response(
                 response: 200,
-                description:
-                    'Testimonial deleted successfully'
+                description: 'Testimonial deleted successfully'
             ),
             new OA\Response(
                 response: 401,
@@ -287,8 +281,7 @@ class TestimonialController extends Controller
         ) {
             return response()->json([
                 'success' => false,
-                'message' =>
-                    'You do not have permission to delete this testimonial.',
+                'message' => 'You do not have permission to delete this testimonial.',
             ], 403);
         }
 
@@ -298,8 +291,7 @@ class TestimonialController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' =>
-                'Testimonial deleted successfully.',
+            'message' => 'Testimonial deleted successfully.',
         ]);
     }
 }

@@ -114,17 +114,13 @@ class ReviewController extends Controller
             'success' => true,
             'data' => $reviews->items(),
             'meta' => [
-                'current_page' =>
-                    $reviews->currentPage(),
+                'current_page' => $reviews->currentPage(),
 
-                'per_page' =>
-                    $reviews->perPage(),
+                'per_page' => $reviews->perPage(),
 
-                'total' =>
-                    $reviews->total(),
+                'total' => $reviews->total(),
 
-                'last_page' =>
-                    $reviews->lastPage(),
+                'last_page' => $reviews->lastPage(),
             ],
         ]);
     }
@@ -240,8 +236,7 @@ class ReviewController extends Controller
         responses: [
             new OA\Response(
                 response: 201,
-                description:
-                    'Reviewer assigned successfully'
+                description: 'Reviewer assigned successfully'
             ),
             new OA\Response(
                 response: 401,
@@ -298,8 +293,7 @@ class ReviewController extends Controller
         if ($reviewer->role !== 'reviewer') {
             return response()->json([
                 'success' => false,
-                'message' =>
-                    'The selected user is not a reviewer.',
+                'message' => 'The selected user is not a reviewer.',
                 'errors' => [
                     'reviewer_id' => [
                         'The selected user must have the reviewer role.',
@@ -315,8 +309,7 @@ class ReviewController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' =>
-                    'Reviewer assigned successfully.',
+                'message' => 'Reviewer assigned successfully.',
                 'data' => $review,
             ], 201);
         } catch (ValidationException $exception) {
@@ -333,16 +326,14 @@ class ReviewController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' =>
-                    'Unable to assign the reviewer at this time.',
+                'message' => 'Unable to assign the reviewer at this time.',
             ], 500);
         }
     }
 
     #[OA\Post(
         path: '/api/v1/reviews/{id}/submit',
-        summary:
-            'Submit a review (score, comments, recommendation)',
+        summary: 'Submit a review (score, comments, recommendation)',
         tags: ['Reviews'],
         parameters: [
             new OA\Parameter(
@@ -371,8 +362,7 @@ class ReviewController extends Controller
                     new OA\Property(
                         property: 'comments',
                         type: 'string',
-                        example:
-                            'Solid methodology, needs more related work.'
+                        example: 'Solid methodology, needs more related work.'
                     ),
                     new OA\Property(
                         property: 'recommendation',
@@ -390,8 +380,7 @@ class ReviewController extends Controller
         responses: [
             new OA\Response(
                 response: 200,
-                description:
-                    'Review submitted successfully'
+                description: 'Review submitted successfully'
             ),
             new OA\Response(
                 response: 401,
@@ -407,8 +396,7 @@ class ReviewController extends Controller
             ),
             new OA\Response(
                 response: 422,
-                description:
-                    'Validation error or review already locked'
+                description: 'Validation error or review already locked'
             ),
             new OA\Response(
                 response: 500,
@@ -437,8 +425,7 @@ class ReviewController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' =>
-                    'Review submitted successfully.',
+                'message' => 'Review submitted successfully.',
                 'data' => $updatedReview,
             ]);
         } catch (ValidationException $exception) {
@@ -448,16 +435,14 @@ class ReviewController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' =>
-                    'Unable to submit the review at this time.',
+                'message' => 'Unable to submit the review at this time.',
             ], 500);
         }
     }
 
     #[OA\Post(
         path: '/api/v1/reviews/{id}/lock',
-        summary:
-            'Lock a submitted review to prevent further edits',
+        summary: 'Lock a submitted review to prevent further edits',
         tags: ['Reviews'],
         parameters: [
             new OA\Parameter(
@@ -472,8 +457,7 @@ class ReviewController extends Controller
         responses: [
             new OA\Response(
                 response: 200,
-                description:
-                    'Review locked successfully'
+                description: 'Review locked successfully'
             ),
             new OA\Response(
                 response: 401,
@@ -489,8 +473,7 @@ class ReviewController extends Controller
             ),
             new OA\Response(
                 response: 422,
-                description:
-                    'Review already locked or not yet submitted'
+                description: 'Review already locked or not yet submitted'
             ),
             new OA\Response(
                 response: 500,
@@ -517,8 +500,7 @@ class ReviewController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' =>
-                    'Review locked successfully.',
+                'message' => 'Review locked successfully.',
                 'data' => $lockedReview,
             ]);
         } catch (ValidationException $exception) {
@@ -528,8 +510,7 @@ class ReviewController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' =>
-                    'Unable to lock the review at this time.',
+                'message' => 'Unable to lock the review at this time.',
             ], 500);
         }
     }
@@ -551,8 +532,7 @@ class ReviewController extends Controller
         responses: [
             new OA\Response(
                 response: 200,
-                description:
-                    'Review assignment removed'
+                description: 'Review assignment removed'
             ),
             new OA\Response(
                 response: 401,
@@ -568,8 +548,7 @@ class ReviewController extends Controller
             ),
             new OA\Response(
                 response: 422,
-                description:
-                    'Cannot delete a submitted review'
+                description: 'Cannot delete a submitted review'
             ),
             new OA\Response(
                 response: 500,
@@ -596,8 +575,7 @@ class ReviewController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' =>
-                    'Review assignment removed.',
+                'message' => 'Review assignment removed.',
             ]);
         } catch (ValidationException $exception) {
             throw $exception;
@@ -606,8 +584,7 @@ class ReviewController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' =>
-                    'Unable to remove the review assignment at this time.',
+                'message' => 'Unable to remove the review assignment at this time.',
             ], 500);
         }
     }

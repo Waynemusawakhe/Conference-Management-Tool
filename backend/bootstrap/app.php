@@ -51,8 +51,7 @@ return Application::configure(
 
             $middleware->trustProxies(
                 at: $proxyAddresses,
-                headers:
-                    Request::HEADER_X_FORWARDED_FOR |
+                headers: Request::HEADER_X_FORWARDED_FOR |
                     Request::HEADER_X_FORWARDED_HOST |
                     Request::HEADER_X_FORWARDED_PORT |
                     Request::HEADER_X_FORWARDED_PROTO
@@ -66,8 +65,7 @@ return Application::configure(
             );
 
             $middleware->alias([
-                'role' =>
-                    EnsureUserHasRole::class,
+                'role' => EnsureUserHasRole::class,
             ]);
 
             $middleware->redirectGuestsTo(
@@ -101,8 +99,7 @@ return Application::configure(
                     ) {
                         return response()->json([
                             'success' => false,
-                            'message' =>
-                                $e->getMessage()
+                            'message' => $e->getMessage()
                                     ?: 'Unauthenticated.',
                         ], 401);
                     }
@@ -121,8 +118,7 @@ return Application::configure(
                     ) {
                         return response()->json([
                             'success' => false,
-                            'message' =>
-                                'Resource not found.',
+                            'message' => 'Resource not found.',
                         ], 404);
                     }
                 }

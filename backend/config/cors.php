@@ -25,8 +25,7 @@ return [
         '*',
     ],
 
-    'allowed_origins' =>
-        $allowedOrigins,
+    'allowed_origins' => $allowedOrigins,
 
     'allowed_origins_patterns' => [],
 

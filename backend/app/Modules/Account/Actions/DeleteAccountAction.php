@@ -21,8 +21,7 @@ class DeleteAccountAction
             $user->password
         )) {
             throw ValidationException::withMessages([
-                'current_password' =>
-                    'The current password is incorrect.',
+                'current_password' => 'The current password is incorrect.',
             ]);
         }
 
@@ -41,8 +40,7 @@ class DeleteAccountAction
 
         if ($ownedConferenceCount > 0) {
             throw ValidationException::withMessages([
-                'account' =>
-                    'Your account cannot be deleted while you still own conferences. Transfer or remove those conferences first.',
+                'account' => 'Your account cannot be deleted while you still own conferences. Transfer or remove those conferences first.',
             ]);
         }
 

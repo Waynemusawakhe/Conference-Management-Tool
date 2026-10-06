@@ -62,8 +62,7 @@ class CreateReviewAction
                         $submission->status === 'pending'
                     ) {
                         $submission->update([
-                            'status' =>
-                                'under_review',
+                            'status' => 'under_review',
                         ]);
                     }
 

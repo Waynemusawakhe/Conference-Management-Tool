@@ -9,9 +9,9 @@ use App\Modules\Conferences\Actions\UpdateConferenceStatus;
 use App\Modules\Conferences\Models\Conference;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
-use Illuminate\Support\Carbon;
 use Illuminate\Validation\ValidationException;
 use OpenApi\Attributes as OA;
 
@@ -29,27 +29,27 @@ class ConferenceController
         ]
     )]
     public function index(Request $request): JsonResponse
-{
-    $perPage = (int) $request->input('per_page', 15);
+    {
+        $perPage = (int) $request->input('per_page', 15);
 
-    $perPage = max(1, min($perPage, 100));
+        $perPage = max(1, min($perPage, 100));
 
-    $conferences = Conference::query()
-        ->with('organiser:id,name,email')
-        ->orderByDesc('created_at')
-        ->paginate($perPage);
+        $conferences = Conference::query()
+            ->with('organiser:id,name,email')
+            ->orderByDesc('created_at')
+            ->paginate($perPage);
 
-    return response()->json([
-        'success' => true,
-        'data' => $conferences->items(),
-        'meta' => [
-            'current_page' => $conferences->currentPage(),
-            'per_page' => $conferences->perPage(),
-            'total' => $conferences->total(),
-            'last_page' => $conferences->lastPage(),
-        ],
-    ]);
-}
+        return response()->json([
+            'success' => true,
+            'data' => $conferences->items(),
+            'meta' => [
+                'current_page' => $conferences->currentPage(),
+                'per_page' => $conferences->perPage(),
+                'total' => $conferences->total(),
+                'last_page' => $conferences->lastPage(),
+            ],
+        ]);
+    }
 
     #[OA\Post(
         path: '/api/v1/conferences',
@@ -510,86 +510,83 @@ class ConferenceController
         ]);
 
         $effectiveStartDate = Carbon::parse(
-    $data['start_date']
-        ?? $conference->start_date
-)->startOfDay();
-
-$effectiveEndDate = Carbon::parse(
-    $data['end_date']
-        ?? $conference->end_date
-)->startOfDay();
-
-$effectiveSubmissionDeadline = null;
-
-if (
-    array_key_exists(
-        'submission_deadline',
-        $data
-    )
-) {
-    if (
-        $data['submission_deadline']
-        !== null
-    ) {
-        $effectiveSubmissionDeadline =
-            Carbon::parse(
-                $data['submission_deadline']
-            )->startOfDay();
-    }
-} elseif (
-    $conference->submission_deadline
-) {
-    $effectiveSubmissionDeadline =
-        Carbon::parse(
-            $conference->submission_deadline
+            $data['start_date']
+                ?? $conference->start_date
         )->startOfDay();
-}
 
-/*
- * Only prevent a past start date when
- * the client is actively changing it.
- *
- * This still allows an organiser to edit
- * the name/description of an already-started
- * conference.
- */
-if (
-    array_key_exists(
-        'start_date',
-        $data
-    ) &&
-    $effectiveStartDate->lt(
-        today()
-    )
-) {
-    throw ValidationException::withMessages([
-        'start_date' =>
-            'The conference start date cannot be in the past.',
-    ]);
-}
+        $effectiveEndDate = Carbon::parse(
+            $data['end_date']
+                ?? $conference->end_date
+        )->startOfDay();
 
-if (
-    $effectiveEndDate->lt(
-        $effectiveStartDate
-    )
-) {
-    throw ValidationException::withMessages([
-        'end_date' =>
-            'The conference end date cannot be before the start date.',
-    ]);
-}
+        $effectiveSubmissionDeadline = null;
 
-if (
-    $effectiveSubmissionDeadline &&
-    $effectiveSubmissionDeadline->gt(
-        $effectiveStartDate
-    )
-) {
-    throw ValidationException::withMessages([
-        'submission_deadline' =>
-            'The submission deadline cannot be after the conference start date.',
-    ]);
-}
+        if (
+            array_key_exists(
+                'submission_deadline',
+                $data
+            )
+        ) {
+            if (
+                $data['submission_deadline']
+                !== null
+            ) {
+                $effectiveSubmissionDeadline =
+                    Carbon::parse(
+                        $data['submission_deadline']
+                    )->startOfDay();
+            }
+        } elseif (
+            $conference->submission_deadline
+        ) {
+            $effectiveSubmissionDeadline =
+                Carbon::parse(
+                    $conference->submission_deadline
+                )->startOfDay();
+        }
+
+        /*
+         * Only prevent a past start date when
+         * the client is actively changing it.
+         *
+         * This still allows an organiser to edit
+         * the name/description of an already-started
+         * conference.
+         */
+        if (
+            array_key_exists(
+                'start_date',
+                $data
+            ) &&
+            $effectiveStartDate->lt(
+                today()
+            )
+        ) {
+            throw ValidationException::withMessages([
+                'start_date' => 'The conference start date cannot be in the past.',
+            ]);
+        }
+
+        if (
+            $effectiveEndDate->lt(
+                $effectiveStartDate
+            )
+        ) {
+            throw ValidationException::withMessages([
+                'end_date' => 'The conference end date cannot be before the start date.',
+            ]);
+        }
+
+        if (
+            $effectiveSubmissionDeadline &&
+            $effectiveSubmissionDeadline->gt(
+                $effectiveStartDate
+            )
+        ) {
+            throw ValidationException::withMessages([
+                'submission_deadline' => 'The submission deadline cannot be after the conference start date.',
+            ]);
+        }
 
         $updated = $action->execute($conference, $data);
 

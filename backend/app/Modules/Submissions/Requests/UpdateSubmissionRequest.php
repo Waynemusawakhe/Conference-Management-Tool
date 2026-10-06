@@ -47,14 +47,11 @@ class UpdateSubmissionRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'file.file' =>
-                'The submission document must be a valid file.',
+            'file.file' => 'The submission document must be a valid file.',
 
-            'file.mimes' =>
-                'The submission document must be a PDF, DOC, or DOCX file.',
+            'file.mimes' => 'The submission document must be a PDF, DOC, or DOCX file.',
 
-            'file.max' =>
-                'The submission document may not be larger than 10 MB.',
+            'file.max' => 'The submission document may not be larger than 10 MB.',
         ];
     }
 }
