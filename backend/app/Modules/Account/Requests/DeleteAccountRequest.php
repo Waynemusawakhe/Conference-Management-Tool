@@ -4,7 +4,7 @@ namespace App\Modules\Account\Requests;
 
 use App\Modules\Shared\Requests\BaseApiRequest;
 
-class ChangePasswordRequest extends BaseApiRequest
+class DeleteAccountRequest extends BaseApiRequest
 {
     public function authorize(): bool
     {
@@ -17,14 +17,6 @@ class ChangePasswordRequest extends BaseApiRequest
             'current_password' => [
                 'required',
                 'string',
-            ],
-
-            'password' => [
-                'required',
-                'string',
-                'min:8',
-                'confirmed',
-                'different:current_password',
             ],
         ];
     }

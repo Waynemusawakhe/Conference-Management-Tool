@@ -3,9 +3,9 @@
 namespace App\Modules\Account\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Modules\Account\Actions\GetReviewersAction;
 use App\Modules\Account\Actions\GetUserAction;
 use App\Modules\Account\Actions\GetUsersAction;
-use App\Modules\Account\Actions\GetReviewersAction;
 use Illuminate\Http\JsonResponse;
 use OpenApi\Attributes as OA;
 use App\Modules\Account\Actions\AssignRoleAction;

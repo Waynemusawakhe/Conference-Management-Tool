@@ -99,31 +99,119 @@ export default function OrganiserDashboard() {
     } finally { setLoading(false); }
   }, [logout, user?.id]);
 
-  const loadConferenceData = useCallback(async (conference) => {
-    if (!conference) {
-      setSubmissions([]); setReviews([]); setRegistrations([]); setSessions([]); return;
-    }
-    setDetailLoading(true); setError("");
-    try {
-      const [submissionResponse, registrationResponse, sessionResponse] = await Promise.all([
-        submissionsApi.getAll({ conference_id: conference.id, per_page: 100 }),
-        conferencesApi.getRegistrations(conference.id),
-        conferencesApi.getSessions(conference.id),
-      ]);
-      const nextSubmissions = unwrapList(submissionResponse);
-      setSubmissions(nextSubmissions);
-      setRegistrations(unwrapList(registrationResponse));
-      setSessions(unwrapList(sessionResponse));
+  const loadConferenceData =
+  useCallback(
+    async (conference) => {
+      if (!conference) {
+        setSubmissions([]);
+        setReviews([]);
+        setRegistrations([]);
+        setSessions([]);
+        return;
+      }
 
-      // Fetch reviews per submission so an organiser only requests reviews for their own conference.
-      const reviewResponses = await Promise.all(nextSubmissions.map((s) => reviewsApi.getAll({ submission_id: s.id, per_page: 100 })));
-      setReviews(reviewResponses.flatMap(unwrapList));
-    } catch (err) {
-      if (err?.status === 401) { await logout(); return; }
-      setError(getErrorMessage(err));
-      setReviews([]);
-    } finally { setDetailLoading(false); }
-  }, [logout]);
+      setDetailLoading(true);
+      setError("");
+
+      try {
+        const [
+          submissionResponse,
+          registrationResponse,
+          sessionResponse,
+          reviewResponse,
+        ] = await Promise.all([
+          submissionsApi.getAll({
+            conference_id:
+              conference.id,
+
+            per_page: 100,
+          }),
+
+          conferencesApi
+            .getRegistrations(
+              conference.id
+            ),
+
+          conferencesApi
+            .getSessions(
+              conference.id
+            ),
+
+          reviewsApi.getAll({
+            per_page: 100,
+          }),
+        ]);
+
+        const nextSubmissions =
+          unwrapList(
+            submissionResponse
+          );
+
+        const submissionIds =
+          new Set(
+            nextSubmissions.map(
+              (submission) =>
+                Number(
+                  submission.id
+                )
+            )
+          );
+
+        const relevantReviews =
+          unwrapList(
+            reviewResponse
+          ).filter(
+            (review) =>
+              submissionIds.has(
+                Number(
+                  review.submission_id
+                )
+              )
+          );
+
+        setSubmissions(
+          nextSubmissions
+        );
+
+        setRegistrations(
+          unwrapList(
+            registrationResponse
+          )
+        );
+
+        setSessions(
+          unwrapList(
+            sessionResponse
+          )
+        );
+
+        setReviews(
+          relevantReviews
+        );
+      } catch (err) {
+        if (
+          err?.status ===
+          401
+        ) {
+          logout();
+          return;
+        }
+
+        setError(
+          getErrorMessage(
+            err
+          )
+        );
+
+        setReviews([]);
+      } finally {
+        setDetailLoading(
+          false
+        );
+      }
+    },
+    [logout]
+  );
 
   useEffect(() => { loadConferences(); }, [loadConferences]);
   useEffect(() => { loadConferenceData(selectedConference); }, [selectedConference, loadConferenceData]);

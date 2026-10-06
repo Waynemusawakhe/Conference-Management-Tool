@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Bell, BookOpen, CalendarDays, ChevronRight, Clock3, FileCheck2, FileText,
   Filter, LayoutDashboard, LogOut, Menu, Plus, Search, Settings, Sparkles,
-  Trash2, Upload, UserRound, X, Eye, Pencil, RotateCcw, AlertCircle
+  Trash2, Upload, UserRound, X, Eye, Pencil, RotateCcw, AlertCircle, Download
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Logo from "../components/Logo";
@@ -159,7 +159,7 @@ export default function AuthorDashboard() {
       }
     }
     if (form.file && form.file.size > 10 * 1024 * 1024) {
-      setFormError("The PDF must be 10MB or smaller.");
+      setFormError("The file must be 10MB or smaller.");
       return;
     }
 
@@ -315,7 +315,47 @@ export default function AuthorDashboard() {
           <div><span className="text-[9px] font-extrabold uppercase tracking-wide text-[#9aa3b3]">Conference</span><p className="mb-0 mt-1 text-sm font-bold">{selected.conference?.name || conferences.find((c)=>c.id===selected.conference_id)?.name || "Conference"}</p></div>
           <div><span className="text-[9px] font-extrabold uppercase tracking-wide text-[#9aa3b3]">Track</span><p className="mb-0 mt-1 text-sm">{selected.track || "General track"}</p></div>
           <div><span className="text-[9px] font-extrabold uppercase tracking-wide text-[#9aa3b3]">Abstract</span><p className="mb-0 mt-2 whitespace-pre-wrap text-sm leading-7 text-[#536079]">{selected.abstract || "The API did not return an abstract for this submission."}</p></div>
-          {selected.file_path && <div className="rounded-xl border border-[#e5e8ef] p-3 text-xs text-[#66728b]">A submission file is attached to this record. Downloading private files is not exposed by the supplied API contract.</div>}
+          {selected.has_file && (
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#e5e8ef] bg-[#fafbfe] p-4">
+            <div>
+              <p className="m-0 text-[11px] font-extrabold text-[#35415f]">
+                Submission document
+              </p>
+
+              <p className="mb-0 mt-1 text-[9px] text-[#8993a6]">
+                {selected.file_size_bytes
+                  ? `${(
+                      selected.file_size_bytes /
+                      1024 /
+                      1024
+                    ).toFixed(2)} MB`
+                  : "Document attached"}
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={async () => {
+                setError("");
+
+                try {
+                  await submissionsApi.downloadFile(
+                    selected.id
+                  );
+                } catch (err) {
+                  setError(
+                    err?.message ||
+                      "Unable to download submission file."
+                  );
+                }
+              }}
+              className="inline-flex items-center gap-2 rounded-xl bg-[#efedff] px-3.5 py-2.5 text-[10px] font-extrabold text-[#5548d7] transition hover:bg-[#e5e2ff]"
+            >
+              <Download size={14} />
+              Download file
+            </button>
+          </div>
+        )}
           {selected.status === "pending" && <div className="flex justify-end border-t border-[#edf0f5] pt-4"><button onClick={()=>openEdit(selected)} className="inline-flex items-center gap-2 rounded-xl bg-[#efedff] px-4 py-2.5 text-xs font-extrabold text-[#5548d7]"><Pencil size={14}/> Edit proposal</button></div>}
         </div>
       </Modal> : null}

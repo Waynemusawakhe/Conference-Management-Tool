@@ -9,26 +9,24 @@ class GetSubmissionStatisticsAction
 {
     public function execute(ReportingFilterRequest $request): array /* the method will return an array */
     {
-        $query = Submission::query();/*Start the DB query */
+        $query = Submission::query(); /* Start the DB query */
 
-        /*Filter by conference id */
+        /* Filter by conference id */
         if ($request->filled('conference_id')) {
             $query->where('conference_id', $request->integer('conference_id'));
         }
 
-        /*Filter by status */
+        /* Filter by status */
         if ($request->filled('status')) {
             $query->where('status', $request->string('status')->toString());
         }
 
-
-        /*Filter by starting date created */
+        /* Filter by starting date created */
         if ($request->filled('date_from')) {
             $query->whereDate('created_at', '>=', $request->input('date_from'));
         }
 
-
-        /*Filter by ending date*/
+        /* Filter by ending date */
         if ($request->filled('date_to')) {
             $query->whereDate('created_at', '<=', $request->input('date_to'));
         }
