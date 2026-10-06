@@ -16,7 +16,10 @@ use App\Modules\Submissions\Requests\UpdateSubmissionRequest;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use OpenApi\Attributes as OA;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class SubmissionController
 {
@@ -133,18 +136,26 @@ class SubmissionController
                 description: 'Submission created'
             ),
             new OA\Response(
-                response: 422,
-                description: 'Validation error'
-            ),
-            new OA\Response(
                 response: 401,
                 description: 'Unauthenticated'
             ),
+            new OA\Response(
+                response: 403,
+                description: 'Forbidden'
+            ),
+            new OA\Response(
+                response: 422,
+                description: 'Validation error'
+            ),
         ]
     )]
-    public function store(StoreSubmissionRequest $request): JsonResponse
-    {
-        Gate::authorize('create', Submission::class);
+    public function store(
+        StoreSubmissionRequest $request
+    ): JsonResponse {
+        Gate::authorize(
+            'create',
+            Submission::class
+        );
 
         $submission = $this->createSubmission->execute(
             $request->user(),
@@ -152,7 +163,10 @@ class SubmissionController
             $request->file('file')
         );
 
-        return response()->json($submission, 201);
+        return response()->json(
+            $submission,
+            201
+        );
     }
 
     #[OA\Get(
@@ -165,13 +179,19 @@ class SubmissionController
                 name: 'submission',
                 in: 'path',
                 required: true,
-                schema: new OA\Schema(type: 'integer')
+                schema: new OA\Schema(
+                    type: 'integer'
+                )
             ),
         ],
         responses: [
             new OA\Response(
                 response: 200,
                 description: 'Submission detail'
+            ),
+            new OA\Response(
+                response: 401,
+                description: 'Unauthenticated'
             ),
             new OA\Response(
                 response: 403,
@@ -183,32 +203,133 @@ class SubmissionController
             ),
         ]
     )]
-    public function show(int $submission): JsonResponse
-    {
-        $model = $this->getSubmission->execute($submission);
+    public function show(
+        int $submission
+    ): JsonResponse {
+        $model = $this
+            ->getSubmission
+            ->execute($submission);
 
-        Gate::authorize('view', $model);
+        Gate::authorize(
+            'view',
+            $model
+        );
 
-        return response()->json($model);
+        return response()->json(
+            $model
+        );
     }
 
-    #[OA\Put(
-        path: '/api/v1/submissions/{submission}',
+    #[OA\Get(
+        path: '/api/v1/submissions/{submission}/file',
         tags: ['Submissions'],
-        summary: 'Update a submission (author only, while pending)',
+        summary: 'Download a submission document',
+        description: 'Downloads the private document attached to a submission. Access is restricted to users who are authorised to view the submission.',
         security: [['sanctum' => []]],
         parameters: [
             new OA\Parameter(
                 name: 'submission',
                 in: 'path',
                 required: true,
-                schema: new OA\Schema(type: 'integer')
+                schema: new OA\Schema(
+                    type: 'integer'
+                )
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Submission file download'
+            ),
+            new OA\Response(
+                response: 401,
+                description: 'Unauthenticated'
+            ),
+            new OA\Response(
+                response: 403,
+                description: 'Forbidden'
+            ),
+            new OA\Response(
+                response: 404,
+                description: 'Submission or file not found'
+            ),
+        ]
+    )]
+    public function downloadFile(
+        Submission $submission
+    ): StreamedResponse {
+        Gate::authorize(
+            'view',
+            $submission
+        );
+
+        if (
+            ! $submission->file_path ||
+            ! Storage::disk('private')
+                ->exists($submission->file_path)
+        ) {
+            abort(
+                404,
+                'No submission file was found.'
+            );
+        }
+
+        $extension = pathinfo(
+            $submission->file_path,
+            PATHINFO_EXTENSION
+        );
+
+        $title = Str::slug(
+            $submission->title
+        );
+
+        if ($title === '') {
+            $title = 'submission';
+        }
+
+        $downloadName =
+            'submission-'.
+            $submission->id.
+            '-'.
+            $title;
+
+        if ($extension !== '') {
+            $downloadName .=
+                '.'.$extension;
+        }
+
+        return Storage::disk(
+            'private'
+        )->download(
+            $submission->file_path,
+            $downloadName
+        );
+    }
+
+    #[OA\Put(
+        path: '/api/v1/submissions/{submission}',
+        tags: ['Submissions'],
+        summary: 'Update a submission',
+        description: 'Updates a submission while the current user is authorised to modify it.',
+        security: [['sanctum' => []]],
+        parameters: [
+            new OA\Parameter(
+                name: 'submission',
+                in: 'path',
+                required: true,
+                schema: new OA\Schema(
+                    type: 'integer'
+                )
             ),
         ],
         responses: [
             new OA\Response(
                 response: 200,
                 description: 'Submission updated'
+            ),
+            new OA\Response(
+                response: 401,
+                description: 'Unauthenticated'
             ),
             new OA\Response(
                 response: 403,
@@ -224,7 +345,10 @@ class SubmissionController
         UpdateSubmissionRequest $request,
         Submission $submission
     ): JsonResponse {
-        Gate::authorize('update', $submission);
+        Gate::authorize(
+            'update',
+            $submission
+        );
 
         $updated = $this->updateSubmission->execute(
             $submission,
@@ -232,20 +356,24 @@ class SubmissionController
             $request->file('file')
         );
 
-        return response()->json($updated);
+        return response()->json(
+            $updated
+        );
     }
 
     #[OA\Delete(
         path: '/api/v1/submissions/{submission}',
         tags: ['Submissions'],
-        summary: 'Delete a submission (author only, while pending)',
+        summary: 'Delete a submission',
         security: [['sanctum' => []]],
         parameters: [
             new OA\Parameter(
                 name: 'submission',
                 in: 'path',
                 required: true,
-                schema: new OA\Schema(type: 'integer')
+                schema: new OA\Schema(
+                    type: 'integer'
+                )
             ),
         ],
         responses: [
@@ -254,18 +382,35 @@ class SubmissionController
                 description: 'Submission deleted'
             ),
             new OA\Response(
+                response: 401,
+                description: 'Unauthenticated'
+            ),
+            new OA\Response(
                 response: 403,
                 description: 'Forbidden'
             ),
+            new OA\Response(
+                response: 404,
+                description: 'Submission not found'
+            ),
         ]
     )]
-    public function destroy(Submission $submission): JsonResponse
-    {
-        Gate::authorize('delete', $submission);
+    public function destroy(
+        Submission $submission
+    ): JsonResponse {
+        Gate::authorize(
+            'delete',
+            $submission
+        );
 
-        $this->deleteSubmission->execute($submission);
+        $this
+            ->deleteSubmission
+            ->execute($submission);
 
-        return response()->json(null, 204);
+        return response()->json(
+            null,
+            204
+        );
     }
 
     #[OA\Post(
@@ -278,13 +423,19 @@ class SubmissionController
                 name: 'submission',
                 in: 'path',
                 required: true,
-                schema: new OA\Schema(type: 'integer')
+                schema: new OA\Schema(
+                    type: 'integer'
+                )
             ),
         ],
         responses: [
             new OA\Response(
                 response: 200,
                 description: 'Submission withdrawn successfully'
+            ),
+            new OA\Response(
+                response: 401,
+                description: 'Unauthenticated'
             ),
             new OA\Response(
                 response: 403,
@@ -296,11 +447,17 @@ class SubmissionController
             ),
         ]
     )]
-    public function withdraw(Submission $submission): JsonResponse
-    {
-        Gate::authorize('update', $submission);
+    public function withdraw(
+        Submission $submission
+    ): JsonResponse {
+        Gate::authorize(
+            'update',
+            $submission
+        );
 
-        $withdrawn = $this->withdrawSubmission->execute($submission);
+        $withdrawn = $this
+            ->withdrawSubmission
+            ->execute($submission);
 
         return response()->json([
             'message' => 'Submission withdrawn successfully.',
@@ -318,7 +475,9 @@ class SubmissionController
                 name: 'submission',
                 in: 'path',
                 required: true,
-                schema: new OA\Schema(type: 'integer')
+                schema: new OA\Schema(
+                    type: 'integer'
+                )
             ),
         ],
         requestBody: new OA\RequestBody(
@@ -347,6 +506,10 @@ class SubmissionController
                 description: 'Submission status updated'
             ),
             new OA\Response(
+                response: 401,
+                description: 'Unauthenticated'
+            ),
+            new OA\Response(
                 response: 403,
                 description: 'Forbidden'
             ),
@@ -364,14 +527,24 @@ class SubmissionController
         UpdateSubmissionStatusRequest $request,
         Submission $submission
     ): JsonResponse {
-        Gate::authorize('decide', $submission);
-
-        $updated = $this->updateSubmissionStatus->execute(
-            $request->user(),
-            $submission,
-            $request->validated('status')
+        Gate::authorize(
+            'decide',
+            $submission
         );
 
-        return response()->json($updated);
+        $updated =
+            $this
+                ->updateSubmissionStatus
+                ->execute(
+                    $request->user(),
+                    $submission,
+                    $request->validated(
+                        'status'
+                    )
+                );
+
+        return response()->json(
+            $updated
+        );
     }
 }

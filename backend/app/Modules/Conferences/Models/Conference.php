@@ -3,6 +3,7 @@
 namespace App\Modules\Conferences\Models;
 
 use App\Models\User;
+use App\Modules\Reviews\Models\Testimonial;
 use App\Modules\Submissions\Models\ConferenceSession;
 use App\Modules\Submissions\Models\Submission;
 use Database\Factories\ConferenceFactory;

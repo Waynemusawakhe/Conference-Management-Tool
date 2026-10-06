@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Logo from "../components/Logo";
 import Navbar from "../components/Navbar";
@@ -38,7 +38,7 @@ function Register() {
     email: "",
     password: "",
     confirmPassword: "",
-    role: "", // No default — user must choose
+    role: "", // No default â€” user must choose
   });
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
@@ -68,7 +68,7 @@ function Register() {
     setError("");
     setSuccess(false);
 
-    // Client-side validation (UX only — backend validates too)
+    // Client-side validation (UX only â€” backend validates too)
     if (
       !formData.fullName ||
       !formData.email ||
@@ -94,8 +94,8 @@ function Register() {
       setError("Please choose a role.");
       return;
     }
-    if (!["admin", "author", "reviewer", "organiser", "attendee"].includes(formData.role)) {
-      setError("Please select a valid role.");
+    if (!["author", "organiser", "attendee"].includes(formData.role)) {
+      setError("Please select a valid public account role.");
       return;
     }
 
@@ -231,16 +231,16 @@ function Register() {
                     </div>
                     <ul className="mt-1 grid gap-1 text-[11px] text-[#788398]">
                       <li className={formData.password.length >= MIN_PASSWORD_LENGTH ? "text-green-600" : ""}>
-                        {formData.password.length >= MIN_PASSWORD_LENGTH ? "✓" : "•"} At least {MIN_PASSWORD_LENGTH} characters
+                        {formData.password.length >= MIN_PASSWORD_LENGTH ? "âœ“" : "â€¢"} At least {MIN_PASSWORD_LENGTH} characters
                       </li>
                       <li className={/[A-Z]/.test(formData.password) && /[a-z]/.test(formData.password) ? "text-green-600" : ""}>
-                        {/[A-Z]/.test(formData.password) && /[a-z]/.test(formData.password) ? "✓" : "•"} Upper and lower case
+                        {/[A-Z]/.test(formData.password) && /[a-z]/.test(formData.password) ? "âœ“" : "â€¢"} Upper and lower case
                       </li>
                       <li className={/\d/.test(formData.password) ? "text-green-600" : ""}>
-                        {/\d/.test(formData.password) ? "✓" : "•"} At least one number
+                        {/\d/.test(formData.password) ? "âœ“" : "â€¢"} At least one number
                       </li>
                       <li className={/[^A-Za-z0-9]/.test(formData.password) ? "text-green-600" : ""}>
-                        {/[^A-Za-z0-9]/.test(formData.password) ? "✓" : "•"} At least one symbol
+                        {/[^A-Za-z0-9]/.test(formData.password) ? "âœ“" : "â€¢"} At least one symbol
                       </li>
                     </ul>
                   </div>
@@ -285,9 +285,7 @@ function Register() {
                     <option value="" disabled>Please choose a role</option>
                     <option value="attendee">Attendee</option>
                     <option value="author">Author</option>
-                    <option value="reviewer">Reviewer</option>
                     <option value="organiser">Organiser</option>
-                    <option value="admin">Admin</option>
                   </select>
                 </label>
               </div>
@@ -302,7 +300,7 @@ function Register() {
               {/* Success Message (Auto-hides and redirects) */}
               {success && (
                 <p className="rounded-lg bg-green-50 px-3 py-2 text-xs font-semibold text-green-700">
-                  ✅ Account created! Redirecting to login...
+                  âœ… Account created! Verify your email, then continue to login.
                 </p>
               )}
 
@@ -331,3 +329,4 @@ function Register() {
 }
 
 export default Register;
+

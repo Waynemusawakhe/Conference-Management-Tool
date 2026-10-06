@@ -20,14 +20,16 @@ class TestimonialController extends Controller
         path: '/api/v1/testimonials',
         tags: ['Testimonials'],
         summary: 'Get all testimonials',
-        security: [['sanctum' => []]],
         responses: [
-            new OA\Response(response: 200, description: 'Testimonials retrieved successfully'),
-            new OA\Response(response: 401, description: 'Unauthenticated'),
+            new OA\Response(
+                response: 200,
+                description: 'Testimonials retrieved successfully'
+            ),
         ]
     )]
-    public function index(GetTestimonialsAction $action): JsonResponse
-    {
+    public function index(
+        GetTestimonialsAction $action
+    ): JsonResponse {
         return response()->json([
             'success' => true,
             'data' => $action->execute(),
@@ -38,24 +40,32 @@ class TestimonialController extends Controller
         path: '/api/v1/testimonials/{id}',
         tags: ['Testimonials'],
         summary: 'Get testimonial by ID',
-        security: [['sanctum' => []]],
         parameters: [
             new OA\Parameter(
                 name: 'id',
                 in: 'path',
                 required: true,
                 description: 'Testimonial ID',
-                schema: new OA\Schema(type: 'integer')
+                schema: new OA\Schema(
+                    type: 'integer'
+                )
             ),
         ],
         responses: [
-            new OA\Response(response: 200, description: 'Testimonial retrieved successfully'),
-            new OA\Response(response: 404, description: 'Testimonial not found'),
-            new OA\Response(response: 401, description: 'Unauthenticated'),
+            new OA\Response(
+                response: 200,
+                description: 'Testimonial retrieved successfully'
+            ),
+            new OA\Response(
+                response: 404,
+                description: 'Testimonial not found'
+            ),
         ]
     )]
-    public function show(int $id, GetTestimonialAction $action): JsonResponse
-    {
+    public function show(
+        int $id,
+        GetTestimonialAction $action
+    ): JsonResponse {
         return response()->json([
             'success' => true,
             'data' => $action->execute($id),
@@ -70,7 +80,11 @@ class TestimonialController extends Controller
         requestBody: new OA\RequestBody(
             required: true,
             content: new OA\JsonContent(
-                required: ['conference_id', 'rating', 'content'],
+                required: [
+                    'conference_id',
+                    'rating',
+                    'content',
+                ],
                 properties: [
                     new OA\Property(
                         property: 'conference_id',
@@ -93,9 +107,18 @@ class TestimonialController extends Controller
             )
         ),
         responses: [
-            new OA\Response(response: 201, description: 'Testimonial created successfully'),
-            new OA\Response(response: 401, description: 'Unauthenticated'),
-            new OA\Response(response: 422, description: 'Validation error'),
+            new OA\Response(
+                response: 201,
+                description: 'Testimonial created successfully'
+            ),
+            new OA\Response(
+                response: 401,
+                description: 'Unauthenticated'
+            ),
+            new OA\Response(
+                response: 422,
+                description: 'Validation error'
+            ),
         ]
     )]
     public function store(
@@ -125,13 +148,18 @@ class TestimonialController extends Controller
                 in: 'path',
                 required: true,
                 description: 'Testimonial ID',
-                schema: new OA\Schema(type: 'integer')
+                schema: new OA\Schema(
+                    type: 'integer'
+                )
             ),
         ],
         requestBody: new OA\RequestBody(
             required: true,
             content: new OA\JsonContent(
-                required: ['rating', 'content'],
+                required: [
+                    'rating',
+                    'content',
+                ],
                 properties: [
                     new OA\Property(
                         property: 'rating',
@@ -149,10 +177,26 @@ class TestimonialController extends Controller
             )
         ),
         responses: [
-            new OA\Response(response: 200, description: 'Testimonial updated successfully'),
-            new OA\Response(response: 401, description: 'Unauthenticated'),
-            new OA\Response(response: 404, description: 'Testimonial not found'),
-            new OA\Response(response: 422, description: 'Validation error'),
+            new OA\Response(
+                response: 200,
+                description: 'Testimonial updated successfully'
+            ),
+            new OA\Response(
+                response: 401,
+                description: 'Unauthenticated'
+            ),
+            new OA\Response(
+                response: 403,
+                description: 'Forbidden'
+            ),
+            new OA\Response(
+                response: 404,
+                description: 'Testimonial not found'
+            ),
+            new OA\Response(
+                response: 422,
+                description: 'Validation error'
+            ),
         ]
     )]
     public function update(
@@ -161,19 +205,24 @@ class TestimonialController extends Controller
         GetTestimonialAction $getAction,
         UpdateTestimonialAction $updateAction
     ): JsonResponse {
-        $testimonial = $getAction->execute($id);
+        $testimonial =
+            $getAction->execute($id);
 
-        if ($testimonial->user_id !== $request->user()->id) {
+        if (
+            $testimonial->user_id !==
+            $request->user()->id
+        ) {
             return response()->json([
                 'success' => false,
                 'message' => 'You do not have permission to update this testimonial.',
             ], 403);
         }
 
-        $testimonial = $updateAction->execute(
-            $testimonial,
-            $request->validated()
-        );
+        $testimonial =
+            $updateAction->execute(
+                $testimonial,
+                $request->validated()
+            );
 
         return response()->json([
             'success' => true,
@@ -193,13 +242,28 @@ class TestimonialController extends Controller
                 in: 'path',
                 required: true,
                 description: 'Testimonial ID',
-                schema: new OA\Schema(type: 'integer')
+                schema: new OA\Schema(
+                    type: 'integer'
+                )
             ),
         ],
         responses: [
-            new OA\Response(response: 200, description: 'Testimonial deleted successfully'),
-            new OA\Response(response: 401, description: 'Unauthenticated'),
-            new OA\Response(response: 404, description: 'Testimonial not found'),
+            new OA\Response(
+                response: 200,
+                description: 'Testimonial deleted successfully'
+            ),
+            new OA\Response(
+                response: 401,
+                description: 'Unauthenticated'
+            ),
+            new OA\Response(
+                response: 403,
+                description: 'Forbidden'
+            ),
+            new OA\Response(
+                response: 404,
+                description: 'Testimonial not found'
+            ),
         ]
     )]
     public function destroy(
@@ -208,16 +272,22 @@ class TestimonialController extends Controller
         GetTestimonialAction $getAction,
         DeleteTestimonialAction $deleteAction
     ): JsonResponse {
-        $testimonial = $getAction->execute($id);
+        $testimonial =
+            $getAction->execute($id);
 
-        if ($testimonial->user_id !== $request->user()->id) {
+        if (
+            $testimonial->user_id !==
+            $request->user()->id
+        ) {
             return response()->json([
                 'success' => false,
                 'message' => 'You do not have permission to delete this testimonial.',
             ], 403);
         }
 
-        $deleteAction->execute($testimonial);
+        $deleteAction->execute(
+            $testimonial
+        );
 
         return response()->json([
             'success' => true,

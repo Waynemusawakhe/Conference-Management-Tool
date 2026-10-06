@@ -10,6 +10,8 @@ import HelpFAQ from "./pages/HelpFAQ";
 import About from "./pages/About";
 import ForgotPassword from "./pages/ForgotPassword";
 import Testimonials from "./pages/Testimonials";
+import EmailVerified from "./pages/EmailVerified";
+import ResetPassword from "./pages/ResetPassword";
 
 import ReviewerDashboard from "./pages/ReviewerDashboard";
 import OrganiserDashboard from "./pages/OrganiserDashboard";
@@ -69,6 +71,8 @@ export default function App() {
           <Route path="/help-faq" element={<HelpFAQ />} />
           <Route path="/about" element={<About />} />
           <Route path="/testimonials" element={<Testimonials />} />
+          <Route path="/reset-password" element={<ResetPassword />}/>
+          <Route path="/email-verified" element={<EmailVerified />}/>
 
           {/* ==================== AUTHOR ==================== */}
 

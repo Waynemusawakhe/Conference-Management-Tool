@@ -1,11 +1,15 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Save, Loader2 } from "lucide-react";
+import { useAuth } from "../hooks/useAuth";
+import { getDashboardPath } from "../utils/roleRoutes";
 import { submissionsApi } from "../api/submissionsApi";
 
 export default function EditSubmissionPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { role } = useAuth();
+  const dashboardPath =getDashboardPath(role);
   const [formData, setFormData] = useState({ title: "", abstract: "", status: "pending" });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -33,7 +37,7 @@ export default function EditSubmissionPage() {
     setError(null);
     try {
       await submissionsApi.update(id, formData);
-      navigate("/admin-dashboard");
+      navigate(dashboardPath);
     } catch (err) {
       setError(err.message || "Failed to update submission");
     } finally {
