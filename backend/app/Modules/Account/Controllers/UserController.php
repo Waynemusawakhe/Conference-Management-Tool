@@ -3,13 +3,13 @@
 namespace App\Modules\Account\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Modules\Account\Actions\AssignRoleAction;
 use App\Modules\Account\Actions\GetReviewersAction;
 use App\Modules\Account\Actions\GetUserAction;
 use App\Modules\Account\Actions\GetUsersAction;
+use App\Modules\Account\Requests\AssignRoleRequest;
 use Illuminate\Http\JsonResponse;
 use OpenApi\Attributes as OA;
-use App\Modules\Account\Actions\AssignRoleAction;
-use App\Modules\Account\Requests\AssignRoleRequest;
 
 class UserController extends Controller
 {
@@ -72,6 +72,7 @@ class UserController extends Controller
             'data' => $user,
         ]);
     }
+
     #[OA\Patch(
         path: '/api/v1/users/{id}/role',
         tags: ['User Management'],
@@ -92,7 +93,7 @@ class UserController extends Controller
             content: new OA\JsonContent(
                 required: ['role'],
                 properties: [
-                    new OA\Property(property: 'role', type: 'string', example: 'organiser')
+                    new OA\Property(property: 'role', type: 'string', example: 'organiser'),
                 ]
             )
         ),
@@ -100,7 +101,7 @@ class UserController extends Controller
             new OA\Response(response: 200, description: 'Role assigned successfully'),
             new OA\Response(response: 403, description: 'Forbidden — admin role required'),
             new OA\Response(response: 404, description: 'User not found'),
-            new OA\Response(response: 422, description: 'Validation Error')
+            new OA\Response(response: 422, description: 'Validation Error'),
         ]
     )]
     public function assignRole(
