@@ -357,7 +357,9 @@ class ReviewController extends Controller
                     new OA\Property(
                         property: 'score',
                         type: 'integer',
-                        example: 8
+                        minimum: 1,
+                        maximum: 5,
+                        example: 4
                     ),
                     new OA\Property(
                         property: 'comments',
