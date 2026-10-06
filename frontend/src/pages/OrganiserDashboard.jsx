@@ -257,18 +257,11 @@ export default function OrganiserDashboard() {
   const [reviewerCandidates, setReviewerCandidates] = useState([]);
 
   const [sessionForm, setSessionForm] = useState({
-
-    title: "",
-
-    submission_id: "",
-
-    start_time: "",
-
-    end_time: "",
-
-    room: "",
-
-  });
+      title: "",
+      submission_id: "",
+      scheduled_time: "",
+      room: "",
+    });
 
   const [sessionSaving, setSessionSaving] = useState(false);
 
@@ -891,19 +884,11 @@ export default function OrganiserDashboard() {
     if (!selectedConference) return;
 
     if (
-
       !sessionForm.title.trim() ||
-
-      !sessionForm.start_time ||
-
-      !sessionForm.end_time
-
+      !sessionForm.scheduled_time
     ) {
-
-      setError("Session title, start time and end time are required.");
-
+      setError("Session title and scheduled time are required.");
       return;
-
     }
 
     setSessionSaving(true);
@@ -913,37 +898,24 @@ export default function OrganiserDashboard() {
     try {
 
       await sessionsApi.create({
+          conference_id: Number(selectedConference.id),
 
-        conference_id: Number(selectedConference.id),
+          submission_id: sessionForm.submission_id
+            ? Number(sessionForm.submission_id)
+            : null,
 
-        submission_id: sessionForm.submission_id
+          title: sessionForm.title.trim(),
 
-          ? Number(sessionForm.submission_id)
+          scheduled_time: sessionForm.scheduled_time,
 
-          : null,
-
-        title: sessionForm.title.trim(),
-
-        start_time: sessionForm.start_time,
-
-        end_time: sessionForm.end_time,
-
-        room: sessionForm.room.trim() || null,
-
-      });
+          room: sessionForm.room.trim() || null,
+        });
 
       setSessionForm({
-
         title: "",
-
         submission_id: "",
-
-        start_time: "",
-
-        end_time: "",
-
+        scheduled_time: "",
         room: "",
-
       });
 
       await loadConferenceData(selectedConference);
@@ -2130,19 +2102,13 @@ export default function OrganiserDashboard() {
 
                 <input
 
-                  type="datetime-local"
-
-                  value={sessionForm.start_time}
-
-                  onChange={(e) =>
-
-                    setSessionForm((v) => ({
-
-                      ...v,
-
-                      start_time: e.target.value,
-
-                    }))
+                    type="datetime-local"
+                      value={sessionForm.scheduled_time}
+                      onChange={(e) =>
+                        setSessionForm((v) => ({
+                          ...v,
+                          scheduled_time: e.target.value,
+                        }))
 
                   }
 
@@ -2152,13 +2118,13 @@ export default function OrganiserDashboard() {
 
                 <input
 
-                  type="datetime-local"
-
-                  value={sessionForm.end_time}
-
-                  onChange={(e) =>
-
-                    setSessionForm((v) => ({ ...v, end_time: e.target.value }))
+                      type="datetime-local"
+                      value={sessionForm.scheduled_time}
+                      onChange={(e) =>
+                        setSessionForm((v) => ({
+                          ...v,
+                          scheduled_time: e.target.value,
+                        }))
 
                   }
 
@@ -2230,7 +2196,7 @@ export default function OrganiserDashboard() {
 
                     <span className="text-[9px] text-[#8993a6] dark:text-[#94a3b8]">
 
-                      {dateLabel(session.start_time || session.starts_at)} ·{" "}
+                      {dateLabel(session.scheduled_time)} ·{" "}
 
                       {session.room || "Room TBA"}
 
