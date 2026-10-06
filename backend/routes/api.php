@@ -266,6 +266,7 @@ Route::prefix('v1/users')
         Route::middleware('role:admin')->group(function () {
             Route::get('/', [UserController::class, 'index']);
             Route::get('/{id}', [UserController::class, 'show']);
+            Route::patch('/{id}/role', [UserController::class, 'assignRole']);
         });
     });
 
