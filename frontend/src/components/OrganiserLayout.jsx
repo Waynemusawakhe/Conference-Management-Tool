@@ -13,7 +13,6 @@ import {
   MessageSquareQuote,
   Moon,
   Plus,
-  Search,
   Settings as SettingsIcon,
   Sun,
   UserRound,
@@ -50,11 +49,6 @@ const PRIMARY_NAV = [
     label: "Create conference",
     to: "/create-conference",
     icon: Plus,
-  },
-  {
-    label: "Browse conferences",
-    to: "/conferences",
-    icon: Search,
   },
 ];
 
@@ -119,7 +113,6 @@ export default function OrganiserLayout({ children }) {
       .map((p) => p[0]?.toUpperCase() ?? "")
       .join("") || "OG";
 
-  /* ---- Poll submissions for the notification bell ---- */
   useEffect(() => {
     let alive = true;
     async function fetchData() {
@@ -223,7 +216,6 @@ export default function OrganiserLayout({ children }) {
 
   return (
     <div className="min-h-screen bg-[#f7f9fc] text-[#0d1b3d] transition-colors dark:bg-[#0a0f1f] dark:text-white">
-      {/* ============ Header ============ */}
       <header className="sticky top-0 z-50 border-b border-white/10 bg-[#07132f]/95 text-white backdrop-blur-xl">
         <div className="mx-auto flex min-h-[76px] w-[min(1400px,calc(100%-32px))] items-center gap-4">
           <button
@@ -247,7 +239,6 @@ export default function OrganiserLayout({ children }) {
           </div>
 
           <div className="ml-auto flex items-center gap-2">
-            {/* Bell */}
             <div className="relative" ref={notificationsRef}>
               <button
                 onClick={() => setShowNotifications((v) => !v)}
@@ -346,7 +337,6 @@ export default function OrganiserLayout({ children }) {
               )}
             </div>
 
-            {/* Theme toggle */}
             <button
               onClick={toggleTheme}
               className="grid h-10 w-10 place-items-center rounded-xl border border-white/10 bg-white/[.04] text-white/85 transition hover:bg-white/10"
@@ -355,7 +345,6 @@ export default function OrganiserLayout({ children }) {
               {dark ? <Sun size={17} /> : <Moon size={17} />}
             </button>
 
-            {/* User chip */}
             <div className="hidden items-center gap-2.5 border-l border-white/10 pl-3 sm:flex">
               <div className="grid h-9 w-9 place-items-center rounded-full bg-[#e8e6ff] text-[10px] font-extrabold text-[#4f46c7]">
                 {initials}
@@ -373,7 +362,6 @@ export default function OrganiserLayout({ children }) {
         </div>
       </header>
 
-      {/* ============ Body ============ */}
       <div className="mx-auto flex w-[min(1400px,calc(100%-32px))] gap-6 py-6">
         {sidebarOpen && (
           <div
@@ -382,7 +370,6 @@ export default function OrganiserLayout({ children }) {
           />
         )}
 
-        {/* Sidebar — byte-identical to RoleChrome's desktop sidebar */}
         <aside
           className={`fixed inset-y-0 left-0 z-50 w-[235px] shrink-0 transform bg-white p-3 shadow-2xl transition-transform duration-300 dark:bg-[#0f172a] lg:sticky lg:top-[100px] lg:block lg:h-[calc(100vh-124px)] lg:translate-x-0 lg:overflow-y-auto lg:rounded-2xl lg:border lg:border-[#e4e8f0] lg:shadow-none lg:dark:border-[#1e293b] lg:dark:bg-[#0f172a] ${
             sidebarOpen ? "translate-x-0" : "-translate-x-full"
@@ -407,7 +394,6 @@ export default function OrganiserLayout({ children }) {
             </button>
           </div>
 
-          {/* Primary nav */}
           <nav className="space-y-1">
             {PRIMARY_NAV.map((item) => {
               const Icon = item.icon;
@@ -432,7 +418,6 @@ export default function OrganiserLayout({ children }) {
 
           <div className="my-4 border-t border-[#edf0f5] dark:border-[#1e293b]" />
 
-          {/* Testimonials */}
           <Link
             to="/testimonials"
             onClick={() => setSidebarOpen(false)}
@@ -448,7 +433,6 @@ export default function OrganiserLayout({ children }) {
 
           <div className="my-4 border-t border-[#edf0f5] dark:border-[#1e293b]" />
 
-          {/* Profile + Settings */}
           <Link
             to="/profile"
             onClick={() => setSidebarOpen(false)}
@@ -481,7 +465,11 @@ export default function OrganiserLayout({ children }) {
             aria-busy={signingOut}
             className="mt-1 flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] font-semibold text-[#9a6470] transition hover:bg-[#fff4f5] dark:hover:bg-[#2a1218]"
           >
-            {signingOut ? <LoaderCircle size={16} className="animate-spin" /> : <LogOut size={16} />}
+            {signingOut ? (
+              <LoaderCircle size={16} className="animate-spin" />
+            ) : (
+              <LogOut size={16} />
+            )}
             {signingOut ? "Signing out..." : "Sign out"}
           </button>
         </aside>

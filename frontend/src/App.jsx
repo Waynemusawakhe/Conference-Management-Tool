@@ -30,6 +30,11 @@ const AttendeeDashboard = lazy(() => import("./pages/AttendeeDashboard"));
 const MyConferences = lazy(() => import("./pages/MyConferences"));
 const UsersPage = lazy(() => import("./pages/UsersPage"));
 
+/* ---------- Organiser sub-pages ---------- */
+const OrganiserConferences = lazy(() => import("./pages/OrganiserConferences"));
+const OrganiserReviews = lazy(() => import("./pages/OrganiserReviews"));
+const OrganiserRegistrations = lazy(() => import("./pages/OrganiserRegistrations"));
+
 /* ---------- Admin pages ---------- */
 const AdminReportsPage = lazy(() => import("./pages/AdminReportsPage"));
 const AdminUserDetailPage = lazy(() => import("./pages/AdminUserDetailPage"));
@@ -183,6 +188,33 @@ export default function App() {
             element={
               <ProtectedRoute roles={["organiser"]}>
                 <OrganiserDashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/organiser/conferences"
+            element={
+              <ProtectedRoute roles={["organiser"]}>
+                <OrganiserConferences />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/organiser/reviews"
+            element={
+              <ProtectedRoute roles={["organiser"]}>
+                <OrganiserReviews />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/organiser/registrations"
+            element={
+              <ProtectedRoute roles={["organiser"]}>
+                <OrganiserRegistrations />
               </ProtectedRoute>
             }
           />

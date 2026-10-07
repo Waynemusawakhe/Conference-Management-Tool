@@ -8,7 +8,7 @@ $allowedOrigins = array_values(
                 ',',
                 (string) env(
                     'CORS_ALLOWED_ORIGINS',
-                    'http://localhost:3000'
+                    'http://localhost:3000,http://172.16.22.182:3000,http://127.0.0.1:3000'
                 )
             )
         )
