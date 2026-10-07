@@ -1,5 +1,5 @@
 import { pageMeta } from "../utils/pagination";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ChevronRight,
@@ -53,7 +53,7 @@ function statusConfig(raw) {
 
 function StatStrip({ counts }) {
   const items = [
-    { label: "Total", value: counts.all, icon: <Inbox size={14} />, tone: "text-[#4f46c7] bg-[#efedff]" },
+    { label: "On this page", value: counts.all, icon: <Inbox size={14} />, tone: "text-[#4f46c7] bg-[#efedff]" },
     { label: "New", value: counts.new, icon: <Mail size={14} />, tone: "text-[#5548d7] bg-[#f0efff]" },
     { label: "In progress", value: counts.in_progress, icon: <Clock size={14} />, tone: "text-[#9b7414] bg-[#fff9e9]" },
     { label: "Resolved", value: counts.resolved, icon: <CheckCircle2 size={14} />, tone: "text-[#18794e] bg-[#effaf4]" },
@@ -111,6 +111,12 @@ export default function ContactMessagesPage() {
   const meta = pageMeta(messagesRes.data);
   const messages = useMemo(() => toArray(messagesRes.data), [messagesRes.data]);
 
+  useEffect(() => {
+    if (messagesRes.loading || messagesRes.error || !messagesRes.data) return;
+    const lastPage = Math.max(1, Number(meta.last_page || 1));
+    if (page > lastPage) setPage(lastPage);
+  }, [messagesRes.loading, messagesRes.error, messagesRes.data, meta.last_page, page]);
+
   const counts = useMemo(() => {
     const c = { all: messages.length, new: 0, in_progress: 0, resolved: 0 };
     messages.forEach((m) => {
@@ -147,9 +153,12 @@ export default function ContactMessagesPage() {
   return (
     <AdminLayout subtitle="Inbox" title="Contact Messages">
       {!messagesRes.loading && !messagesRes.error && messages.length > 0 && (
-        <div className="mb-5">
+        <section aria-label="Current page message counts" className="mb-5">
+          <p className="mb-2 text-xs text-[#66728b]">
+            Counts for the current page · Status: {FILTERS.find((item) => item.key === filter)?.label}
+          </p>
           <StatStrip counts={counts} />
-        </div>
+        </section>
       )}
 
       <Card>
