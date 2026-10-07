@@ -3,6 +3,7 @@
 **/dist/ 
 .env 
 .env.* 
-backend/config/cors.php
 .postman
+backend/config/cors.php
+
 
