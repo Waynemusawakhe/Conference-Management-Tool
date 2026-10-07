@@ -1,48 +1,48 @@
 import { lazy, Suspense } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 
-import Home from "./pages/Home";
-import Login from "./pages/Login";
-import Conferences from "./pages/Conferences";
-import Register from "./pages/Register";
-import Contact from "./pages/Contact";
-import HelpFAQ from "./pages/HelpFAQ";
-import About from "./pages/About";
-import ForgotPassword from "./pages/ForgotPassword";
-import Testimonials from "./pages/Testimonials";
-import EmailVerified from "./pages/EmailVerified";
-import ResetPassword from "./pages/ResetPassword";
+const Home = lazy(() => import("./pages/Home"));
+const Login = lazy(() => import("./pages/Login"));
+const Conferences = lazy(() => import("./pages/Conferences"));
+const Register = lazy(() => import("./pages/Register"));
+const Contact = lazy(() => import("./pages/Contact"));
+const HelpFAQ = lazy(() => import("./pages/HelpFAQ"));
+const About = lazy(() => import("./pages/About"));
+const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
+const Testimonials = lazy(() => import("./pages/Testimonials"));
+const EmailVerified = lazy(() => import("./pages/EmailVerified"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 
-import ReviewerDashboard from "./pages/ReviewerDashboard";
-import OrganiserDashboard from "./pages/OrganiserDashboard";
-import AdminDashboard from "./pages/AdminDashboard";
+const ReviewerDashboard = lazy(() => import("./pages/ReviewerDashboard"));
+const OrganiserDashboard = lazy(() => import("./pages/OrganiserDashboard"));
+const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 
-import AccountSettings from "./pages/AccountSettings";
-import Profile from "./pages/Profile";
-import Settings from "./pages/Settings";
-import SubmitProposal from "./pages/SubmitProposal";
+const AccountSettings = lazy(() => import("./pages/AccountSettings"));
+const Profile = lazy(() => import("./pages/Profile"));
+const Settings = lazy(() => import("./pages/Settings"));
+const SubmitProposal = lazy(() => import("./pages/SubmitProposal"));
 
-import CreateEditConference from "./pages/create_edit_conference";
-import EditSubmissionPage from "./pages/EditSubmissionPage";
-import AssignReviewersPage from "./pages/AssignReviewersPage";
-import ScoreSubmission from "./pages/ScoreSubmission";
-import AttendeeDashboard from "./pages/AttendeeDashboard";
-import MyConferences from "./pages/MyConferences";
-import UsersPage from "./pages/UsersPage";
+const CreateEditConference = lazy(() => import("./pages/create_edit_conference"));
+const EditSubmissionPage = lazy(() => import("./pages/EditSubmissionPage"));
+const AssignReviewersPage = lazy(() => import("./pages/AssignReviewersPage"));
+const ScoreSubmission = lazy(() => import("./pages/ScoreSubmission"));
+const AttendeeDashboard = lazy(() => import("./pages/AttendeeDashboard"));
+const MyConferences = lazy(() => import("./pages/MyConferences"));
+const UsersPage = lazy(() => import("./pages/UsersPage"));
 
 /* ---------- Admin pages ---------- */
-import AdminReportsPage from "./pages/AdminReportsPage";
-import AdminUserDetailPage from "./pages/AdminUserDetailPage";
-import AdminContactMessagesPage from "./pages/AdminContactMessagesPage";
-import AdminContactMessageDetailPage from "./pages/AdminContactMessageDetailPage";
-import AdminFaqsPage from "./pages/AdminFaqsPage";
-import AdminFaqEditPage from "./pages/AdminFaqEditPage";
-import AdminConferencesPage from "./pages/AdminConferencesPage";
-import AdminEditConferencePage from "./pages/AdminEditConferencePage";
-import AdminReviewsPage from "./pages/AdminReviewsPage";
-import AdminRegistrationsPage from "./pages/AdminRegistrationsPage";
-import AdminTestimonialsPage from "./pages/AdminTestimonialsPage";
-import AdminSubmissionsPage from "./pages/AdminSubmissionsPage";
+const AdminReportsPage = lazy(() => import("./pages/AdminReportsPage"));
+const AdminUserDetailPage = lazy(() => import("./pages/AdminUserDetailPage"));
+const AdminContactMessagesPage = lazy(() => import("./pages/AdminContactMessagesPage"));
+const AdminContactMessageDetailPage = lazy(() => import("./pages/AdminContactMessageDetailPage"));
+const AdminFaqsPage = lazy(() => import("./pages/AdminFaqsPage"));
+const AdminFaqEditPage = lazy(() => import("./pages/AdminFaqEditPage"));
+const AdminConferencesPage = lazy(() => import("./pages/AdminConferencesPage"));
+const AdminEditConferencePage = lazy(() => import("./pages/AdminEditConferencePage"));
+const AdminReviewsPage = lazy(() => import("./pages/AdminReviewsPage"));
+const AdminRegistrationsPage = lazy(() => import("./pages/AdminRegistrationsPage"));
+const AdminTestimonialsPage = lazy(() => import("./pages/AdminTestimonialsPage"));
+const AdminSubmissionsPage = lazy(() => import("./pages/AdminSubmissionsPage"));
 
 import { ThemeProvider } from "./context/ThemeContext";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -107,7 +107,7 @@ export default function App() {
           <Route
             path="/edit-submission/:id"
             element={
-              <ProtectedRoute roles={["author", "organiser", "admin"]}>
+              <ProtectedRoute roles={["author", "admin"]}>
                 <EditSubmissionPage />
               </ProtectedRoute>
             }

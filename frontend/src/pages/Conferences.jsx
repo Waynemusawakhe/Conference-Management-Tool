@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { collectPages } from "../utils/pagination";
+import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import {
   CalendarDays,
   LayoutGrid,
@@ -10,7 +11,7 @@ import {
   CheckCircle2,
   LoaderCircle,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import AttendeeHeader from "../components/AttendeeHeader";
 import AttendeeSidebar from "../components/AttendeeSidebar";
@@ -29,14 +30,14 @@ const CATEGORIES = [
 ];
 
 const STATUSES = [
-  "Open for submissions",
-  "Reviewing",
-  "Registration open",
-  "Coming soon",
-  "Closed",
+  { value: "open", label: "Open for submissions" },
+  { value: "closed", label: "Closed" },
 ];
-
-const FORMATS = ["In-person", "Hybrid", "Online"];
+const FORMATS = [
+  { value: "in_person", label: "In-person" },
+  { value: "hybrid", label: "Hybrid" },
+  { value: "virtual", label: "Online" },
+];
 
 function unwrapList(response) {
   if (Array.isArray(response)) {
@@ -72,58 +73,35 @@ function normaliseConference(conference) {
 
     name: conference.name || "Untitled Conference",
 
-    shortTitle:
-      conference.name ||
-      conference.code ||
-      "Untitled Conference",
+    shortTitle: conference.name || conference.code || "Untitled Conference",
 
     description:
       conference.description ||
       "Conference information and submission details.",
 
-    category:
-      conference.category ||
-      "Computer Science",
+    category: conference.category || "Computer Science",
 
-    topics: Array.isArray(conference.topics)
-      ? conference.topics
-      : [],
+    topics: Array.isArray(conference.topics) ? conference.topics : [],
 
-    format:
-      conference.format ||
-      "",
+    format: conference.format || "",
 
-    status:
-      conference.submission_status ||
-      "",
+    status: conference.submission_status || "",
 
-    submissionDeadline:
-      formatDate(conference.submission_deadline),
+    submissionDeadline: formatDate(conference.submission_deadline),
 
-    startDate:
-      formatDate(conference.start_date),
+    startDate: formatDate(conference.start_date),
 
-    endDate:
-      formatDate(conference.end_date),
+    endDate: formatDate(conference.end_date),
 
-    date:
-      formatDate(conference.start_date),
+    date: formatDate(conference.start_date),
 
-    location:
-      conference.venue_name ||
-      "Venue to be announced",
+    location: conference.venue_name || "Venue to be announced",
 
-    city:
-      conference.city ||
-      "",
+    city: conference.city || "",
 
-    country:
-      conference.country ||
-      "",
+    country: conference.country || "",
 
-    websiteLink:
-      conference.website_link ||
-      "",
+    websiteLink: conference.website_link || "",
 
     accent: getAccent(conference.category),
   };
@@ -150,83 +128,15 @@ function formatDate(value) {
 function getAccent(category) {
   const value = String(category || "").toLowerCase();
 
-  if (
-    value.includes("medicine") ||
-    value.includes("health")
-  ) {
+  if (value.includes("medicine") || value.includes("health")) {
     return "green";
   }
 
-  if (
-    value.includes("engineering") ||
-    value.includes("education")
-  ) {
+  if (value.includes("engineering") || value.includes("education")) {
     return "orange";
   }
 
   return "purple";
-}
-
-function matchesSearch(conference, query) {
-  if (!query.trim()) {
-    return true;
-  }
-
-  const searchableText = [
-    conference.name,
-    conference.code,
-    conference.description,
-    conference.category,
-    conference.format,
-    conference.submission_status,
-    conference.venue_name,
-    conference.city,
-    conference.country,
-    ...(Array.isArray(conference.topics)
-      ? conference.topics
-      : []),
-  ]
-    .filter(Boolean)
-    .join(" ")
-    .toLowerCase();
-
-  return searchableText.includes(query.trim().toLowerCase());
-}
-
-function matchesFilters(conference, filters) {
-  if (
-    filters.category &&
-    String(conference.category || "").toLowerCase() !==
-      filters.category.toLowerCase()
-  ) {
-    return false;
-  }
-
-  if (
-    filters.country &&
-    String(conference.country || "").toLowerCase() !==
-      filters.country.toLowerCase()
-  ) {
-    return false;
-  }
-
-  if (
-    filters.status &&
-    String(conference.submission_status || "").toLowerCase() !==
-      filters.status.toLowerCase()
-  ) {
-    return false;
-  }
-
-  if (
-    filters.format &&
-    String(conference.format || "").toLowerCase() !==
-      filters.format.toLowerCase()
-  ) {
-    return false;
-  }
-
-  return true;
 }
 
 function getRegistrationConferenceId(registration) {
@@ -238,54 +148,110 @@ function getRegistrationConferenceId(registration) {
   );
 }
 
-function sortConferences(conferences, sortBy) {
-  const sorted = [...conferences];
+function FilterPanel({
+  activeFilterCount,
+  clearFilters,
+  filters,
+  updateFilter,
+}) {
+  return (
+    <aside className="rounded-2xl border border-[#e4e8f0] bg-white p-5 shadow-sm">
+      <div className="mb-5 flex items-center justify-between border-b border-[#e8ebf2] pb-4">
+        <strong>Filters</strong>
 
-  if (sortBy === "name") {
-    return sorted.sort((a, b) =>
-      String(a.name || "").localeCompare(
-        String(b.name || "")
-      )
-    );
-  }
+        {activeFilterCount > 0 && (
+          <button
+            type="button"
+            className="border-0 bg-transparent text-[11px] font-bold text-[#5c50ec]"
+            onClick={clearFilters}
+          >
+            Clear all
+          </button>
+        )}
+      </div>
 
-  if (sortBy === "date") {
-    return sorted.sort((a, b) => {
-      const dateA = a.start_date
-        ? new Date(a.start_date).getTime()
-        : Number.MAX_SAFE_INTEGER;
+      <label className="mb-4 grid gap-1.5 text-[10px] font-bold text-[#68748b]">
+        <span>Research area</span>
 
-      const dateB = b.start_date
-        ? new Date(b.start_date).getTime()
-        : Number.MAX_SAFE_INTEGER;
+        <select
+          className="min-h-10 w-full rounded-[9px] border border-[#dfe4ed] bg-white px-2.5 text-[11px] text-[#0d1b3d] outline-none focus:border-[#7568f7] focus:ring-4 focus:ring-[#7568f7]/10"
+          value={filters.category}
+          onChange={(e) => updateFilter("category", e.target.value)}
+        >
+          <option value="">All areas</option>
 
-      return dateA - dateB;
-    });
-  }
+          {CATEGORIES.map((category) => (
+            <option key={category} value={category}>
+              {category}
+            </option>
+          ))}
+        </select>
+      </label>
 
-  return sorted.sort((a, b) => {
-    const dateA = a.submission_deadline
-      ? new Date(a.submission_deadline).getTime()
-      : Number.MAX_SAFE_INTEGER;
+      <label className="mb-4 grid gap-1.5 text-[10px] font-bold text-[#68748b]">
+        <span>Country</span>
 
-    const dateB = b.submission_deadline
-      ? new Date(b.submission_deadline).getTime()
-      : Number.MAX_SAFE_INTEGER;
+        <input
+          value={filters.country}
+          onChange={(e) => updateFilter("country", e.target.value)}
+          placeholder="All countries"
+          aria-label="Country"
+          className="min-h-10 w-full rounded-[9px] border border-[#dfe4ed] px-2.5 text-[11px]"
+        />
+      </label>
 
-    return dateA - dateB;
-  });
+      <label className="mb-4 grid gap-1.5 text-[10px] font-bold text-[#68748b]">
+        <span>Status</span>
+
+        <select
+          className="min-h-10 w-full rounded-[9px] border border-[#dfe4ed] bg-white px-2.5 text-[11px] text-[#0d1b3d] outline-none focus:border-[#7568f7] focus:ring-4 focus:ring-[#7568f7]/10"
+          value={filters.status}
+          onChange={(e) => updateFilter("status", e.target.value)}
+        >
+          <option value="">All statuses</option>
+
+          {STATUSES.map((status) => (
+            <option key={status.value} value={status.value}>
+              {status.label}
+            </option>
+          ))}
+        </select>
+      </label>
+
+      <label className="grid gap-1.5 text-[10px] font-bold text-[#68748b]">
+        <span>Format</span>
+
+        <select
+          className="min-h-10 w-full rounded-[9px] border border-[#dfe4ed] bg-white px-2.5 text-[11px] text-[#0d1b3d] outline-none focus:border-[#7568f7] focus:ring-4 focus:ring-[#7568f7]/10"
+          value={filters.format}
+          onChange={(e) => updateFilter("format", e.target.value)}
+        >
+          <option value="">All formats</option>
+
+          {FORMATS.map((format) => (
+            <option key={format.value} value={format.value}>
+              {format.label}
+            </option>
+          ))}
+        </select>
+      </label>
+    </aside>
+  );
 }
 
 export default function Conferences() {
   const navigate = useNavigate();
+  const requestVersion = useRef(0);
   const { user, status: authStatus } = useAuth();
-  const isAttendee = authStatus === "authenticated" && user?.role === "attendee";
+  const isAttendee =
+    authStatus === "authenticated" && user?.role === "attendee";
 
-  const [query, setQuery] = useState("");
+  const [searchParams] = useSearchParams();
+  const [query, setQuery] = useState(() => searchParams.get("search") || "");
 
   const [filters, setFilters] = useState({
-    category: "",
-    country: "",
+    category: searchParams.get("category") || "",
+    country: searchParams.get("country") || "",
     status: "",
     format: "",
   });
@@ -303,62 +269,79 @@ export default function Conferences() {
   const [error, setError] = useState("");
 
   const [registeredConferenceIds, setRegisteredConferenceIds] = useState(
-    new Set()
+    new Set(),
   );
-  const [registeringConferenceId, setRegisteringConferenceId] =
-    useState(null);
+  const [registeringConferenceId, setRegisteringConferenceId] = useState(null);
   const [registrationMessage, setRegistrationMessage] = useState("");
   const [registrationError, setRegistrationError] = useState("");
 
-  const [showMobileFilters, setShowMobileFilters] =
-    useState(false);
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const loadConferences = useCallback(async ({ page = 1, append = false } = {}) => {
-    if (append) {
-      setLoadingMore(true);
-    } else {
-      setLoading(true);
-    }
-    setError("");
-
-    try {
-      const response = await conferencesApi.getAll({
-        page,
-        per_page: 12,
-      });
-
-      const data = unwrapList(response);
-
-      setConferences((current) =>
-        append ? [...current, ...data] : data
-      );
-      setCurrentPage(page);
-      setHasMore(page < Number(response?.meta?.last_page ?? page));
-      setTotalConferences(Number(response?.meta?.total ?? data.length));
-    } catch (err) {
-      console.error("Failed to load conferences:", err);
-
-      setError(
-        err?.response?.data?.message ||
-          err?.message ||
-          "Unable to load conferences. Please try again."
-      );
-
-      if (!append) {
-        setConferences([]);
-      }
-    } finally {
+  const loadConferences = useCallback(
+    async ({ page = 1, append = false } = {}) => {
+      const version = ++requestVersion.current;
       if (append) {
-        setLoadingMore(false);
+        setLoadingMore(true);
       } else {
-        setLoading(false);
+        setLoading(true);
       }
-    }
-  }, []);
+      setError("");
+
+      try {
+        const response = await conferencesApi.getAll({
+          page,
+          per_page: 12,
+          search: query.trim(),
+          category: filters.category,
+          country: filters.country,
+          submission_status: filters.status,
+          format: filters.format,
+          sort: sortBy,
+        });
+
+        if (version !== requestVersion.current) return;
+        const data = unwrapList(response);
+
+        setConferences((current) => (append ? [...current, ...data] : data));
+        setCurrentPage(page);
+        setHasMore(page < Number(response?.meta?.last_page ?? page));
+        setTotalConferences(Number(response?.meta?.total ?? data.length));
+      } catch (err) {
+        if (version !== requestVersion.current) return;
+
+        setError(
+          err?.response?.data?.message ||
+            err?.message ||
+            "Unable to load conferences. Please try again.",
+        );
+
+        if (!append) {
+          setConferences([]);
+        }
+      } finally {
+        if (version === requestVersion.current) {
+          if (append) {
+            setLoadingMore(false);
+          } else {
+            setLoading(false);
+          }
+        }
+      }
+    },
+    [query, filters, sortBy],
+  );
 
   useEffect(() => {
-    loadConferences();
+    requestVersion.current += 1;
+    setLoading(true);
+    setHasMore(false);
+    setLoadingMore(false);
+    const timer = setTimeout(() => loadConferences(), 250);
+    return () => {
+      clearTimeout(timer);
+      requestVersion.current += 1;
+    };
   }, [loadConferences]);
 
   const loadMyRegistrations = useCallback(async () => {
@@ -368,11 +351,7 @@ export default function Conferences() {
     }
 
     try {
-      const response = await registrationsApi.getAll({
-        per_page: 100,
-      });
-
-      const registrationList = unwrapList(response);
+      const registrationList = await collectPages(registrationsApi.getAll);
 
       const ownRegistrations = registrationList.filter((registration) => {
         if (
@@ -387,9 +366,10 @@ export default function Conferences() {
 
       const ids = new Set(
         ownRegistrations
+          .filter((registration) => registration.status !== "cancelled")
           .map(getRegistrationConferenceId)
           .filter((id) => id !== null && id !== undefined)
-          .map(String)
+          .map(String),
       );
 
       setRegisteredConferenceIds(ids);
@@ -418,9 +398,7 @@ export default function Conferences() {
     const conferenceId = conference?.id;
 
     if (!conferenceId) {
-      setRegistrationError(
-        "This conference does not have a valid identifier."
-      );
+      setRegistrationError("This conference does not have a valid identifier.");
       return;
     }
 
@@ -443,7 +421,7 @@ export default function Conferences() {
       });
 
       setRegistrationMessage(
-        `You are now registered for ${conference.name || "this conference"}.`
+        `You are now registered for ${conference.name || "this conference"}.`,
       );
     } catch (err) {
       const validationMessage = Object.values(err?.errors || {})
@@ -454,27 +432,17 @@ export default function Conferences() {
       setRegistrationError(
         validationMessage ||
           err?.message ||
-          "Unable to register for this conference."
+          "Unable to register for this conference.",
       );
     } finally {
       setRegisteringConferenceId(null);
     }
   };
 
-  const filteredConferences = useMemo(() => {
-    const filtered = conferences.filter((conference) => {
-      return (
-        matchesSearch(conference, query) &&
-        matchesFilters(conference, filters)
-      );
-    });
-
-    return sortConferences(filtered, sortBy);
-  }, [conferences, query, filters, sortBy]);
-
-  const displayConferences = useMemo(() => {
-    return filteredConferences.map(normaliseConference);
-  }, [filteredConferences]);
+  const displayConferences = useMemo(
+    () => conferences.map(normaliseConference),
+    [conferences],
+  );
 
   const updateFilter = (key, value) => {
     setFilters((previous) => ({
@@ -494,116 +462,7 @@ export default function Conferences() {
     });
   };
 
-  const activeFilterCount =
-    Object.values(filters).filter(Boolean).length;
-
-  const countries = useMemo(() => {
-    const values = conferences
-      .map((conference) => conference.country)
-      .filter(Boolean);
-
-    return [...new Set(values)].sort((a, b) =>
-      String(a).localeCompare(String(b))
-    );
-  }, [conferences]);
-
-  const FilterPanel = () => (
-    <aside className="rounded-2xl border border-[#e4e8f0] bg-white p-5 shadow-sm">
-      <div className="mb-5 flex items-center justify-between border-b border-[#e8ebf2] pb-4">
-        <strong>Filters</strong>
-
-        {activeFilterCount > 0 && (
-          <button
-            type="button"
-            className="border-0 bg-transparent text-[11px] font-bold text-[#5c50ec]"
-            onClick={clearFilters}
-          >
-            Clear all
-          </button>
-        )}
-      </div>
-
-      <label className="mb-4 grid gap-1.5 text-[10px] font-bold text-[#68748b]">
-        <span>Research area</span>
-
-        <select
-          className="min-h-10 w-full rounded-[9px] border border-[#dfe4ed] bg-white px-2.5 text-[11px] text-[#0d1b3d] outline-none focus:border-[#7568f7] focus:ring-4 focus:ring-[#7568f7]/10"
-          value={filters.category}
-          onChange={(e) =>
-            updateFilter("category", e.target.value)
-          }
-        >
-          <option value="">All areas</option>
-
-          {CATEGORIES.map((category) => (
-            <option key={category} value={category}>
-              {category}
-            </option>
-          ))}
-        </select>
-      </label>
-
-      <label className="mb-4 grid gap-1.5 text-[10px] font-bold text-[#68748b]">
-        <span>Country</span>
-
-        <select
-          className="min-h-10 w-full rounded-[9px] border border-[#dfe4ed] bg-white px-2.5 text-[11px] text-[#0d1b3d] outline-none focus:border-[#7568f7] focus:ring-4 focus:ring-[#7568f7]/10"
-          value={filters.country}
-          onChange={(e) =>
-            updateFilter("country", e.target.value)
-          }
-        >
-          <option value="">All countries</option>
-
-          {countries.map((country) => (
-            <option key={country} value={country}>
-              {country}
-            </option>
-          ))}
-        </select>
-      </label>
-
-      <label className="mb-4 grid gap-1.5 text-[10px] font-bold text-[#68748b]">
-        <span>Status</span>
-
-        <select
-          className="min-h-10 w-full rounded-[9px] border border-[#dfe4ed] bg-white px-2.5 text-[11px] text-[#0d1b3d] outline-none focus:border-[#7568f7] focus:ring-4 focus:ring-[#7568f7]/10"
-          value={filters.status}
-          onChange={(e) =>
-            updateFilter("status", e.target.value)
-          }
-        >
-          <option value="">All statuses</option>
-
-          {STATUSES.map((status) => (
-            <option key={status} value={status}>
-              {status}
-            </option>
-          ))}
-        </select>
-      </label>
-
-      <label className="grid gap-1.5 text-[10px] font-bold text-[#68748b]">
-        <span>Format</span>
-
-        <select
-          className="min-h-10 w-full rounded-[9px] border border-[#dfe4ed] bg-white px-2.5 text-[11px] text-[#0d1b3d] outline-none focus:border-[#7568f7] focus:ring-4 focus:ring-[#7568f7]/10"
-          value={filters.format}
-          onChange={(e) =>
-            updateFilter("format", e.target.value)
-          }
-        >
-          <option value="">All formats</option>
-
-          {FORMATS.map((format) => (
-            <option key={format} value={format}>
-              {format}
-            </option>
-          ))}
-        </select>
-      </label>
-    </aside>
-  );
+  const activeFilterCount = Object.values(filters).filter(Boolean).length;
 
   return (
     <div className="min-h-screen overflow-clip bg-[#f7f9fc] text-[#0d1b3d]">
@@ -631,231 +490,215 @@ export default function Conferences() {
           />
         )}
 
-      <main className={isAttendee ? "min-w-0 flex-1" : ""}>
-        <section className="relative overflow-hidden bg-[radial-gradient(circle_at_75%_32%,rgba(98,83,245,.2),transparent_27%),linear-gradient(135deg,#07132f_0%,#0a1740_52%,#15165a_100%)] px-5 py-24 text-white">
-          <div className="relative z-[2] mx-auto flex w-[min(1200px,100%)] flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <span className="inline-flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-[.1em] text-[#b9b3ff]">
-                <Sparkles size={15} />
-                Browse conferences
-              </span>
-
-              <h1 className="my-4 max-w-[720px] text-[clamp(34px,4.4vw,54px)] font-bold leading-tight tracking-[-.05em]">
-                Find the right conference for your research.
-              </h1>
-
-              <p className="max-w-[620px] text-[15px] leading-7 text-white/75">
-                Search by topic, filter by status and format,
-                and find conferences created by organisers on
-                the platform.
-              </p>
-            </div>
-          </div>
-        </section>
-
-        <section
-          className="bg-white px-5 py-[88px]"
-          id="conferences"
-        >
-          <div className="mx-auto w-[min(1200px,100%)]">
-            <div className="mb-8 flex items-center justify-between gap-5 max-[700px]:block">
-              <form
-                className="flex min-h-[58px] w-full max-w-[620px] items-center rounded-[14px] border border-[#e4e8f0] bg-white p-1.5 shadow-sm"
-                onSubmit={(e) => e.preventDefault()}
-              >
-                <Search
-                  className="mx-3 shrink-0 text-[#71809a]"
-                  size={20}
-                />
-
-                <input
-                  value={query}
-                  onChange={(e) =>
-                    setQuery(e.target.value)
-                  }
-                  className="min-w-0 flex-1 border-0 bg-transparent text-sm outline-none placeholder:text-[#8792a8]"
-                  placeholder="Search by title, topic, city or acronym..."
-                  aria-label="Search conferences"
-                />
-
-                <button
-                  className="min-h-11 rounded-[10px] border-0 bg-gradient-to-br from-[#6655f6] to-[#7869ff] px-4 text-xs font-bold text-white"
-                  type="submit"
-                >
-                  Search
-                </button>
-              </form>
-
-              <div className="flex items-center gap-3 max-[700px]:mt-4">
-                <button
-                  type="button"
-                  className="inline-flex items-center gap-1.5 rounded-[10px] border border-[#dfe4ed] bg-white px-3 py-2.5 text-xs font-bold text-[#43506a] lg:hidden"
-                  onClick={() =>
-                    setShowMobileFilters((value) => !value)
-                  }
-                >
-                  <SlidersHorizontal size={16} />
-                  Filters
-                  {activeFilterCount > 0
-                    ? ` (${activeFilterCount})`
-                    : ""}
-                </button>
-
-                <label className="flex items-center gap-2 text-xs font-bold text-[#68748b]">
-                  <span className="hidden sm:inline">
-                    Sort
-                  </span>
-
-                  <select
-                    className="min-h-10 rounded-[9px] border border-[#dfe4ed] bg-white px-2.5 text-[11px] text-[#0d1b3d] outline-none focus:border-[#7568f7]"
-                    value={sortBy}
-                    onChange={(e) =>
-                      setSortBy(e.target.value)
-                    }
-                  >
-                    <option value="deadline">
-                      Submission deadline
-                    </option>
-
-                    <option value="date">
-                      Conference date
-                    </option>
-
-                    <option value="name">
-                      Name
-                    </option>
-                  </select>
-                </label>
-
-                <div
-                  className="flex overflow-hidden rounded-[9px] border border-[#dfe4ed]"
-                  role="group"
-                  aria-label="View mode"
-                >
-                  <button
-                    type="button"
-                    className={`grid h-10 w-10 place-items-center border-0 ${
-                      view === "grid"
-                        ? "bg-[#efedff] text-[#5c50ec]"
-                        : "bg-white text-[#68748b]"
-                    }`}
-                    onClick={() => setView("grid")}
-                    aria-label="Grid view"
-                  >
-                    <LayoutGrid size={18} />
-                  </button>
-
-                  <button
-                    type="button"
-                    className={`grid h-10 w-10 place-items-center border-0 ${
-                      view === "list"
-                        ? "bg-[#efedff] text-[#5c50ec]"
-                        : "bg-white text-[#68748b]"
-                    }`}
-                    onClick={() => setView("list")}
-                    aria-label="List view"
-                  >
-                    <List size={18} />
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {showMobileFilters && (
-              <div className="mb-6 lg:hidden">
-                <FilterPanel />
-              </div>
-            )}
-
-            {registrationMessage && (
-              <div
-                role="status"
-                className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-[14px] border border-[#bfe5d1] bg-[#effaf4] px-4 py-3 text-xs font-semibold text-[#18794e]"
-              >
-                <span className="flex items-center gap-2">
-                  <CheckCircle2 size={16} />
-                  {registrationMessage}
+        <main className={isAttendee ? "min-w-0 flex-1" : ""}>
+          <section className="relative overflow-hidden bg-[radial-gradient(circle_at_75%_32%,rgba(98,83,245,.2),transparent_27%),linear-gradient(135deg,#07132f_0%,#0a1740_52%,#15165a_100%)] px-5 py-24 text-white">
+            <div className="relative z-[2] mx-auto flex w-[min(1200px,100%)] flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <span className="inline-flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-[.1em] text-[#b9b3ff]">
+                  <Sparkles size={15} />
+                  Browse conferences
                 </span>
 
-                <button
-                  type="button"
-                  onClick={() => navigate("/my-conferences")}
-                  className="rounded-lg bg-white px-3 py-2 text-[10px] font-extrabold text-[#18794e] shadow-sm"
+                <h1 className="my-4 max-w-[720px] text-[clamp(34px,4.4vw,54px)] font-bold leading-tight tracking-[-.05em]">
+                  Find the right conference for your research.
+                </h1>
+
+                <p className="max-w-[620px] text-[15px] leading-7 text-white/75">
+                  Search by topic, filter by status and format, and find
+                  conferences created by organisers on the platform.
+                </p>
+              </div>
+            </div>
+          </section>
+
+          <section className="bg-white px-5 py-[88px]" id="conferences">
+            <div className="mx-auto w-[min(1200px,100%)]">
+              <div className="mb-8 flex items-center justify-between gap-5 max-[700px]:block">
+                <form
+                  className="flex min-h-[58px] w-full max-w-[620px] items-center rounded-[14px] border border-[#e4e8f0] bg-white p-1.5 shadow-sm"
+                  onSubmit={(e) => e.preventDefault()}
                 >
-                  View My Conferences
-                </button>
-              </div>
-            )}
+                  <Search className="mx-3 shrink-0 text-[#71809a]" size={20} />
 
-            {registrationError && (
-              <div
-                role="alert"
-                className="mb-6 rounded-[14px] border border-red-200 bg-red-50 px-4 py-3 text-xs font-semibold text-red-700"
-              >
-                {registrationError}
-              </div>
-            )}
+                  <input
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    className="min-w-0 flex-1 border-0 bg-transparent text-sm outline-none placeholder:text-[#8792a8]"
+                    placeholder="Search by title, topic, city or acronym..."
+                    aria-label="Search conferences"
+                  />
 
-            <div className="grid grid-cols-[220px_1fr] gap-8 max-[900px]:grid-cols-1">
-              <div className="hidden lg:block">
-                <FilterPanel />
-              </div>
+                  <button
+                    className="min-h-11 rounded-[10px] border-0 bg-gradient-to-br from-[#6655f6] to-[#7869ff] px-4 text-xs font-bold text-white"
+                    type="submit"
+                  >
+                    Search
+                  </button>
+                </form>
 
-              <div className="min-w-0">
-                <SectionHeading
-                  eyebrow="Conference catalogue"
-                  title={
-                    query || activeFilterCount
-                      ? `${displayConferences.length} result${
-                          displayConferences.length === 1
-                            ? ""
-                            : "s"
-                        }`
-                      : "All conferences"
-                  }
-                  description={
-                    query || activeFilterCount
-                      ? "Refine your search or clear the filters to see all conferences."
-                      : "Live conference data from the Conference Management Tool."
-                  }
-                />
+                <div className="flex items-center gap-3 max-[700px]:mt-4">
+                  <button
+                    type="button"
+                    className="inline-flex items-center gap-1.5 rounded-[10px] border border-[#dfe4ed] bg-white px-3 py-2.5 text-xs font-bold text-[#43506a] lg:hidden"
+                    onClick={() => setShowMobileFilters((value) => !value)}
+                  >
+                    <SlidersHorizontal size={16} />
+                    Filters
+                    {activeFilterCount > 0 ? ` (${activeFilterCount})` : ""}
+                  </button>
 
-                {loading && (
-                  <div className="rounded-[18px] border border-[#e4e8f0] bg-[#fafbfe] p-10 text-center">
-                    <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-4 border-[#e5e3ff] border-t-[#6655f6]" />
+                  <label className="flex items-center gap-2 text-xs font-bold text-[#68748b]">
+                    <span className="hidden sm:inline">Sort</span>
 
-                    <h3 className="text-sm font-bold text-[#0d1b3d]">
-                      Loading conferences...
-                    </h3>
+                    <select
+                      className="min-h-10 rounded-[9px] border border-[#dfe4ed] bg-white px-2.5 text-[11px] text-[#0d1b3d] outline-none focus:border-[#7568f7]"
+                      value={sortBy}
+                      onChange={(e) => setSortBy(e.target.value)}
+                    >
+                      <option value="deadline">Submission deadline</option>
 
-                    <p className="mt-1 text-xs text-[#788398]">
-                      Fetching the latest conferences.
-                    </p>
-                  </div>
-                )}
+                      <option value="date">Conference date</option>
 
-                {!loading && error && (
-                  <div className="rounded-[18px] border border-red-200 bg-red-50 p-8 text-center">
-                    <h3 className="text-sm font-bold text-red-700">
-                      Unable to load conferences
-                    </h3>
+                      <option value="name">Name</option>
+                    </select>
+                  </label>
 
-                    <p className="mt-2 text-xs leading-6 text-red-600">
-                      {error}
-                    </p>
+                  <div
+                    className="flex overflow-hidden rounded-[9px] border border-[#dfe4ed]"
+                    role="group"
+                    aria-label="View mode"
+                  >
+                    <button
+                      type="button"
+                      className={`grid h-10 w-10 place-items-center border-0 ${
+                        view === "grid"
+                          ? "bg-[#efedff] text-[#5c50ec]"
+                          : "bg-white text-[#68748b]"
+                      }`}
+                      onClick={() => setView("grid")}
+                      aria-label="Grid view"
+                    >
+                      <LayoutGrid size={18} />
+                    </button>
 
                     <button
                       type="button"
-                      onClick={() => loadConferences()}
-                      className="mt-5 rounded-[11px] border-0 bg-gradient-to-br from-[#6655f6] to-[#7869ff] px-[18px] py-[11px] text-[13px] font-bold text-white"
+                      className={`grid h-10 w-10 place-items-center border-0 ${
+                        view === "list"
+                          ? "bg-[#efedff] text-[#5c50ec]"
+                          : "bg-white text-[#68748b]"
+                      }`}
+                      onClick={() => setView("list")}
+                      aria-label="List view"
                     >
-                      Try again
+                      <List size={18} />
                     </button>
                   </div>
-                )}
+                </div>
+              </div>
 
-                {!loading &&
-                  displayConferences.length > 0 && (
+              {showMobileFilters && (
+                <div className="mb-6 lg:hidden">
+                  <FilterPanel
+                    activeFilterCount={activeFilterCount}
+                    clearFilters={clearFilters}
+                    filters={filters}
+                    updateFilter={updateFilter}
+                  />
+                </div>
+              )}
+
+              {registrationMessage && (
+                <div
+                  role="status"
+                  className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-[14px] border border-[#bfe5d1] bg-[#effaf4] px-4 py-3 text-xs font-semibold text-[#18794e]"
+                >
+                  <span className="flex items-center gap-2">
+                    <CheckCircle2 size={16} />
+                    {registrationMessage}
+                  </span>
+
+                  <button
+                    type="button"
+                    onClick={() => navigate("/my-conferences")}
+                    className="rounded-lg bg-white px-3 py-2 text-[10px] font-extrabold text-[#18794e] shadow-sm"
+                  >
+                    View My Conferences
+                  </button>
+                </div>
+              )}
+
+              {registrationError && (
+                <div
+                  role="alert"
+                  className="mb-6 rounded-[14px] border border-red-200 bg-red-50 px-4 py-3 text-xs font-semibold text-red-700"
+                >
+                  {registrationError}
+                </div>
+              )}
+
+              <div className="grid grid-cols-[220px_1fr] gap-8 max-[900px]:grid-cols-1">
+                <div className="hidden lg:block">
+                  <FilterPanel
+                    activeFilterCount={activeFilterCount}
+                    clearFilters={clearFilters}
+                    filters={filters}
+                    updateFilter={updateFilter}
+                  />
+                </div>
+
+                <div className="min-w-0">
+                  <SectionHeading
+                    eyebrow="Conference catalogue"
+                    title={
+                      query || activeFilterCount
+                        ? `${displayConferences.length} result${
+                            displayConferences.length === 1 ? "" : "s"
+                          }`
+                        : "All conferences"
+                    }
+                    description={
+                      query || activeFilterCount
+                        ? "Refine your search or clear the filters to see all conferences."
+                        : "Live conference data from the Conference Management Tool."
+                    }
+                  />
+
+                  {loading && (
+                    <div className="rounded-[18px] border border-[#e4e8f0] bg-[#fafbfe] p-10 text-center">
+                      <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-4 border-[#e5e3ff] border-t-[#6655f6]" />
+
+                      <h3 className="text-sm font-bold text-[#0d1b3d]">
+                        Loading conferences...
+                      </h3>
+
+                      <p className="mt-1 text-xs text-[#788398]">
+                        Fetching the latest conferences.
+                      </p>
+                    </div>
+                  )}
+
+                  {!loading && error && (
+                    <div className="rounded-[18px] border border-red-200 bg-red-50 p-8 text-center">
+                      <h3 className="text-sm font-bold text-red-700">
+                        Unable to load conferences
+                      </h3>
+
+                      <p className="mt-2 text-xs leading-6 text-red-600">
+                        {error}
+                      </p>
+
+                      <button
+                        type="button"
+                        onClick={() => loadConferences()}
+                        className="mt-5 rounded-[11px] border-0 bg-gradient-to-br from-[#6655f6] to-[#7869ff] px-[18px] py-[11px] text-[13px] font-bold text-white"
+                      >
+                        Try again
+                      </button>
+                    </div>
+                  )}
+
+                  {!loading && displayConferences.length > 0 && (
                     <div
                       className={
                         view === "grid"
@@ -864,19 +707,15 @@ export default function Conferences() {
                       }
                     >
                       {displayConferences.map((conference) => {
-                        const isRegistered =
-                          registeredConferenceIds.has(
-                            String(conference.id)
-                          );
+                        const isRegistered = registeredConferenceIds.has(
+                          String(conference.id),
+                        );
 
                         const isRegistering =
                           registeringConferenceId === conference.id;
 
                         return (
-                          <div
-                            key={conference.id}
-                            className="min-w-0"
-                          >
+                          <div key={conference.id} className="min-w-0">
                             <ConferenceCard
                               conference={conference}
                               layout={view}
@@ -886,9 +725,7 @@ export default function Conferences() {
                               <button
                                 type="button"
                                 disabled={isRegistering}
-                                onClick={() =>
-                                  handleRegister(conference)
-                                }
+                                onClick={() => handleRegister(conference)}
                                 className={`inline-flex min-h-10 items-center justify-center gap-2 rounded-[10px] px-4 text-[11px] font-extrabold transition disabled:cursor-not-allowed disabled:opacity-60 ${
                                   isRegistered
                                     ? "border border-[#bfe5d1] bg-[#effaf4] text-[#18794e] hover:bg-[#e6f7ee]"
@@ -922,22 +759,16 @@ export default function Conferences() {
                     </div>
                   )}
 
-                {!loading &&
-                  !error &&
-                  displayConferences.length === 0 && (
+                  {!loading && !error && displayConferences.length === 0 && (
                     <div className="rounded-[18px] border border-dashed border-[#ccd3df] bg-[#fafbfe] p-[35px] text-center">
-                      <Search
-                        size={28}
-                        className="mx-auto text-[#68748b]"
-                      />
+                      <Search size={28} className="mx-auto text-[#68748b]" />
 
                       <h3 className="mt-3 text-base font-bold text-[#0d1b3d]">
                         No conferences found
                       </h3>
 
                       <p className="mt-2 text-xs text-[#788398]">
-                        Try another search or clear your
-                        filters.
+                        Try another search or clear your filters.
                       </p>
 
                       <button
@@ -950,9 +781,7 @@ export default function Conferences() {
                     </div>
                   )}
 
-                {!loading &&
-                  !error &&
-                  displayConferences.length > 0 && (
+                  {!loading && !error && displayConferences.length > 0 && (
                     <div className="mt-6 flex flex-wrap justify-between gap-3 border-t border-[#e8ebf2] pt-4 text-[10px] text-[#788398]">
                       <span className="flex items-center gap-1.5">
                         <CalendarDays size={16} />
@@ -965,33 +794,34 @@ export default function Conferences() {
                       </span>
 
                       <span>
-                        {conferences.length} of {totalConferences} conferences loaded
+                        {conferences.length} of {totalConferences} conferences
+                        loaded
                       </span>
                     </div>
                   )}
 
-                {!loading && hasMore && (
-                  <div className="mt-6 flex justify-center">
-                    <button
-                      type="button"
-                      disabled={loadingMore}
-                      onClick={() =>
-                        loadConferences({
-                          page: currentPage + 1,
-                          append: true,
-                        })
-                      }
-                      className="inline-flex min-h-10 items-center justify-center gap-2 rounded-[10px] border border-[#dfe4ed] bg-white px-5 text-[11px] font-extrabold text-[#5649dc] transition hover:bg-[#f7f6ff] disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      {loadingMore ? "Loading..." : "Load more conferences"}
-                    </button>
-                  </div>
-                )}
+                  {!loading && hasMore && (
+                    <div className="mt-6 flex justify-center">
+                      <button
+                        type="button"
+                        disabled={loadingMore}
+                        onClick={() =>
+                          loadConferences({
+                            page: currentPage + 1,
+                            append: true,
+                          })
+                        }
+                        className="inline-flex min-h-10 items-center justify-center gap-2 rounded-[10px] border border-[#dfe4ed] bg-white px-5 text-[11px] font-extrabold text-[#5649dc] transition hover:bg-[#f7f6ff] disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {loadingMore ? "Loading..." : "Load more conferences"}
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        </section>
-      </main>
+          </section>
+        </main>
       </div>
 
       <footer className="bg-[#07132f] text-white/60">
@@ -1005,9 +835,7 @@ export default function Conferences() {
               />
 
               <div className="flex flex-col leading-[1.05]">
-                <strong className="text-xl tracking-[-.04em]">
-                  CMT
-                </strong>
+                <strong className="text-xl tracking-[-.04em]">CMT</strong>
 
                 <span className="mt-1 whitespace-nowrap text-[9px] text-white/70">
                   Conference Management Tool
@@ -1019,8 +847,7 @@ export default function Conferences() {
           </div>
 
           <span>
-            © {new Date().getFullYear()} CMT. Conference
-            Management Tool.
+            © {new Date().getFullYear()} CMT. Conference Management Tool.
           </span>
         </div>
       </footer>

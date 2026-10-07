@@ -1,25 +1,30 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from "react";
 
 export function useApiResource(loader, dependencies = []) {
+  const requestVersion = useRef(0);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   const reload = useCallback(async () => {
+    const version = ++requestVersion.current;
     setLoading(true);
     setError(null);
     try {
       const result = await loader();
-      setData(result);
+      if (version === requestVersion.current) setData(result);
     } catch (err) {
-      setError(err);
+      if (version === requestVersion.current) setError(err);
     } finally {
-      setLoading(false);
+      if (version === requestVersion.current) setLoading(false);
     }
-  }, dependencies); // eslint-disable-line react-hooks/exhaustive-deps
+  }, dependencies);
 
   useEffect(() => {
     reload();
+    return () => {
+      requestVersion.current += 1;
+    };
   }, [reload]);
 
   return { data, loading, error, reload };

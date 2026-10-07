@@ -2098,41 +2098,13 @@ export default function OrganiserDashboard() {
 
               </select>
 
-              <div className="grid grid-cols-2 gap-3">
-
-                <input
-
-                    type="datetime-local"
-                      value={sessionForm.scheduled_time}
-                      onChange={(e) =>
-                        setSessionForm((v) => ({
-                          ...v,
-                          scheduled_time: e.target.value,
-                        }))
-
-                  }
-
-                  className="h-10 rounded-xl border border-[#dfe4ed] px-3 text-[11px] dark:border-[#1e293b] dark:bg-[#0b1224] dark:text-white"
-
-                />
-
-                <input
-
-                      type="datetime-local"
-                      value={sessionForm.scheduled_time}
-                      onChange={(e) =>
-                        setSessionForm((v) => ({
-                          ...v,
-                          scheduled_time: e.target.value,
-                        }))
-
-                  }
-
-                  className="h-10 rounded-xl border border-[#dfe4ed] px-3 text-[11px] dark:border-[#1e293b] dark:bg-[#0b1224] dark:text-white"
-
-                />
-
-              </div>
+              <label className="grid gap-2 text-xs font-semibold">
+                Scheduled time
+                <input aria-label="Scheduled time" type="datetime-local"
+                  value={sessionForm.scheduled_time}
+                  onChange={(e) => setSessionForm((v) => ({ ...v, scheduled_time: e.target.value }))}
+                  className="h-10 rounded-xl border border-[#dfe4ed] px-3 text-[11px] dark:border-[#1e293b] dark:bg-[#0b1224] dark:text-white" />
+              </label>
 
               <div className="flex gap-2">
 

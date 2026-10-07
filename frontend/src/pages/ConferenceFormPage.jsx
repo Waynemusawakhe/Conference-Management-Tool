@@ -1,3 +1,5 @@
+import { useAuth } from "../hooks/useAuth";
+import { getDashboardPath } from "../utils/roleRoutes";
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Save, ArrowLeft, Loader2 } from "lucide-react";
@@ -6,12 +8,14 @@ import { conferencesApi } from "../api/conferencesApi";
 export default function ConferenceFormPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { role } = useAuth();
+  const dashboardPath = getDashboardPath(role);
   const isEdit = Boolean(id);
 
   const [formData, setFormData] = useState({
     code: "",
     name: "",
-    format: "in-person",
+    format: "in_person",
     start_date: "",
     end_date: "",
     description: "",
@@ -30,7 +34,7 @@ export default function ConferenceFormPage() {
           setFormData({
             code: data.code || "",
             name: data.name || "",
-            format: data.format || "in-person",
+            format: data.format || "in_person",
             start_date: startDate ? startDate.split("T")[0] : "",
             end_date: data.end_date ? data.end_date.split("T")[0] : "",
             description: data.description || "",
@@ -160,7 +164,7 @@ export default function ConferenceFormPage() {
             required
             className={inputClass("format")}
           >
-            <option value="in-person">In-person</option>
+            <option value="in_person">In-person</option>
             <option value="virtual">Virtual</option>
             <option value="hybrid">Hybrid</option>
           </select>
