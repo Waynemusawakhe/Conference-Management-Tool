@@ -1428,208 +1428,65 @@ export default function OrganiserDashboard() {
 
 
 
-  const openAssign = (submission) => {
+ const openAssign = (submission) => {
+  setSelectedSubmission(submission);
+  setReviewerId("");
+  setFormError("");
+  setModal("assign");
+};
 
 
 
-    setSelectedSubmission(submission);
 
 
 
-    const existing = reviews.find(
 
+const assignReviewer = async (e) => {
+  e.preventDefault();
+  setFormError("");
+  if (!reviewerId || !selectedSubmission?.id) {
+    setFormError("Select a reviewer before assigning.");
+    return;
+  }
+  const alreadyAssigned = reviews.some(
+    (review) =>
+      Number(review.submission_id) ===
+        Number(selectedSubmission.id) &&
+      Number(review.reviewer_id) === Number(reviewerId),
+  );
 
-
-      (r) => Number(r.submission_id) === Number(submission.id) && r.reviewer_id
-
-
-
+  if (alreadyAssigned) {
+    setFormError(
+      "This reviewer is already assigned to this submission.",
     );
+    return;
+  }
 
+  setSaving(true);
 
+  try {
+    await reviewsApi.assign({
+      submission_id: Number(selectedSubmission.id),
+      reviewer_id: Number(reviewerId),
+    });
 
-    setReviewerId(existing?.reviewer_id ? String(existing.reviewer_id) : "");
-
-
-
-    setFormError("");
-
-
-
-    setModal("assign");
-
-
-
-  };
-
-
-
-
-
-
-
-  const assignReviewer = async (e) => {
-
-
-
-    e.preventDefault();
-
-
-
-    setFormError("");
-
-
-
-    if (!reviewerId || !selectedSubmission?.id) {
-
-
-
-      setFormError("Select a reviewer before assigning.");
-
-
-
-      return;
-
-
-
-    }
-
-
-
-    setSaving(true);
-
-
-
-    try {
-
-
-
-      const existing = reviews.find(
-
-
-
-        (r) => Number(r.submission_id) === Number(selectedSubmission.id)
-
-
-
+    if (selectedSubmission.status === "pending") {
+      await submissionsApi.updateStatus(
+        selectedSubmission.id,
+        "under_review",
       );
-
-
-
-      if (existing && Number(existing.reviewer_id) !== Number(reviewerId)) {
-
-
-
-        if (existing.locked || existing.submitted_at) {
-
-
-
-          setFormError(
-
-
-
-            "This review has already been submitted or locked and cannot be reassigned."
-
-
-
-          );
-
-
-
-          return;
-
-
-
-        }
-
-
-
-        await reviewsApi.remove(existing.id);
-
-
-
-      }
-
-
-
-      if (!existing || Number(existing.reviewer_id) !== Number(reviewerId)) {
-
-
-
-        await reviewsApi.assign({
-
-
-
-          submission_id: Number(selectedSubmission.id),
-
-
-
-          reviewer_id: Number(reviewerId),
-
-
-
-        });
-
-
-
-      }
-
-
-
-      if (selectedSubmission.status === "pending") {
-
-
-
-        await submissionsApi.updateStatus(
-
-
-
-          selectedSubmission.id,
-
-
-
-          "under_review"
-
-
-
-        );
-
-
-
-      }
-
-
-
-      setModal(null);
-
-
-
-      await loadConferenceData(selectedConference);
-
-
-
-    } catch (err) {
-
-
-
-      setFormError(getErrorMessage(err));
-
-
-
-    } finally {
-
-
-
-      setSaving(false);
-
-
-
     }
 
+    setReviewerId("");
+    setModal(null);
 
-
-  };
-
+    await loadConferenceData(selectedConference);
+  } catch (err) {
+    setFormError(getErrorMessage(err));
+  } finally {
+    setSaving(false);
+  }
+};
 
 
 
@@ -1637,118 +1494,57 @@ export default function OrganiserDashboard() {
 
 
   const decide = async (submission, status) => {
-
-
-
     const related = reviews.filter(
-
-
-
-      (r) => Number(r.submission_id) === Number(submission.id)
-
-
-
+      (review) =>
+        Number(review.submission_id) ===
+        Number(submission.id),
     );
 
-
-
-    const lockedReview = related.find((r) => r.locked);
-
-
-
-    if (!lockedReview) {
-
-
-
+    if (related.length === 0) {
       setError(
-
-
-
-        "A reviewer must submit and lock the review before the final decision can be recorded."
-
-
-
+        "Assign at least one reviewer before recording a final decision.",
       );
-
-
-
       return;
-
-
-
     }
 
+    const allReviewsLocked = related.every(
+      (review) => review.locked,
+    );
 
+    if (!allReviewsLocked) {
+      setError(
+        "All assigned reviewers must submit and lock their reviews before the final decision can be recorded.",
+      );
+      return;
+    }
 
     const labels = {
-
-
-
       accepted: "accept",
-
-
-
       rejected: "reject",
-
-
-
-      revision_requested: "request a revision",
-
-
-
+      revision_requested: "request a revision for",
     };
 
-
-
-    if (
-
-
-
-      !window.confirm(
-
-
-
-        `Are you sure you want to ${labels[status]} "${submission.title}"?`
-
-
-
-      )
-
-
-
+  if (
+    !window.confirm(
+      `Are you sure you want to ${labels[status]} "${submission.title}"?`,
     )
+  ) {
+    return;
+  }
 
+  try {
+    setError("");
 
+    await submissionsApi.updateStatus(
+      submission.id,
+      status,
+    );
 
-      return;
-
-
-
-    try {
-
-
-
-      await submissionsApi.updateStatus(submission.id, status);
-
-
-
-      await loadConferenceData(selectedConference);
-
-
-
-    } catch (err) {
-
-
-
-      setError(getErrorMessage(err));
-
-
-
-    }
-
-
-
-  };
+    await loadConferenceData(selectedConference);
+  } catch (err) {
+    setError(getErrorMessage(err));
+  }
+};
 
 
 
@@ -3470,7 +3266,7 @@ export default function OrganiserDashboard() {
 
 
 
-                              {related.length ? "Reassign" : "Assign"}
+                              {related.length ? "Assign another" : "Assign"}
 
 
 
@@ -3782,7 +3578,7 @@ export default function OrganiserDashboard() {
 
 
 
-                        {related.length ? "Reassign" : "Assign reviewer"}
+                        {related.length ? "Assign another" : "Assign reviewer"}
 
 
 
@@ -4568,20 +4364,10 @@ export default function OrganiserDashboard() {
 
             <div className="rounded-xl border border-[#e7eaf0] bg-[#fafbfe] p-4 text-[10px] leading-5 text-[#6d7890] dark:border-[#1e293b] dark:bg-[#0b1224] dark:text-[#94a3b8]">
 
-
-
-              Select an available reviewer from the reviewer directory. The
-
-
-
-              assignment is saved against this submission and can be
-
-
-
-              reassigned until a review is locked.
-
-
-
+              Select an available reviewer from the reviewer directory. Each
+              reviewer is added to this submission independently. Existing
+              reviewer assignments are kept, and duplicate assignments are
+              blocked.
             </div>
 
 
