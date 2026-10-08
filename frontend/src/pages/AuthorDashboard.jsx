@@ -10,30 +10,21 @@ import {
   FileCheck2,
   FileText,
   Filter,
-  LayoutDashboard,
-  LoaderCircle,
-  LogOut,
-  Menu,
   MessageSquareQuote,
   Pencil,
   Plus,
   RotateCcw,
   Search,
-  Settings,
-  Sparkles,
   Trash2,
   Upload,
-  UserRound,
   X,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import Logo from "../components/Logo";
-import { useTheme } from "../context/ThemeContext";
+import AuthorLayout from "../components/AuthorLayout";
 import { useAuth } from "../context/AuthContext";
 import { submissionsApi } from "../api/submissionsApi";
 import { conferencesApi } from "../api/conferencesApi";
 import { reviewsApi } from "../api/reviewsApi";
-import NotificationBell from "../components/NotificationBell";
 
 const STATUS_LABELS = {
   pending: "Pending",
@@ -134,11 +125,8 @@ function Modal({ title, children, onClose, wide = false }) {
 
 export default function AuthorDashboard() {
   const navigate = useNavigate();
-  const { dark, toggleTheme } = useTheme();
   const { user, logout } = useAuth();
 
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [signingOut, setSigningOut] = useState(false);
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [proposals, setProposals] = useState([]);
@@ -164,13 +152,6 @@ export default function AuthorDashboard() {
   };
 
   const [form, setForm] = useState(emptyForm);
-
-  const handleSignOut = async () => {
-    if (signingOut) return;
-    setSigningOut(true);
-    await logout();
-    navigate("/login", { replace: true });
-  };
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -340,7 +321,6 @@ export default function AuthorDashboard() {
         setFormError("Only PDF, DOC or DOCX files are allowed.");
         return;
       }
-
       if (form.file.size > 10 * 1024 * 1024) {
         setFormError("The file must be 10MB or smaller.");
         return;
@@ -354,7 +334,6 @@ export default function AuthorDashboard() {
     body.append("title", form.title.trim());
     body.append("track", form.track.trim());
     body.append("abstract", form.abstract.trim());
-
     if (form.file) {
       body.append("file", form.file);
     }
@@ -406,644 +385,504 @@ export default function AuthorDashboard() {
     }
   };
 
-  const scrollTo = (id) => {
-    setSidebarOpen(false);
-    document
-      .getElementById(id)
-      ?.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
-
-  const displayName = user?.name || "Author";
-  const initials =
-    displayName
-      .split(/\s+/)
-      .filter(Boolean)
-      .slice(0, 2)
-      .map((x) => x[0])
-      .join("")
-      .toUpperCase() || "A";
-
   return (
-    <div className="min-h-screen bg-[#f7f9fc] text-[#0d1b3d]">
-      <header className="sticky top-0 z-50 border-b border-white/10 bg-[#07132f]/95 text-white shadow-[0_8px_30px_rgba(7,19,47,.12)] backdrop-blur-xl">
-        <div className="mx-auto flex min-h-[76px] w-[min(1400px,calc(100%-32px))] items-center gap-5">
-          <button
-            className="lg:hidden"
-            onClick={() => setSidebarOpen((v) => !v)}
-            aria-label="Toggle dashboard navigation"
-          >
-            {sidebarOpen ? <X size={22} /> : <Menu size={22} />}
-          </button>
-          <button
-            className="border-0 bg-transparent p-0"
-            onClick={() => navigate("/")}
-            aria-label="CMT home"
-          >
-            <Logo />
-          </button>
-          <div className="hidden h-7 w-px bg-white/10 sm:block" />
-          <div className="hidden sm:block">
-            <p className="m-0 text-[10px] font-extrabold uppercase tracking-[.13em] text-[#a9a2ff]">
-              Author workspace
-            </p>
-            <p className="m-0 text-[12px] font-semibold text-white/65">
-              Conference Management Tool
+    <AuthorLayout>
+      <section
+        id="dashboard-overview"
+        className="relative scroll-mt-24 overflow-hidden rounded-[22px] bg-[radial-gradient(circle_at_78%_18%,rgba(121,104,255,.22),transparent_25%),radial-gradient(circle_at_100%_100%,rgba(27,94,255,.18),transparent_36%),linear-gradient(135deg,#07132f_0%,#0a1740_52%,#15165a_100%)] p-6 text-white shadow-[0_18px_55px_rgba(15,28,65,.12)] sm:p-8"
+      >
+        <div className="absolute inset-0 opacity-[.16] [background-image:radial-gradient(rgba(255,255,255,.15)_0.7px,transparent_0.7px)] [background-size:22px_22px]" />
+        <div className="relative flex items-end justify-between gap-6 max-[700px]:block">
+          <div>
+            <span className="inline-flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-[.12em] text-[#b9b3ff]">
+              <BookOpen size={14} /> Author dashboard
+            </span>
+            <h1 className="mb-2 mt-3 text-[clamp(28px,4vw,44px)] font-bold leading-tight tracking-[-.045em]">
+              Welcome, {(user?.name || "Author").split(" ")[0]}.
+            </h1>
+            <p className="m-0 max-w-[600px] text-[12px] leading-6 text-white/65">
+              Track proposal progress, update eligible submissions and keep
+              every deadline visible from one workspace.
             </p>
           </div>
-          <div className="ml-auto flex items-center gap-2">
-            <NotificationBell dark />
+          <button
+            onClick={openCreate}
+            className="mt-5 inline-flex shrink-0 items-center gap-2 rounded-xl bg-gradient-to-br from-[#6655f6] to-[#7869ff] px-4 py-3 text-[12px] font-extrabold text-white shadow-[0_12px_28px_rgba(103,87,245,.28)] transition hover:-translate-y-px"
+          >
+            <Plus size={16} /> Submit a proposal
+          </button>
+        </div>
+      </section>
+
+      {error && (
+        <div
+          role="alert"
+          className="flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-xs font-semibold text-red-700"
+        >
+          <AlertCircle size={17} className="mt-0.5 shrink-0" />
+          <div className="flex-1">{error}</div>
+          <button onClick={loadData} className="font-extrabold underline">
+            Retry
+          </button>
+        </div>
+      )}
+
+      <section className="grid grid-cols-4 gap-4 max-[1000px]:grid-cols-2 max-[520px]:grid-cols-1">
+        {[
+          {
+            icon: <FileText size={19} />,
+            value: stats.total,
+            label: "Total proposals",
+            note: "Your submissions",
+          },
+          {
+            icon: <Clock3 size={19} />,
+            value: stats.review,
+            label: "In review",
+            note: "Awaiting decisions",
+          },
+          {
+            icon: <FileCheck2 size={19} />,
+            value: stats.accepted,
+            label: "Accepted",
+            note: "Positive decisions",
+          },
+          {
+            icon: <Upload size={19} />,
+            value: stats.revision,
+            label: "Needs revision",
+            note: "Action required",
+          },
+        ].map((stat) => (
+          <article
+            key={stat.label}
+            className="rounded-[17px] border border-[#e4e8f0] bg-white p-4 shadow-[0_10px_28px_rgba(15,28,65,.04)]"
+          >
+            <span className="grid h-9 w-9 place-items-center rounded-[10px] bg-[#efedff] text-[#5c50ec]">
+              {stat.icon}
+            </span>
+            <strong className="mt-4 block text-[25px] leading-none tracking-[-.04em]">
+              {stat.value}
+            </strong>
+            <p className="mb-0 mt-1.5 text-[11px] font-bold text-[#35415f]">
+              {stat.label}
+            </p>
+            <span className="text-[9px] text-[#8b95a8]">{stat.note}</span>
+          </article>
+        ))}
+      </section>
+
+      <section id="feedback-preview" className="scroll-mt-24">
+        <div className="rounded-[20px] border border-[#e4e8f0] bg-white shadow-[0_10px_30px_rgba(15,28,65,.035)]">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#edf0f5] p-5 sm:p-6">
+            <div>
+              <span className="text-[10px] font-extrabold uppercase tracking-[.1em] text-[#6655f6]">
+                Reviewer activity
+              </span>
+              <h2 className="mb-0 mt-1 text-[20px] font-bold tracking-[-.03em]">
+                Latest feedback
+              </h2>
+            </div>
             <button
-              className="hidden h-10 w-10 place-items-center rounded-[11px] border border-white/15 bg-white/[.05] text-white/80 sm:grid"
-              onClick={toggleTheme}
-              aria-label="Toggle theme"
+              onClick={() => navigate("/author/feedback")}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-[#efedff] px-3.5 py-2.5 text-[10px] font-extrabold text-[#5548d7] transition hover:bg-[#e4e1ff]"
             >
-              <Sparkles size={16} />
+              View all <ChevronRight size={12} />
             </button>
-            <div className="ml-1 hidden items-center gap-2.5 border-l border-white/10 pl-3 sm:flex">
-              <div className="grid h-9 w-9 place-items-center rounded-full bg-[#e8e6ff] text-[10px] font-extrabold text-[#4f46c7]">
-                {initials}
-              </div>
-              <div className="leading-tight">
-                <strong className="block text-[11px] text-white">
-                  {displayName}
-                </strong>
-                <span className="block text-[9px] text-white/45">Author</span>
-              </div>
+          </div>
+
+          {loadingFeedback ? (
+            <div className="grid place-items-center p-10 text-xs font-semibold text-[#7c879a]">
+              Loading feedback…
+            </div>
+          ) : Object.values(feedbackBySubmission).flat().length === 0 ? (
+            <div className="p-10 text-center">
+              <MessageSquareQuote
+                size={22}
+                className="mx-auto text-[#aeb6c6]"
+              />
+              <h3 className="mb-1 mt-3 text-[13px] font-bold">
+                No feedback yet
+              </h3>
+              <p className="m-0 text-[10px] text-[#8993a6]">
+                Feedback appears once reviewers assess your submissions.
+              </p>
+            </div>
+          ) : (
+            <ul className="divide-y divide-[#edf0f5]">
+              {proposals
+                .filter((p) => feedbackBySubmission[p.id]?.length)
+                .slice(0, 3)
+                .map((p) => {
+                  const status = p.status || "pending";
+                  const reviews = feedbackBySubmission[p.id] || [];
+                  const first = reviews[0];
+                  const rec = (first.recommendation || "").toLowerCase();
+                  const recCls =
+                    rec === "accept"
+                      ? "border-[#bfe5d1] bg-[#effaf4] text-[#18794e]"
+                      : rec === "reject"
+                      ? "border-[#f1c8c8] bg-[#fff2f2] text-[#b13a3a]"
+                      : rec === "revise"
+                      ? "border-[#f0d0b9] bg-[#fff6ee] text-[#a55b25]"
+                      : "border-[#d7dce5] bg-[#f4f6f9] text-[#68748b]";
+                  return (
+                    <li
+                      key={p.id}
+                      className="flex flex-wrap items-center justify-between gap-3 p-5"
+                    >
+                      <div className="flex min-w-0 items-center gap-3">
+                        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-[10px] bg-[#f1efff] text-[#5b4fe3]">
+                          <FileText size={16} />
+                        </span>
+                        <div className="min-w-0">
+                          <strong className="block truncate text-[12px] text-[#1c2a4a]">
+                            {p.title}
+                          </strong>
+                          <span className="text-[10px] text-[#8c96a9]">
+                            {reviews.length} review
+                            {reviews.length === 1 ? "" : "s"} ·{" "}
+                            {dateLabel(p.created_at)}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        {first.recommendation && (
+                          <span
+                            className={`inline-flex rounded-full border px-2.5 py-1 text-[9px] font-extrabold uppercase ${recCls}`}
+                          >
+                            {first.recommendation}
+                          </span>
+                        )}
+                        <span
+                          className={`inline-flex rounded-full border px-2.5 py-1 text-[9px] font-extrabold ${
+                            STATUS_STYLES[status] || STATUS_STYLES.pending
+                          }`}
+                        >
+                          {STATUS_LABELS[status] || status}
+                        </span>
+                        <button
+                          onClick={() => openView(p)}
+                          className="inline-flex items-center gap-1.5 rounded-lg bg-[#efedff] px-3 py-1.5 text-[10px] font-extrabold text-[#5548d7] hover:bg-[#e4e1ff]"
+                        >
+                          <Eye size={12} /> View
+                        </button>
+                      </div>
+                    </li>
+                  );
+                })}
+            </ul>
+          )}
+        </div>
+      </section>
+
+      <section
+        id="my-proposals"
+        className="scroll-mt-24 rounded-[20px] border border-[#e4e8f0] bg-white shadow-[0_10px_30px_rgba(15,28,65,.035)]"
+      >
+        <div className="flex items-center justify-between gap-4 border-b border-[#edf0f5] p-5 sm:p-6 max-[720px]:block">
+          <div>
+            <span className="text-[10px] font-extrabold uppercase tracking-[.1em] text-[#6655f6]">
+              Research activity
+            </span>
+            <h2 className="mb-0 mt-1 text-[20px] font-bold tracking-[-.03em]">
+              My proposals
+            </h2>
+          </div>
+          <div className="mt-3 flex gap-2 sm:mt-0 max-[480px]:grid max-[480px]:grid-cols-[1fr_auto]">
+            <div className="relative min-w-0 sm:w-[220px]">
+              <Search
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-[#98a1b3]"
+                size={15}
+              />
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search proposals..."
+                className="h-10 w-full rounded-[10px] border border-[#e2e6ee] bg-[#fafbfe] pl-9 pr-3 text-[11px] outline-none focus:border-[#8175ef]"
+              />
+            </div>
+            <div className="relative">
+              <Filter
+                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#98a1b3]"
+                size={14}
+              />
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="h-10 max-w-[165px] rounded-[10px] border border-[#e2e6ee] bg-[#fafbfe] pl-9 pr-3 text-[11px] font-semibold text-[#59657d] outline-none"
+              >
+                <option value="all">All statuses</option>
+                {Object.entries(STATUS_LABELS).map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
         </div>
-      </header>
 
-      <div className="mx-auto flex w-[min(1400px,calc(100%-32px))] gap-6 py-6 lg:gap-7">
-        <aside
-          className={`${
-            sidebarOpen ? "fixed inset-x-4 top-[88px] z-40 block" : "hidden"
-          } w-[235px] shrink-0 rounded-2xl border border-[#e4e8f0] bg-white p-3 shadow-[0_18px_45px_rgba(15,28,65,.10)] lg:sticky lg:top-[100px] lg:block lg:h-[calc(100vh-124px)] lg:overflow-y-auto lg:shadow-none`}
-        >
-          <div className="mb-3 rounded-xl bg-gradient-to-br from-[#111e4b] to-[#342b87] p-4 text-white">
-            <span className="mb-2 grid h-9 w-9 place-items-center rounded-lg bg-white/10">
-              <BookOpen size={17} />
-            </span>
-            <strong className="block text-[13px]">Your research hub</strong>
-            <p className="mt-1 text-[10px] leading-5 text-white/60">
-              Manage submissions and stay on top of conference deadlines.
-            </p>
+        {loading ? (
+          <div className="grid place-items-center p-12 text-xs font-semibold text-[#7c879a]">
+            Loading your proposals…
           </div>
-          <nav className="space-y-1" aria-label="Author dashboard navigation">
-            <button
-              className="flex w-full items-center gap-3 rounded-xl bg-[#efedff] px-3 py-2.5 text-left text-[12px] font-extrabold text-[#5649dc]"
-              onClick={() => scrollTo("dashboard-overview")}
-            >
-              <LayoutDashboard size={16} /> Overview
-            </button>
-            <button
-              className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] font-semibold text-[#66728b] hover:bg-[#f5f6fa]"
-              onClick={() => scrollTo("my-proposals")}
-            >
-              <FileText size={16} /> My proposals
-            </button>
-            <button
-              className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] font-semibold text-[#66728b] hover:bg-[#f5f6fa]"
-              onClick={() => navigate("/author/feedback")}
-            >
-              <MessageSquareQuote size={16} /> Feedback
-            </button>
-            <button
-              className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] font-semibold text-[#66728b] hover:bg-[#f5f6fa]"
-              onClick={() => scrollTo("deadlines")}
-            >
-              <CalendarDays size={16} /> Deadlines
-            </button>
-          </nav>
-
-          <div className="my-4 border-t border-[#edf0f5]" />
-
-          <button
-            onClick={() => navigate("/profile")}
-            className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] font-semibold text-[#66728b] hover:bg-[#f5f6fa]"
-          >
-            <UserRound size={16} /> Profile
-          </button>
-          <button
-            onClick={() => navigate("/settings")}
-            className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] font-semibold text-[#66728b] hover:bg-[#f5f6fa]"
-          >
-            <Settings size={16} /> Settings
-          </button>
-          <button
-            onClick={handleSignOut}
-            disabled={signingOut}
-            aria-busy={signingOut}
-            className="mt-1 flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] font-semibold text-[#9a6470] transition-colors hover:bg-[#fff4f5] disabled:cursor-wait disabled:opacity-70"
-          >
-            {signingOut ? (
-              <LoaderCircle size={16} className="animate-spin" />
-            ) : (
-              <LogOut size={16} />
-            )}
-            {signingOut ? "Signing out..." : "Sign out"}
-          </button>
-        </aside>
-
-        <main id="dashboard-overview" className="min-w-0 flex-1 scroll-mt-24">
-          <section className="relative overflow-hidden rounded-[22px] bg-[radial-gradient(circle_at_78%_18%,rgba(121,104,255,.22),transparent_25%),radial-gradient(circle_at_100%_100%,rgba(27,94,255,.18),transparent_36%),linear-gradient(135deg,#07132f_0%,#0a1740_52%,#15165a_100%)] p-6 text-white shadow-[0_18px_55px_rgba(15,28,65,.12)] sm:p-8">
-            <div className="absolute inset-0 opacity-[.16] [background-image:radial-gradient(rgba(255,255,255,.15)_0.7px,transparent_0.7px)] [background-size:22px_22px]" />
-            <div className="relative flex items-end justify-between gap-6 max-[700px]:block">
-              <div>
-                <span className="inline-flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-[.12em] text-[#b9b3ff]">
-                  <Sparkles size={14} /> Author dashboard
-                </span>
-                <h1 className="mb-2 mt-3 text-[clamp(28px,4vw,44px)] font-bold leading-tight tracking-[-.045em]">
-                  Welcome, {displayName.split(" ")[0]}.
-                </h1>
-                <p className="m-0 max-w-[600px] text-[12px] leading-6 text-white/65">
-                  Track proposal progress, update eligible submissions and keep
-                  every deadline visible from one workspace.
-                </p>
-              </div>
-              <button
-                onClick={openCreate}
-                className="mt-5 inline-flex shrink-0 items-center gap-2 rounded-xl bg-gradient-to-br from-[#6655f6] to-[#7869ff] px-4 py-3 text-[12px] font-extrabold text-white shadow-[0_12px_28px_rgba(103,87,245,.28)] transition hover:-translate-y-px"
-              >
-                <Plus size={16} /> Submit a proposal
-              </button>
-            </div>
-          </section>
-
-          {error && (
-            <div
-              role="alert"
-              className="mt-5 flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-xs font-semibold text-red-700"
-            >
-              <AlertCircle size={17} className="mt-0.5 shrink-0" />
-              <div className="flex-1">{error}</div>
-              <button onClick={loadData} className="font-extrabold underline">
-                Retry
-              </button>
-            </div>
-          )}
-
-          <section className="mt-5 grid grid-cols-4 gap-4 max-[1000px]:grid-cols-2 max-[520px]:grid-cols-1">
-            {[
-              {
-                icon: <FileText size={19} />,
-                value: stats.total,
-                label: "Total proposals",
-                note: "Your submissions",
-              },
-              {
-                icon: <Clock3 size={19} />,
-                value: stats.review,
-                label: "In review",
-                note: "Awaiting decisions",
-              },
-              {
-                icon: <FileCheck2 size={19} />,
-                value: stats.accepted,
-                label: "Accepted",
-                note: "Positive decisions",
-              },
-              {
-                icon: <Upload size={19} />,
-                value: stats.revision,
-                label: "Needs revision",
-                note: "Action required",
-              },
-            ].map((stat) => (
-              <article
-                key={stat.label}
-                className="rounded-[17px] border border-[#e4e8f0] bg-white p-4 shadow-[0_10px_28px_rgba(15,28,65,.04)]"
-              >
-                <span className="grid h-9 w-9 place-items-center rounded-[10px] bg-[#efedff] text-[#5c50ec]">
-                  {stat.icon}
-                </span>
-                <strong className="mt-4 block text-[25px] leading-none tracking-[-.04em]">
-                  {stat.value}
-                </strong>
-                <p className="mb-0 mt-1.5 text-[11px] font-bold text-[#35415f]">
-                  {stat.label}
-                </p>
-                <span className="text-[9px] text-[#8b95a8]">{stat.note}</span>
-              </article>
-            ))}
-          </section>
-
-          <section id="feedback-preview" className="mt-6 scroll-mt-24">
-            <div className="rounded-[20px] border border-[#e4e8f0] bg-white shadow-[0_10px_30px_rgba(15,28,65,.035)]">
-              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#edf0f5] p-5 sm:p-6">
-                <div>
-                  <span className="text-[10px] font-extrabold uppercase tracking-[.1em] text-[#6655f6]">
-                    Reviewer activity
-                  </span>
-                  <h2 className="mb-0 mt-1 text-[20px] font-bold tracking-[-.03em]">
-                    Latest feedback
-                  </h2>
-                </div>
-                <button
-                  onClick={() => navigate("/author/feedback")}
-                  className="inline-flex items-center gap-1.5 rounded-xl bg-[#efedff] px-3.5 py-2.5 text-[10px] font-extrabold text-[#5548d7] transition hover:bg-[#e4e1ff]"
-                >
-                  View all <ChevronRight size={12} />
-                </button>
-              </div>
-
-              {loadingFeedback ? (
-                <div className="grid place-items-center p-10 text-xs font-semibold text-[#7c879a]">
-                  Loading feedback…
-                </div>
-              ) : Object.values(feedbackBySubmission).flat().length === 0 ? (
-                <div className="p-10 text-center">
-                  <MessageSquareQuote
-                    size={22}
-                    className="mx-auto text-[#aeb6c6]"
-                  />
-                  <h3 className="mb-1 mt-3 text-[13px] font-bold">
-                    No feedback yet
-                  </h3>
-                  <p className="m-0 text-[10px] text-[#8993a6]">
-                    Feedback appears once reviewers assess your submissions.
-                  </p>
-                </div>
-              ) : (
-                <ul className="divide-y divide-[#edf0f5]">
-                  {proposals
-                    .filter((p) => feedbackBySubmission[p.id]?.length)
-                    .slice(0, 3)
-                    .map((p) => {
-                      const status = p.status || "pending";
-                      const reviews = feedbackBySubmission[p.id] || [];
-                      const first = reviews[0];
-                      const rec = (first.recommendation || "").toLowerCase();
-                      const recCls =
-                        rec === "accept"
-                          ? "border-[#bfe5d1] bg-[#effaf4] text-[#18794e]"
-                          : rec === "reject"
-                          ? "border-[#f1c8c8] bg-[#fff2f2] text-[#b13a3a]"
-                          : rec === "revise"
-                          ? "border-[#f0d0b9] bg-[#fff6ee] text-[#a55b25]"
-                          : "border-[#d7dce5] bg-[#f4f6f9] text-[#68748b]";
-                      return (
-                        <li
-                          key={p.id}
-                          className="flex flex-wrap items-center justify-between gap-3 p-5"
-                        >
-                          <div className="flex min-w-0 items-center gap-3">
-                            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-[10px] bg-[#f1efff] text-[#5b4fe3]">
-                              <FileText size={16} />
-                            </span>
-                            <div className="min-w-0">
-                              <strong className="block truncate text-[12px] text-[#1c2a4a]">
-                                {p.title}
-                              </strong>
-                              <span className="text-[10px] text-[#8c96a9]">
-                                {reviews.length} review
-                                {reviews.length === 1 ? "" : "s"} ·{" "}
-                                {dateLabel(p.created_at)}
-                              </span>
-                            </div>
-                          </div>
-                          <div className="flex flex-wrap items-center gap-2">
-                            {first.recommendation && (
-                              <span
-                                className={`inline-flex rounded-full border px-2.5 py-1 text-[9px] font-extrabold uppercase ${recCls}`}
-                              >
-                                {first.recommendation}
-                              </span>
-                            )}
-                            <span
-                              className={`inline-flex rounded-full border px-2.5 py-1 text-[9px] font-extrabold ${
-                                STATUS_STYLES[status] || STATUS_STYLES.pending
-                              }`}
-                            >
-                              {STATUS_LABELS[status] || status}
-                            </span>
-                            <button
-                              onClick={() => openView(p)}
-                              className="inline-flex items-center gap-1.5 rounded-lg bg-[#efedff] px-3 py-1.5 text-[10px] font-extrabold text-[#5548d7] hover:bg-[#e4e1ff]"
-                            >
-                              <Eye size={12} /> View
-                            </button>
-                          </div>
-                        </li>
-                      );
-                    })}
-                </ul>
-              )}
-            </div>
-          </section>
-
-          <section
-            id="my-proposals"
-            className="mt-6 scroll-mt-24 rounded-[20px] border border-[#e4e8f0] bg-white shadow-[0_10px_30px_rgba(15,28,65,.035)]"
-          >
-            <div className="flex items-center justify-between gap-4 border-b border-[#edf0f5] p-5 sm:p-6 max-[720px]:block">
-              <div>
-                <span className="text-[10px] font-extrabold uppercase tracking-[.1em] text-[#6655f6]">
-                  Research activity
-                </span>
-                <h2 className="mb-0 mt-1 text-[20px] font-bold tracking-[-.03em]">
-                  My proposals
-                </h2>
-              </div>
-              <div className="mt-3 flex gap-2 sm:mt-0 max-[480px]:grid max-[480px]:grid-cols-[1fr_auto]">
-                <div className="relative min-w-0 sm:w-[220px]">
-                  <Search
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-[#98a1b3]"
-                    size={15}
-                  />
-                  <input
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    placeholder="Search proposals..."
-                    className="h-10 w-full rounded-[10px] border border-[#e2e6ee] bg-[#fafbfe] pl-9 pr-3 text-[11px] outline-none focus:border-[#8175ef]"
-                  />
-                </div>
-                <div className="relative">
-                  <Filter
-                    className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#98a1b3]"
-                    size={14}
-                  />
-                  <select
-                    value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value)}
-                    className="h-10 max-w-[165px] rounded-[10px] border border-[#e2e6ee] bg-[#fafbfe] pl-9 pr-3 text-[11px] font-semibold text-[#59657d] outline-none"
-                  >
-                    <option value="all">All statuses</option>
-                    {Object.entries(STATUS_LABELS).map(([value, label]) => (
-                      <option key={value} value={value}>
-                        {label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            {loading ? (
-              <div className="grid place-items-center p-12 text-xs font-semibold text-[#7c879a]">
-                Loading your proposals…
-              </div>
-            ) : filteredProposals.length ? (
-              <>
-                <div className="hidden overflow-x-auto md:block">
-                  <table className="w-full border-collapse text-left">
-                    <thead>
-                      <tr className="border-b border-[#edf0f5] text-[9px] font-extrabold uppercase tracking-[.08em] text-[#9ba4b5]">
-                        <th className="px-6 py-3">Proposal</th>
-                        <th className="px-4 py-3">Conference</th>
-                        <th className="px-4 py-3">Submitted</th>
-                        <th className="px-4 py-3">Status</th>
-                        <th className="px-6 py-3 text-right">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredProposals.map((proposal) => {
-                        const conferenceName =
-                          proposal.conference?.name ||
-                          proposal.conference?.title ||
-                          conferences.find(
-                            (c) => c.id === proposal.conference_id,
-                          )?.name ||
-                          "Conference";
-                        const status = proposal.status || "pending";
-                        const editable = status === "pending";
-                        return (
-                          <tr
-                            key={proposal.id}
-                            className="border-b border-[#f0f2f6] last:border-0 hover:bg-[#fbfbfe]"
-                          >
-                            <td className="px-6 py-4">
-                              <div className="flex items-center gap-3">
-                                <span className="grid h-9 w-9 place-items-center rounded-[10px] bg-[#f1efff] text-[#5b4fe3]">
-                                  <FileText size={16} />
-                                </span>
-                                <div>
-                                  <strong className="block max-w-[290px] truncate text-[11px] text-[#1c2a4a]">
-                                    {proposal.title}
-                                  </strong>
-                                  <span className="text-[9px] text-[#929bad]">
-                                    #{proposal.id} ·{" "}
-                                    {proposal.track || "General track"}
-                                  </span>
-                                </div>
-                              </div>
-                            </td>
-                            <td className="px-4 py-4 text-[10px] font-semibold text-[#5c6880]">
-                              {conferenceName}
-                            </td>
-                            <td className="px-4 py-4 text-[10px] text-[#7b869b]">
-                              {dateLabel(proposal.created_at)}
-                            </td>
-                            <td className="px-4 py-4">
-                              <span
-                                className={`inline-flex rounded-full border px-2.5 py-1 text-[9px] font-extrabold ${
-                                  STATUS_STYLES[status] ||
-                                  STATUS_STYLES.pending
-                                }`}
-                              >
-                                {STATUS_LABELS[status] || status}
-                              </span>
-                            </td>
-                            <td className="px-6 py-4">
-                              <div className="flex justify-end gap-1.5">
-                                <button
-                                  title="View"
-                                  onClick={() => openView(proposal)}
-                                  className="grid h-8 w-8 place-items-center rounded-lg bg-[#f4f6fa] text-[#647089] hover:bg-[#eceffa] hover:text-[#5548d7]"
-                                >
-                                  <Eye size={14} />
-                                </button>
-                                {editable && (
-                                  <button
-                                    title="Edit"
-                                    onClick={() => openEdit(proposal)}
-                                    className="grid h-8 w-8 place-items-center rounded-lg bg-[#f4f6fa] text-[#647089] hover:bg-[#eceffa] hover:text-[#5548d7]"
-                                  >
-                                    <Pencil size={14} />
-                                  </button>
-                                )}
-                                {editable && (
-                                  <button
-                                    title="Delete"
-                                    onClick={() => removeProposal(proposal)}
-                                    className="grid h-8 w-8 place-items-center rounded-lg bg-[#fff3f4] text-[#b13a3a] hover:bg-[#ffe6e8]"
-                                  >
-                                    <Trash2 size={14} />
-                                  </button>
-                                )}
-                                {["under_review", "revision_requested"].includes(
-                                  status,
-                                ) && (
-                                  <button
-                                    title="Withdraw"
-                                    onClick={() => withdrawProposal(proposal)}
-                                    className="grid h-8 w-8 place-items-center rounded-lg bg-[#fff7ec] text-[#a55b25] hover:bg-[#ffeed8]"
-                                  >
-                                    <RotateCcw size={14} />
-                                  </button>
-                                )}
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-
-                <div className="divide-y divide-[#edf0f5] md:hidden">
+        ) : filteredProposals.length ? (
+          <>
+            <div className="hidden overflow-x-auto md:block">
+              <table className="w-full border-collapse text-left">
+                <thead>
+                  <tr className="border-b border-[#edf0f5] text-[9px] font-extrabold uppercase tracking-[.08em] text-[#9ba4b5]">
+                    <th className="px-6 py-3">Proposal</th>
+                    <th className="px-4 py-3">Conference</th>
+                    <th className="px-4 py-3">Submitted</th>
+                    <th className="px-4 py-3">Status</th>
+                    <th className="px-6 py-3 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
                   {filteredProposals.map((proposal) => {
-                    const status = proposal.status || "pending";
                     const conferenceName =
                       proposal.conference?.name ||
                       proposal.conference?.title ||
                       conferences.find((c) => c.id === proposal.conference_id)
                         ?.name ||
                       "Conference";
+                    const status = proposal.status || "pending";
                     const editable = status === "pending";
                     return (
-                      <article key={proposal.id} className="p-4">
-                        <div className="flex gap-3">
-                          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-[10px] bg-[#f1efff] text-[#5b4fe3]">
-                            <FileText size={16} />
-                          </span>
-                          <div className="min-w-0 flex-1">
-                            <strong className="block text-[11px]">
-                              {proposal.title}
-                            </strong>
-                            <p className="mb-2 mt-1 text-[9px] text-[#8c96a9]">
-                              {conferenceName}
-                            </p>
-                            <span
-                              className={`inline-flex rounded-full border px-2.5 py-1 text-[9px] font-extrabold ${
-                                STATUS_STYLES[status] || STATUS_STYLES.pending
-                              }`}
-                            >
-                              {STATUS_LABELS[status] || status}
+                      <tr
+                        key={proposal.id}
+                        className="border-b border-[#f0f2f6] last:border-0 hover:bg-[#fbfbfe]"
+                      >
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            <span className="grid h-9 w-9 place-items-center rounded-[10px] bg-[#f1efff] text-[#5b4fe3]">
+                              <FileText size={16} />
                             </span>
+                            <div>
+                              <strong className="block max-w-[290px] truncate text-[11px] text-[#1c2a4a]">
+                                {proposal.title}
+                              </strong>
+                              <span className="text-[9px] text-[#929bad]">
+                                #{proposal.id} ·{" "}
+                                {proposal.track || "General track"}
+                              </span>
+                            </div>
                           </div>
-                        </div>
-                        <div className="mt-3 flex flex-wrap justify-between gap-2 text-[9px] text-[#8c96a9]">
-                          <span>Submitted {dateLabel(proposal.created_at)}</span>
-                          <div className="flex gap-1.5">
+                        </td>
+                        <td className="px-4 py-4 text-[10px] font-semibold text-[#5c6880]">
+                          {conferenceName}
+                        </td>
+                        <td className="px-4 py-4 text-[10px] text-[#7b869b]">
+                          {dateLabel(proposal.created_at)}
+                        </td>
+                        <td className="px-4 py-4">
+                          <span
+                            className={`inline-flex rounded-full border px-2.5 py-1 text-[9px] font-extrabold ${
+                              STATUS_STYLES[status] || STATUS_STYLES.pending
+                            }`}
+                          >
+                            {STATUS_LABELS[status] || status}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex justify-end gap-1.5">
                             <button
+                              title="View"
                               onClick={() => openView(proposal)}
-                              className="rounded-lg bg-[#f4f6fa] px-2.5 py-1.5 font-bold"
+                              className="grid h-8 w-8 place-items-center rounded-lg bg-[#f4f6fa] text-[#647089] hover:bg-[#eceffa] hover:text-[#5548d7]"
                             >
-                              View
+                              <Eye size={14} />
                             </button>
                             {editable && (
                               <button
+                                title="Edit"
                                 onClick={() => openEdit(proposal)}
-                                className="rounded-lg bg-[#efedff] px-2.5 py-1.5 font-bold text-[#5548d7]"
+                                className="grid h-8 w-8 place-items-center rounded-lg bg-[#f4f6fa] text-[#647089] hover:bg-[#eceffa] hover:text-[#5548d7]"
                               >
-                                Edit
+                                <Pencil size={14} />
                               </button>
                             )}
                             {editable && (
                               <button
+                                title="Delete"
                                 onClick={() => removeProposal(proposal)}
-                                className="rounded-lg bg-[#fff2f2] px-2.5 py-1.5 font-bold text-[#b13a3a]"
+                                className="grid h-8 w-8 place-items-center rounded-lg bg-[#fff3f4] text-[#b13a3a] hover:bg-[#ffe6e8]"
                               >
-                                Delete
+                                <Trash2 size={14} />
+                              </button>
+                            )}
+                            {["under_review", "revision_requested"].includes(
+                              status,
+                            ) && (
+                              <button
+                                title="Withdraw"
+                                onClick={() => withdrawProposal(proposal)}
+                                className="grid h-8 w-8 place-items-center rounded-lg bg-[#fff7ec] text-[#a55b25] hover:bg-[#ffeed8]"
+                              >
+                                <RotateCcw size={14} />
                               </button>
                             )}
                           </div>
-                        </div>
-                      </article>
+                        </td>
+                      </tr>
                     );
                   })}
-                </div>
-              </>
-            ) : (
-              <div className="p-12 text-center">
-                <Search size={20} className="mx-auto text-[#aeb6c6]" />
-                <h3 className="mb-1 mt-3 text-[13px] font-bold">
-                  No proposals found
-                </h3>
-                <p className="m-0 text-[10px] text-[#8993a6]">
-                  Try another search/status filter or submit a new proposal.
-                </p>
-              </div>
-            )}
-          </section>
+                </tbody>
+              </table>
+            </div>
 
-          <section
-            id="deadlines"
-            className="mt-6 grid scroll-mt-24 grid-cols-[1.25fr_.75fr] gap-5 max-[900px]:grid-cols-1"
-          >
-            <article className="rounded-[20px] border border-[#e4e8f0] bg-white p-5 shadow-[0_10px_30px_rgba(15,28,65,.035)] sm:p-6">
-              <div className="mb-5 flex items-start justify-between">
-                <div>
-                  <span className="text-[10px] font-extrabold uppercase tracking-[.1em] text-[#6655f6]">
-                    Stay ahead
-                  </span>
-                  <h2 className="mb-0 mt-1 text-[20px] font-bold tracking-[-.03em]">
-                    Upcoming deadlines
-                  </h2>
-                </div>
-                <CalendarDays size={19} className="text-[#6a5af2]" />
-              </div>
-              <div className="space-y-3">
-                {deadlines.length ? (
-                  deadlines.map((c) => (
-                    <div
-                      key={c.id}
-                      className="flex items-center gap-3 rounded-[13px] border border-[#edf0f5] bg-[#fafbfe] p-3"
-                    >
-                      <div className="grid h-11 w-12 shrink-0 place-items-center rounded-[10px] bg-[#efedff] text-center">
-                        <strong className="block text-[10px] font-extrabold text-[#5649dc]">
-                          {new Date(c.submission_deadline).toLocaleDateString(
-                            undefined,
-                            { month: "short", day: "2-digit" },
-                          )}
-                        </strong>
-                      </div>
+            <div className="divide-y divide-[#edf0f5] md:hidden">
+              {filteredProposals.map((proposal) => {
+                const status = proposal.status || "pending";
+                const conferenceName =
+                  proposal.conference?.name ||
+                  proposal.conference?.title ||
+                  conferences.find((c) => c.id === proposal.conference_id)
+                    ?.name ||
+                  "Conference";
+                const editable = status === "pending";
+                return (
+                  <article key={proposal.id} className="p-4">
+                    <div className="flex gap-3">
+                      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-[10px] bg-[#f1efff] text-[#5b4fe3]">
+                        <FileText size={16} />
+                      </span>
                       <div className="min-w-0 flex-1">
-                        <strong className="block truncate text-[11px]">
-                          {c.name}
+                        <strong className="block text-[11px]">
+                          {proposal.title}
                         </strong>
-                        <span className="text-[9px] text-[#8a95a8]">
-                          Submission deadline
+                        <p className="mb-2 mt-1 text-[9px] text-[#8c96a9]">
+                          {conferenceName}
+                        </p>
+                        <span
+                          className={`inline-flex rounded-full border px-2.5 py-1 text-[9px] font-extrabold ${
+                            STATUS_STYLES[status] || STATUS_STYLES.pending
+                          }`}
+                        >
+                          {STATUS_LABELS[status] || status}
                         </span>
                       </div>
-                      <ChevronRight size={15} className="text-[#a7afbd]" />
                     </div>
-                  ))
-                ) : (
-                  <p className="m-0 text-xs text-[#8a95a8]">
-                    No conference deadlines are available yet.
-                  </p>
-                )}
-              </div>
-            </article>
+                    <div className="mt-3 flex flex-wrap justify-between gap-2 text-[9px] text-[#8c96a9]">
+                      <span>Submitted {dateLabel(proposal.created_at)}</span>
+                      <div className="flex gap-1.5">
+                        <button
+                          onClick={() => openView(proposal)}
+                          className="rounded-lg bg-[#f4f6fa] px-2.5 py-1.5 font-bold"
+                        >
+                          View
+                        </button>
+                        {editable && (
+                          <button
+                            onClick={() => openEdit(proposal)}
+                            className="rounded-lg bg-[#efedff] px-2.5 py-1.5 font-bold text-[#5548d7]"
+                          >
+                            Edit
+                          </button>
+                        )}
+                        {editable && (
+                          <button
+                            onClick={() => removeProposal(proposal)}
+                            className="rounded-lg bg-[#fff2f2] px-2.5 py-1.5 font-bold text-[#b13a3a]"
+                          >
+                            Delete
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          </>
+        ) : (
+          <div className="p-12 text-center">
+            <Search size={20} className="mx-auto text-[#aeb6c6]" />
+            <h3 className="mb-1 mt-3 text-[13px] font-bold">
+              No proposals found
+            </h3>
+            <p className="m-0 text-[10px] text-[#8993a6]">
+              Try another search/status filter or submit a new proposal.
+            </p>
+          </div>
+        )}
+      </section>
 
-            <article className="rounded-[20px] bg-gradient-to-br from-[#111e4b] to-[#342b87] p-6 text-white shadow-[0_18px_45px_rgba(20,28,80,.15)]">
-              <span className="grid h-10 w-10 place-items-center rounded-xl bg-white/10">
-                <BookOpen size={18} />
+      <section
+        id="deadlines"
+        className="grid scroll-mt-24 grid-cols-[1.25fr_.75fr] gap-5 max-[900px]:grid-cols-1"
+      >
+        <article className="rounded-[20px] border border-[#e4e8f0] bg-white p-5 shadow-[0_10px_30px_rgba(15,28,65,.035)] sm:p-6">
+          <div className="mb-5 flex items-start justify-between">
+            <div>
+              <span className="text-[10px] font-extrabold uppercase tracking-[.1em] text-[#6655f6]">
+                Stay ahead
               </span>
-              <h2 className="mb-2 mt-5 text-[20px] font-bold tracking-[-.03em]">
-                Ready for your next submission?
+              <h2 className="mb-0 mt-1 text-[20px] font-bold tracking-[-.03em]">
+                Upcoming deadlines
               </h2>
-              <p className="m-0 text-[10px] leading-6 text-white/60">
-                Browse open conferences and submit directly into the CMT
-                workflow.
+            </div>
+            <CalendarDays size={19} className="text-[#6a5af2]" />
+          </div>
+          <div className="space-y-3">
+            {deadlines.length ? (
+              deadlines.map((c) => (
+                <div
+                  key={c.id}
+                  className="flex items-center gap-3 rounded-[13px] border border-[#edf0f5] bg-[#fafbfe] p-3"
+                >
+                  <div className="grid h-11 w-12 shrink-0 place-items-center rounded-[10px] bg-[#efedff] text-center">
+                    <strong className="block text-[10px] font-extrabold text-[#5649dc]">
+                      {new Date(c.submission_deadline).toLocaleDateString(
+                        undefined,
+                        { month: "short", day: "2-digit" },
+                      )}
+                    </strong>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <strong className="block truncate text-[11px]">
+                      {c.name}
+                    </strong>
+                    <span className="text-[9px] text-[#8a95a8]">
+                      Submission deadline
+                    </span>
+                  </div>
+                  <ChevronRight size={15} className="text-[#a7afbd]" />
+                </div>
+              ))
+            ) : (
+              <p className="m-0 text-xs text-[#8a95a8]">
+                No conference deadlines are available yet.
               </p>
-              <button
-                onClick={() => navigate("/conferences")}
-                className="mt-5 inline-flex items-center gap-2 rounded-[10px] border border-white/15 bg-white/[.08] px-3.5 py-2.5 text-[10px] font-extrabold text-white hover:bg-white/[.14]"
-              >
-                Browse conferences <ChevronRight size={14} />
-              </button>
-            </article>
-          </section>
+            )}
+          </div>
+        </article>
 
-          <footer className="flex flex-wrap items-center justify-between gap-3 px-1 py-8 text-[9px] text-[#8c96a9]">
-            <span>CMT Author Workspace · API connected</span>
-            <span>Submission permissions are enforced by the backend.</span>
-          </footer>
-        </main>
-      </div>
+        <article className="rounded-[20px] bg-gradient-to-br from-[#111e4b] to-[#342b87] p-6 text-white shadow-[0_18px_45px_rgba(20,28,80,.15)]">
+          <span className="grid h-10 w-10 place-items-center rounded-xl bg-white/10">
+            <BookOpen size={18} />
+          </span>
+          <h2 className="mb-2 mt-5 text-[20px] font-bold tracking-[-.03em]">
+            Ready for your next submission?
+          </h2>
+          <p className="m-0 text-[10px] leading-6 text-white/60">
+            Browse open conferences and submit directly into the CMT workflow.
+          </p>
+          <button
+            onClick={() => navigate("/author/conferences")}
+            className="mt-5 inline-flex items-center gap-2 rounded-[10px] border border-white/15 bg-white/[.08] px-3.5 py-2.5 text-[10px] font-extrabold text-white hover:bg-white/[.14]"
+          >
+            Browse conferences <ChevronRight size={14} />
+          </button>
+        </article>
+      </section>
+
+      <footer className="flex flex-wrap items-center justify-between gap-3 px-1 py-4 text-[9px] text-[#8c96a9]">
+        <span>CMT Author Workspace · API connected</span>
+        <span>Submission permissions are enforced by the backend.</span>
+      </footer>
 
       {modal === "create" || modal === "edit" ? (
         <Modal
@@ -1241,7 +1080,7 @@ export default function AuthorDashboard() {
               </p>
             </div>
 
-            <div id="feedback" className="scroll-mt-24">
+            <div>
               <span className="text-[9px] font-extrabold uppercase tracking-wide text-[#9aa3b3]">
                 Reviewer feedback
               </span>
@@ -1251,8 +1090,7 @@ export default function AuthorDashboard() {
                 </p>
               ) : submissionReviews.length === 0 ? (
                 <p className="mb-0 mt-2 rounded-xl border border-dashed border-[#dfe4ed] bg-[#fafbfe] p-3 text-[11px] text-[#8993a6]">
-                  No reviewer feedback yet. Feedback appears once reviewers
-                  submit their assessment.
+                  No reviewer feedback yet.
                 </p>
               ) : (
                 <ul className="mt-2 space-y-3">
@@ -1352,6 +1190,6 @@ export default function AuthorDashboard() {
           </div>
         </Modal>
       ) : null}
-    </div>
+    </AuthorLayout>
   );
 }

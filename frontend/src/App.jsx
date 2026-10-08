@@ -30,6 +30,11 @@ const AttendeeDashboard = lazy(() => import("./pages/AttendeeDashboard"));
 const MyConferences = lazy(() => import("./pages/MyConferences"));
 const UsersPage = lazy(() => import("./pages/UsersPage"));
 
+/* ---------- Author sub-pages ---------- */
+const AuthorFeedback = lazy(() => import("./pages/AuthorFeedback"));
+const AuthorTestimonials = lazy(() => import("./pages/AuthorTestimonials"));
+const AuthorConferences = lazy(() => import("./pages/AuthorConferences"));
+
 /* ---------- Organiser sub-pages ---------- */
 const OrganiserConferences = lazy(() => import("./pages/OrganiserConferences"));
 const OrganiserReviews = lazy(() => import("./pages/OrganiserReviews"));
@@ -92,6 +97,35 @@ export default function App() {
           />
 
           <Route
+            path="/author/feedback"
+            element={
+              <ProtectedRoute roles={["author"]}>
+                <AuthorFeedback />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/author/conferences"
+            element={
+              <ProtectedRoute roles={["author"]}>
+                <AuthorConferences />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/author/testimonials"
+            element={
+              <ProtectedRoute
+                roles={["author", "reviewer", "organiser", "attendee", "admin"]}
+              >
+                <AuthorTestimonials />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
             path="/submit-proposal"
             element={
               <ProtectedRoute roles={["author"]}>
@@ -144,7 +178,7 @@ export default function App() {
               <ProtectedRoute
                 roles={["author", "reviewer", "organiser", "attendee", "admin"]}
               >
-                <Testimonials />
+                <AuthorTestimonials />
               </ProtectedRoute>
             }
           />

@@ -17,6 +17,7 @@ import {
   X,
 } from "lucide-react";
 import Logo from "./Logo";
+import NotificationBell from "./NotificationBell";
 import AttendeeHeader from "./AttendeeHeader";
 import AttendeeSidebar from "./AttendeeSidebar";
 import { useAuth } from "../context/AuthContext";
@@ -104,6 +105,7 @@ function AuthorWorkspaceShell({ children }) {
             </p>
           </div>
           <div className="ml-auto flex items-center gap-2">
+            <NotificationBell dark />
             <button
               className="hidden h-10 w-10 place-items-center rounded-[11px] border border-white/15 bg-white/[.05] text-white/80 sm:grid"
               onClick={toggleTheme}
@@ -142,7 +144,7 @@ function AuthorWorkspaceShell({ children }) {
             </p>
           </div>
 
-          <nav className="space-y-1" aria-label="Author navigation">
+          <nav className="space-y-1" aria-label="Author dashboard navigation">
             {AUTHOR_NAV.map((item) => {
               const Icon = item.icon;
               const active = isActive(item.to);
@@ -151,7 +153,7 @@ function AuthorWorkspaceShell({ children }) {
                   key={item.to + item.label}
                   to={item.to}
                   onClick={() => setSidebarOpen(false)}
-                  className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] transition ${
+                  className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] ${
                     active
                       ? "bg-[#efedff] font-extrabold text-[#5649dc]"
                       : "font-semibold text-[#66728b] hover:bg-[#f5f6fa]"
@@ -167,9 +169,24 @@ function AuthorWorkspaceShell({ children }) {
           <div className="my-4 border-t border-[#edf0f5]" />
 
           <Link
+            to="/testimonials"
+            onClick={() => setSidebarOpen(false)}
+            className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] ${
+              location.pathname === "/testimonials"
+                ? "bg-[#efedff] font-extrabold text-[#5649dc]"
+                : "font-semibold text-[#66728b] hover:bg-[#f5f6fa]"
+            }`}
+          >
+            <MessageSquareQuote size={16} />
+            <span className="truncate">Testimonials</span>
+          </Link>
+
+          <div className="my-4 border-t border-[#edf0f5]" />
+
+          <Link
             to="/profile"
             onClick={() => setSidebarOpen(false)}
-            className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] transition ${
+            className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] ${
               location.pathname === "/profile"
                 ? "bg-[#efedff] font-extrabold text-[#5649dc]"
                 : "font-semibold text-[#66728b] hover:bg-[#f5f6fa]"
@@ -182,7 +199,7 @@ function AuthorWorkspaceShell({ children }) {
           <Link
             to="/settings"
             onClick={() => setSidebarOpen(false)}
-            className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] transition ${
+            className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] ${
               location.pathname === "/settings"
                 ? "bg-[#efedff] font-extrabold text-[#5649dc]"
                 : "font-semibold text-[#66728b] hover:bg-[#f5f6fa]"
@@ -295,7 +312,7 @@ function GenericShell({ children }) {
                 <Link
                   key={item.to + item.label}
                   to={item.to}
-                  className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] transition ${
+                  className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] ${
                     active
                       ? "bg-[#efedff] font-extrabold text-[#5649dc]"
                       : "font-semibold text-[#66728b] hover:bg-[#f5f6fa]"
@@ -312,7 +329,7 @@ function GenericShell({ children }) {
 
           <Link
             to="/testimonials"
-            className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] transition ${
+            className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] ${
               location.pathname === "/testimonials"
                 ? "bg-[#efedff] font-extrabold text-[#5649dc]"
                 : "font-semibold text-[#66728b] hover:bg-[#f5f6fa]"
@@ -326,7 +343,7 @@ function GenericShell({ children }) {
 
           <Link
             to="/profile"
-            className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] transition ${
+            className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] ${
               location.pathname === "/profile"
                 ? "bg-[#efedff] font-extrabold text-[#5649dc]"
                 : "font-semibold text-[#66728b] hover:bg-[#f5f6fa]"
@@ -338,7 +355,7 @@ function GenericShell({ children }) {
 
           <Link
             to="/settings"
-            className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] transition ${
+            className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] ${
               location.pathname === "/settings"
                 ? "bg-[#efedff] font-extrabold text-[#5649dc]"
                 : "font-semibold text-[#66728b] hover:bg-[#f5f6fa]"
@@ -397,7 +414,8 @@ export default function RoleChrome({ children }) {
   if (role === "admin") return <AdminLayout>{children}</AdminLayout>;
   if (role === "reviewer") return <ReviewerLayout>{children}</ReviewerLayout>;
   if (role === "organiser") return <OrganiserLayout>{children}</OrganiserLayout>;
-  if (role === "author") return <AuthorWorkspaceShell>{children}</AuthorWorkspaceShell>;
+  if (role === "author")
+    return <AuthorWorkspaceShell>{children}</AuthorWorkspaceShell>;
   if (role === "attendee")
     return <AttendeeWorkspaceShell>{children}</AttendeeWorkspaceShell>;
   return <GenericShell>{children}</GenericShell>;
