@@ -3443,40 +3443,14 @@ const assignReviewer = async (e) => {
 
 
             <div className="divide-y divide-[#edf0f5] dark:divide-[#1e293b] md:hidden">
-
-
-
               {filteredSubmissions.map((s) => {
-
-
-
                 const related = reviews.filter(
-
-
-
                   (r) => Number(r.submission_id) === Number(s.id)
-
-
-
                 );
-
-
-
                 const status = s.status || "pending";
-
-
-
                 return (
-
-
-
                   <article key={s.id} className="p-4">
-
-
-
                     <div className="flex gap-3">
-
-
 
                       <span className="grid h-9 w-9 shrink-0 place-items-center rounded-[10px] bg-[#f1efff] text-[#5b4fe3] dark:bg-[#2a2354] dark:text-[#a9a2ff]">
 
