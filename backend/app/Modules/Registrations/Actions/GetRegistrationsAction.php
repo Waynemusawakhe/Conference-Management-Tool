@@ -16,7 +16,27 @@ class GetRegistrationsAction
         $query = Registration::query()
             ->with(['conference', 'user']);
 
-        if ($requester->role === 'organiser') {
+        /*
+         * An organiser has two registration views:
+         *
+         * 1. Management view:
+         *    registrations for conferences they organise.
+         *
+         * 2. Personal attendance view:
+         *    registrations where they are personally attending.
+         *
+         * MyConferences sends user_id equal to the authenticated
+         * user's ID, so in that case the organiser should receive
+         * their own attendance registrations.
+         */
+        $requestingOwnRegistrations =
+            ! empty($filters['user_id'])
+            && (int) $filters['user_id'] === (int) $requester->id;
+
+        if (
+            $requester->role === 'organiser'
+            && ! $requestingOwnRegistrations
+        ) {
             $query->whereHas(
                 'conference',
                 function ($conferenceQuery) use ($requester) {
@@ -27,7 +47,15 @@ class GetRegistrationsAction
                 }
             );
         } elseif ($requester->role !== 'admin') {
-            $query->where('user_id', $requester->id);
+            /*
+             * Authors, reviewers, attendees and organisers
+             * explicitly requesting their own registrations
+             * may only see their own attendance.
+             */
+            $query->where(
+                'user_id',
+                $requester->id
+            );
         }
 
         if (! empty($filters['conference_id'])) {

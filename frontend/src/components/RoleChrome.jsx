@@ -40,7 +40,7 @@ const WORKSPACE_LABEL = {
 const AUTHOR_NAV = [
   { label: "Overview", to: "/author-dashboard", icon: LayoutDashboard },
   { label: "My proposals", to: "/author-dashboard#my-proposals", icon: FileText },
-  { label: "Feedback", to: "/author/feedback", icon: MessageSquareQuote },
+     
   { label: "Deadlines", to: "/author-dashboard#deadlines", icon: CalendarDays },
   { label: "Browse conferences", to: "/conferences", icon: Search },
 ];
