@@ -4,6 +4,5 @@
 .env 
 .env.* 
 .postman
-backend/config/cors.php
 
 
