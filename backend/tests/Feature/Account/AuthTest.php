@@ -76,14 +76,14 @@ class AuthTest extends TestCase
         );
     }
 
-    public function test_public_registration_cannot_create_reviewer_account(): void
+    public function test_public_registration_can_create_reviewer_account(): void
     {
         Notification::fake();
 
         $response = $this->postJson(
             '/api/v1/auth/register',
             [
-                'name' => 'Fake Reviewer',
+                'name' => 'Reviewer User',
                 'email' => 'reviewer@example.com',
                 'password' => 'password123',
                 'password_confirmation' => 'password123',
@@ -92,15 +92,17 @@ class AuthTest extends TestCase
         );
 
         $response
-            ->assertUnprocessable()
-            ->assertJsonValidationErrors([
-                'role',
-            ]);
+            ->assertCreated()
+            ->assertJsonPath(
+                'success',
+                true
+            );
 
-        $this->assertDatabaseMissing(
+        $this->assertDatabaseHas(
             'users',
             [
                 'email' => 'reviewer@example.com',
+                'role' => 'reviewer',
             ]
         );
     }

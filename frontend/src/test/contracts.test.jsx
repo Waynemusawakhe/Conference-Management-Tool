@@ -98,13 +98,20 @@ describe("role and navigation contracts", () => {
       ).not.toBeInTheDocument();
     },
   );
-  it("shows proposal action and readable API labels for authors", () => {
+  it("shows conference details action and readable API labels for authors", () => {
     wrapper(<ConferenceCard conference={conference} />);
+
     expect(
-      screen.getByRole("button", { name: /Submit a proposal/ }),
+      screen.getByRole("button", {
+        name: /View conference details/i,
+      }),
     ).toBeInTheDocument();
+
     expect(screen.getByText("Online")).toBeInTheDocument();
-    expect(screen.getByText("Open for submissions")).toBeInTheDocument();
+
+    expect(
+      screen.getByText("Open for submissions"),
+    ).toBeInTheDocument();
   });
   it("redirects an organiser away from author/admin edit content", () => {
     wrapper(

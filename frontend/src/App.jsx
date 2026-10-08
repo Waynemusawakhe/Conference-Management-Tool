@@ -1,6 +1,7 @@
 import { lazy, Suspense } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 
+const UserConferencePage = lazy(() => import("./pages/UserConferencePage"));
 const Home = lazy(() => import("./pages/Home"));
 const Login = lazy(() => import("./pages/Login"));
 const Conferences = lazy(() => import("./pages/Conferences"));
@@ -34,7 +35,7 @@ const UsersPage = lazy(() => import("./pages/UsersPage"));
 const UserTestimonials = lazy(() => import("./pages/UserTestimonials"));
 
 /* ---------- Author sub-pages ---------- */
-const AuthorFeedback = lazy(() => import("./pages/AuthorFeedback"));
+ 
 const AuthorConferences = lazy(() => import("./pages/AuthorConferences"));
 
 /* ---------- Organiser sub-pages ---------- */
@@ -82,6 +83,7 @@ export default function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/conferences" element={<Conferences />} />
+          <Route path="/conferences/:id" element={<UserConferencePage />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/help-faq" element={<HelpFAQ />} />
           <Route path="/about" element={<About />} />
@@ -111,14 +113,7 @@ export default function App() {
             }
           />
 
-          <Route
-            path="/author/feedback"
-            element={
-              <ProtectedRoute roles={["author"]}>
-                <AuthorFeedback />
-              </ProtectedRoute>
-            }
-          />
+       
 
           <Route
             path="/author/conferences"
