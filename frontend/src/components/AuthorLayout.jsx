@@ -29,7 +29,7 @@ const NAV = [
 ];
 
 const FOOTER_NAV = [
-  { label: "Testimonials", to: "/author/testimonials", icon: MessageSquareQuote },
+  { label: "Testimonials", to: "/user-testimonials", icon: MessageSquareQuote },
 ];
 
 const SETTINGS_NAV = [

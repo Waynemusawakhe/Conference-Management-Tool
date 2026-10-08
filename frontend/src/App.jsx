@@ -30,9 +30,11 @@ const AttendeeDashboard = lazy(() => import("./pages/AttendeeDashboard"));
 const MyConferences = lazy(() => import("./pages/MyConferences"));
 const UsersPage = lazy(() => import("./pages/UsersPage"));
 
+/* ---------- Shared authenticated ---------- */
+const UserTestimonials = lazy(() => import("./pages/UserTestimonials"));
+
 /* ---------- Author sub-pages ---------- */
 const AuthorFeedback = lazy(() => import("./pages/AuthorFeedback"));
-const AuthorTestimonials = lazy(() => import("./pages/AuthorTestimonials"));
 const AuthorConferences = lazy(() => import("./pages/AuthorConferences"));
 
 /* ---------- Organiser sub-pages ---------- */
@@ -58,6 +60,8 @@ import { ThemeProvider } from "./context/ThemeContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 const AuthorDashboard = lazy(() => import("./pages/AuthorDashboard"));
+
+const ALL_ROLES = ["author", "reviewer", "organiser", "attendee", "admin"];
 
 export default function App() {
   return (
@@ -85,6 +89,17 @@ export default function App() {
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/email-verified" element={<EmailVerified />} />
 
+          {/* ==================== SHARED AUTHENTICATED ==================== */}
+
+          <Route
+            path="/user-testimonials"
+            element={
+              <ProtectedRoute roles={ALL_ROLES}>
+                <UserTestimonials />
+              </ProtectedRoute>
+            }
+          />
+
           {/* ==================== AUTHOR ==================== */}
 
           <Route
@@ -110,17 +125,6 @@ export default function App() {
             element={
               <ProtectedRoute roles={["author"]}>
                 <AuthorConferences />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/author/testimonials"
-            element={
-              <ProtectedRoute
-                roles={["author", "reviewer", "organiser", "attendee", "admin"]}
-              >
-                <AuthorTestimonials />
               </ProtectedRoute>
             }
           />
@@ -173,17 +177,6 @@ export default function App() {
           />
 
           <Route
-            path="/user-testimonials"
-            element={
-              <ProtectedRoute
-                roles={["author", "reviewer", "organiser", "attendee", "admin"]}
-              >
-                <AuthorTestimonials />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
             path="/reviewer/pending"
             element={<Navigate to="/reviewer-dashboard?filter=pending" replace />}
           />
@@ -207,9 +200,7 @@ export default function App() {
           <Route
             path="/my-conferences"
             element={
-              <ProtectedRoute
-                roles={["author", "reviewer", "organiser", "attendee", "admin"]}
-              >
+              <ProtectedRoute roles={ALL_ROLES}>
                 <MyConferences />
               </ProtectedRoute>
             }
@@ -422,9 +413,7 @@ export default function App() {
           <Route
             path="/profile"
             element={
-              <ProtectedRoute
-                roles={["author", "reviewer", "organiser", "attendee", "admin"]}
-              >
+              <ProtectedRoute roles={ALL_ROLES}>
                 <Profile />
               </ProtectedRoute>
             }
@@ -433,9 +422,7 @@ export default function App() {
           <Route
             path="/settings"
             element={
-              <ProtectedRoute
-                roles={["author", "reviewer", "organiser", "attendee", "admin"]}
-              >
+              <ProtectedRoute roles={ALL_ROLES}>
                 <Settings />
               </ProtectedRoute>
             }
@@ -444,9 +431,7 @@ export default function App() {
           <Route
             path="/account-settings"
             element={
-              <ProtectedRoute
-                roles={["author", "reviewer", "organiser", "attendee", "admin"]}
-              >
+              <ProtectedRoute roles={ALL_ROLES}>
                 <AccountSettings />
               </ProtectedRoute>
             }

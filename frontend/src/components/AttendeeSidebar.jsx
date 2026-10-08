@@ -3,6 +3,7 @@ import {
   LayoutDashboard,
   LoaderCircle,
   LogOut,
+  MessageSquareQuote,
   Settings,
   TicketCheck,
   UserRound,
@@ -64,7 +65,7 @@ export default function AttendeeSidebar({ open, onClose }) {
       <aside
         className={`${
           open ? "fixed left-4 top-[88px] z-40 block" : "hidden"
-        } w-[250px] shrink-0 rounded-2xl border border-[#e4e8f0] bg-white p-3 shadow-[0_18px_45px_rgba(15,28,65,.12)] lg:sticky lg:top-[100px] lg:block lg:h-[calc(100vh-124px)] lg:shadow-none`}
+        } w-[250px] shrink-0 rounded-2xl border border-[#e4e8f0] bg-white p-3 shadow-[0_18px_45px_rgba(15,28,65,.12)] lg:sticky lg:top-[100px] lg:block lg:h-[calc(100vh-124px)] lg:overflow-y-auto lg:shadow-none`}
       >
         <div className="mb-3 rounded-xl bg-gradient-to-br from-[#111e4b] to-[#342b87] p-4 text-white">
           <span className="mb-2 grid h-9 w-9 place-items-center rounded-lg bg-white/10">
@@ -105,6 +106,15 @@ export default function AttendeeSidebar({ open, onClose }) {
             onClick={() => goTo("/conferences")}
           />
         </nav>
+
+        <div className="my-4 border-t border-[#edf0f5]" />
+
+        <NavItem
+          icon={<MessageSquareQuote size={16} />}
+          label="Testimonials"
+          active={location.pathname === "/user-testimonials"}
+          onClick={() => goTo("/user-testimonials")}
+        />
 
         <div className="my-4 border-t border-[#edf0f5]" />
 

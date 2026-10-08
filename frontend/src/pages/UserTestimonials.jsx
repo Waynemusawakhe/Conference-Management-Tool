@@ -77,9 +77,7 @@ function StarRow({ value, size = 14 }) {
           key={i}
           size={size}
           className={
-            i < value
-              ? "fill-[#f59e0b] text-[#f59e0b]"
-              : "text-[#dfe4ed]"
+            i < value ? "fill-[#f59e0b] text-[#f59e0b]" : "text-[#dfe4ed]"
           }
         />
       ))}
@@ -376,8 +374,7 @@ function TestimonialDialog({
               disabled={
                 saving ||
                 rating < 1 ||
-                (!isEdit &&
-                  (conferencesLoading || conferences.length === 0))
+                (!isEdit && (conferencesLoading || conferences.length === 0))
               }
               className="inline-flex min-h-11 items-center justify-center rounded-xl bg-gradient-to-br from-[#6655f6] to-[#7869ff] px-5 text-[11px] font-extrabold text-white shadow-[0_12px_28px_rgba(103,87,245,.28)] transition hover:-translate-y-px disabled:cursor-not-allowed disabled:opacity-60"
             >
@@ -394,7 +391,7 @@ function TestimonialDialog({
   );
 }
 
-export default function AuthorTestimonials() {
+export default function UserTestimonials() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
 
@@ -446,9 +443,7 @@ export default function AuthorTestimonials() {
   const myTestimonial = useMemo(() => {
     if (currentUserId == null) return null;
     return (
-      items.find(
-        (t) => String(tOwnerId(t)) === String(currentUserId),
-      ) || null
+      items.find((t) => String(tOwnerId(t)) === String(currentUserId)) || null
     );
   }, [items, currentUserId]);
 
@@ -485,8 +480,8 @@ export default function AuthorTestimonials() {
               What people say
             </h1>
             <p className="m-0 max-w-[620px] text-[12px] leading-6 text-white/65">
-              Real experiences from authors, reviewers, organisers and
-              attendees across CMT.
+              Real experiences from authors, reviewers, organisers and attendees
+              across CMT.
             </p>
           </div>
           <button

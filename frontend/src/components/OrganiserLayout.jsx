@@ -25,31 +25,11 @@ import { useAuth } from "../context/AuthContext";
 import { submissionsApi } from "../api/submissionsApi";
 
 const PRIMARY_NAV = [
-  {
-    label: "Overview",
-    to: "/organiser-dashboard",
-    icon: LayoutDashboard,
-  },
-  {
-    label: "My conferences",
-    to: "/organiser/conferences",
-    icon: CalendarDays,
-  },
-  {
-    label: "Reviews",
-    to: "/organiser/reviews",
-    icon: CheckCheck,
-  },
-  {
-    label: "Attendees",
-    to: "/organiser/registrations",
-    icon: Users,
-  },
-  {
-    label: "Create conference",
-    to: "/create-conference",
-    icon: Plus,
-  },
+  { label: "Overview", to: "/organiser-dashboard", icon: LayoutDashboard },
+  { label: "My conferences", to: "/organiser/conferences", icon: CalendarDays },
+  { label: "Reviews", to: "/organiser/reviews", icon: CheckCheck },
+  { label: "Attendees", to: "/organiser/registrations", icon: Users },
+  { label: "Create conference", to: "/create-conference", icon: Plus },
 ];
 
 const DISMISSED_KEY = "cmt_organiser_dismissed_notifications";
@@ -419,10 +399,10 @@ export default function OrganiserLayout({ children }) {
           <div className="my-4 border-t border-[#edf0f5] dark:border-[#1e293b]" />
 
           <Link
-            to="/testimonials"
+            to="/user-testimonials"
             onClick={() => setSidebarOpen(false)}
             className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] transition ${
-              isActiveRoute("/testimonials")
+              isActiveRoute("/user-testimonials")
                 ? "bg-[#efedff] font-extrabold text-[#5649dc] dark:bg-[#2a2354] dark:text-[#a9a2ff]"
                 : "font-semibold text-[#66728b] hover:bg-[#f5f6fa] dark:text-[#94a3b8] dark:hover:bg-[#111c33]"
             }`}
