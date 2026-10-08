@@ -2,14 +2,29 @@
 import { Link, useNavigate } from "react-router-dom";
 import Logo from "../components/Logo";
 import Navbar from "../components/Navbar";
-import { ArrowRight, CheckCircle2, LockKeyhole, Mail, Sparkles, UserRound, Users } from "lucide-react";
+import {
+  ArrowRight,
+  CheckCircle2,
+  LockKeyhole,
+  Mail,
+  Sparkles,
+  UserRound,
+  Users,
+} from "lucide-react";
 import { authApi } from "../api/authApi";
 
-// Minimum password length confirmed for your frontend UX.
-// The backend remains the final authority.
 const MIN_PASSWORD_LENGTH = 8;
 
-// Calculates password strength based on length and character variety.
+const ROLE_OPTIONS = [
+  { value: "attendee", label: "Attendee" },
+  { value: "author", label: "Author" },
+  { value: "reviewer", label: "Reviewer" },
+  { value: "organiser", label: "Organiser" },
+  { value: "admin", label: "Admin" },
+];
+
+const ALLOWED_ROLES = ROLE_OPTIONS.map((r) => r.value);
+
 function getPasswordStrength(password) {
   if (!password) {
     return { score: 0, label: "", color: "" };
@@ -38,13 +53,12 @@ function Register() {
     email: "",
     password: "",
     confirmPassword: "",
-    role: "", // No default — user must choose
+    role: "",
   });
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // Auto-hide success message and redirect to login after 3 seconds
   useEffect(() => {
     if (!success) return;
 
@@ -68,7 +82,6 @@ function Register() {
     setError("");
     setSuccess(false);
 
-    // Client-side validation (UX only — backend validates too)
     if (
       !formData.fullName ||
       !formData.email ||
@@ -94,15 +107,14 @@ function Register() {
       setError("Please choose a role.");
       return;
     }
-    if (!["author", "organiser", "attendee"].includes(formData.role)) {
-      setError("Please select a valid public account role.");
+    if (!ALLOWED_ROLES.includes(formData.role)) {
+      setError("Please select a valid account role.");
       return;
     }
 
     setLoading(true);
 
     try {
-      // CONFIRM IN SWAGGER: exact field names and accepted role values.
       await authApi.register({
         name: formData.fullName,
         email: formData.email,
@@ -111,7 +123,6 @@ function Register() {
         role: formData.role,
       });
 
-      // Clear form and show success state
       setFormData({
         fullName: "",
         email: "",
@@ -138,15 +149,28 @@ function Register() {
       <main className="relative overflow-hidden bg-[radial-gradient(circle_at_75%_32%,rgba(98,83,245,.2),transparent_27%),linear-gradient(135deg,#07132f_0%,#0a1740_52%,#15165a_100%)] px-5 py-16 text-white sm:py-24">
         <div className="relative z-10 mx-auto grid w-[min(1100px,100%)] items-center gap-12 lg:grid-cols-[1.1fr_.9fr]">
           <div className="mx-auto w-full max-w-[470px] rounded-2xl border border-white/15 bg-white p-7 text-[#0d1b3d] shadow-[0_25px_70px_rgba(0,0,0,.3)] sm:p-10">
-            <div className="mb-6 flex justify-center lg:hidden"><Logo /></div>
-            <span className="text-[10px] font-extrabold uppercase tracking-[.12em] text-[#5c50ec]">Join the network</span>
-            <h1 className="mt-2 text-3xl font-bold tracking-[-.04em]">Create your CMT account</h1>
-            <p className="mt-2 text-xs leading-6 text-[#788398]">Bring your research workflow into one connected place.</p>
+            <div className="mb-6 flex justify-center lg:hidden">
+              <Logo />
+            </div>
+
+            <span className="text-[10px] font-extrabold uppercase tracking-[.12em] text-[#5c50ec]">
+              Join the network
+            </span>
+
+            <h1 className="mt-2 text-3xl font-bold tracking-[-.04em]">
+              Create your CMT account
+            </h1>
+
+            <p className="mt-2 text-xs leading-6 text-[#788398]">
+              Bring your research workflow into one connected place.
+            </p>
 
             <form onSubmit={handleSubmit} className="grid gap-5">
-              {/* Full Name */}
               <div className="grid gap-2">
-                <label className="text-xs font-bold text-[#43506a]" htmlFor="fullName">
+                <label
+                  className="text-xs font-bold text-[#43506a]"
+                  htmlFor="fullName"
+                >
                   <span className="mb-2 flex items-center gap-2">
                     <UserRound size={14} className="text-[#5c50ec]" /> Full name
                   </span>
@@ -161,9 +185,11 @@ function Register() {
                 </label>
               </div>
 
-              {/* Email */}
               <div className="grid gap-2">
-                <label className="text-xs font-bold text-[#43506a]" htmlFor="email">
+                <label
+                  className="text-xs font-bold text-[#43506a]"
+                  htmlFor="email"
+                >
                   <span className="mb-2 flex items-center gap-2">
                     <Mail size={14} className="text-[#5c50ec]" /> Email
                   </span>
@@ -178,9 +204,11 @@ function Register() {
                 </label>
               </div>
 
-              {/* Password + Strength Meter */}
               <div className="grid gap-2">
-                <label className="text-xs font-bold text-[#43506a]" htmlFor="password">
+                <label
+                  className="text-xs font-bold text-[#43506a]"
+                  htmlFor="password"
+                >
                   <span className="mb-2 flex items-center gap-2">
                     <LockKeyhole size={14} className="text-[#5c50ec]" /> Password
                   </span>
@@ -203,7 +231,9 @@ function Register() {
                         <span
                           key={step}
                           className={`h-1.5 flex-1 rounded-full transition-colors ${
-                            step <= strength.score ? strength.color : "bg-[#e5e8f0]"
+                            step <= strength.score
+                              ? strength.color
+                              : "bg-[#e5e8f0]"
                           }`}
                         />
                       ))}
@@ -230,28 +260,63 @@ function Register() {
                       </span>
                     </div>
                     <ul className="mt-1 grid gap-1 text-[11px] text-[#788398]">
-                      <li className={formData.password.length >= MIN_PASSWORD_LENGTH ? "text-green-600" : ""}>
-                        {formData.password.length >= MIN_PASSWORD_LENGTH ? "✓" : "•"} At least {MIN_PASSWORD_LENGTH} characters
+                      <li
+                        className={
+                          formData.password.length >= MIN_PASSWORD_LENGTH
+                            ? "text-green-600"
+                            : ""
+                        }
+                      >
+                        {formData.password.length >= MIN_PASSWORD_LENGTH
+                          ? "✓"
+                          : "•"}{" "}
+                        At least {MIN_PASSWORD_LENGTH} characters
                       </li>
-                      <li className={/[A-Z]/.test(formData.password) && /[a-z]/.test(formData.password) ? "text-green-600" : ""}>
-                        {/[A-Z]/.test(formData.password) && /[a-z]/.test(formData.password) ? "✓" : "•"} Upper and lower case
+                      <li
+                        className={
+                          /[A-Z]/.test(formData.password) &&
+                          /[a-z]/.test(formData.password)
+                            ? "text-green-600"
+                            : ""
+                        }
+                      >
+                        {/[A-Z]/.test(formData.password) &&
+                        /[a-z]/.test(formData.password)
+                          ? "✓"
+                          : "•"}{" "}
+                        Upper and lower case
                       </li>
-                      <li className={/\d/.test(formData.password) ? "text-green-600" : ""}>
-                        {/\d/.test(formData.password) ? "✓" : "•"} At least one number
+                      <li
+                        className={
+                          /\d/.test(formData.password) ? "text-green-600" : ""
+                        }
+                      >
+                        {/\d/.test(formData.password) ? "✓" : "•"} At least one
+                        number
                       </li>
-                      <li className={/[^A-Za-z0-9]/.test(formData.password) ? "text-green-600" : ""}>
-                        {/[^A-Za-z0-9]/.test(formData.password) ? "✓" : "•"} At least one symbol
+                      <li
+                        className={
+                          /[^A-Za-z0-9]/.test(formData.password)
+                            ? "text-green-600"
+                            : ""
+                        }
+                      >
+                        {/[^A-Za-z0-9]/.test(formData.password) ? "✓" : "•"} At
+                        least one symbol
                       </li>
                     </ul>
                   </div>
                 )}
               </div>
 
-              {/* Confirm Password */}
               <div className="grid gap-2">
-                <label className="text-xs font-bold text-[#43506a]" htmlFor="confirmPassword">
+                <label
+                  className="text-xs font-bold text-[#43506a]"
+                  htmlFor="confirmPassword"
+                >
                   <span className="mb-2 flex items-center gap-2">
-                    <CheckCircle2 size={14} className="text-[#5c50ec]" /> Confirm password
+                    <CheckCircle2 size={14} className="text-[#5c50ec]" /> Confirm
+                    password
                   </span>
                   <input
                     id="confirmPassword"
@@ -263,14 +328,19 @@ function Register() {
                     className="min-h-11 w-full rounded-[10px] border border-[#dfe4ed] px-3 text-sm font-normal text-[#0d1b3d] outline-none transition focus:border-[#7568f7] focus:ring-4 focus:ring-[#7568f7]/10"
                   />
                 </label>
-                {formData.confirmPassword && formData.password !== formData.confirmPassword && (
-                  <p className="text-[11px] font-semibold text-red-600">Passwords do not match.</p>
-                )}
+                {formData.confirmPassword &&
+                  formData.password !== formData.confirmPassword && (
+                    <p className="text-[11px] font-semibold text-red-600">
+                      Passwords do not match.
+                    </p>
+                  )}
               </div>
 
-              {/* Role Dropdown */}
               <div className="grid gap-2">
-                <label className="text-xs font-bold text-[#43506a]" htmlFor="role">
+                <label
+                  className="text-xs font-bold text-[#43506a]"
+                  htmlFor="role"
+                >
                   <span className="mb-2 flex items-center gap-2">
                     <Users size={14} className="text-[#5c50ec]" /> Role
                   </span>
@@ -282,29 +352,30 @@ function Register() {
                     required
                     className="min-h-11 w-full rounded-[10px] border border-[#dfe4ed] px-3 text-sm font-normal text-[#0d1b3d] outline-none transition focus:border-[#7568f7] focus:ring-4 focus:ring-[#7568f7]/10 bg-white"
                   >
-                    <option value="" disabled>Please choose a role</option>
-                    <option value="attendee">Attendee</option>
-                    <option value="author">Author</option>
-                    <option value="organiser">Organiser</option>
+                    <option value="" disabled>
+                      Please choose a role
+                    </option>
+                    {ROLE_OPTIONS.map((role) => (
+                      <option key={role.value} value={role.value}>
+                        {role.label}
+                      </option>
+                    ))}
                   </select>
                 </label>
               </div>
 
-              {/* Error Message */}
               {error && (
                 <p className="rounded-lg bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">
                   {error}
                 </p>
               )}
 
-              {/* Success Message (Auto-hides and redirects) */}
               {success && (
                 <p className="rounded-lg bg-green-50 px-3 py-2 text-xs font-semibold text-green-700">
                   ✅ Account created! Verify your email, then continue to login.
                 </p>
               )}
 
-              {/* Submit Button */}
               <button
                 type="submit"
                 disabled={loading}
@@ -316,7 +387,10 @@ function Register() {
 
               <p className="text-center text-xs text-[#788398]">
                 Already have an account?{" "}
-                <Link to="/login" className="font-bold text-[#5c50ec] hover:underline">
+                <Link
+                  to="/login"
+                  className="font-bold text-[#5c50ec] hover:underline"
+                >
                   Log in
                 </Link>
               </p>
