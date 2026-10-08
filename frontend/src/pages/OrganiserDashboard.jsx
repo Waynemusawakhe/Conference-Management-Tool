@@ -1,4 +1,4 @@
-// src/pages/OrganiserDashboard.jsx
+﻿// src/pages/OrganiserDashboard.jsx
 
 
 
@@ -238,7 +238,7 @@ function dateLabel(value) {
 
 
 
-  if (!value) return "—";
+  if (!value) return "â€”";
 
 
 
@@ -1998,7 +1998,7 @@ const assignReviewer = async (e) => {
 
 
 
-              Run your conferences from one workspace — monitor submissions,
+              Run your conferences from one workspace â€” monitor submissions,
 
 
 
@@ -2338,7 +2338,7 @@ const assignReviewer = async (e) => {
 
 
 
-            Loading your conferences…
+            Loading your conferencesâ€¦
 
 
 
@@ -2482,7 +2482,7 @@ const assignReviewer = async (e) => {
 
 
 
-                      {dateLabel(c.start_date)} — {dateLabel(c.end_date)} ·{" "}
+                      {dateLabel(c.start_date)} â€” {dateLabel(c.end_date)} Â·{" "}
 
 
 
@@ -2894,7 +2894,7 @@ const assignReviewer = async (e) => {
 
 
 
-                  placeholder="Search submissions…"
+                  placeholder="Search submissionsâ€¦"
 
 
 
@@ -2998,7 +2998,7 @@ const assignReviewer = async (e) => {
 
 
 
-            Loading submissions, reviews and attendee data…
+            Loading submissions, reviews and attendee dataâ€¦
 
 
 
@@ -3067,13 +3067,7 @@ const assignReviewer = async (e) => {
 
 
                     const related = reviews.filter(
-
-
-
                       (r) => Number(r.submission_id) === Number(s.id)
-
-
-
                     );
 
 
@@ -3146,7 +3140,7 @@ const assignReviewer = async (e) => {
 
 
 
-                                #{s.id} · {s.track || "General track"}
+                                #{s.id} Â· {s.track || "General track"}
 
 
 
@@ -3274,7 +3268,7 @@ const assignReviewer = async (e) => {
 
 
 
-                            {related.some((r) => r.locked) &&
+                            {(related.length > 0 && related.every((r) => r.locked)) &&
 
 
 
@@ -3310,7 +3304,7 @@ const assignReviewer = async (e) => {
 
 
 
-                            {related.some((r) => r.locked) &&
+                            {(related.length > 0 && related.every((r) => r.locked)) &&
 
 
 
@@ -3346,7 +3340,7 @@ const assignReviewer = async (e) => {
 
 
 
-                            {related.some((r) => r.locked) &&
+                            {(related.length > 0 && related.every((r) => r.locked)) &&
 
 
 
@@ -3382,7 +3376,7 @@ const assignReviewer = async (e) => {
 
 
 
-                            {!related.some((r) => r.locked) &&
+                            {!(related.length > 0 && related.every((r) => r.locked)) &&
 
 
 
@@ -3484,7 +3478,7 @@ const assignReviewer = async (e) => {
 
 
 
-                          {s.author?.name || "Author"} ·{" "}
+                          {s.author?.name || "Author"} Â·{" "}
 
 
 
@@ -3560,7 +3554,7 @@ const assignReviewer = async (e) => {
 
 
 
-                      {related.some((r) => r.locked) &&
+                      {(related.length > 0 && related.every((r) => r.locked)) &&
 
 
 
@@ -3596,7 +3590,7 @@ const assignReviewer = async (e) => {
 
 
 
-                      {related.some((r) => r.locked) &&
+                      {(related.length > 0 && related.every((r) => r.locked)) &&
 
 
 
@@ -3632,7 +3626,7 @@ const assignReviewer = async (e) => {
 
 
 
-                      {related.some((r) => r.locked) &&
+                      {(related.length > 0 && related.every((r) => r.locked)) &&
 
 
 
@@ -3668,7 +3662,7 @@ const assignReviewer = async (e) => {
 
 
 
-                      {!related.some((r) => r.locked) &&
+                      {!(related.length > 0 && related.every((r) => r.locked)) &&
 
 
 
@@ -4036,7 +4030,7 @@ const assignReviewer = async (e) => {
 
 
 
-                  {sessionSaving ? "Saving…" : "Add session"}
+                  {sessionSaving ? "Savingâ€¦" : "Add session"}
 
 
 
@@ -4108,7 +4102,7 @@ const assignReviewer = async (e) => {
 
 
 
-                      {dateLabel(session.scheduled_time)} ·{" "}
+                      {dateLabel(session.scheduled_time)} Â·{" "}
 
 
 
@@ -4260,7 +4254,7 @@ const assignReviewer = async (e) => {
 
 
 
-              1 · Assign
+              1 Â· Assign
 
 
 
@@ -4272,7 +4266,7 @@ const assignReviewer = async (e) => {
 
 
 
-              2 · Review
+              2 Â· Review
 
 
 
@@ -4284,7 +4278,7 @@ const assignReviewer = async (e) => {
 
 
 
-              3 · Decide
+              3 Â· Decide
 
 
 
@@ -4320,7 +4314,7 @@ const assignReviewer = async (e) => {
 
 
 
-          title={`Assign reviewer · ${selectedSubmission.title}`}
+          title={`Assign reviewer Â· ${selectedSubmission.title}`}
 
 
 
@@ -4394,7 +4388,7 @@ const assignReviewer = async (e) => {
 
 
 
-                      {r.name || r.email || `User #${r.id}`} · #{r.id}
+                      {r.name || r.email || `User #${r.id}`} Â· #{r.id}
 
 
 
@@ -4558,7 +4552,7 @@ const assignReviewer = async (e) => {
 
 
 
-                {saving ? "Assigning…" : "Assign reviewer"}
+                {saving ? "Assigningâ€¦" : "Assign reviewer"}
 
 
 
