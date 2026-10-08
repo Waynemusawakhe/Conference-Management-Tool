@@ -4,7 +4,7 @@ import {
   Clock,
   MapPin,
 } from "lucide-react";
-import { useAuth } from "../hooks/useAuth";
+
 import { useNavigate } from "react-router-dom";
 
 const accentClasses = {
@@ -25,9 +25,7 @@ const accentClasses = {
 };
 
 function formatDate(value) {
-  if (!value) {
-    return "";
-  }
+  if (!value) return "";
 
   const date = new Date(value);
 
@@ -43,7 +41,9 @@ function formatDate(value) {
 }
 
 function getAccent(category) {
-  const value = String(category || "").toLowerCase();
+  const value = String(
+    category || "",
+  ).toLowerCase();
 
   if (
     value.includes("medicine") ||
@@ -67,9 +67,9 @@ export default function ConferenceCard({
   layout = "grid",
 }) {
   const navigate = useNavigate();
-  const { user } = useAuth();
 
-  const isList = layout === "list";
+  const isList =
+    layout === "list";
 
   const accent =
     conference.accent ||
@@ -106,9 +106,10 @@ export default function ConferenceCard({
     conference.description ||
     "";
 
-  const topics = Array.isArray(conference.topics)
-    ? conference.topics
-    : [];
+  const topics =
+    Array.isArray(conference.topics)
+      ? conference.topics
+      : [];
 
   const venue =
     conference.venue_name ||
@@ -139,32 +140,33 @@ export default function ConferenceCard({
     conference.endDate ||
     "";
 
-  const formattedStartDate = formatDate(startDate);
+  const formattedStartDate =
+    formatDate(startDate);
 
-  const formattedEndDate = formatDate(endDate);
+  const formattedEndDate =
+    formatDate(endDate);
 
   const formattedDeadline =
     formatDate(submissionDeadline);
 
-  const handleSubmitProposal = () => {
-    if (!conference?.id) {
-      return;
-    }
+  function handleViewConference() {
+    if (!conference?.id) return;
 
     navigate(
-      `/submit-proposal/${encodeURIComponent(
-        conference.id
-      )}`
+      `/conferences/${encodeURIComponent(
+        conference.id,
+      )}`,
     );
-  };
+  }
 
   return (
     <article
       className={`overflow-hidden rounded-2xl border border-[#e5e8ef] bg-white shadow-[0_12px_32px_rgba(15,28,65,.06)] transition hover:-translate-y-1.5 hover:shadow-[0_22px_45px_rgba(15,28,65,.10)] ${
-        isList ? "md:flex" : ""
+        isList
+          ? "md:flex"
+          : ""
       }`}
     >
-      {/* Conference header */}
       <div
         className={`relative flex min-h-[175px] items-center justify-center overflow-hidden bg-[radial-gradient(circle_at_80%_20%,rgba(102,85,246,.3),transparent_35%),linear-gradient(135deg,#07132f,#15165a)] p-8 ${
           isList
@@ -174,6 +176,7 @@ export default function ConferenceCard({
       >
         <div className="absolute inset-0 opacity-30">
           <div className="absolute -left-10 -top-10 h-32 w-32 rounded-full border border-white/20" />
+
           <div className="absolute -bottom-16 -right-10 h-44 w-44 rounded-full border border-white/10" />
         </div>
 
@@ -196,10 +199,11 @@ export default function ConferenceCard({
         )}
       </div>
 
-      {/* Conference information */}
       <div
         className={`p-5 ${
-          isList ? "md:flex-1" : ""
+          isList
+            ? "md:flex-1"
+            : ""
         }`}
       >
         <div className="flex flex-wrap items-center gap-2">
@@ -211,13 +215,22 @@ export default function ConferenceCard({
 
           {conferenceStatus && (
             <span className="rounded-full bg-[#eaf9f2] px-2 py-1 text-[9px] font-bold text-[#159b64]">
-              {{ open: "Open for submissions", closed: "Closed" }[conferenceStatus] || conferenceStatus}
+              {{
+                open: "Open for submissions",
+                closed: "Closed",
+              }[conferenceStatus] ||
+                conferenceStatus}
             </span>
           )}
 
           {conferenceFormat && (
             <span className="rounded-full bg-[#f2f1ff] px-2 py-1 text-[9px] font-bold text-[#5c50ec]">
-              {{ in_person: "In-person", virtual: "Online", hybrid: "Hybrid" }[conferenceFormat] || conferenceFormat}
+              {{
+                in_person: "In-person",
+                virtual: "Online",
+                hybrid: "Hybrid",
+              }[conferenceFormat] ||
+                conferenceFormat}
             </span>
           )}
         </div>
@@ -253,14 +266,21 @@ export default function ConferenceCard({
 
         {topics.length > 0 && (
           <div className="mt-3 flex flex-wrap gap-1.5">
-            {topics.slice(0, 3).map((topic, index) => (
-              <span
-                className="rounded-full bg-[#f4f6fa] px-2 py-1 text-[9px] font-semibold text-[#68748b]"
-                key={`${topic}-${index}`}
-              >
-                {topic}
-              </span>
-            ))}
+            {topics
+              .slice(0, 3)
+              .map(
+                (
+                  topic,
+                  index,
+                ) => (
+                  <span
+                    className="rounded-full bg-[#f4f6fa] px-2 py-1 text-[9px] font-semibold text-[#68748b]"
+                    key={`${topic}-${index}`}
+                  >
+                    {topic}
+                  </span>
+                ),
+              )}
           </div>
         )}
 
@@ -273,8 +293,12 @@ export default function ConferenceCard({
 
             <span>
               {venue}
-              {city ? `, ${city}` : ""}
-              {country ? `, ${country}` : ""}
+              {city
+                ? `, ${city}`
+                : ""}
+              {country
+                ? `, ${country}`
+                : ""}
             </span>
           </span>
 
@@ -297,15 +321,16 @@ export default function ConferenceCard({
           )}
         </div>
 
-        {user?.role === "author" && <button
-          className="mt-5 inline-flex items-center gap-1.5 border-0 bg-transparent p-0 text-[11px] font-extrabold text-[#5a4df1]"
+        <button
           type="button"
-          onClick={handleSubmitProposal}
+          onClick={handleViewConference}
           disabled={!conference?.id}
+          className="mt-5 inline-flex items-center gap-1.5 border-0 bg-transparent p-0 text-[11px] font-extrabold text-[#5a4df1] transition hover:text-[#4136c7] disabled:cursor-not-allowed disabled:opacity-50"
         >
-          Submit a proposal
+          View conference details
+
           <ArrowUpRight size={17} />
-        </button>}
+        </button>
       </div>
     </article>
   );

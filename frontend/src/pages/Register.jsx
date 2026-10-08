@@ -1,36 +1,33 @@
 ﻿import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import Logo from "../components/Logo";
-import Navbar from "../components/Navbar";
 import {
   ArrowRight,
   CheckCircle2,
   LockKeyhole,
   Mail,
-  Sparkles,
   UserRound,
   Users,
 } from "lucide-react";
+
+import Logo from "../components/Logo";
+import Navbar from "../components/Navbar";
 import { authApi } from "../api/authApi";
 
 const MIN_PASSWORD_LENGTH = 8;
 
-const ROLE_OPTIONS = [
-  { value: "attendee", label: "Attendee" },
-  { value: "author", label: "Author" },
-  { value: "reviewer", label: "Reviewer" },
-  { value: "organiser", label: "Organiser" },
-  { value: "admin", label: "Admin" },
-];
-
-const ALLOWED_ROLES = ROLE_OPTIONS.map((r) => r.value);
+const PUBLIC_ROLES = ["author", "reviewer", "organiser", "attendee"];
 
 function getPasswordStrength(password) {
   if (!password) {
-    return { score: 0, label: "", color: "" };
+    return {
+      score: 0,
+      label: "",
+      color: "",
+    };
   }
 
   let score = 0;
+
   if (password.length >= MIN_PASSWORD_LENGTH) score += 1;
   if (password.length >= 12) score += 1;
   if (/[A-Z]/.test(password) && /[a-z]/.test(password)) score += 1;
@@ -39,10 +36,35 @@ function getPasswordStrength(password) {
 
   const capped = Math.min(score, 4);
 
-  if (capped <= 1) return { score: 1, label: "Weak", color: "bg-red-500" };
-  if (capped === 2) return { score: 2, label: "Fair", color: "bg-orange-500" };
-  if (capped === 3) return { score: 3, label: "Good", color: "bg-yellow-500" };
-  return { score: 4, label: "Strong", color: "bg-green-500" };
+  if (capped <= 1) {
+    return {
+      score: 1,
+      label: "Weak",
+      color: "bg-red-500",
+    };
+  }
+
+  if (capped === 2) {
+    return {
+      score: 2,
+      label: "Fair",
+      color: "bg-orange-500",
+    };
+  }
+
+  if (capped === 3) {
+    return {
+      score: 3,
+      label: "Good",
+      color: "bg-yellow-500",
+    };
+  }
+
+  return {
+    score: 4,
+    label: "Strong",
+    color: "bg-green-500",
+  };
 }
 
 function Register() {
@@ -55,60 +77,81 @@ function Register() {
     confirmPassword: "",
     role: "",
   });
+
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!success) return;
+    if (!success) return undefined;
 
     const timer = setTimeout(() => {
       setSuccess(false);
-      navigate("/login", { replace: true });
+      navigate("/login", {
+        replace: true,
+      });
     }, 3000);
 
     return () => clearTimeout(timer);
   }, [success, navigate]);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+  const handleChange = (event) => {
+    const { name, value } = event.target;
+
+    setFormData((previous) => ({
+      ...previous,
+      [name]: value,
+    }));
+
+    if (error) {
+      setError("");
+    }
   };
 
   const strength = getPasswordStrength(formData.password);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+
     setError("");
     setSuccess(false);
 
     if (
-      !formData.fullName ||
-      !formData.email ||
+      !formData.fullName.trim() ||
+      !formData.email.trim() ||
       !formData.password ||
       !formData.confirmPassword
     ) {
       setError("Please fill in every field.");
       return;
     }
+
     if (formData.password.length < MIN_PASSWORD_LENGTH) {
-      setError(`Password must be at least ${MIN_PASSWORD_LENGTH} characters.`);
+      setError(
+        `Password must be at least ${MIN_PASSWORD_LENGTH} characters.`,
+      );
       return;
     }
+
     if (strength.score < 2) {
-      setError("Please choose a stronger password (Fair or better).");
+      setError(
+        "Please choose a stronger password (Fair or better).",
+      );
       return;
     }
+
     if (formData.password !== formData.confirmPassword) {
       setError("Passwords do not match.");
       return;
     }
+
     if (!formData.role) {
       setError("Please choose a role.");
       return;
     }
-    if (!ALLOWED_ROLES.includes(formData.role)) {
-      setError("Please select a valid account role.");
+
+    if (!PUBLIC_ROLES.includes(formData.role)) {
+      setError("Please select a valid public account role.");
       return;
     }
 
@@ -116,8 +159,8 @@ function Register() {
 
     try {
       await authApi.register({
-        name: formData.fullName,
-        email: formData.email,
+        name: formData.fullName.trim(),
+        email: formData.email.trim().toLowerCase(),
         password: formData.password,
         password_confirmation: formData.confirmPassword,
         role: formData.role,
@@ -130,13 +173,24 @@ function Register() {
         confirmPassword: "",
         role: "",
       });
+
       setSuccess(true);
     } catch (err) {
-      if (err.status === 422 && err.errors) {
-        const details = Object.values(err.errors).flat().join(" ");
-        setError(details || err.message);
+      if (err?.status === 422 && err?.errors) {
+        const details = Object.values(err.errors)
+          .flat()
+          .join(" ");
+
+        setError(
+          details ||
+            err.message ||
+            "Registration failed.",
+        );
       } else {
-        setError(err.message || "Registration failed.");
+        setError(
+          err?.message ||
+            "Registration failed. Please try again.",
+        );
       }
     } finally {
       setLoading(false);
@@ -146,6 +200,7 @@ function Register() {
   return (
     <div className="min-h-screen bg-[#f7f9fc] text-[#0d1b3d]">
       <Navbar />
+
       <main className="relative overflow-hidden bg-[radial-gradient(circle_at_75%_32%,rgba(98,83,245,.2),transparent_27%),linear-gradient(135deg,#07132f_0%,#0a1740_52%,#15165a_100%)] px-5 py-16 text-white sm:py-24">
         <div className="relative z-10 mx-auto grid w-[min(1100px,100%)] items-center gap-12 lg:grid-cols-[1.1fr_.9fr]">
           <div className="mx-auto w-full max-w-[470px] rounded-2xl border border-white/15 bg-white p-7 text-[#0d1b3d] shadow-[0_25px_70px_rgba(0,0,0,.3)] sm:p-10">
@@ -162,62 +217,92 @@ function Register() {
             </h1>
 
             <p className="mt-2 text-xs leading-6 text-[#788398]">
-              Bring your research workflow into one connected place.
+              Bring your conference workflow into one
+              connected place.
             </p>
 
-            <form onSubmit={handleSubmit} className="grid gap-5">
+            <form
+              onSubmit={handleSubmit}
+              className="mt-6 grid gap-5"
+            >
+              {/* Full Name */}
               <div className="grid gap-2">
                 <label
                   className="text-xs font-bold text-[#43506a]"
                   htmlFor="fullName"
                 >
                   <span className="mb-2 flex items-center gap-2">
-                    <UserRound size={14} className="text-[#5c50ec]" /> Full name
+                    <UserRound
+                      size={14}
+                      className="text-[#5c50ec]"
+                    />
+                    Full name
                   </span>
+
                   <input
                     id="fullName"
                     name="fullName"
                     type="text"
                     value={formData.fullName}
                     onChange={handleChange}
+                    autoComplete="name"
+                    required
+                    placeholder="Enter your full name"
                     className="min-h-11 w-full rounded-[10px] border border-[#dfe4ed] px-3 text-sm font-normal text-[#0d1b3d] outline-none transition focus:border-[#7568f7] focus:ring-4 focus:ring-[#7568f7]/10"
                   />
                 </label>
               </div>
 
+              {/* Email */}
               <div className="grid gap-2">
                 <label
                   className="text-xs font-bold text-[#43506a]"
                   htmlFor="email"
                 >
                   <span className="mb-2 flex items-center gap-2">
-                    <Mail size={14} className="text-[#5c50ec]" /> Email
+                    <Mail
+                      size={14}
+                      className="text-[#5c50ec]"
+                    />
+                    Email
                   </span>
+
                   <input
                     id="email"
                     name="email"
                     type="email"
                     value={formData.email}
                     onChange={handleChange}
+                    autoComplete="email"
+                    required
+                    placeholder="you@example.com"
                     className="min-h-11 w-full rounded-[10px] border border-[#dfe4ed] px-3 text-sm font-normal text-[#0d1b3d] outline-none transition focus:border-[#7568f7] focus:ring-4 focus:ring-[#7568f7]/10"
                   />
                 </label>
               </div>
 
+              {/* Password */}
               <div className="grid gap-2">
                 <label
                   className="text-xs font-bold text-[#43506a]"
                   htmlFor="password"
                 >
                   <span className="mb-2 flex items-center gap-2">
-                    <LockKeyhole size={14} className="text-[#5c50ec]" /> Password
+                    <LockKeyhole
+                      size={14}
+                      className="text-[#5c50ec]"
+                    />
+                    Password
                   </span>
+
                   <input
                     id="password"
                     name="password"
                     type="password"
                     value={formData.password}
                     onChange={handleChange}
+                    autoComplete="new-password"
+                    required
                     placeholder="At least 8 characters"
                     minLength={MIN_PASSWORD_LENGTH}
                     className="min-h-11 w-full rounded-[10px] border border-[#dfe4ed] px-3 text-sm font-normal text-[#0d1b3d] outline-none transition focus:border-[#7568f7] focus:ring-4 focus:ring-[#7568f7]/10"
@@ -238,6 +323,7 @@ function Register() {
                         />
                       ))}
                     </div>
+
                     <div className="flex items-center justify-between text-[11px]">
                       <span className="font-semibold text-[#788398]">
                         Strength:{" "}
@@ -246,32 +332,39 @@ function Register() {
                             strength.score <= 1
                               ? "text-red-600"
                               : strength.score === 2
-                              ? "text-orange-600"
-                              : strength.score === 3
-                              ? "text-yellow-600"
-                              : "text-green-600"
+                                ? "text-orange-600"
+                                : strength.score === 3
+                                  ? "text-yellow-600"
+                                  : "text-green-600"
                           }
                         >
                           {strength.label}
                         </span>
                       </span>
+
                       <span className="text-[#9aa3b5]">
-                        {formData.password.length}/{MIN_PASSWORD_LENGTH} min
+                        {formData.password.length}/
+                        {MIN_PASSWORD_LENGTH} min
                       </span>
                     </div>
+
                     <ul className="mt-1 grid gap-1 text-[11px] text-[#788398]">
                       <li
                         className={
-                          formData.password.length >= MIN_PASSWORD_LENGTH
+                          formData.password.length >=
+                          MIN_PASSWORD_LENGTH
                             ? "text-green-600"
                             : ""
                         }
                       >
-                        {formData.password.length >= MIN_PASSWORD_LENGTH
+                        {formData.password.length >=
+                        MIN_PASSWORD_LENGTH
                           ? "✓"
                           : "•"}{" "}
-                        At least {MIN_PASSWORD_LENGTH} characters
+                        At least {MIN_PASSWORD_LENGTH}{" "}
+                        characters
                       </li>
+
                       <li
                         className={
                           /[A-Z]/.test(formData.password) &&
@@ -286,103 +379,160 @@ function Register() {
                           : "•"}{" "}
                         Upper and lower case
                       </li>
+
                       <li
                         className={
-                          /\d/.test(formData.password) ? "text-green-600" : ""
-                        }
-                      >
-                        {/\d/.test(formData.password) ? "✓" : "•"} At least one
-                        number
-                      </li>
-                      <li
-                        className={
-                          /[^A-Za-z0-9]/.test(formData.password)
+                          /\d/.test(formData.password)
                             ? "text-green-600"
                             : ""
                         }
                       >
-                        {/[^A-Za-z0-9]/.test(formData.password) ? "✓" : "•"} At
-                        least one symbol
+                        {/\d/.test(formData.password)
+                          ? "✓"
+                          : "•"}{" "}
+                        At least one number
+                      </li>
+
+                      <li
+                        className={
+                          /[^A-Za-z0-9]/.test(
+                            formData.password,
+                          )
+                            ? "text-green-600"
+                            : ""
+                        }
+                      >
+                        {/[^A-Za-z0-9]/.test(
+                          formData.password,
+                        )
+                          ? "✓"
+                          : "•"}{" "}
+                        At least one symbol
                       </li>
                     </ul>
                   </div>
                 )}
               </div>
 
+              {/* Confirm Password */}
               <div className="grid gap-2">
                 <label
                   className="text-xs font-bold text-[#43506a]"
                   htmlFor="confirmPassword"
                 >
                   <span className="mb-2 flex items-center gap-2">
-                    <CheckCircle2 size={14} className="text-[#5c50ec]" /> Confirm
-                    password
+                    <CheckCircle2
+                      size={14}
+                      className="text-[#5c50ec]"
+                    />
+                    Confirm password
                   </span>
+
                   <input
                     id="confirmPassword"
                     name="confirmPassword"
                     type="password"
                     value={formData.confirmPassword}
                     onChange={handleChange}
-                    placeholder="******"
+                    autoComplete="new-password"
+                    required
+                    placeholder="Repeat your password"
                     className="min-h-11 w-full rounded-[10px] border border-[#dfe4ed] px-3 text-sm font-normal text-[#0d1b3d] outline-none transition focus:border-[#7568f7] focus:ring-4 focus:ring-[#7568f7]/10"
                   />
                 </label>
+
                 {formData.confirmPassword &&
-                  formData.password !== formData.confirmPassword && (
+                  formData.password !==
+                    formData.confirmPassword && (
                     <p className="text-[11px] font-semibold text-red-600">
                       Passwords do not match.
                     </p>
                   )}
               </div>
 
+              {/* Role */}
               <div className="grid gap-2">
                 <label
                   className="text-xs font-bold text-[#43506a]"
                   htmlFor="role"
                 >
                   <span className="mb-2 flex items-center gap-2">
-                    <Users size={14} className="text-[#5c50ec]" /> Role
+                    <Users
+                      size={14}
+                      className="text-[#5c50ec]"
+                    />
+                    Role
                   </span>
+
                   <select
                     id="role"
                     name="role"
                     value={formData.role}
                     onChange={handleChange}
                     required
-                    className="min-h-11 w-full rounded-[10px] border border-[#dfe4ed] px-3 text-sm font-normal text-[#0d1b3d] outline-none transition focus:border-[#7568f7] focus:ring-4 focus:ring-[#7568f7]/10 bg-white"
+                    className="min-h-11 w-full rounded-[10px] border border-[#dfe4ed] bg-white px-3 text-sm font-normal text-[#0d1b3d] outline-none transition focus:border-[#7568f7] focus:ring-4 focus:ring-[#7568f7]/10"
                   >
                     <option value="" disabled>
                       Please choose a role
                     </option>
-                    {ROLE_OPTIONS.map((role) => (
-                      <option key={role.value} value={role.value}>
-                        {role.label}
-                      </option>
-                    ))}
+
+                    <option value="attendee">
+                      Attendee
+                    </option>
+
+                    <option value="author">
+                      Author
+                    </option>
+
+                    <option value="reviewer">
+                      Reviewer
+                    </option>
+
+                    <option value="organiser">
+                      Organiser
+                    </option>
                   </select>
                 </label>
+
+                <p className="text-[10px] leading-5 text-[#8b95a7]">
+                  Choose how you primarily plan to use
+                  CMT. Administrator accounts are managed
+                  separately.
+                </p>
               </div>
 
+              {/* Error */}
               {error && (
-                <p className="rounded-lg bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">
+                <p
+                  role="alert"
+                  className="rounded-lg bg-red-50 px-3 py-2 text-xs font-semibold text-red-700"
+                >
                   {error}
                 </p>
               )}
 
+              {/* Success */}
               {success && (
-                <p className="rounded-lg bg-green-50 px-3 py-2 text-xs font-semibold text-green-700">
-                  ✅ Account created! Verify your email, then continue to login.
+                <p
+                  role="status"
+                  className="rounded-lg bg-green-50 px-3 py-2 text-xs font-semibold text-green-700"
+                >
+                  ✅ Account created! Verify your email,
+                  then continue to login.
                 </p>
               )}
 
+              {/* Submit */}
               <button
                 type="submit"
                 disabled={loading}
-                className="min-h-11 rounded-[11px] border-0 bg-gradient-to-br from-[#6655f6] to-[#7869ff] px-4 text-sm font-bold text-white shadow-[0_10px_26px_rgba(103,87,245,.26)] transition hover:-translate-y-px disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="flex min-h-11 items-center justify-center gap-2 rounded-[11px] border-0 bg-gradient-to-br from-[#6655f6] to-[#7869ff] px-4 text-sm font-bold text-white shadow-[0_10px_26px_rgba(103,87,245,.26)] transition hover:-translate-y-px disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {loading ? "Creating..." : "Create account"}
-                <ArrowRight size={16} />
+                {loading
+                  ? "Creating..."
+                  : "Create account"}
+
+                {!loading && <ArrowRight size={16} />}
               </button>
 
               <p className="text-center text-xs text-[#788398]">
