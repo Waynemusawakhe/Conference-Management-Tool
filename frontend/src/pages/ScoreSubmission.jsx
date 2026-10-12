@@ -18,7 +18,7 @@ import {
 import ReviewerLayout from "../components/ReviewerLayout";
 import { useAuth } from "../context/AuthContext";
 import { reviewsApi } from "../api/reviewsApi";
-import { tokenStore } from "../api/client";
+import { API_BASE_URL, tokenStore } from "../api/client";
 
 // The review API accepts integer scores from 1 to 5.
 const SCORE_OPTIONS = [1, 2, 3, 4, 5];
@@ -93,6 +93,32 @@ function StatusBadge({ state }) {
   );
 }
 
+function getDownloadFilename(disposition, contentType, submissionId) {
+  const encodedFilename = disposition?.match(/filename\*=UTF-8''([^;]+)/i)?.[1];
+
+  if (encodedFilename) {
+    try {
+      return decodeURIComponent(encodedFilename);
+    } catch {
+      // Fall back to the regular filename when the encoded header is malformed.
+    }
+  }
+
+  const filename = disposition?.match(/filename="?([^";]+)"?/i)?.[1];
+  if (filename) return filename;
+
+  const extensionByContentType = {
+    "application/pdf": "pdf",
+    "application/msword": "doc",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+      "docx",
+  };
+  const extension =
+    extensionByContentType[contentType?.split(";")[0].trim().toLowerCase()];
+
+  return `submission-${submissionId}${extension ? `.${extension}` : ""}`;
+}
+
 /* ------------------------------------------------------------------ *
  * Page
  * ------------------------------------------------------------------ */
@@ -117,6 +143,8 @@ export default function ScoreSubmission() {
   const baselineRef = useRef(null);
 
   const [blobUrl, setBlobUrl] = useState(null);
+  const [downloadName, setDownloadName] = useState(null);
+  const [fileContentType, setFileContentType] = useState("");
   const [fileState, setFileState] = useState("idle");
   const [fileError, setFileError] = useState("");
 
@@ -222,10 +250,10 @@ export default function ScoreSubmission() {
   const abstract = submission?.abstract ?? paper?.abstract ?? "";
 
   const fileUrl = submissionId
-    ? `${import.meta.env.VITE_API_BASE_URL}/submissions/${submissionId}/file`
+    ? `${API_BASE_URL}/submissions/${submissionId}/file`
     : null;
 
-  const fileName = `submission-${submissionId ?? id}.pdf`;
+  const fileName = downloadName ?? `submission-${submissionId ?? id}`;
 
   /* Fetch file with bearer token */
   useEffect(() => {
@@ -242,6 +270,8 @@ export default function ScoreSubmission() {
     (async () => {
       setFileState("loading");
       setFileError("");
+      setDownloadName(null);
+      setFileContentType("");
 
       try {
         const token = tokenStore.get();
@@ -255,6 +285,14 @@ export default function ScoreSubmission() {
 
         const blob = await response.blob();
         if (cancelled) return;
+        setDownloadName(
+          getDownloadFilename(
+            response.headers.get("Content-Disposition"),
+            blob.type,
+            submissionId,
+          ),
+        );
+        setFileContentType(blob.type);
         objectUrl = URL.createObjectURL(blob);
         setBlobUrl(objectUrl);
         setFileState("ready");
@@ -289,7 +327,7 @@ export default function ScoreSubmission() {
       cancelled = true;
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
-  }, [fileUrl]);
+  }, [fileUrl, submissionId]);
 
   /* ============================================================== *
    * Submit flow now opens a styled modal first.
@@ -603,13 +641,31 @@ export default function ScoreSubmission() {
                   </div>
                 )}
 
-                {fileUrl && fileState === "ready" && blobUrl && (
+                {fileUrl &&
+                  fileState === "ready" &&
+                  blobUrl &&
+                  fileContentType.toLowerCase().startsWith("application/pdf") && (
                   <iframe
                     src={blobUrl}
                     title="Paper Document"
                     className="h-[500px] w-full rounded-xl border border-[#e5e7eb]"
                   />
                 )}
+
+                {fileUrl &&
+                  fileState === "ready" &&
+                  blobUrl &&
+                  !fileContentType.toLowerCase().startsWith("application/pdf") && (
+                    <div className="flex h-[400px] flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-[#e5e7eb] bg-[#f9fafb] p-6 text-center">
+                      <FileText size={28} className="text-[#aeb6c6]" />
+                      <strong className="text-[12px] font-bold text-[#43506a]">
+                        Preview unavailable
+                      </strong>
+                      <span className="max-w-[320px] text-[11px] leading-5 text-[#8993a6]">
+                        Download the document to open it in a compatible app.
+                      </span>
+                    </div>
+                  )}
 
                 {fileUrl && fileState === "error" && (
                   <div className="flex h-[400px] flex-col items-center justify-center gap-3 rounded-xl border border-[#e9d9a7] bg-[#fff9e9] p-6 text-center">
