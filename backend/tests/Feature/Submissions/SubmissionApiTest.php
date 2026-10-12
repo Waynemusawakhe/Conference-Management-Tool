@@ -4,9 +4,11 @@ namespace Tests\Feature\Submissions;
 
 use App\Models\User;
 use App\Modules\Conferences\Models\Conference;
+use App\Modules\Reviews\Models\SubmissionReview;
 use App\Modules\Submissions\Models\Submission;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class SubmissionApiTest extends TestCase
@@ -140,6 +142,44 @@ class SubmissionApiTest extends TestCase
                 'content-disposition'
             )
         );
+    }
+
+    public function test_assigned_reviewer_can_download_submission_file_without_changing_its_contents(): void
+    {
+        Storage::fake('private');
+
+        $reviewer = User::factory()->create([
+            'role' => 'reviewer',
+        ]);
+
+        $fileContents = 'original submission document';
+        Storage::disk('private')->put(
+            'submissions/reviewer-paper.pdf',
+            $fileContents
+        );
+
+        $submission = Submission::factory()->create([
+            'file_path' => 'submissions/reviewer-paper.pdf',
+        ]);
+
+        SubmissionReview::create([
+            'submission_id' => $submission->id,
+            'reviewer_id' => $reviewer->id,
+        ]);
+
+        $response = $this
+            ->actingAs($reviewer, 'sanctum')
+            ->get(
+                "/api/v1/submissions/{$submission->id}/file"
+            );
+
+        $response
+            ->assertOk()
+            ->assertHeader(
+                'content-disposition',
+                'attachment; filename=submission-'.$submission->id.'-'.Str::slug($submission->title).'.pdf'
+            )
+            ->assertStreamedContent($fileContents);
     }
 
     public function test_submission_response_does_not_expose_private_file_path(): void
