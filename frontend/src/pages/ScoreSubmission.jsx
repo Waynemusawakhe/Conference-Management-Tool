@@ -4,12 +4,12 @@ import {
   AlertCircle,
   ArrowLeft,
   CheckCircle2,
-  ClipboardCheck,
   Download,
   ExternalLink,
   FileText,
   Lightbulb,
   Lock,
+  Maximize2,
   Send,
   Star,
   X,
@@ -20,7 +20,6 @@ import { useAuth } from "../context/AuthContext";
 import { reviewsApi } from "../api/reviewsApi";
 import { tokenStore } from "../api/client";
 
-// The review API accepts integer scores from 1 to 5.
 const SCORE_OPTIONS = [1, 2, 3, 4, 5];
 const SCORE_LABELS = ["Poor", "Fair", "Good", "Great", "Excellent"];
 
@@ -48,9 +47,27 @@ const RECOMMENDATIONS = [
   },
 ];
 
-/* ------------------------------------------------------------------ *
- * Inline field error
- * ------------------------------------------------------------------ */
+const COMMON_TYPOS = {
+  "teh": "the",
+  "recieve": "receive",
+  "seperate": "separate",
+  "definately": "definitely",
+  "accomodate": "accommodate",
+  "occured": "occurred",
+  "untill": "until",
+  "wich": "which",
+  "beleive": "believe",
+  "sucess": "success",
+  "reserch": "research",
+  "metod": "method",
+  "analisys": "analysis",
+  "intresting": "interesting",
+  "novelity": "novelty",
+  "experimant": "experiment",
+  "evalution": "evaluation",
+  "limitatons": "limitations"
+};
+
 function FieldError({ errors, name }) {
   const messages = errors?.[name];
   if (!messages?.length) return null;
@@ -61,9 +78,6 @@ function FieldError({ errors, name }) {
   );
 }
 
-/* ------------------------------------------------------------------ *
- * Status badge
- * ------------------------------------------------------------------ */
 function StatusBadge({ state }) {
   const meta = {
     pending: {
@@ -93,9 +107,6 @@ function StatusBadge({ state }) {
   );
 }
 
-/* ------------------------------------------------------------------ *
- * Page
- * ------------------------------------------------------------------ */
 export default function ScoreSubmission() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -116,18 +127,16 @@ export default function ScoreSubmission() {
 
   const baselineRef = useRef(null);
 
-  const [blobUrl, setBlobUrl] = useState(null);
+  const [fileData, setFileData] = useState(null);
+  const [fileType, setFileType] = useState("pdf");
   const [fileState, setFileState] = useState("idle");
   const [fileError, setFileError] = useState("");
 
-  // controls the custom confirm modal
   const [confirmState, setConfirmState] = useState(null);
-  // confirmState shape:
-  // { kind: "submit" | "lock", title, message, confirmLabel, tone, onConfirm }
+  const [fullscreenOpen, setFullscreenOpen] = useState(false);
 
   const displayName = user?.name ?? user?.full_name ?? "Reviewer";
 
-  /* ---- Load review ---------------------------------------------- */
   useEffect(() => {
     if (typeof reviewsApi?.getById !== "function") {
       setError("reviewsApi.getById is not defined.");
@@ -215,28 +224,36 @@ export default function ScoreSubmission() {
     );
   }, [score, comments, recommendation, locked]);
 
-  const submission = paper?.submission ?? {};
-  const submissionId =
-    paper?.submission_id ?? submission?.id ?? paper?.submission?.id ?? null;
+  const baseUrl = import.meta.env.VITE_API_BASE_URL && import.meta.env.VITE_API_BASE_URL !== "undefined" 
+    ? import.meta.env.VITE_API_BASE_URL 
+    : "http://127.0.0.1:8000/api/v1";
+
+  const submission = paper?.submission ?? paper?.data?.submission ?? {};
+  
+  const submissionId = 
+    submission?.id ?? 
+    paper?.submission_id ?? 
+    paper?.submissionId ?? 
+    null;
+
   const title = submission?.title ?? paper?.title ?? `Review #${id}`;
   const abstract = submission?.abstract ?? paper?.abstract ?? "";
 
-  const fileUrl = submissionId
-    ? `${import.meta.env.VITE_API_BASE_URL}/submissions/${submissionId}/file`
+  const apiFileUrl = submissionId
+    ? `${baseUrl}/submissions/${submissionId}/file`
     : null;
 
-  const fileName = `submission-${submissionId ?? id}.pdf`;
+  const fileExt = fileType === "word" ? "docx" : "pdf";
+  const fileName = `submission-${submissionId ?? id}.${fileExt}`;
 
-  /* Fetch file with bearer token */
   useEffect(() => {
-    if (!fileUrl) {
+    if (!apiFileUrl) {
       setFileState("idle");
-      setBlobUrl(null);
+      setFileData(null);
       setFileError("");
       return;
     }
 
-    let objectUrl = null;
     let cancelled = false;
 
     (async () => {
@@ -245,7 +262,7 @@ export default function ScoreSubmission() {
 
       try {
         const token = tokenStore.get();
-        const response = await fetch(fileUrl, {
+        const response = await fetch(apiFileUrl, {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
 
@@ -253,11 +270,34 @@ export default function ScoreSubmission() {
           throw new Error(`HTTP ${response.status} ${response.statusText}`);
         }
 
-        const blob = await response.blob();
+        const contentType = response.headers.get("content-type") || "";
+        
+        let detectedType = "other";
+        if (contentType.includes("pdf")) {
+          detectedType = "pdf";
+        } else if (
+          contentType.includes("word") || 
+          contentType.includes("officedocument") ||
+          contentType.includes("application/msword")
+        ) {
+          detectedType = "word";
+        }
+        
+        setFileType(detectedType);
+
+        const arrayBuffer = await response.arrayBuffer();
         if (cancelled) return;
-        objectUrl = URL.createObjectURL(blob);
-        setBlobUrl(objectUrl);
-        setFileState("ready");
+
+        const blob = new Blob([arrayBuffer], { type: contentType || "application/octet-stream" });
+        const reader = new FileReader();
+        
+        reader.onloadend = () => {
+          if (cancelled) return;
+          setFileData(reader.result);
+          setFileState("ready");
+        };
+        
+        reader.readAsDataURL(blob);
       } catch (err) {
         if (cancelled) return;
 
@@ -265,14 +305,14 @@ export default function ScoreSubmission() {
           err instanceof TypeError && /failed to fetch/i.test(err.message);
 
         console.error("[ScoreSubmission] file fetch failed:", {
-          fileUrl,
+          apiFileUrl,
           error: err,
         });
 
         if (isNetworkError) {
-          let origin = fileUrl;
+          let origin = apiFileUrl;
           try {
-            origin = new URL(fileUrl).origin;
+            origin = new URL(apiFileUrl).origin;
           } catch {}
           setFileError(
             `Cannot reach ${origin}. This is a CORS or wrong-host problem, ` +
@@ -287,14 +327,28 @@ export default function ScoreSubmission() {
 
     return () => {
       cancelled = true;
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
-  }, [fileUrl]);
+  }, [apiFileUrl]);
 
-  /* ============================================================== *
-   * Submit flow now opens a styled modal first.
-   *    Actual network call is in doSubmit().
-   * ============================================================== */
+  function handleCommentsBlur() {
+    if (!comments || locked) return;
+    
+    const corrected = comments.replace(/\b[a-zA-Z]+\b/g, (match) => {
+      const lower = match.toLowerCase();
+      if (COMMON_TYPOS[lower]) {
+        if (match[0] === match[0].toUpperCase()) {
+          return COMMON_TYPOS[lower].charAt(0).toUpperCase() + COMMON_TYPOS[lower].slice(1);
+        }
+        return COMMON_TYPOS[lower];
+      }
+      return match;
+    });
+
+    if (corrected !== comments) {
+      setComments(corrected);
+    }
+  }
+
   function handleSubmit(e) {
     e.preventDefault();
     if (locked || submitting) return;
@@ -313,7 +367,6 @@ export default function ScoreSubmission() {
 
   async function doSubmit() {
     setConfirmState(null);
-
     setSubmitting(true);
     setError(null);
     setErrorKind(null);
@@ -363,9 +416,6 @@ export default function ScoreSubmission() {
     }
   }
 
-  /* ============================================================== *
-   * Lock flow also uses the modal.
-   * ============================================================== */
   function handleLock() {
     if (locking) return;
 
@@ -382,7 +432,6 @@ export default function ScoreSubmission() {
 
   async function doLock() {
     setConfirmState(null);
-
     setLocking(true);
     setError(null);
     setErrorKind(null);
@@ -410,7 +459,6 @@ export default function ScoreSubmission() {
     ? comments.trim().split(/\s+/).length
     : 0;
 
-  /* ---- Render ---------------------------------------------------- */
   return (
     <ReviewerLayout>
       <style>{`
@@ -433,37 +481,35 @@ export default function ScoreSubmission() {
         .cmt-star-pop  { animation: cmtStarPop .45s cubic-bezier(.34,1.56,.64,1); }
       `}</style>
 
-      {/* Header */}
-      <div className="cmt-fade-up flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <div className="flex flex-wrap items-center gap-3">
-            <button
-              onClick={() => navigate("/reviewer-dashboard")}
-              className="group inline-flex items-center gap-2 rounded-xl bg-[#2563eb] px-4 py-2.5 text-[11px] font-extrabold text-white shadow-[0_12px_28px_rgba(37,99,235,.28)] transition hover:-translate-y-px hover:bg-[#1d4ed8]"
-            >
-              <ArrowLeft size={14} className="transition group-hover:-translate-x-0.5" />
-              Back to dashboard
-            </button>
-            {paper && <StatusBadge state={reviewState} />}
+      <div className="mx-auto max-w-[1500px] flex flex-col gap-6">
+        
+        <div className="cmt-fade-up flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                onClick={() => navigate("/reviewer-dashboard")}
+                className="group inline-flex items-center gap-2 rounded-xl bg-[#2563eb] px-4 py-2.5 text-[11px] font-extrabold text-white shadow-[0_12px_28px_rgba(37,99,235,.28)] transition hover:-translate-y-px hover:bg-[#1d4ed8]"
+              >
+                <ArrowLeft size={14} className="transition group-hover:-translate-x-0.5" />
+                Back to dashboard
+              </button>
+              {paper && <StatusBadge state={reviewState} />}
+            </div>
+            <h1 className="m-0 mt-3 text-[22px] font-bold tracking-[-.03em] text-[#1c2a4a]">
+              {title}
+            </h1>
           </div>
-          <h1 className="m-0 mt-3 text-[22px] font-bold tracking-[-.03em] text-[#1c2a4a]">
-            {title}
-          </h1>
         </div>
-      </div>
 
-      {/* Unsaved changes banner */}
-      {dirty && alreadySubmitted && !locked && (
-        <div className="cmt-fade-up flex items-center gap-2 rounded-xl border border-[#dbeafe] bg-[#eff6ff] px-4 py-2.5 text-[11px] font-semibold text-[#1d4ed8]">
-          <Zap size={13} className="animate-pulse" />
-          You have unsaved changes — remember to update your review.
-        </div>
-      )}
+        {dirty && alreadySubmitted && !locked && (
+          <div className="cmt-fade-up flex items-center gap-2 rounded-xl border border-[#dbeafe] bg-[#eff6ff] px-4 py-2.5 text-[11px] font-semibold text-[#1d4ed8]">
+            <Zap size={13} className="animate-pulse" />
+            You have unsaved changes — remember to update your review.
+          </div>
+        )}
 
-      {/* Persistent "Submitted" panel */}
-      {alreadySubmitted && !locked && !loading && (
-        <div className="cmt-fade-up flex flex-col gap-3 rounded-2xl border border-[#cfd0ff] bg-gradient-to-br from-[#f0efff] to-[#e8e6ff] p-5 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-start gap-3">
+        {alreadySubmitted && !locked && !loading && (
+          <div className="cmt-fade-up flex items-start gap-3 rounded-2xl border border-[#cfd0ff] bg-gradient-to-br from-[#f0efff] to-[#e8e6ff] p-5">
             <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white text-[#5548d7] shadow-[0_6px_16px_rgba(85,72,215,.18)]">
               <CheckCircle2 size={18} />
             </span>
@@ -476,360 +522,412 @@ export default function ScoreSubmission() {
               </span>
             </div>
           </div>
-          <button
-            onClick={() => navigate("/reviewer-dashboard")}
-            className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-[#2563eb] px-4 py-2.5 text-[11px] font-extrabold text-white shadow-[0_12px_28px_rgba(37,99,235,.28)] transition hover:-translate-y-px hover:bg-[#1d4ed8]"
-          >
-            <ArrowLeft size={13} /> Back to dashboard
-          </button>
-        </div>
-      )}
+        )}
 
-      {/* Loading */}
-      {loading && (
-        <div className="grid min-h-[40vh] place-items-center text-sm text-[#66728b]">
-          Loading review…
-        </div>
-      )}
-
-      {/* Load error */}
-      {!loading && error && !paper && (
-        <div className="cmt-scale-in rounded-2xl border border-[#f87171] bg-[#fef2f2] p-8 text-center">
-          <AlertCircle size={32} className="mx-auto text-[#b13a3a]" />
-          <h2 className="mt-3 text-[15px] font-bold text-[#991b1b]">
-            {errorKind === "forbidden"
-              ? "Access denied"
-              : errorKind === "notFound"
-              ? "Review not found"
-              : "Couldn't load this review"}
-          </h2>
-          <p className="mx-auto mt-2 max-w-[520px] text-[12px] leading-6 text-[#991b1b]">
-            {error}
-          </p>
-          <div className="mt-5 flex justify-center gap-2">
-            <button
-              onClick={() => navigate("/reviewer-dashboard")}
-              className="inline-flex items-center gap-2 rounded-xl bg-[#2563eb] px-4 py-2.5 text-[11px] font-extrabold text-white transition hover:-translate-y-px hover:bg-[#1d4ed8]"
-            >
-              <ArrowLeft size={13} /> Back to dashboard
-            </button>
+        {loading && (
+          <div className="grid min-h-[40vh] place-items-center text-sm text-[#66728b]">
+            Loading review…
           </div>
-        </div>
-      )}
+        )}
 
-      {paper && (
-        <>
-          {error && (
-            <div
-              className={`cmt-fade-up flex items-start gap-3 rounded-xl border p-4 text-[12px] ${
-                errorKind === "validation"
-                  ? "border-[#e9d9a7] bg-[#fff9e9] text-[#7a5c10]"
-                  : "border-[#f1c8c8] bg-[#fff2f2] text-[#b13a3a]"
-              }`}
-            >
-              <AlertCircle size={16} className="mt-0.5 shrink-0" />
-              <span>{error}</span>
+        {!loading && error && !paper && (
+          <div className="cmt-scale-in rounded-2xl border border-[#f87171] bg-[#fef2f2] p-8 text-center">
+            <AlertCircle size={32} className="mx-auto text-[#b13a3a]" />
+            <h2 className="mt-3 text-[15px] font-bold text-[#991b1b]">
+              {errorKind === "forbidden"
+                ? "Access denied"
+                : errorKind === "notFound"
+                ? "Review not found"
+                : "Couldn't load this review"}
+            </h2>
+            <p className="mx-auto mt-2 max-w-[520px] text-[12px] leading-6 text-[#991b1b]">
+              {error}
+            </p>
+            <div className="mt-5 flex justify-center gap-2">
+              <button
+                onClick={() => navigate("/reviewer-dashboard")}
+                className="inline-flex items-center gap-2 rounded-xl bg-[#2563eb] px-4 py-2.5 text-[11px] font-extrabold text-white transition hover:-translate-y-px hover:bg-[#1d4ed8]"
+              >
+                <ArrowLeft size={13} /> Back to dashboard
+              </button>
             </div>
-          )}
+          </div>
+        )}
 
-          {locked && (
-            <div className="cmt-fade-up flex items-center gap-2 rounded-xl border border-[#bfe5d1] bg-[#effaf4] p-4 text-[12px] font-semibold text-[#18794e]">
-              <Lock size={16} /> This review is locked. No further changes are possible.
-            </div>
-          )}
-
-          <div className="grid gap-6 lg:grid-cols-2">
-            {/* ============ Submission ============ */}
-            <section
-              className="cmt-fade-up flex flex-col gap-5 rounded-2xl border border-[#e4e8f0] bg-white p-6 shadow-[0_10px_30px_rgba(15,28,65,.035)] transition hover:shadow-[0_14px_40px_rgba(15,28,65,.06)]"
-              style={{ animationDelay: "60ms" }}
-            >
-              <div>
-                <span className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-[#dbeafe] to-[#e0e7ff] px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-[.06em] text-[#1e40af]">
-                  <FileText size={11} /> Submission details
-                </span>
+        {paper && (
+          <>
+            {error && (
+              <div
+                className={`cmt-fade-up flex items-start gap-3 rounded-xl border p-4 text-[12px] ${
+                  errorKind === "validation"
+                    ? "border-[#e9d9a7] bg-[#fff9e9] text-[#7a5c10]"
+                    : "border-[#f1c8c8] bg-[#fff2f2] text-[#b13a3a]"
+                }`}
+              >
+                <AlertCircle size={16} className="mt-0.5 shrink-0" />
+                <span>{error}</span>
               </div>
+            )}
 
-              <div>
-                <strong className="mb-2 block text-[10px] font-extrabold uppercase tracking-[.1em] text-[#9ba4b5]">
-                  Abstract
-                </strong>
-                <p className="m-0 rounded-xl border border-[#eef1f7] bg-gradient-to-br from-[#fafbff] to-[#f4f6fb] p-4 text-[12px] leading-6 text-[#374151]">
-                  {abstract || "No abstract available for this submission."}
-                </p>
+            {locked && (
+              <div className="cmt-fade-up flex items-center gap-2 rounded-xl border border-[#bfe5d1] bg-[#effaf4] p-4 text-[12px] font-semibold text-[#18794e]">
+                <Lock size={16} /> This review is locked. No further changes are possible.
               </div>
+            )}
 
-              <div className="flex-1">
-                <div className="mb-2 flex items-center justify-between gap-2">
-                  <strong className="block text-[10px] font-extrabold uppercase tracking-[.1em] text-[#9ba4b5]">
-                    Paper document
+            <div className="grid gap-6 lg:grid-cols-[1fr_420px] xl:grid-cols-[1fr_460px]">
+              
+              <section
+                className="cmt-fade-up flex flex-col gap-5 rounded-2xl border border-[#e4e8f0] bg-white p-6 shadow-[0_10px_30px_rgba(15,28,65,.035)]"
+                style={{ animationDelay: "60ms" }}
+              >
+                <div>
+                  <span className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-[#dbeafe] to-[#e0e7ff] px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-[.06em] text-[#1e40af]">
+                    <FileText size={11} /> Submission details
+                  </span>
+                </div>
+
+                <div>
+                  <strong className="mb-2 block text-[10px] font-extrabold uppercase tracking-[.1em] text-[#9ba4b5]">
+                    Abstract
                   </strong>
-                  {fileState === "ready" && blobUrl && (
-                    <div className="flex items-center gap-1.5">
-                      <a
-                        href={blobUrl}
-                        download={fileName}
-                        className="inline-flex items-center gap-1.5 rounded-lg bg-[#2563eb] px-3 py-1.5 text-[10px] font-extrabold text-white shadow-[0_8px_18px_-6px_rgba(37,99,235,.55)] transition hover:-translate-y-px hover:bg-[#1d4ed8]"
-                      >
-                        <Download size={12} /> Download
-                      </a>
-                      <a
-                        href={blobUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex items-center gap-1.5 rounded-lg border border-[#e4e8f0] bg-white px-3 py-1.5 text-[10px] font-bold text-[#43506a] transition hover:bg-[#fafbff]"
-                      >
-                        <ExternalLink size={12} /> Open
-                      </a>
+                  <p className="m-0 rounded-xl border border-[#eef1f7] bg-gradient-to-br from-[#fafbff] to-[#f4f6fb] p-4 text-[12px] leading-6 text-[#374151]">
+                    {abstract || "No abstract available for this submission."}
+                  </p>
+                </div>
+
+                <div className="flex-1 flex flex-col">
+                  <div className="mb-2 flex items-center justify-between gap-2">
+                    <strong className="block text-[10px] font-extrabold uppercase tracking-[.1em] text-[#9ba4b5]">
+                      Paper document
+                    </strong>
+                    {fileState === "ready" && fileData && (
+                      <div className="flex items-center gap-1.5">
+                        <a
+                          href={fileData}
+                          download={fileName}
+                          className="inline-flex items-center gap-1.5 rounded-lg bg-[#2563eb] px-3 py-1.5 text-[10px] font-extrabold text-white shadow-[0_8px_18px_-6px_rgba(37,99,235,.55)] transition hover:-translate-y-px hover:bg-[#1d4ed8]"
+                        >
+                          <Download size={12} /> Download
+                        </a>
+                        {fileType === "pdf" && (
+                          <button
+                            type="button"
+                            onClick={() => setFullscreenOpen(true)}
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-[#e4e8f0] bg-white px-3 py-1.5 text-[10px] font-bold text-[#43506a] transition hover:bg-[#fafbff]"
+                          >
+                            <Maximize2 size={12} /> View Fullscreen
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {!apiFileUrl && (
+                    <div className="flex min-h-[600px] flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-[#e5e7eb] bg-[#f9fafb] p-6 text-center">
+                      <FileText size={48} className="text-[#aeb6c6] mb-2" />
+                      <strong className="text-[14px] font-bold text-[#43506a]">
+                        No document attached
+                      </strong>
+                      <span className="max-w-[280px] text-[12px] leading-5 text-[#8993a6]">
+                        This submission doesn't have a file attached.
+                      </span>
+                    </div>
+                  )}
+
+                  {apiFileUrl && fileState === "loading" && (
+                    <div className="flex min-h-[600px] items-center justify-center rounded-xl border border-[#e5e7eb] bg-[#f9fafb] text-[13px] font-semibold text-[#8a95a8]">
+                      Loading document…
+                    </div>
+                  )}
+
+                  {apiFileUrl && fileState === "ready" && fileData && (
+                    <>
+                      {fileType === "pdf" && (
+                        <div className="relative min-h-[700px] h-[80vh] w-full overflow-hidden rounded-xl border border-[#e5e7eb] bg-white shadow-sm">
+                          <object
+                            data={fileData}
+                            type="application/pdf"
+                            className="h-full w-full"
+                          >
+                            <div className="flex h-full flex-col items-center justify-center gap-3 p-6 text-center bg-[#f9fafb]">
+                              <FileText size={48} className="text-[#aeb6c6] mb-2" />
+                              <strong className="text-base font-bold text-[#43506a]">Preview not available</strong>
+                              <p className="text-sm text-[#8993a6]">Your browser security settings are blocking the inline PDF viewer.</p>
+                              <button
+                                type="button"
+                                onClick={() => setFullscreenOpen(true)}
+                                className="mt-4 inline-flex items-center gap-2 rounded-xl bg-[#2563eb] px-6 py-3 text-sm font-bold text-white shadow-sm hover:bg-[#1d4ed8]"
+                              >
+                                <Maximize2 size={16} /> View Fullscreen
+                              </button>
+                            </div>
+                          </object>
+                        </div>
+                      )}
+
+                      {fileType !== "pdf" && (
+                        <div className="flex min-h-[600px] flex-col items-center justify-center rounded-xl border border-[#e5e7eb] bg-[#f9fafb] p-6 text-center">
+                          <div className="grid h-24 w-24 place-items-center rounded-3xl bg-white text-[#2563eb] shadow-sm mb-6">
+                            <FileText size={48} />
+                          </div>
+                          <h3 className="text-2xl font-extrabold text-[#1c2a4a]">
+                            Preview not available
+                          </h3>
+                          <p className="max-w-[360px] mt-3 text-sm leading-7 text-[#66728b]">
+                            Word documents and other file types cannot be previewed directly in the browser. Please download the file to view it on your device.
+                          </p>
+                          <a
+                            href={fileData}
+                            download={fileName}
+                            className="mt-8 inline-flex items-center gap-2 rounded-xl bg-[#2563eb] px-8 py-4 text-sm font-extrabold text-white shadow-[0_12px_28px_rgba(37,99,235,.28)] transition hover:-translate-y-0.5 hover:bg-[#1d4ed8]"
+                          >
+                            <Download size={18} /> Download document
+                          </a>
+                        </div>
+                      )}
+                    </>
+                  )}
+
+                  {apiFileUrl && fileState === "error" && (
+                    <div className="flex min-h-[600px] flex-col items-center justify-center gap-3 rounded-xl border border-[#e9d9a7] bg-[#fff9e9] p-6 text-center">
+                      <AlertCircle size={48} className="text-[#9b7414] mb-2" />
+                      <strong className="text-[14px] font-bold text-[#7a5c10]">
+                        Document is unavailable
+                      </strong>
+                      <span className="max-w-[420px] text-[12px] leading-5 text-[#7a5c10]/85">
+                        {fileError}
+                      </span>
+                      <code className="max-w-full break-all rounded-lg bg-white px-3 py-2 text-[11px] text-[#7a5c10]">
+                        {apiFileUrl}
+                      </code>
                     </div>
                   )}
                 </div>
+              </section>
 
-                {!fileUrl && (
-                  <div className="flex h-[400px] flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-[#e5e7eb] bg-[#f9fafb] p-6 text-center">
-                    <FileText size={28} className="text-[#aeb6c6]" />
-                    <strong className="text-[12px] font-bold text-[#43506a]">
-                      No document attached
-                    </strong>
-                    <span className="max-w-[280px] text-[11px] leading-5 text-[#8993a6]">
-                      This submission doesn't have a file attached.
-                    </span>
-                  </div>
-                )}
-
-                {fileUrl && fileState === "loading" && (
-                  <div className="flex h-[400px] items-center justify-center rounded-xl border border-[#e5e7eb] bg-[#f9fafb] text-[12px] font-semibold text-[#8a95a8]">
-                    Loading document…
-                  </div>
-                )}
-
-                {fileUrl && fileState === "ready" && blobUrl && (
-                  <iframe
-                    src={blobUrl}
-                    title="Paper Document"
-                    className="h-[500px] w-full rounded-xl border border-[#e5e7eb]"
-                  />
-                )}
-
-                {fileUrl && fileState === "error" && (
-                  <div className="flex h-[400px] flex-col items-center justify-center gap-3 rounded-xl border border-[#e9d9a7] bg-[#fff9e9] p-6 text-center">
-                    <AlertCircle size={28} className="text-[#9b7414]" />
-                    <strong className="text-[12px] font-bold text-[#7a5c10]">
-                      Document is unavailable
-                    </strong>
-                    <span className="max-w-[420px] text-[11px] leading-5 text-[#7a5c10]/85">
-                      {fileError}
-                    </span>
-                    <code className="max-w-full break-all rounded-lg bg-white px-3 py-2 text-[10px] text-[#7a5c10]">
-                      {fileUrl}
-                    </code>
-                  </div>
-                )}
-              </div>
-            </section>
-
-            {/* ============ Form ============ */}
-            <section
-              className="cmt-fade-up flex flex-col rounded-2xl border border-[#e4e8f0] bg-white p-6 shadow-[0_10px_30px_rgba(15,28,65,.035)] transition hover:shadow-[0_14px_40px_rgba(15,28,65,.06)]"
-              style={{ animationDelay: "140ms" }}
-            >
-              <h3 className="m-0 mb-6 flex items-center gap-2 border-b border-[#edf0f5] pb-4 text-[16px] font-bold">
-                <span className="grid h-7 w-7 place-items-center rounded-lg bg-gradient-to-br from-[#2563eb] to-[#60a5fa] text-white shadow-[0_8px_18px_-6px_rgba(37,99,235,.55)]">
-                  <Star size={13} />
-                </span>
-                {locked ? "Your review" : "Evaluation & scoring"}
-              </h3>
-
-              <form
-                onSubmit={handleSubmit}
-                className="flex flex-1 flex-col justify-between gap-6"
+              <section
+                className="cmt-fade-up flex flex-col rounded-2xl border border-[#e4e8f0] bg-white p-6 shadow-[0_10px_30px_rgba(15,28,65,.035)] lg:sticky lg:top-6 lg:h-fit"
+                style={{ animationDelay: "140ms" }}
               >
-                {/* Score */}
-                <div>
-                  <label className="mb-3 block text-[10px] font-extrabold uppercase tracking-[.1em] text-[#6b7280]">
-                    Score — 1 Poor to 5 Excellent
-                  </label>
-                  <div className="flex gap-2.5">
-                    {SCORE_OPTIONS.map((num) => {
-                      const active = score === num;
-                      return (
-                        <button
-                          key={num}
-                          type="button"
-                          disabled={locked}
-                          onClick={() => setScore(num)}
-                          className={`group relative flex flex-1 flex-col items-center justify-center gap-0.5 rounded-xl border py-3 text-sm font-bold transition-all duration-200 ${
-                            active
-                              ? "scale-[1.05] border-transparent bg-gradient-to-br from-[#2563eb] to-[#3b82f6] text-white shadow-[0_14px_30px_-8px_rgba(37,99,235,.6)]"
-                              : "border-[#d1d5db] bg-white text-[#374151] hover:-translate-y-0.5 hover:border-[#2563eb] hover:bg-[#eff6ff]"
-                          } disabled:cursor-not-allowed disabled:opacity-60`}
-                        >
-                          <Star
-                            size={16}
-                            className={`transition ${
-                              active
-                                ? "cmt-star-pop fill-white"
-                                : "text-[#9ca3af] group-hover:text-[#2563eb]"
-                            }`}
-                          />
-                          <span className="text-[13px] font-extrabold">{num}</span>
-                          <span
-                            className={`text-[8px] font-bold uppercase tracking-wider ${
-                              active ? "text-white/85" : "text-[#9ca3af]"
-                            }`}
-                          >
-                            {SCORE_LABELS[num - 1]}
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                  <FieldError errors={fieldErrors} name="score" />
-                </div>
+                <h3 className="m-0 mb-6 flex items-center gap-2 border-b border-[#edf0f5] pb-4 text-[16px] font-bold">
+                  <span className="grid h-7 w-7 place-items-center rounded-lg bg-gradient-to-br from-[#2563eb] to-[#60a5fa] text-white shadow-[0_8px_18px_-6px_rgba(37,99,235,.55)]">
+                    <Star size={13} />
+                  </span>
+                  {locked ? "Your review" : "Evaluation & scoring"}
+                </h3>
 
-                {/* Recommendation */}
-                <div>
-                  <label className="mb-3 block text-[10px] font-extrabold uppercase tracking-[.1em] text-[#6b7280]">
-                    Final recommendation
-                  </label>
-                  <div className="grid grid-cols-3 gap-2.5">
-                    {RECOMMENDATIONS.map((r) => {
-                      const active = recommendation === r.value;
-                      const Icon = r.icon;
-                      return (
-                        <button
-                          key={r.value}
-                          type="button"
-                          disabled={locked}
-                          onClick={() => setRecommendation(r.value)}
-                          className={`group relative flex flex-col items-center gap-1.5 rounded-xl border px-2 py-3 text-center transition-all duration-200 ${
-                            active
-                              ? `scale-[1.03] border-transparent bg-gradient-to-br ${r.accent} text-white shadow-[0_14px_30px_-8px_rgba(15,28,65,.4)]`
-                              : "border-[#d1d5db] bg-white text-[#374151] hover:-translate-y-0.5 hover:border-[#93c5fd]"
-                          } disabled:cursor-not-allowed disabled:opacity-60`}
-                        >
-                          <Icon
-                            size={16}
-                            className={
-                              active
-                                ? "text-white"
-                                : "text-[#9ca3af] transition group-hover:text-[#2563eb]"
-                            }
-                          />
-                          <strong className="text-[11px] font-extrabold">
-                            {r.label}
-                          </strong>
-                          <span
-                            className={`text-[8px] font-semibold leading-tight ${
-                              active ? "text-white/85" : "text-[#8a95a8]"
-                            }`}
-                          >
-                            {r.desc}
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                  <FieldError errors={fieldErrors} name="recommendation" />
-                </div>
-
-                {/* Comments */}
-                <div>
-                  <div className="mb-2 flex items-center justify-between">
-                    <label
-                      htmlFor="comments"
-                      className="text-[10px] font-extrabold uppercase tracking-[.1em] text-[#6b7280]"
-                    >
-                      Review comments
+                <form
+                  onSubmit={handleSubmit}
+                  className="flex flex-1 flex-col gap-6"
+                >
+                  <div>
+                    <label className="mb-3 block text-[10px] font-extrabold uppercase tracking-[.1em] text-[#6b7280]">
+                      Score — 1 Poor to 5 Excellent
                     </label>
-                    <span
-                      className={`text-[10px] font-semibold tabular-nums ${
-                        wordCount < 10 ? "text-[#a55b25]" : "text-[#18794e]"
-                      }`}
-                    >
-                      {wordCount} words
-                    </span>
+                    <div className="flex gap-1.5 sm:gap-2.5">
+                      {SCORE_OPTIONS.map((num) => {
+                        const active = score === num;
+                        return (
+                          <button
+                            key={num}
+                            type="button"
+                            disabled={locked}
+                            onClick={() => setScore(num)}
+                            className={`group relative flex flex-1 flex-col items-center justify-center gap-0.5 rounded-xl border py-3 text-sm font-bold transition-all duration-200 ${
+                              active
+                                ? "scale-[1.05] border-transparent bg-gradient-to-br from-[#2563eb] to-[#3b82f6] text-white shadow-[0_14px_30px_-8px_rgba(37,99,235,.6)]"
+                                : "border-[#d1d5db] bg-white text-[#374151] hover:-translate-y-0.5 hover:border-[#2563eb] hover:bg-[#eff6ff]"
+                            } disabled:cursor-not-allowed disabled:opacity-60`}
+                          >
+                            <Star
+                              size={16}
+                              className={`transition ${
+                                active
+                                  ? "cmt-star-pop fill-white"
+                                  : "text-[#9ca3af] group-hover:text-[#2563eb]"
+                              }`}
+                            />
+                            <span className="text-[13px] font-extrabold">{num}</span>
+                            <span
+                              className={`text-[8px] font-bold uppercase tracking-wider hidden sm:block ${
+                                active ? "text-white/85" : "text-[#9ca3af]"
+                              }`}
+                            >
+                              {SCORE_LABELS[num - 1]}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <FieldError errors={fieldErrors} name="score" />
                   </div>
-                  <textarea
-                    id="comments"
-                    rows={6}
-                    required
-                    value={comments}
-                    onChange={(e) => setComments(e.target.value)}
-                    disabled={locked}
-                    placeholder="Explain your reasoning, strengths, and areas for improvement…"
-                    className="w-full resize-y rounded-xl border border-[#d1d5db] bg-white p-3 text-sm text-[#111827] outline-none transition focus:border-[#2563eb] focus:bg-white focus:ring-4 focus:ring-[#2563eb]/10 disabled:bg-[#f7f8fc] disabled:text-[#8a95a8]"
-                  />
-                  <FieldError errors={fieldErrors} name="comments" />
-                </div>
 
-                {/* Actions */}
-                {!locked && (
-                  <>
-                    {!alreadySubmitted ? (
-                      <button
-                        type="submit"
-                        disabled={submitting}
-                        className="group relative mt-auto flex w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-gradient-to-br from-[#2563eb] to-[#1d4ed8] py-4 text-sm font-extrabold text-white shadow-[0_16px_36px_-8px_rgba(37,99,235,.55)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_20px_44px_-8px_rgba(37,99,235,.65)] active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
+                  <div>
+                    <label className="mb-3 block text-[10px] font-extrabold uppercase tracking-[.1em] text-[#6b7280]">
+                      Final recommendation
+                    </label>
+                    <div className="grid grid-cols-1 gap-2.5">
+                      {RECOMMENDATIONS.map((r) => {
+                        const active = recommendation === r.value;
+                        const Icon = r.icon;
+                        return (
+                          <button
+                            key={r.value}
+                            type="button"
+                            disabled={locked}
+                            onClick={() => setRecommendation(r.value)}
+                            className={`group relative flex items-center gap-3 rounded-xl border px-4 py-3 transition-all duration-200 ${
+                              active
+                                ? `border-transparent bg-gradient-to-r ${r.accent} text-white shadow-[0_8px_20px_-6px_rgba(15,28,65,.4)]`
+                                : "border-[#d1d5db] bg-white text-[#374151] hover:border-[#93c5fd]"
+                            } disabled:cursor-not-allowed disabled:opacity-60`}
+                          >
+                            <Icon
+                              size={18}
+                              className={
+                                active
+                                  ? "text-white"
+                                  : "text-[#9ca3af] transition group-hover:text-[#2563eb]"
+                              }
+                            />
+                            <div className="flex flex-col text-left">
+                              <strong className="text-[12px] font-extrabold">
+                                {r.label}
+                              </strong>
+                              <span
+                                className={`text-[10px] font-medium ${
+                                  active ? "text-white/90" : "text-[#8a95a8]"
+                                }`}
+                              >
+                                {r.desc}
+                              </span>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <FieldError errors={fieldErrors} name="recommendation" />
+                  </div>
+
+                  <div className="flex-1 flex flex-col">
+                    <div className="mb-2 flex items-center justify-between">
+                      <label
+                        htmlFor="comments"
+                        className="text-[10px] font-extrabold uppercase tracking-[.1em] text-[#6b7280]"
                       >
-                        <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
-                        <Send size={15} />
-                        {submitting ? "Submitting review…" : "Submit final review"}
-                      </button>
-                    ) : (
-                      <div className="mt-auto flex flex-col gap-2">
+                        Review comments
+                      </label>
+                      <span
+                        className={`text-[10px] font-semibold tabular-nums ${
+                          wordCount < 10 ? "text-[#a55b25]" : "text-[#18794e]"
+                        }`}
+                      >
+                        {wordCount} words
+                      </span>
+                    </div>
+                    <textarea
+                      id="comments"
+                      rows={6}
+                      required
+                      value={comments}
+                      onChange={(e) => setComments(e.target.value)}
+                      onBlur={handleCommentsBlur}
+                      disabled={locked}
+                      spellCheck="true"
+                      autoCorrect="on"
+                      autoCapitalize="sentences"
+                      placeholder="Explain your reasoning, strengths, and areas for improvement…"
+                      className="flex-1 w-full resize-y rounded-xl border border-[#d1d5db] bg-white p-3 text-sm text-[#111827] outline-none transition focus:border-[#2563eb] focus:bg-white focus:ring-4 focus:ring-[#2563eb]/10 disabled:bg-[#f7f8fc] disabled:text-[#8a95a8]"
+                    />
+                    <FieldError errors={fieldErrors} name="comments" />
+                  </div>
+
+                  {!locked && (
+                    <>
+                      {!alreadySubmitted ? (
                         <button
-                          type="button"
-                          onClick={() => navigate("/reviewer-dashboard")}
-                          className="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-gradient-to-br from-[#2563eb] to-[#1d4ed8] py-4 text-sm font-extrabold text-white shadow-[0_16px_36px_-8px_rgba(37,99,235,.55)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_20px_44px_-8px_rgba(37,99,235,.65)]"
+                          type="submit"
+                          disabled={submitting}
+                          className="group relative mt-2 flex w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-gradient-to-br from-[#2563eb] to-[#1d4ed8] py-4 text-sm font-extrabold text-white shadow-[0_16px_36px_-8px_rgba(37,99,235,.55)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_20px_44px_-8px_rgba(37,99,235,.65)] active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
                         >
                           <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
-                          <ArrowLeft size={15} />
-                          Back to dashboard
+                          <Send size={15} />
+                          {submitting ? "Submitting review…" : "Submit final review"}
                         </button>
-
-                        <div className="grid grid-cols-2 gap-2">
-                          <button
-                            type="submit"
-                            disabled={submitting || !dirty}
-                            className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#e4e8f0] bg-white py-3 text-[12px] font-extrabold text-[#43506a] transition hover:-translate-y-px hover:border-[#93c5fd] hover:bg-[#eff6ff] disabled:cursor-not-allowed disabled:opacity-50"
-                          >
-                            <Send size={13} />
-                            {submitting ? "Saving…" : "Update review"}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={handleLock}
-                            disabled={locking}
-                            className="inline-flex items-center justify-center gap-2 rounded-xl border-2 border-[#bfdbfe] bg-[#eff6ff] py-3 text-[12px] font-extrabold text-[#1d4ed8] transition hover:-translate-y-px hover:border-[#93c5fd] hover:bg-[#dbeafe] disabled:opacity-50"
-                          >
-                            <Lock size={13} />
-                            {locking ? "Locking…" : "Lock review"}
-                          </button>
+                      ) : (
+                        <div className="mt-2 flex flex-col gap-2">
+                          <div className="grid grid-cols-2 gap-2">
+                            <button
+                              type="submit"
+                              disabled={submitting || !dirty}
+                              className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#e4e8f0] bg-white py-3 text-[12px] font-extrabold text-[#43506a] transition hover:-translate-y-px hover:border-[#93c5fd] hover:bg-[#eff6ff] disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                              <Send size={13} />
+                              {submitting ? "Saving…" : "Update review"}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleLock}
+                              disabled={locking}
+                              className="inline-flex items-center justify-center gap-2 rounded-xl border-2 border-[#bfdbfe] bg-[#eff6ff] py-3 text-[12px] font-extrabold text-[#1d4ed8] transition hover:-translate-y-px hover:border-[#93c5fd] hover:bg-[#dbeafe] disabled:opacity-50"
+                            >
+                              <Lock size={13} />
+                              {locking ? "Locking…" : "Lock review"}
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                    )}
-                  </>
-                )}
+                      )}
+                    </>
+                  )}
 
-                {locked && (
-                  <div className="mt-auto flex flex-col gap-3">
-                    <div className="flex items-center justify-center gap-2 rounded-xl bg-[#effaf4] py-3.5 text-[12px] font-bold text-[#18794e]">
-                      <CheckCircle2 size={15} /> Review complete
+                  {locked && (
+                    <div className="mt-2 flex flex-col gap-3">
+                      <div className="flex items-center justify-center gap-2 rounded-xl bg-[#effaf4] py-3.5 text-[12px] font-bold text-[#18794e]">
+                        <CheckCircle2 size={15} /> Review complete
+                      </div>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => navigate("/reviewer-dashboard")}
-                      className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#2563eb] py-3.5 text-[13px] font-extrabold text-white shadow-[0_16px_36px_-8px_rgba(37,99,235,.55)] transition hover:-translate-y-0.5 hover:bg-[#1d4ed8]"
-                    >
-                      <ArrowLeft size={14} /> Back to dashboard
-                    </button>
-                  </div>
-                )}
-              </form>
-            </section>
+                  )}
+                </form>
+              </section>
+            </div>
+          </>
+        )}
+      </div>
+
+      {fullscreenOpen && fileData && fileType === "pdf" && (
+        <div className="fixed inset-0 z-[100] flex flex-col bg-[#07132f]/95 backdrop-blur-md p-4 sm:p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-white font-extrabold text-lg tracking-[-.03em] truncate pr-4">
+              {title}
+            </h2>
+            <button
+              onClick={() => setFullscreenOpen(false)}
+              className="inline-flex items-center gap-2 rounded-xl bg-white/10 px-4 py-2 text-sm font-extrabold text-white backdrop-blur transition hover:bg-white/20"
+            >
+              <X size={18} /> Close
+            </button>
           </div>
-        </>
+          <div className="flex-1 bg-white rounded-2xl overflow-hidden shadow-2xl">
+            <object
+              data={fileData}
+              type="application/pdf"
+              className="w-full h-full"
+            >
+              <div className="flex flex-col items-center justify-center h-full gap-4 bg-[#f9fafb]">
+                <FileText size={48} className="text-[#aeb6c6]" />
+                <p className="text-sm font-bold text-[#43506a]">Preview not available in this browser.</p>
+                <a
+                  href={fileData}
+                  download={fileName}
+                  className="rounded-xl bg-[#2563eb] px-6 py-3 text-sm font-bold text-white shadow-sm hover:bg-[#1d4ed8]"
+                >
+                  Download PDF
+                </a>
+              </div>
+            </object>
+          </div>
+        </div>
       )}
 
       <SuccessOverlay
@@ -837,7 +935,6 @@ export default function ScoreSubmission() {
         onDismiss={() => setSuccessKind(null)}
       />
 
-      {/* custom confirm modal (replaces window.confirm) */}
       <ConfirmDialog
         state={confirmState}
         onCancel={() => setConfirmState(null)}
@@ -846,15 +943,7 @@ export default function ScoreSubmission() {
   );
 }
 
-/* ------------------------------------------------------------------ *
- * ConfirmDialog
- *
- * Replaces window.confirm() with a styled modal that matches the app.
- * Driven by confirmState: { kind, title, message, confirmLabel, tone,
- * onConfirm }. Renders nothing when state is null.
- * ------------------------------------------------------------------ */
 function ConfirmDialog({ state, onCancel }) {
-  // Close on Escape
   useEffect(() => {
     if (!state) return;
     const onKey = (e) => {
@@ -869,7 +958,6 @@ function ConfirmDialog({ state, onCancel }) {
   const isLock = state.kind === "lock";
   const Icon = isLock ? Lock : Send;
 
-  // Tone styling — lock uses a warning look, submit uses primary blue.
   const toneStyles = isLock
     ? {
         iconBg: "bg-gradient-to-br from-[#f59e0b] to-[#fbbf24]",
@@ -907,7 +995,6 @@ function ConfirmDialog({ state, onCancel }) {
         className="cmt-confirm-in relative w-full max-w-[440px] overflow-hidden rounded-3xl bg-white p-7 shadow-[0_40px_100px_rgba(7,19,47,.45)]"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Icon */}
         <div className="flex justify-center">
           <span
             className={`grid h-14 w-14 place-items-center rounded-2xl text-white ${toneStyles.iconBg} ${toneStyles.iconShadow}`}
@@ -916,7 +1003,6 @@ function ConfirmDialog({ state, onCancel }) {
           </span>
         </div>
 
-        {/* Title + message */}
         <h2
           id="confirm-title"
           className="mt-5 text-center text-[18px] font-extrabold tracking-[-.025em] text-[#1c2a4a]"
@@ -927,7 +1013,6 @@ function ConfirmDialog({ state, onCancel }) {
           {state.message}
         </p>
 
-        {/* Buttons */}
         <div className="mt-7 flex flex-col gap-2 sm:flex-row sm:justify-center">
           <button
             type="button"
@@ -950,9 +1035,6 @@ function ConfirmDialog({ state, onCancel }) {
   );
 }
 
-/* ------------------------------------------------------------------ *
- * Success overlay
- * ------------------------------------------------------------------ */
 function SuccessOverlay({ kind, onDismiss }) {
   useEffect(() => {
     if (!kind) return;
