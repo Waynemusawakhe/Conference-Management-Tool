@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 const AUTOPLAY_MS = 5000;
 const API = import.meta.env.VITE_API_URL ?? "http://127.0.0.1:8000";
 
-/* ---------- helpers (unchanged) ---------- */
+
 function normalize(c) {
   return {
     id: c.id,
@@ -73,7 +73,7 @@ export default function ConferencesCarousel({ mode = "live" }) {
     []
   );
 
-  /* ---------- fetch ---------- */
+  
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -100,7 +100,7 @@ export default function ConferencesCarousel({ mode = "live" }) {
     };
   }, []);
 
-  /* ---------- which items show ---------- */
+  
   const items = useMemo(() => {
     const rows =
       mode === "all" ? conferences : conferences.filter((c) => isLive(c));
@@ -117,7 +117,7 @@ export default function ConferencesCarousel({ mode = "live" }) {
     setIndex((i) => Math.min(i, maxIndex));
   }, [maxIndex]);
 
-  /* ---------- measure & translate ---------- */
+ 
   useEffect(() => {
     const measure = () => {
       const track = trackRef.current;
@@ -136,7 +136,7 @@ export default function ConferencesCarousel({ mode = "live" }) {
     };
   }, [index, perView, items.length]);
 
-  /* ---------- navigation ---------- */
+ 
   const go = useCallback(
     (next, userInitiated = false) => {
       if (maxIndex === 0) return;
@@ -148,7 +148,7 @@ export default function ConferencesCarousel({ mode = "live" }) {
     [maxIndex]
   );
 
-  /* ---------- autoplay ---------- */
+ 
   const stop = useCallback(() => {
     setPlaying(false);
     cancelAnimationFrame(rafRef.current);
@@ -186,7 +186,7 @@ export default function ConferencesCarousel({ mode = "live" }) {
     return stop;
   }, [state, items.length, perView, start, stop]);
 
-  /* pause off-screen */
+  
   useEffect(() => {
     const el = stageRef.current;
     if (!el) return;
@@ -200,7 +200,7 @@ export default function ConferencesCarousel({ mode = "live" }) {
     return () => io.disconnect();
   }, []);
 
-  /* pause hidden tab */
+  
   useEffect(() => {
     const onVis = () => {
       visibleRef.current = !document.hidden;
@@ -209,7 +209,7 @@ export default function ConferencesCarousel({ mode = "live" }) {
     return () => document.removeEventListener("visibilitychange", onVis);
   }, []);
 
-  /* keyboard */
+ 
   const onKeyDown = (e) => {
     if (e.key === "ArrowLeft") {
       e.preventDefault();
@@ -220,7 +220,7 @@ export default function ConferencesCarousel({ mode = "live" }) {
     }
   };
 
-  /* swipe */
+  
   const touchX = useRef(null);
   const onTouchStart = (e) => {
     touchX.current = e.touches[0].clientX;
@@ -232,7 +232,7 @@ export default function ConferencesCarousel({ mode = "live" }) {
     touchX.current = null;
   };
 
-  /* ---------- states ---------- */
+  
   if (state === "loading") {
     return (
       <div className="flex gap-5" aria-busy="true" aria-label="Loading conferences">
