@@ -237,7 +237,7 @@ export default function AdminRegistrationsPage() {
                 const name = regUserName(r);
                 const status = regStatus(r);
                 return (
-                  <tr key={r.id} className="group border-b border-[#f0f2f6] transition-colors last:border-0 hover:bg-[#fafbff]">
+                  <tr key={r.id} className="cmt-admin-list-row admin-registration-row group border-b border-[#f0f2f6] transition-colors last:border-0 hover:bg-[#fafbff]">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#efedff] text-[10px] font-extrabold text-[#4f46c7]">

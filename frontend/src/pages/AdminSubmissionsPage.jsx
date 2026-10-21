@@ -270,7 +270,7 @@ export default function AdminSubmissionsPage() {
                 filtered.map((sub) => {
                   const label = statusLabel(sub.status);
                   return (
-                    <tr key={sub.id} className="group border-b border-[#f0f2f6] transition-colors last:border-0 hover:bg-[#fafbff]">
+                    <tr key={sub.id} className="cmt-admin-list-row group border-b border-[#f0f2f6] transition-colors last:border-0 hover:bg-[#fafbff]">
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
                           <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-[#efedff] to-[#e0dcff] text-[#4f46c7] shadow-[0_6px_14px_-4px_rgba(102,85,246,.28)]">

@@ -399,7 +399,7 @@ export default function AdminTestimonialsPage() {
                 return (
                   <article
                     key={t.id}
-                    className="group relative rounded-2xl border border-[#edf0f5] bg-white p-5 transition hover:-translate-y-px hover:shadow-[0_16px_40px_rgba(15,28,65,.06)]"
+                    className="cmt-admin-list-card group relative rounded-2xl border border-[#edf0f5] bg-white p-5 transition hover:-translate-y-px hover:shadow-[0_16px_40px_rgba(15,28,65,.06)]"
                   >
                     <span className="absolute right-4 top-4 grid h-8 w-8 place-items-center rounded-lg bg-[#f1efff] text-[#5b4fe3]">
                       <Quote size={14} />

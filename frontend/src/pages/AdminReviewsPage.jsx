@@ -415,7 +415,7 @@ export default function AdminReviewsPage() {
                 const rec = REC_MAP[reviewRecommendation(r)];
                 const locked = reviewIsLocked(r);
                 return (
-                  <tr key={reviewId(r)} className="group border-b border-[#f0f2f6] transition-colors last:border-0 hover:bg-[#fafbff]">
+                  <tr key={reviewId(r)} className="cmt-admin-list-row group border-b border-[#f0f2f6] transition-colors last:border-0 hover:bg-[#fafbff]">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-[#efedff] to-[#e0dcff] text-[11px] font-extrabold text-[#4f46c7]">

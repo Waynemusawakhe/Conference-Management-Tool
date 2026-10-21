@@ -92,12 +92,12 @@ function renderValue(value) {
 function MetricCard({ label, value, accent, text, glow, ring }) {
   return (
     <div
-      className={`group relative overflow-hidden rounded-2xl bg-white p-4 ring-1 ring-[#eef1f7] transition-all duration-300 hover:-translate-y-1 hover:ring-2 ${ring} ${glow}`}
+      className={`cmt-report-metric group relative overflow-hidden rounded-2xl bg-white p-4 ring-1 ring-[#eef1f7] transition-all duration-300 hover:-translate-y-1 hover:ring-2 ${ring} ${glow}`}
     >
       <div
         className={`pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-br ${accent} opacity-[.06] transition-opacity duration-300 group-hover:opacity-[.12]`}
       />
-      <div className={`absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r ${accent}`} />
+      <div className={`cmt-report-metric__accent absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r ${accent}`} />
       <div
         className={`absolute right-4 top-4 h-1.5 w-1.5 rounded-full bg-gradient-to-br ${accent} opacity-40 transition-opacity group-hover:opacity-100`}
       />
@@ -128,7 +128,7 @@ function DataTable({ rows }) {
     return (
       <ul className="grid gap-1.5 text-xs text-[#43506a]">
         {rows.map((row, i) => (
-          <li key={i} className="rounded-lg border border-[#eef1f7] bg-white px-3 py-2 transition hover:bg-[#fafbff]">
+          <li key={i} className="cmt-admin-list-card rounded-lg border border-[#eef1f7] bg-white px-3 py-2 transition hover:bg-[#fafbff]">
             {renderValue(row)}
           </li>
         ))}
@@ -161,7 +161,7 @@ function DataTable({ rows }) {
           </thead>
           <tbody>
             {rows.map((row, i) => (
-              <tr key={i} className="border-b border-[#f2f4f9] transition-colors last:border-0 hover:bg-[#fafbff]">
+              <tr key={i} className="cmt-admin-list-row border-b border-[#f2f4f9] transition-colors last:border-0 hover:bg-[#fafbff]">
                 {columns.map((col) => (
                   <td key={col} className="whitespace-nowrap px-4 py-3 text-[#43506a]">
                     {renderValue(row?.[col])}

@@ -267,7 +267,7 @@ export default function ContactMessagesPage() {
                     <tr
                       key={m.id}
                       onClick={() => navigate(`/admin/contact-messages/${m.id}`)}
-                      className="group cursor-pointer border-b border-[#f0f2f6] transition-colors last:border-0 hover:bg-[#fafbff]"
+                      className="cmt-admin-list-row group cursor-pointer border-b border-[#f0f2f6] transition-colors last:border-0 hover:bg-[#fafbff]"
                     >
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">

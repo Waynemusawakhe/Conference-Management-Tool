@@ -76,6 +76,7 @@ function Register() {
     password: "",
     confirmPassword: "",
     role: "",
+    bootstrapToken: "",
   });
 
   const [error, setError] = useState("");
@@ -150,21 +151,43 @@ function Register() {
       return;
     }
 
-    if (!PUBLIC_ROLES.includes(formData.role)) {
+    if (
+      formData.role !== "admin" &&
+      !PUBLIC_ROLES.includes(formData.role)
+    ) {
       setError("Please select a valid public account role.");
+      return;
+    }
+
+    if (
+      formData.role === "admin" &&
+      !formData.bootstrapToken.trim()
+    ) {
+      setError("Enter the one-time administrator invitation token.");
       return;
     }
 
     setLoading(true);
 
     try {
-      await authApi.register({
+      const registrationData = {
         name: formData.fullName.trim(),
         email: formData.email.trim().toLowerCase(),
         password: formData.password,
         password_confirmation: formData.confirmPassword,
-        role: formData.role,
-      });
+      };
+
+      if (formData.role === "admin") {
+        await authApi.bootstrapAdmin({
+          ...registrationData,
+          bootstrap_token: formData.bootstrapToken.trim(),
+        });
+      } else {
+        await authApi.register({
+          ...registrationData,
+          role: formData.role,
+        });
+      }
 
       setFormData({
         fullName: "",
@@ -172,6 +195,7 @@ function Register() {
         password: "",
         confirmPassword: "",
         role: "",
+        bootstrapToken: "",
       });
 
       setSuccess(true);
@@ -491,15 +515,42 @@ function Register() {
                     <option value="organiser">
                       Organiser
                     </option>
+
+                    <option value="admin">
+                      Administrator (invitation required)
+                    </option>
                   </select>
                 </label>
 
                 <p className="text-[10px] leading-5 text-[#8b95a7]">
-                  Choose how you primarily plan to use
-                  CMT. Administrator accounts are managed
-                  separately.
+                  Administrator signup requires the server-configured
+                  one-time invitation token.
                 </p>
               </div>
+
+              {formData.role === "admin" && (
+                <div className="grid gap-2">
+                  <label
+                    className="text-xs font-bold text-[#43506a]"
+                    htmlFor="bootstrapToken"
+                  >
+                    Administrator invitation token
+                  </label>
+                  <input
+                    id="bootstrapToken"
+                    name="bootstrapToken"
+                    type="password"
+                    value={formData.bootstrapToken}
+                    onChange={handleChange}
+                    autoComplete="off"
+                    required
+                    className="min-h-11 w-full rounded-[10px] border border-[#dfe4ed] px-3 text-sm font-normal text-[#0d1b3d] outline-none transition focus:border-[#7568f7] focus:ring-4 focus:ring-[#7568f7]/10"
+                  />
+                  <p className="text-[10px] leading-5 text-[#8b95a7]">
+                    This token works once to create the initial administrator.
+                  </p>
+                </div>
+              )}
 
               {/* Error */}
               {error && (

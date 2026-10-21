@@ -62,7 +62,7 @@ function SubmissionBadge({ count, loading }) {
   if (loading) return <span className="inline-block h-6 w-10 animate-pulse rounded-lg bg-[#eef1f7]" />;
   if (count === 0)
     return (
-      <span className="inline-flex min-w-[32px] justify-center rounded-lg border border-[#edf0f5] bg-[#fafbfe] px-2 py-1 text-[10px] font-bold text-[#aeb6c6]">
+      <span className="cmt-conference-row__pill inline-flex min-w-[32px] justify-center rounded-lg border border-[#edf0f5] bg-[#fafbfe] px-2 py-1 text-[10px] font-bold text-[#aeb6c6]">
         0
       </span>
     );
@@ -73,7 +73,7 @@ function SubmissionBadge({ count, loading }) {
       ? "border-[#e2d9f5] bg-[#f1efff] text-[#5b4fe3]"
       : "border-[#d9e3ee] bg-[#f5f8fc] text-[#4a637a]";
   return (
-    <span className={`inline-flex min-w-[32px] justify-center rounded-lg border px-2 py-1 text-[10px] font-extrabold ${tone}`}>
+    <span className={`cmt-conference-row__pill inline-flex min-w-[32px] justify-center rounded-lg border px-2 py-1 text-[10px] font-extrabold ${tone}`}>
       {count}
     </span>
   );
@@ -81,17 +81,21 @@ function SubmissionBadge({ count, loading }) {
 
 function StatCard({ icon, tint, value, label, note, loading }) {
   return (
-    <div className="group relative overflow-hidden rounded-[16px] border border-[#e4e8f0] bg-white p-4 shadow-[0_10px_28px_rgba(15,28,65,.04)] transition hover:-translate-y-px hover:shadow-[0_14px_36px_rgba(15,28,65,.07)]">
+    <article tabIndex={0} aria-label={`${label}: ${loading ? "loading" : value}`} className="cmt-hover-tile group relative isolate rounded-[16px] border border-[#e4e8f0] bg-white shadow-[0_10px_28px_rgba(15,28,65,.04)]">
+      <span aria-hidden="true" className="cmt-hover-tile__fill" />
+      <span className="cmt-hover-tile__surface cmt-stat-tile p-4">
       <div className="flex items-start justify-between">
-        <span className={`grid h-9 w-9 place-items-center rounded-[10px] ${tint}`}>{icon}</span>
-        <Sparkles size={12} className="text-[#dfe4ed] opacity-0 transition group-hover:opacity-100" />
+        <span className={`cmt-hover-tile__icon grid h-9 w-9 place-items-center rounded-[10px] ${tint}`}>{icon}</span>
+        <Sparkles size={12} className="cmt-hover-tile__trend text-[#dfe4ed] opacity-0 transition group-hover:opacity-100" />
       </div>
-      <strong className="mt-4 block text-[24px] leading-none tracking-[-.04em] text-[#1c2a4a]">
+      <strong className="cmt-hover-tile__number mt-4 block text-[24px] leading-none tracking-[-.04em] text-[#1c2a4a]">
         {loading ? "…" : value}
       </strong>
-      <p className="m-0 mt-1.5 text-[11px] font-bold text-[#35415f]">{label}</p>
-      {note && <span className="mt-0.5 block text-[9px] text-[#8b95a8]">{note}</span>}
-    </div>
+      <p className="cmt-hover-tile__title m-0 mt-1.5 text-[11px] font-bold text-[#35415f]">{label}</p>
+      {note && <span className="cmt-hover-tile__description mt-0.5 block text-[9px] text-[#8b95a8]">{note}</span>}
+      </span>
+      <span aria-hidden="true" className="cmt-hover-tile__arrow">→</span>
+    </article>
   );
 }
 
@@ -325,27 +329,27 @@ export default function AdminConferencesPage() {
                     <tr
                       key={conf.id}
                       onClick={() => navigate(`/admin/conferences/${conf.id}/edit`)}
-                      className="group cursor-pointer border-b border-[#f0f2f6] transition-colors last:border-0 hover:bg-[#fafbff]"
+                      className="group cmt-conference-row cursor-pointer border-b border-[#f0f2f6] last:border-0"
                     >
                       <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <span className="relative grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-[#efedff] to-[#e0dcff] text-[11px] font-extrabold text-[#4f46c7] shadow-[0_6px_14px_-4px_rgba(102,85,246,.28)]">
+                        <div className="cmt-conference-row__lead relative flex items-center gap-3">
+                          <span className="cmt-conference-row__avatar relative grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-[#efedff] to-[#e0dcff] text-[11px] font-extrabold text-[#4f46c7] shadow-[0_6px_14px_-4px_rgba(102,85,246,.28)]">
                             {getInitials(name) === "?" ? <CalendarDays size={16} /> : getInitials(name)}
-                            <span className="absolute -bottom-0.5 -right-0.5 grid h-4 w-4 place-items-center rounded-full border-2 border-white bg-gradient-to-br from-[#6655f6] to-[#8b7bff] text-white">
+                            <span className="cmt-conference-row__badge absolute -bottom-0.5 -right-0.5 grid h-4 w-4 place-items-center rounded-full border-2 border-white bg-gradient-to-br from-[#6655f6] to-[#8b7bff] text-white">
                               <CalendarDays size={8} strokeWidth={3} />
                             </span>
                           </span>
                           <div className="min-w-0">
-                            <strong className="block truncate text-[11px] font-bold text-[#1c2a4a]">
+                            <strong className="cmt-conference-name block truncate text-[11px] font-bold text-[#1c2a4a]">
                               {name}
                             </strong>
-                            <span className="text-[9px] font-semibold text-[#929bad]">#{conf.id}</span>
+                            <span className="cmt-conference-row__meta text-[9px] font-semibold text-[#929bad]">#{conf.id}</span>
                           </div>
                         </div>
                       </td>
 
                       <td className="px-4 py-4">
-                        <span className="inline-flex items-center gap-1.5 rounded-lg border border-[#edf0f5] bg-[#fafbfe] px-2 py-1 text-[10px] font-semibold text-[#5c6880]">
+                          <span className="cmt-conference-row__pill inline-flex items-center gap-1.5 rounded-lg border border-[#edf0f5] bg-[#fafbfe] px-2 py-1 text-[10px] font-semibold text-[#5c6880]">
                           <CalendarDays size={11} className="text-[#aeb6c6]" />
                           {confDate(conf)}
                         </span>
@@ -353,8 +357,8 @@ export default function AdminConferencesPage() {
 
                       <td className="px-4 py-4">
                         {location ? (
-                          <span className="inline-flex max-w-[220px] items-center gap-1.5 text-[10px] text-[#5c6880]">
-                            <MapPin size={12} className="shrink-0 text-[#aeb6c6]" />
+                          <span className="cmt-conference-row__location inline-flex max-w-[220px] items-center gap-1.5 text-[10px] text-[#5c6880]">
+                            <MapPin size={12} className="cmt-conference-row__location-icon shrink-0 text-[#aeb6c6]" />
                             <span className="truncate">{location}</span>
                           </span>
                         ) : (
@@ -375,18 +379,18 @@ export default function AdminConferencesPage() {
                               e.stopPropagation();
                               navigate(`/admin/conferences/${conf.id}/edit`);
                             }}
-                            className="inline-flex items-center gap-1.5 rounded-lg bg-blue-50 px-2.5 py-1.5 text-[10px] font-bold text-blue-600 transition hover:bg-blue-100"
+                            className="cmt-conference-row__edit inline-flex items-center gap-1.5 rounded-lg bg-blue-50 px-2.5 py-1.5 text-[10px] font-bold text-blue-600 transition-colors"
                           >
                             <Pencil size={12} /> Edit
                           </button>
                           <button
                             onClick={(e) => handleDelete(e, conf)}
-                            className="inline-flex items-center gap-1.5 rounded-lg bg-red-50 px-2.5 py-1.5 text-[10px] font-bold text-red-600 transition hover:bg-red-100"
+                            className="cmt-conference-row__delete inline-flex items-center gap-1.5 rounded-lg bg-red-50 px-2.5 py-1.5 text-[10px] font-bold text-red-600 transition-colors"
                             aria-label={`Delete ${name}`}
                           >
                             <Trash2 size={12} /> Delete
                           </button>
-                          <span className="ml-1 inline-grid h-7 w-7 place-items-center rounded-full text-[#aeb6c6] transition group-hover:bg-[#efedff] group-hover:text-[#5649dc]">
+                          <span className="cmt-conference-row__chevron ml-1 inline-grid h-7 w-7 place-items-center rounded-full text-[#aeb6c6]">
                             <ChevronRight size={16} />
                           </span>
                         </div>
