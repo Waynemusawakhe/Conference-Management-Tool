@@ -11,6 +11,16 @@ import { Card, CardHeader, StateBlock, formatDate } from "../components/AdminUI"
 import { useApiResource } from "../hooks/useApiResource";
 import { toArray } from "../api/normalize";
 import { submissionsApi } from "../api/submissionsApi";
+import { AdminTableToolbar, SortableTh, useAdminTableControls } from "../components/AdminTableControls";
+
+const SUBMISSION_COLUMNS = [
+  { key: "title", label: "Title" },
+  { key: "author", label: "Author" },
+  { key: "conference", label: "Conference" },
+  { key: "status", label: "Status" },
+  { key: "decision", label: "Decision" },
+  { key: "submitted", label: "Submitted" },
+];
 
 const STATUS_LABELS = {
   pending: "Pending",
@@ -110,6 +120,7 @@ export default function AdminSubmissionsPage() {
 
   const submissionsRes = useApiResource(() => submissionsApi.getAll(), []);
   const submissions = useMemo(() => toArray(submissionsRes.data), [submissionsRes.data]);
+  const table = useAdminTableControls("submissions", SUBMISSION_COLUMNS);
 
   const statuses = useMemo(() => {
     const set = new Set();
@@ -135,6 +146,15 @@ export default function AdminSubmissionsPage() {
         .includes(q);
     });
   }, [submissions, query, statusFilter]);
+  const visibleSubmissions = table.sortRows(filtered, {
+    title: (sub) => subTitle(sub),
+    author: (sub) => subAuthor(sub),
+    conference: (sub) => subConference(sub),
+    status: (sub) => statusKey(sub.status),
+    decision: (sub) => subDecision(sub),
+    submitted: (sub) => sub.created_at ?? sub.submitted_at,
+  });
+  const visibleColumnCount = SUBMISSION_COLUMNS.filter((column) => table.columnVisible(column.key)).length;
 
   return (
     <AdminLayout subtitle="Oversight" title="Submissions">
@@ -214,16 +234,17 @@ export default function AdminSubmissionsPage() {
           </div>
         )}
 
+        <AdminTableToolbar columns={SUBMISSION_COLUMNS} controls={table} />
         <div className="overflow-x-auto">
-          <table className="w-full border-collapse text-left">
+          <table data-table-density={table.density} className="cmt-mobile-card-table admin-data-table w-full min-w-[900px] border-collapse text-left">
             <thead>
               <tr className="border-b border-[#edf0f5] bg-gradient-to-b from-[#fafbff] to-[#f4f6fb] text-[9px] font-extrabold uppercase tracking-[.08em] text-[#9ba4b5]">
-                <th className="px-6 py-3">Title</th>
-                <th className="px-4 py-3">Author</th>
-                <th className="px-4 py-3">Conference</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3">Decision</th>
-                <th className="px-6 py-3 text-right">Submitted</th>
+                {table.columnVisible("title") && <SortableTh column={SUBMISSION_COLUMNS[0]} controls={table} className="sticky left-0 z-20 bg-[#fafbff] px-6 py-2.5 dark:bg-[#0f172a]" />}
+                {table.columnVisible("author") && <SortableTh column={SUBMISSION_COLUMNS[1]} controls={table} className="whitespace-nowrap px-4 py-2.5" />}
+                {table.columnVisible("conference") && <SortableTh column={SUBMISSION_COLUMNS[2]} controls={table} className="whitespace-nowrap px-4 py-2.5" />}
+                {table.columnVisible("status") && <SortableTh column={SUBMISSION_COLUMNS[3]} controls={table} className="whitespace-nowrap px-4 py-2.5" />}
+                {table.columnVisible("decision") && <SortableTh column={SUBMISSION_COLUMNS[4]} controls={table} className="whitespace-nowrap px-4 py-2.5" />}
+                {table.columnVisible("submitted") && <SortableTh column={SUBMISSION_COLUMNS[5]} controls={table} className="whitespace-nowrap px-6 py-2.5 text-right" />}
               </tr>
             </thead>
             <tbody>
@@ -231,7 +252,7 @@ export default function AdminSubmissionsPage() {
 
               {!submissionsRes.loading && submissionsRes.error && (
                 <tr>
-                  <td colSpan={6}>
+                  <td colSpan={visibleColumnCount}>
                     <StateBlock kind="error" message={submissionsRes.error.message} onRetry={submissionsRes.reload} />
                   </td>
                 </tr>
@@ -239,7 +260,7 @@ export default function AdminSubmissionsPage() {
 
               {!submissionsRes.loading && !submissionsRes.error && filtered.length === 0 && (
                 <tr>
-                  <td colSpan={6}>
+                  <td colSpan={visibleColumnCount}>
                     <div className="flex flex-col items-center gap-3 px-6 py-14 text-center">
                       <span className="grid h-12 w-12 place-items-center rounded-2xl bg-[#efedff] text-[#5c50ec]">
                         <FileText size={22} />
@@ -267,11 +288,11 @@ export default function AdminSubmissionsPage() {
 
               {!submissionsRes.loading &&
                 !submissionsRes.error &&
-                filtered.map((sub) => {
+                visibleSubmissions.map((sub) => {
                   const label = statusLabel(sub.status);
                   return (
                     <tr key={sub.id} className="cmt-admin-list-row group border-b border-[#f0f2f6] transition-colors last:border-0 hover:bg-[#fafbff]">
-                      <td className="px-6 py-4">
+                      {table.columnVisible("title") && <td data-label="Submission" className="sticky left-0 z-10 bg-white px-6 py-4 dark:bg-[#0f172a]">
                         <div className="flex items-center gap-3">
                           <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-[#efedff] to-[#e0dcff] text-[#4f46c7] shadow-[0_6px_14px_-4px_rgba(102,85,246,.28)]">
                             <FileText size={15} />
@@ -283,29 +304,29 @@ export default function AdminSubmissionsPage() {
                             <span className="text-[9px] text-[#929bad]">#{sub.id}</span>
                           </div>
                         </div>
-                      </td>
-                      <td className="px-4 py-4">
+                      </td>}
+                      {table.columnVisible("author") && <td data-label="Author" className="px-4 py-4">
                         <span className="inline-flex items-center gap-1.5 text-[10px] text-[#5c6880]">
                           <User size={12} className="text-[#aeb6c6]" />
                           {subAuthor(sub)}
                         </span>
-                      </td>
-                      <td className="px-4 py-4">
+                      </td>}
+                      {table.columnVisible("conference") && <td data-label="Conference" className="px-4 py-4">
                         <span className="block max-w-[200px] truncate text-[10px] text-[#5c6880]">
                           {subConference(sub)}
                         </span>
-                      </td>
-                      <td className="px-4 py-4">
+                      </td>}
+                      {table.columnVisible("status") && <td data-label="Status" className="px-4 py-4">
                         <span className={`inline-flex rounded-full border px-2.5 py-1 text-[9px] font-extrabold uppercase tracking-[.06em] ${STATUS_TONES[label] ?? "border-[#e2e6ee] bg-[#f5f6fa] text-[#59657d]"}`}>
                           {label}
                         </span>
-                      </td>
-                      <td className="px-4 py-4 text-[10px] font-semibold text-[#5c6880]">
+                      </td>}
+                      {table.columnVisible("decision") && <td data-label="Decision" className="px-4 py-4 text-[10px] font-semibold text-[#5c6880]">
                         {subDecision(sub)}
-                      </td>
-                      <td className="px-6 py-4 text-right text-[10px] text-[#7b869b]">
+                      </td>}
+                      {table.columnVisible("submitted") && <td data-label="Submitted" className="px-6 py-4 text-right text-[10px] text-[#7b869b]">
                         {formatDate(sub.created_at ?? sub.submitted_at)}
-                      </td>
+                      </td>}
                     </tr>
                   );
                 })}

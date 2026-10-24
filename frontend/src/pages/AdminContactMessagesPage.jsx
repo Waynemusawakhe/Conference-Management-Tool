@@ -17,6 +17,15 @@ import { Card, CardHeader, StateBlock, formatDateTime } from "../components/Admi
 import { useApiResource } from "../hooks/useApiResource";
 import { toArray } from "../api/normalize";
 import { contactMessagesApi } from "../api/contactMessagesApi";
+import { AdminTableToolbar, SortableTh, useAdminTableControls } from "../components/AdminTableControls";
+
+const MESSAGE_COLUMNS = [
+  { key: "sender", label: "From" },
+  { key: "message", label: "Message" },
+  { key: "status", label: "Status" },
+  { key: "received", label: "Received" },
+  { key: "actions", label: "Actions" },
+];
 
 const STATUS_CONFIG = {
   new: {
@@ -110,6 +119,7 @@ export default function ContactMessagesPage() {
   const messagesRes = useApiResource(() => contactMessagesApi.getAll({ page, per_page: 25, status: filter === "all" ? undefined : filter }), [page, filter]);
   const meta = pageMeta(messagesRes.data);
   const messages = useMemo(() => toArray(messagesRes.data), [messagesRes.data]);
+  const table = useAdminTableControls("contact-messages", MESSAGE_COLUMNS);
 
   useEffect(() => {
     if (messagesRes.loading || messagesRes.error || !messagesRes.data) return;
@@ -138,6 +148,13 @@ export default function ContactMessagesPage() {
         .includes(q);
     });
   }, [messages, query, filter]);
+  const visibleMessages = table.sortRows(filtered, {
+    sender: (message) => message.name ?? message.email,
+    message: (message) => message.message,
+    status: (message) => statusKey(message.status),
+    received: (message) => message.created_at,
+  });
+  const visibleColumnCount = MESSAGE_COLUMNS.filter((column) => table.columnVisible(column.key)).length;
 
   const handleDelete = async (e, id) => {
     e.stopPropagation();
@@ -220,15 +237,16 @@ export default function ContactMessagesPage() {
           })}
         </div>
 
+        <AdminTableToolbar columns={MESSAGE_COLUMNS} controls={table} />
         <div className="overflow-x-auto">
-          <table className="w-full border-collapse text-left">
+          <table data-table-density={table.density} className="cmt-mobile-card-table admin-data-table w-full min-w-[820px] border-collapse text-left">
             <thead>
               <tr className="border-b border-[#edf0f5] text-[9px] font-extrabold uppercase tracking-[.08em] text-[#9ba4b5]">
-                <th className="px-6 py-3">From</th>
-                <th className="px-4 py-3">Message</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3">Received</th>
-                <th className="px-6 py-3 text-right">Actions</th>
+                {table.columnVisible("sender") && <SortableTh column={MESSAGE_COLUMNS[0]} controls={table} className="sticky left-0 z-20 bg-[#fafbff] px-6 py-2.5 dark:bg-[#0f172a]" />}
+                {table.columnVisible("message") && <SortableTh column={MESSAGE_COLUMNS[1]} controls={table} className="whitespace-nowrap px-4 py-2.5" />}
+                {table.columnVisible("status") && <SortableTh column={MESSAGE_COLUMNS[2]} controls={table} className="whitespace-nowrap px-4 py-2.5" />}
+                {table.columnVisible("received") && <SortableTh column={MESSAGE_COLUMNS[3]} controls={table} className="whitespace-nowrap px-4 py-2.5" />}
+                {table.columnVisible("actions") && <th className="px-6 py-2.5 text-right">Actions</th>}
               </tr>
             </thead>
             <tbody>
@@ -236,7 +254,7 @@ export default function ContactMessagesPage() {
 
               {!messagesRes.loading && messagesRes.error && (
                 <tr>
-                  <td colSpan={5}>
+                  <td colSpan={visibleColumnCount}>
                     <StateBlock kind="error" message={messagesRes.error.message} onRetry={messagesRes.reload} />
                   </td>
                 </tr>
@@ -244,7 +262,7 @@ export default function ContactMessagesPage() {
 
               {!messagesRes.loading && !messagesRes.error && filtered.length === 0 && (
                 <tr>
-                  <td colSpan={5}>
+                  <td colSpan={visibleColumnCount}>
                     <StateBlock
                       message={
                         messages.length === 0
@@ -260,7 +278,7 @@ export default function ContactMessagesPage() {
 
               {!messagesRes.loading &&
                 !messagesRes.error &&
-                filtered.map((m) => {
+                visibleMessages.map((m) => {
                   const key = statusKey(m.status);
                   const config = statusConfig(m.status);
                   return (
@@ -269,7 +287,7 @@ export default function ContactMessagesPage() {
                       onClick={() => navigate(`/admin/contact-messages/${m.id}`)}
                       className="cmt-admin-list-row group cursor-pointer border-b border-[#f0f2f6] transition-colors last:border-0 hover:bg-[#fafbff]"
                     >
-                      <td className="px-6 py-4">
+                      {table.columnVisible("sender") && <td data-label="Sender" className="sticky left-0 z-10 bg-white px-6 py-4 dark:bg-[#0f172a]">
                         <div className="flex items-center gap-3">
                           <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-full ${config.icon}`}>
                             {key === "resolved" ? <MailOpen size={15} /> : <Mail size={15} />}
@@ -283,21 +301,21 @@ export default function ContactMessagesPage() {
                             </span>
                           </div>
                         </div>
-                      </td>
-                      <td className="px-4 py-4 max-w-[360px]">
+                      </td>}
+                      {table.columnVisible("message") && <td data-label="Message" className="px-4 py-4 max-w-[360px]">
                         <p className="m-0 line-clamp-2 text-[11px] text-[#5c6880]">
                           {m.message ?? "—"}
                         </p>
-                      </td>
-                      <td className="px-4 py-4">
+                      </td>}
+                      {table.columnVisible("status") && <td data-label="Status" className="px-4 py-4">
                         <span className={`inline-flex rounded-full border px-2.5 py-1 text-[9px] font-extrabold uppercase tracking-[.06em] ${config.chip}`}>
                           {config.label}
                         </span>
-                      </td>
-                      <td className="px-4 py-4 text-[10px] text-[#7b869b]">
+                      </td>}
+                      {table.columnVisible("received") && <td data-label="Received" className="px-4 py-4 text-[10px] text-[#7b869b]">
                         {formatDateTime(m.created_at)}
-                      </td>
-                      <td className="px-6 py-4 text-right">
+                      </td>}
+                      {table.columnVisible("actions") && <td data-label="Actions" className="px-6 py-4 text-right">
                         <div className="flex items-center justify-end gap-1.5">
                           <button
                             onClick={(e) => handleDelete(e, m.id)}
@@ -310,7 +328,7 @@ export default function ContactMessagesPage() {
                             <ChevronRight size={16} />
                           </span>
                         </div>
-                      </td>
+                      </td>}
                     </tr>
                   );
                 })}

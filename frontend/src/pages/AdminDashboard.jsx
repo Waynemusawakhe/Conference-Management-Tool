@@ -124,7 +124,7 @@ function HoverTile({ as: Element = "article", children, className = "", contentC
 function StatCard({ icon, value, label, note, tint, loading, intro, index }) {
   return (
     <HoverTile
-      className={`rounded-[18px] border border-[#e4e8f0] bg-white shadow-[0_10px_28px_rgba(15,28,65,.04)] ${intro ? "admin-intro-card" : ""}`}
+      className={`cmt-dashboard-summary-tile rounded-[18px] border border-[#e4e8f0] bg-white shadow-[0_10px_28px_rgba(15,28,65,.04)] ${intro ? "admin-intro-card" : ""}`}
       contentClassName="cmt-stat-tile p-5"
       style={intro ? { "--intro-delay": `${1180 + index * 90}ms` } : undefined}
       ariaLabel={`${label}: ${loading ? "loading" : value}`}
@@ -136,7 +136,7 @@ function StatCard({ icon, value, label, note, tint, loading, intro, index }) {
         <TrendingUp size={13} className="cmt-hover-tile__trend text-[#dfe4ed] opacity-0 transition group-hover:opacity-100" />
       </div>
       <strong className="cmt-hover-tile__number mt-4 block text-[28px] leading-none font-bold tracking-[-.04em] text-[#1c2a4a]">
-        {loading ? "…" : <CountUp value={value} animate={intro} delay={1300 + index * 90} />}
+        {loading ? "…" : value == null ? "—" : <CountUp value={value} animate={intro} delay={1300 + index * 90} />}
       </strong>
       <p className="cmt-hover-tile__title m-0 mt-2 text-[11px] font-bold text-[#35415f]">{label}</p>
       {note && <span className="cmt-hover-tile__description mt-0.5 block text-[9px] text-[#8b95a8]">{note}</span>}
@@ -148,7 +148,7 @@ function QuickTile({ icon, label, tint, count, loading, onClick, intro, index })
   return (
     <button
       onClick={onClick}
-      className={`group cmt-manage-hover w-full rounded-[16px] border border-[#e4e8f0] bg-white text-left shadow-[0_6px_18px_rgba(15,28,65,.03)] ${intro ? "admin-intro-card" : ""}`}
+      className={`group cmt-dashboard-manage-tile cmt-manage-hover relative isolate w-full rounded-[16px] border border-[#e4e8f0] bg-white text-left shadow-[0_6px_18px_rgba(15,28,65,.03)] ${intro ? "admin-intro-card" : ""}`}
       style={intro ? { "--intro-delay": `${1760 + index * 90}ms` } : undefined}
     >
       <span className="cmt-manage-hover__surface flex items-center gap-3 p-4">
@@ -158,7 +158,7 @@ function QuickTile({ icon, label, tint, count, loading, onClick, intro, index })
         <span className="min-w-0 flex-1">
           <strong className="cmt-manage-hover__title block truncate text-[12px] font-bold text-[#1c2a4a]">{label}</strong>
           <span className="mt-0.5 block text-[10px] text-[#8a95a8]">
-            {loading ? "…" : count != null ? `${count} total` : "Open"}
+            {loading ? "…" : count === "unavailable" ? "Unavailable" : count != null ? `${count} total` : "Open"}
           </span>
         </span>
         <ChevronRight size={16} className="cmt-manage-hover__chevron shrink-0 text-[#c4c8d4]" />
@@ -186,13 +186,14 @@ function RecentRow({ primary, secondary, meta, badge, onClick }) {
   );
 }
 
-function RecentEmpty({ message }) {
+function RecentEmpty({ message, onRetry }) {
   return (
-    <div className="cmt-admin-state flex flex-col items-center gap-2.5 px-5 py-9 text-center text-[11px] text-[#8993a6]" role="status">
+    <div className="cmt-admin-state flex flex-col items-center gap-2.5 px-5 py-9 text-center text-[11px] text-[#8993a6]" role={onRetry ? "alert" : "status"}>
       <span className="cmt-admin-state__icon grid h-10 w-10 place-items-center rounded-2xl bg-[#efedff] text-[#5b4fe3]">
         <Inbox size={18} strokeWidth={1.8} />
       </span>
       <span className="max-w-[320px] leading-5">{message}</span>
+      {onRetry && <button type="button" onClick={onRetry} className="min-h-11 rounded-lg bg-[#efedff] px-4 text-[11px] font-extrabold text-[#5548d7] hover:bg-[#e5e2ff] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#6655f6]">Retry</button>}
     </div>
   );
 }
@@ -247,40 +248,33 @@ export default function AdminDashboard() {
       {
         icon: <CalendarDays size={17} />,
         tint: "bg-[#efedff] text-[#4f46c7]",
-        value:
-          pickNumber(dashboard?.total_conferences, dashboard?.conferences_count) ??
-          conferences.length,
+        value: pickNumber(dashboard?.total_conferences),
         label: "Conferences",
         note: "On the platform",
       },
       {
         icon: <FileText size={17} />,
         tint: "bg-[#eef5fd] text-[#1d5fa8]",
-        value:
-          pickNumber(dashboard?.total_submissions, dashboard?.submissions_count) ??
-          submissions.length,
+        value: pickNumber(dashboard?.total_submissions),
         label: "Submissions",
         note: "All conferences",
       },
       {
         icon: <Users size={17} />,
         tint: "bg-[#effaf4] text-[#18794e]",
-        value:
-          pickNumber(dashboard?.total_users, dashboard?.users_count) ?? users.length,
+        value: pickNumber(dashboard?.total_users),
         label: "Users",
         note: "Across every role",
       },
       {
         icon: <FileCheck2 size={17} />,
         tint: "bg-[#fff6ee] text-[#a55b25]",
-        value:
-          pickNumber(dashboard?.accepted_submissions, dashboard?.accepted_count) ??
-          submissions.filter((s) => statusKey(s.status) === "accepted").length,
+        value: pickNumber(dashboard?.accepted_submissions),
         label: "Accepted",
         note: "Ready for publication",
       },
     ],
-    [dashboard, conferences.length, submissions, users.length]
+    [dashboard]
   );
 
   const recentSubmissions = useMemo(() => submissions.slice(0, 5), [submissions]);
@@ -294,6 +288,7 @@ export default function AdminDashboard() {
       tint: "bg-[#efedff] text-[#4f46c7]",
       count: conferences.length,
       loading: conferencesRes.loading,
+      error: conferencesRes.error,
     },
     {
       label: "Users",
@@ -302,6 +297,7 @@ export default function AdminDashboard() {
       tint: "bg-[#effaf4] text-[#18794e]",
       count: users.length,
       loading: usersRes.loading,
+      error: usersRes.error,
     },
     {
       label: "Contact Messages",
@@ -310,6 +306,7 @@ export default function AdminDashboard() {
       tint: "bg-[#eef5fd] text-[#1d5fa8]",
       count: messages.length,
       loading: messagesRes.loading,
+      error: messagesRes.error,
     },
     {
       label: "Reports",
@@ -339,28 +336,27 @@ export default function AdminDashboard() {
           </div>
           <button
             onClick={() => navigate("/admin/reports")}
-            className="mt-5 w-full shrink-0 inline-flex items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/[.06] px-4 py-3 text-[12px] font-extrabold text-white transition hover:-translate-y-px hover:bg-white/10 sm:w-auto"
+            className="mt-5 w-full shrink-0 inline-flex items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/[.06] px-4 py-3 text-[12px] font-extrabold text-white transition hover:-translate-y-px hover:border-[#10b981] hover:bg-[#10b981] sm:w-auto"
           >
             <BarChart3 size={16} /> Open Reports
           </button>
         </div>
       </section>
 
-      <section className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {stats.map((stat, index) => (
-          <StatCard
-            key={stat.label}
-            icon={stat.icon}
-            tint={stat.tint}
-            value={stat.value}
-            label={stat.label}
-            note={stat.note}
-            loading={reportsRes.loading && stat.value == null}
-            intro={intro}
-            index={index}
-          />
-        ))}
-      </section>
+      {reportsRes.loading ? (
+        <section aria-label="Loading dashboard totals" aria-busy="true" className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {stats.map((stat) => <div key={stat.label} className="h-[132px] animate-pulse rounded-[18px] border border-[#e4e8f0] bg-white p-5 dark:border-[#1e293b] dark:bg-[#0f172a]"><div className="h-10 w-10 rounded-xl bg-[#eef1f7] dark:bg-[#1e293b]" /><div className="mt-4 h-7 w-20 rounded bg-[#eef1f7] dark:bg-[#1e293b]" /><div className="mt-2 h-3 w-24 rounded bg-[#eef1f7] dark:bg-[#1e293b]" /></div>)}
+        </section>
+      ) : reportsRes.error ? (
+        <section role="alert" className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#f1c8c8] bg-[#fff2f2] px-5 py-4 text-[12px] font-semibold text-[#9f3030] dark:border-[#5b1e1e] dark:bg-[#2a1218] dark:text-[#f08a9a]">
+          <span>Dashboard totals could not be loaded: {reportsRes.error.message}</span>
+          <button type="button" onClick={reportsRes.reload} className="min-h-11 rounded-lg bg-white px-4 text-[11px] font-extrabold text-[#9f3030] shadow-sm hover:bg-[#fff8f8] focus-visible:outline focus-visible:outline-2 focus-visible:outline-red-500 dark:bg-[#3a1515] dark:text-[#f08a9a]">Retry</button>
+        </section>
+      ) : (
+        <section className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {stats.map((stat, index) => <StatCard key={stat.label} icon={stat.icon} tint={stat.tint} value={stat.value} label={stat.label} note={stat.note} intro={intro} index={index} />)}
+        </section>
+      )}
 
       <section className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-3">
         <div className={`overflow-hidden rounded-[20px] border border-[#e4e8f0] bg-white shadow-[0_10px_30px_rgba(15,28,65,.035)] lg:col-span-2 ${intro ? "admin-intro-card" : ""}`} style={intro ? { "--intro-delay": "1580ms" } : undefined}>
@@ -381,7 +377,7 @@ export default function AdminDashboard() {
           {submissionsRes.loading ? (
             <RecentLoading />
           ) : submissionsRes.error ? (
-            <RecentEmpty message={submissionsRes.error.message} />
+            <RecentEmpty message={submissionsRes.error.message} onRetry={submissionsRes.reload} />
           ) : recentSubmissions.length === 0 ? (
             <RecentEmpty message="No submissions yet." />
           ) : (
@@ -428,7 +424,7 @@ export default function AdminDashboard() {
           {messagesRes.loading ? (
             <RecentLoading rows={5} />
           ) : messagesRes.error ? (
-            <RecentEmpty message={messagesRes.error.message} />
+            <RecentEmpty message={messagesRes.error.message} onRetry={messagesRes.reload} />
           ) : recentMessages.length === 0 ? (
             <RecentEmpty message="Inbox is empty." />
           ) : (
@@ -466,7 +462,7 @@ export default function AdminDashboard() {
               icon={q.icon}
               tint={q.tint}
               label={q.label}
-              count={q.count}
+              count={q.error ? "unavailable" : q.count}
               loading={q.loading}
               onClick={() => navigate(q.to)}
               intro={intro}

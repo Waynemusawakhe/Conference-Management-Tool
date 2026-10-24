@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
   BarChart3,
@@ -12,6 +13,7 @@ import AdminLayout from "../components/AdminLayout";
 import { Card, CardHeader, GhostButton, StateBlock } from "../components/AdminUI";
 import { useApiResource } from "../hooks/useApiResource";
 import { reportsApi } from "../api/reportsApi";
+import { AdminTableToolbar, SortableTh, useAdminTableControls } from "../components/AdminTableControls";
 
 const DEFAULT_TAB = "dashboard";
 
@@ -117,7 +119,14 @@ function MetricCard({ label, value, accent, text, glow, ring }) {
   );
 }
 
-function DataTable({ rows }) {
+function DataTable({ rows, tableId = "report-data" }) {
+  const columns = useMemo(() => Array.isArray(rows) && rows[0] && typeof rows[0] === "object"
+    ? Array.from(rows.reduce((set, row) => { Object.keys(row || {}).forEach((key) => set.add(key)); return set; }, new Set())).map((key) => ({ key, label: prettifyKey(key) }))
+    : [], [rows]);
+  const controls = useAdminTableControls(tableId, columns);
+  const accessors = useMemo(() => Object.fromEntries(columns.map(({ key }) => [key, (row) => row?.[key]])), [columns]);
+  const visibleRows = controls.sortRows(rows ?? [], accessors);
+
   if (!Array.isArray(rows) || rows.length === 0) {
     return (
       <p className="rounded-xl bg-[#f7f8fc] px-4 py-3 text-xs text-[#9ba4b5]">No records.</p>
@@ -136,35 +145,30 @@ function DataTable({ rows }) {
     );
   }
 
-  const columns = Array.from(
-    rows.reduce((set, row) => {
-      Object.keys(row || {}).forEach((k) => set.add(k));
-      return set;
-    }, new Set())
-  );
-
   return (
     <div className="overflow-hidden rounded-2xl border border-[#eef1f7] bg-white shadow-[0_10px_30px_-18px_rgba(23,35,66,.18)]">
+      <AdminTableToolbar columns={columns} controls={controls} />
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[520px] text-left text-xs">
+        <table data-table-density={controls.density} className="cmt-mobile-card-table admin-data-table w-full min-w-[520px] text-left text-xs">
           <thead>
             <tr className="bg-gradient-to-b from-[#fafbff] to-[#f4f6fb]">
-              {columns.map((col) => (
-                <th
-                  key={col}
-                  className="whitespace-nowrap border-b border-[#eef1f7] px-4 py-3 text-[9px] font-extrabold uppercase tracking-[.1em] text-[#9ba4b5]"
+              {columns.filter((column) => controls.columnVisible(column.key)).map((column, index) => (
+                <SortableTh
+                  key={column.key}
+                  column={column}
+                  controls={controls}
+                  className={`whitespace-nowrap border-b border-[#eef1f7] px-4 py-2.5 text-[9px] font-extrabold uppercase tracking-[.1em] text-[#9ba4b5] ${index === 0 ? "sticky left-0 z-20 bg-[#fafbff] dark:bg-[#0f172a]" : ""}`}
                 >
-                  {prettifyKey(col)}
-                </th>
+                </SortableTh>
               ))}
             </tr>
           </thead>
           <tbody>
-            {rows.map((row, i) => (
+            {visibleRows.map((row, i) => (
               <tr key={i} className="cmt-admin-list-row border-b border-[#f2f4f9] transition-colors last:border-0 hover:bg-[#fafbff]">
-                {columns.map((col) => (
-                  <td key={col} className="whitespace-nowrap px-4 py-3 text-[#43506a]">
-                    {renderValue(row?.[col])}
+                {columns.filter((column) => controls.columnVisible(column.key)).map((column, index) => (
+                  <td key={column.key} data-label={column.label} className={`whitespace-nowrap px-4 py-3 text-[#43506a] ${index === 0 ? "sticky left-0 z-10 bg-white dark:bg-[#0f172a]" : ""}`}>
+                    {renderValue(row?.[column.key])}
                   </td>
                 ))}
               </tr>
@@ -176,12 +180,12 @@ function DataTable({ rows }) {
   );
 }
 
-function SubSection({ title, value, accent, text, glow, ring }) {
+function SubSection({ title, value, accent, text, glow, ring, tableId }) {
   if (Array.isArray(value)) {
     return (
       <section className="mt-6">
         <SectionTitle title={title} accent={accent} />
-        <DataTable rows={value} />
+        <DataTable rows={value} tableId={`${tableId}-${title}`} />
       </section>
     );
   }
@@ -223,7 +227,7 @@ function ReportBody({ payload, tab }) {
   if (Array.isArray(payload)) {
     return (
       <div className="p-6 sm:p-7">
-        <DataTable rows={payload} />
+        <DataTable rows={payload} tableId={`reports-${tab.key}-root`} />
       </div>
     );
   }
@@ -266,6 +270,7 @@ function ReportBody({ payload, tab }) {
           text={text}
           glow={glow}
           ring={ring}
+          tableId={`reports-${tab.key}`}
         />
       ))}
     </div>

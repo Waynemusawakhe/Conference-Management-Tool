@@ -14,6 +14,15 @@ import { Card, CardHeader, StateBlock, formatDate, formatDateTime } from "../com
 import { useApiResource } from "../hooks/useApiResource";
 import { toArray } from "../api/normalize";
 import { registrationsApi } from "../api/registrationsApi";
+import { AdminTableToolbar, SortableTh, useAdminTableControls } from "../components/AdminTableControls";
+
+const REGISTRATION_COLUMNS = [
+  { key: "attendee", label: "Attendee" },
+  { key: "conference", label: "Conference" },
+  { key: "status", label: "Status" },
+  { key: "registered", label: "Registered" },
+  { key: "actions", label: "Actions" },
+];
 
 
 const regConfName = (r) =>
@@ -108,6 +117,7 @@ export default function AdminRegistrationsPage() {
 
   const regRes = useApiResource(() => registrationsApi.getAll(), []);
   const registrations = useMemo(() => toArray(regRes.data), [regRes.data]);
+  const table = useAdminTableControls("registrations", REGISTRATION_COLUMNS);
 
   const statuses = useMemo(() => {
     const set = new Set();
@@ -127,6 +137,13 @@ export default function AdminRegistrationsPage() {
         .includes(q);
     });
   }, [registrations, query, statusFilter]);
+  const visibleRegistrations = table.sortRows(filtered, {
+    attendee: (registration) => regUserName(registration),
+    conference: (registration) => regConfName(registration),
+    status: (registration) => regStatus(registration),
+    registered: (registration) => registration.created_at ?? registration.registered_at,
+  });
+  const visibleColumnCount = REGISTRATION_COLUMNS.filter((column) => table.columnVisible(column.key)).length;
 
   const handleCancel = async (r) => {
     if (!window.confirm(`Cancel registration #${r.id} for ${regUserName(r)}?`)) return;
@@ -199,27 +216,28 @@ export default function AdminRegistrationsPage() {
           </div>
         )}
 
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse text-left">
+        <AdminTableToolbar columns={REGISTRATION_COLUMNS} controls={table} />
+        <div className="cmt-registration-table-wrap overflow-x-auto">
+          <table data-table-density={table.density} className="cmt-registration-table admin-data-table w-full min-w-[760px] border-collapse text-left">
             <thead>
               <tr className="border-b border-[#edf0f5] bg-gradient-to-b from-[#fafbff] to-[#f4f6fb] text-[9px] font-extrabold uppercase tracking-[.08em] text-[#9ba4b5]">
-                <th className="px-6 py-3">Attendee</th>
-                <th className="px-4 py-3">Conference</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3">Registered</th>
-                <th className="px-6 py-3 text-right">Actions</th>
+                {table.columnVisible("attendee") && <SortableTh column={REGISTRATION_COLUMNS[0]} controls={table} className="sticky left-0 z-20 bg-[#fafbff] px-6 py-2.5 dark:bg-[#0f172a]" />}
+                {table.columnVisible("conference") && <SortableTh column={REGISTRATION_COLUMNS[1]} controls={table} className="cmt-registration-conference whitespace-nowrap px-4 py-2.5" />}
+                {table.columnVisible("status") && <SortableTh column={REGISTRATION_COLUMNS[2]} controls={table} className="cmt-registration-status whitespace-nowrap px-4 py-2.5" />}
+                {table.columnVisible("registered") && <SortableTh column={REGISTRATION_COLUMNS[3]} controls={table} className="cmt-registration-date whitespace-nowrap px-4 py-2.5" />}
+                {table.columnVisible("actions") && <th className="cmt-registration-actions px-6 py-2.5 text-right">Actions</th>}
               </tr>
             </thead>
             <tbody>
               {regRes.loading && <LoadingRows />}
 
               {!regRes.loading && regRes.error && (
-                <tr><td colSpan={5}><StateBlock kind="error" message={regRes.error.message} onRetry={regRes.reload} /></td></tr>
+                <tr><td colSpan={visibleColumnCount}><StateBlock kind="error" message={regRes.error.message} onRetry={regRes.reload} /></td></tr>
               )}
 
               {!regRes.loading && !regRes.error && filtered.length === 0 && (
                 <tr>
-                  <td colSpan={5}>
+                  <td colSpan={visibleColumnCount}>
                     <div className="flex flex-col items-center gap-3 px-6 py-14 text-center">
                       <span className="grid h-12 w-12 place-items-center rounded-2xl bg-[#efedff] text-[#5c50ec]"><Ticket size={22} /></span>
                       <h3 className="m-0 text-[13px] font-bold text-[#1c2a4a]">{registrations.length === 0 ? "No registrations yet" : "No matches"}</h3>
@@ -233,45 +251,53 @@ export default function AdminRegistrationsPage() {
                 </tr>
               )}
 
-              {!regRes.loading && !regRes.error && filtered.map((r) => {
+              {!regRes.loading && !regRes.error && visibleRegistrations.map((r) => {
                 const name = regUserName(r);
                 const status = regStatus(r);
                 return (
                   <tr key={r.id} className="cmt-admin-list-row admin-registration-row group border-b border-[#f0f2f6] transition-colors last:border-0 hover:bg-[#fafbff]">
-                    <td className="px-6 py-4">
+                    {table.columnVisible("attendee") && <td className="cmt-registration-attendee sticky left-0 z-10 bg-white px-6 py-4 dark:bg-[#0f172a]">
                       <div className="flex items-center gap-3">
                         <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#efedff] text-[10px] font-extrabold text-[#4f46c7]">
                           {getInitials(name)}
                         </span>
-                        <div className="min-w-0">
+                        <div className="min-w-0 flex-1">
                           <strong className="block truncate text-[11px] font-bold text-[#1c2a4a]">{name}</strong>
                           <span className="block truncate text-[10px] text-[#8a95a8]">{regUserEmail(r)}</span>
+                          <div className="cmt-registration-mobile-meta mt-2 hidden min-w-0 flex-wrap items-center gap-2">
+                            {table.columnVisible("conference") && <span className="w-full break-words text-[11px] leading-5 text-[#5c6880]">{regConfName(r)}</span>}
+                            <div className="flex w-full flex-wrap items-center justify-between gap-2">
+                              {table.columnVisible("status") && <span className={`inline-flex rounded-full border px-2.5 py-1 text-[9px] font-extrabold uppercase tracking-[.06em] ${statusTone(status)}`}>{status}</span>}
+                              {table.columnVisible("registered") && <span className="text-[10px] text-[#7b869b]">{formatDate(r.created_at ?? r.registered_at)}</span>}
+                            </div>
+                            {table.columnVisible("actions") && <button onClick={() => handleCancel(r)} className="cmt-registration-mobile-cancel mt-1 inline-flex min-h-11 w-full items-center justify-center gap-1.5 rounded-lg bg-red-50 px-3 text-[11px] font-bold text-red-600 transition hover:bg-red-100" aria-label={`Cancel registration for ${name}`}><Trash2 size={14} /> Cancel registration</button>}
+                          </div>
                         </div>
                       </div>
-                    </td>
-                    <td className="px-4 py-4">
+                    </td>}
+                    {table.columnVisible("conference") && <td className="cmt-registration-conference px-4 py-4">
                       <span className="inline-flex items-center gap-1.5 text-[10px] text-[#5c6880]">
                         <CalendarDays size={12} className="text-[#aeb6c6]" />
                         <span className="max-w-[220px] truncate">{regConfName(r)}</span>
                       </span>
-                    </td>
-                    <td className="px-4 py-4">
+                    </td>}
+                    {table.columnVisible("status") && <td className="cmt-registration-status px-4 py-4">
                       <span className={`inline-flex rounded-full border px-2.5 py-1 text-[9px] font-extrabold uppercase tracking-[.06em] ${statusTone(status)}`}>
                         {status}
                       </span>
-                    </td>
-                    <td className="px-4 py-4 text-[10px] text-[#7b869b]">
+                    </td>}
+                    {table.columnVisible("registered") && <td className="cmt-registration-date px-4 py-4 text-[10px] text-[#7b869b]">
                       {formatDate(r.created_at ?? r.registered_at)}
-                    </td>
-                    <td className="px-6 py-4 text-right">
+                    </td>}
+                    {table.columnVisible("actions") && <td className="cmt-registration-actions px-6 py-4 text-right">
                       <button
                         onClick={() => handleCancel(r)}
-                        className="inline-flex items-center gap-1.5 rounded-lg bg-red-50 px-2.5 py-1.5 text-[10px] font-bold text-red-600 transition hover:bg-red-100"
+                        className="cmt-registration-desktop-cancel inline-flex items-center gap-1.5 rounded-lg bg-red-50 px-2.5 py-1.5 text-[10px] font-bold text-red-600 transition hover:bg-red-100"
                         aria-label={`Cancel registration for ${name}`}
                       >
                         <Trash2 size={12} /> Cancel
                       </button>
-                    </td>
+                    </td>}
                   </tr>
                 );
               })}

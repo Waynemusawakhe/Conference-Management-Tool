@@ -687,7 +687,7 @@ export default function AdminLayout({
   return (
     <div className={`min-h-screen bg-[#f7f9fc] text-[#0d1b3d] transition-colors dark:bg-[#0a0f1f] dark:text-white ${playEntrance ? "admin-intro" : ""}`}>
       <header className={`sticky top-0 z-50 border-b border-white/10 bg-[#07132f]/95 text-white shadow-[0_8px_30px_rgba(7,19,47,.12)] backdrop-blur-xl ${playEntrance ? "admin-intro-topbar" : ""}`}>
-        <div className="mx-auto flex min-h-[76px] w-[min(1400px,calc(100%-32px))] items-center gap-4 sm:gap-6">
+        <div className="admin-topbar-inner mx-auto flex min-h-[76px] w-[min(1400px,calc(100%-32px))] items-center gap-4 sm:gap-6">
           <button
             type="button"
             className="text-white/80 hover:text-white lg:hidden"
@@ -1044,7 +1044,7 @@ export default function AdminLayout({
         </div>
       </header>
 
-      <div className="mx-auto flex w-[min(1400px,calc(100%-32px))] gap-6 py-6 lg:gap-7">
+      <div className="admin-shell mx-auto flex w-[min(1400px,calc(100%-32px))] gap-6 py-6 lg:gap-7">
         {sidebarOpen && (
           <div
             className="fixed inset-0 z-40 bg-[#07132f]/60 backdrop-blur-sm lg:hidden"
@@ -1174,7 +1174,7 @@ export default function AdminLayout({
 
           <button
             type="button"
-            className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] font-semibold text-[#9a6470] hover:bg-[#fff4f5] dark:text-[#f08a9a] dark:hover:bg-[#2a1218]"
+            className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] font-semibold text-[#9a6470] transition-colors hover:bg-red-600 hover:text-white dark:text-[#f08a9a] dark:hover:bg-red-500"
             onClick={
               handleSignOut
             }

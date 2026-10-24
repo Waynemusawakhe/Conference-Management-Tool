@@ -6,6 +6,15 @@ import { Card, CardHeader, StateBlock, formatDate } from "../components/AdminUI"
 import { useApiResource } from "../hooks/useApiResource";
 import { toArray } from "../api/normalize";
 import { usersApi } from "../api/usersApi";
+import { AdminTableToolbar, SortableTh, useAdminTableControls } from "../components/AdminTableControls";
+
+const USER_TABLE_COLUMNS = [
+  { key: "user", label: "User" },
+  { key: "email", label: "Email" },
+  { key: "role", label: "Role" },
+  { key: "joined", label: "Joined" },
+  { key: "actions", label: "Actions" },
+];
 
 const ROLES = [
   { key: "all", label: "All", match: () => true },
@@ -23,22 +32,27 @@ const ROLE_STYLES = {
   admin: {
     chip: "border-[#cfd0ff] bg-[#f0efff] text-[#5548d7]",
     avatar: "bg-[#efedff] text-[#4f46c7]",
+    rowHover: "#6b5de0",
   },
   organiser: {
     chip: "border-[#f0d0b9] bg-[#fff6ee] text-[#a55b25]",
     avatar: "bg-[#fff6ee] text-[#a55b25]",
+    rowHover: "#b96c36",
   },
   reviewer: {
     chip: "border-[#bfe5d1] bg-[#effaf4] text-[#18794e]",
     avatar: "bg-[#effaf4] text-[#18794e]",
+    rowHover: "#208458",
   },
   author: {
     chip: "border-[#c9dff5] bg-[#eef5fd] text-[#1d5fa8]",
     avatar: "bg-[#eef5fd] text-[#1d5fa8]",
+    rowHover: "#2f70ad",
   },
   attendee: {
     chip: "border-[#e2e6ee] bg-[#f5f6fa] text-[#59657d]",
     avatar: "bg-[#f5f6fa] text-[#59657d]",
+    rowHover: "#6d788c",
   },
 };
 
@@ -63,7 +77,7 @@ function RoleChip({ role }) {
   const styles = ROLE_STYLES[key] ?? ROLE_STYLES.attendee;
   return (
     <span
-      className={`inline-flex rounded-full border px-2.5 py-1 text-[9px] font-extrabold uppercase tracking-[.06em] ${styles.chip}`}
+      className={`cmt-user-role-badge inline-flex rounded-full border px-2.5 py-1 text-[9px] font-extrabold uppercase tracking-[.06em] ${styles.chip}`}
     >
       {key || "—"}
     </span>
@@ -84,11 +98,11 @@ function StatStrip({ users }) {
   }, [users]);
 
   const items = [
-    { label: "Total", value: users.length, icon: <Users size={14} />, tone: "text-[#4f46c7] bg-[#efedff]" },
-    { label: "Admins", value: counts.admin, icon: <Shield size={14} />, tone: "text-[#5548d7] bg-[#f0efff]" },
-    { label: "Organisers", value: counts.organiser, icon: <UserCheck size={14} />, tone: "text-[#a55b25] bg-[#fff6ee]" },
-    { label: "Reviewers", value: counts.reviewer, icon: <UserCheck size={14} />, tone: "text-[#18794e] bg-[#effaf4]" },
-    { label: "Authors & Attendees", value: counts.authorAttendee, icon: <Users size={14} />, tone: "text-[#1d5fa8] bg-[#eef5fd]" },
+    { label: "Total", value: users.length, icon: <Users size={14} />, tone: "text-[#4f46c7] bg-[#efedff]", tile: "border-[#cfd0ff] bg-white dark:border-[#514a83] dark:bg-[#0f172a]", text: "text-[#4f46c7] dark:text-[#a9a2ff]" },
+    { label: "Admins", value: counts.admin, icon: <Shield size={14} />, tone: "text-[#5548d7] bg-[#f0efff]", tile: "border-[#b5b6ff] bg-[#f0efff] dark:border-[#7169b5] dark:bg-[#211d3d]", text: "text-[#5548d7] dark:text-[#c4bfff]" },
+    { label: "Organisers", value: counts.organiser, icon: <UserCheck size={14} />, tone: "text-[#a55b25] bg-[#fff6ee]", tile: "border-[#e6b48f] bg-[#fff6ee] dark:border-[#96613d] dark:bg-[#2a1c14]", text: "text-[#a55b25] dark:text-[#f0b98e]" },
+    { label: "Reviewers", value: counts.reviewer, icon: <UserCheck size={14} />, tone: "text-[#18794e] bg-[#effaf4]", tile: "border-[#9bd7b7] bg-[#effaf4] dark:border-[#347b52] dark:bg-[#10271d]", text: "text-[#18794e] dark:text-[#70d69d]" },
+    { label: "Authors & Attendees", value: counts.authorAttendee, icon: <Users size={14} />, tone: "text-[#1d5fa8] bg-[#eef5fd]", tile: "border-[#a9cdec] bg-[#eef5fd] dark:border-[#456d99] dark:bg-[#132338]", text: "text-[#1d5fa8] dark:text-[#8bc3f5]" },
   ];
 
   return (
@@ -96,15 +110,15 @@ function StatStrip({ users }) {
       {items.map((it) => (
         <div
           key={it.label}
-          className="rounded-[14px] border border-[#e4e8f0] bg-white p-3 shadow-[0_6px_18px_rgba(15,28,65,.03)]"
+          className={`rounded-[14px] border-2 p-3 shadow-[0_6px_18px_rgba(15,28,65,.08)] ${it.tile}`}
         >
           <span className={`inline-grid h-7 w-7 place-items-center rounded-lg ${it.tone}`}>
             {it.icon}
           </span>
-          <strong className="mt-3 block text-[18px] leading-none tracking-[-.03em] text-[#1c2a4a]">
+          <strong className={`mt-3 block text-[20px] font-black leading-none tracking-[-.03em] ${it.text}`}>
             {it.value}
           </strong>
-          <span className="mt-1 block text-[9px] font-extrabold uppercase tracking-[.08em] text-[#9ba4b5]">
+          <span className={`mt-1 block text-[10px] font-black uppercase tracking-[.08em] ${it.text}`}>
             {it.label}
           </span>
         </div>
@@ -149,6 +163,7 @@ export default function UsersPage() {
   const selectedUser = detailRes.data?.data ?? detailRes.data ?? null;
   const activeView = selectedUserId && viewPhase.startsWith("detail") ? "detail" : "list";
   const users = useMemo(() => toArray(usersRes.data), [usersRes.data]);
+  const table = useAdminTableControls("users", USER_TABLE_COLUMNS);
 
   const activeRole = ROLES.find((r) => r.key === roleFilter) ?? ROLES[0];
 
@@ -164,6 +179,13 @@ export default function UsersPage() {
         .includes(q);
     });
   }, [users, query, activeRole]);
+  const visibleUsers = table.sortRows(filtered, {
+    user: (u) => userName(u),
+    email: (u) => u.email,
+    role: (u) => userRole(u),
+    joined: (u) => u.created_at ?? u.joined_at,
+  });
+  const visibleColumnCount = USER_TABLE_COLUMNS.filter((column) => table.columnVisible(column.key)).length;
 
   const openUser = (id) => {
     setSelectedUserId(id);
@@ -179,7 +201,12 @@ export default function UsersPage() {
   };
 
   useLayoutEffect(() => {
-    if (viewContentRef.current) setViewFrameHeight(viewContentRef.current.scrollHeight);
+    const updateFrameHeight = () => {
+      if (viewContentRef.current) setViewFrameHeight(viewContentRef.current.scrollHeight);
+    };
+    updateFrameHeight();
+    window.addEventListener("resize", updateFrameHeight);
+    return () => window.removeEventListener("resize", updateFrameHeight);
   }, [activeView, selectedUser, detailRes.loading, viewPhase, filtered.length, usersRes.loading, usersRes.error]);
 
   return (
@@ -261,15 +288,17 @@ export default function UsersPage() {
           })}
         </div>
 
+        <AdminTableToolbar columns={USER_TABLE_COLUMNS} controls={table} />
+
         <div className="cmt-users-table-wrap overflow-x-auto">
-          <table className="w-full border-collapse text-left">
+          <table data-table-density={table.density} className="cmt-users-table admin-data-table w-full min-w-[760px] border-collapse text-left">
             <thead>
               <tr className="border-b border-[#edf0f5] text-[9px] font-extrabold uppercase tracking-[.08em] text-[#9ba4b5]">
-                <th className="px-6 py-3">User</th>
-                <th className="px-4 py-3">Email</th>
-                <th className="px-4 py-3">Role</th>
-                <th className="px-4 py-3">Joined</th>
-                <th className="px-6 py-3 text-right"></th>
+                {table.columnVisible("user") && <SortableTh column={USER_TABLE_COLUMNS[0]} controls={table} className="sticky left-0 z-20 bg-[#fafbff] px-6 py-2.5 dark:bg-[#0f172a]" />}
+                {table.columnVisible("email") && <SortableTh column={USER_TABLE_COLUMNS[1]} controls={table} className="cmt-user-email whitespace-nowrap px-4 py-2.5" />}
+                {table.columnVisible("role") && <SortableTh column={USER_TABLE_COLUMNS[2]} controls={table} className="cmt-user-role whitespace-nowrap px-4 py-2.5" />}
+                {table.columnVisible("joined") && <SortableTh column={USER_TABLE_COLUMNS[3]} controls={table} className="cmt-user-joined whitespace-nowrap px-4 py-2.5" />}
+                {table.columnVisible("actions") && <th className="cmt-user-actions px-6 py-2.5 text-right">Actions</th>}
               </tr>
             </thead>
             <tbody>
@@ -277,7 +306,7 @@ export default function UsersPage() {
 
               {!usersRes.loading && usersRes.error && (
                 <tr>
-                  <td colSpan={5}>
+                  <td colSpan={visibleColumnCount}>
                     <StateBlock kind="error" message={usersRes.error.message} onRetry={usersRes.reload} />
                   </td>
                 </tr>
@@ -285,7 +314,7 @@ export default function UsersPage() {
 
               {!usersRes.loading && !usersRes.error && filtered.length === 0 && (
                 <tr>
-                  <td colSpan={5}>
+                  <td colSpan={visibleColumnCount}>
                     <StateBlock
                       message={
                         users.length === 0
@@ -301,7 +330,7 @@ export default function UsersPage() {
 
               {!usersRes.loading &&
                 !usersRes.error &&
-                filtered.map((u) => {
+                visibleUsers.map((u) => {
                   const name = userName(u);
                   const role = userRole(u);
                   const styles = ROLE_STYLES[role] ?? ROLE_STYLES.attendee;
@@ -312,31 +341,40 @@ export default function UsersPage() {
                       onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); openUser(u.id); } }}
                       tabIndex={0}
                       aria-label={`View ${name}`}
-                      className="cmt-user-row group cursor-pointer border-b border-[#f0f2f6] transition-colors last:border-0 hover:bg-[#fafbff]"
+                      style={{ "--user-role-hover": styles.rowHover }}
+                      className="cmt-user-row group cursor-pointer border-b border-[#f0f2f6] transition-colors last:border-0"
                     >
-                      <td className="px-6 py-4">
+                      {table.columnVisible("user") && <td className="sticky left-0 z-10 bg-white px-6 py-4 dark:bg-[#0f172a]">
                         <div className="flex items-center gap-3">
                           <span className={`cmt-user-avatar grid h-9 w-9 shrink-0 place-items-center rounded-full text-[11px] font-extrabold ${styles.avatar}`}>
                             {getInitials(name)}
                           </span>
-                          <div className="min-w-0">
-                            <strong className="cmt-user-name block truncate text-[11px] font-bold text-[#1c2a4a]">{name}</strong>
-                            <span className="text-[9px] text-[#929bad]">#{u.id}</span>
+                          <div className="min-w-0 flex-1">
+                            <strong className="cmt-user-name block truncate text-[11px] font-bold text-[#1c2a4a] transition-colors group-hover:text-white">{name}</strong>
+                            <span className="text-[9px] text-[#929bad] transition-colors group-hover:text-white/80">#{u.id}</span>
+                            <div className="cmt-user-mobile-meta mt-2 hidden min-w-0 flex-wrap items-center gap-x-3 gap-y-2">
+                              {table.columnVisible("email") && <span className="cmt-user-mobile-email min-w-0 break-all text-[11px] text-[#66728b]">{u.email ?? "—"}</span>}
+                              <div className="flex w-full flex-wrap items-center justify-between gap-2">
+                                {table.columnVisible("role") && <RoleChip role={role} />}
+                                {table.columnVisible("joined") && <span className="text-[10px] text-[#7b869b]">Joined {formatDate(u.created_at ?? u.joined_at)}</span>}
+                              </div>
+                            </div>
                           </div>
+                          {table.columnVisible("actions") && <span className="cmt-user-mobile-chevron hidden h-9 w-9 shrink-0 place-items-center rounded-full text-[#7c879b]"><ChevronRight size={17} /></span>}
                         </div>
-                      </td>
-                      <td className="px-4 py-4 text-[10px] text-[#5c6880]">{u.email ?? "—"}</td>
-                      <td className="px-4 py-4">
+                      </td>}
+                      {table.columnVisible("email") && <td className="cmt-user-email px-4 py-4 text-[10px] text-[#5c6880] transition-colors group-hover:text-white">{u.email ?? "—"}</td>}
+                      {table.columnVisible("role") && <td className="cmt-user-role px-4 py-4 text-[10px] text-[#5c6880] transition-colors group-hover:text-white">
                         <RoleChip role={role} />
-                      </td>
-                      <td className="px-4 py-4 text-[10px] text-[#7b869b]">
+                      </td>}
+                      {table.columnVisible("joined") && <td className="cmt-user-joined px-4 py-4 text-[10px] text-[#7b869b] transition-colors group-hover:text-white/90">
                         {formatDate(u.created_at ?? u.joined_at)}
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <span className="cmt-user-chevron inline-grid h-7 w-7 place-items-center rounded-full text-[#aeb6c6] transition group-hover:bg-[#efedff] group-hover:text-[#5649dc]">
+                      </td>}
+                      {table.columnVisible("actions") && <td className="cmt-user-actions px-6 py-4 text-right">
+                        <span className="cmt-user-chevron inline-grid h-7 w-7 place-items-center rounded-full text-[#aeb6c6] transition group-hover:bg-white/20 group-hover:text-white">
                           <ChevronRight size={16} />
                         </span>
-                      </td>
+                      </td>}
                     </tr>
                   );
                 })}
@@ -369,7 +407,7 @@ function UserDetailContent({ user, loading, error, onBack, onRetry }) {
 
   return (
     <div className="cmt-user-detail-body p-5 sm:p-6">
-      <button onClick={onBack} className="cmt-user-detail-back mb-5 inline-flex items-center gap-2 rounded-lg px-2.5 py-2 text-[11px] font-extrabold text-[#5548d7] transition hover:bg-[#f0efff] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#6655f6]">
+      <button onClick={onBack} className="cmt-user-detail-back mb-5 inline-flex items-center gap-2 rounded-lg border border-[#07132f] bg-[#07132f] px-2.5 py-2 text-[11px] font-extrabold text-white transition hover:bg-[#10234a] dark:border-[#0b1224] dark:bg-[#0b1224] dark:hover:bg-[#080d19] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#6655f6]">
         <ArrowLeft size={14} /> Back to users
       </button>
       {loading ? (
