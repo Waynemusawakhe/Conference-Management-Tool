@@ -15,7 +15,7 @@ import { authApi } from "../api/authApi";
 
 const MIN_PASSWORD_LENGTH = 8;
 
-const PUBLIC_ROLES = ["author", "reviewer", "organiser", "attendee"];
+const PUBLIC_ROLES = ["author", "organiser", "attendee"];
 
 function getPasswordStrength(password) {
   if (!password) {
@@ -76,7 +76,6 @@ function Register() {
     password: "",
     confirmPassword: "",
     role: "",
-    bootstrapToken: "",
   });
 
   const [error, setError] = useState("");
@@ -127,6 +126,12 @@ function Register() {
       return;
     }
 
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email.trim())) {
+      setError("Please enter a valid email address.");
+      return;
+    }
+
     if (formData.password.length < MIN_PASSWORD_LENGTH) {
       setError(
         `Password must be at least ${MIN_PASSWORD_LENGTH} characters.`,
@@ -151,43 +156,21 @@ function Register() {
       return;
     }
 
-    if (
-      formData.role !== "admin" &&
-      !PUBLIC_ROLES.includes(formData.role)
-    ) {
+    if (!PUBLIC_ROLES.includes(formData.role)) {
       setError("Please select a valid public account role.");
-      return;
-    }
-
-    if (
-      formData.role === "admin" &&
-      !formData.bootstrapToken.trim()
-    ) {
-      setError("Enter the one-time administrator invitation token.");
       return;
     }
 
     setLoading(true);
 
     try {
-      const registrationData = {
+      await authApi.register({
         name: formData.fullName.trim(),
         email: formData.email.trim().toLowerCase(),
         password: formData.password,
         password_confirmation: formData.confirmPassword,
-      };
-
-      if (formData.role === "admin") {
-        await authApi.bootstrapAdmin({
-          ...registrationData,
-          bootstrap_token: formData.bootstrapToken.trim(),
-        });
-      } else {
-        await authApi.register({
-          ...registrationData,
-          role: formData.role,
-        });
-      }
+        role: formData.role,
+      });
 
       setFormData({
         fullName: "",
@@ -195,7 +178,6 @@ function Register() {
         password: "",
         confirmPassword: "",
         role: "",
-        bootstrapToken: "",
       });
 
       setSuccess(true);
@@ -249,7 +231,6 @@ function Register() {
               onSubmit={handleSubmit}
               className="mt-6 grid gap-5"
             >
-              {/* Full Name */}
               <div className="grid gap-2">
                 <label
                   className="text-xs font-bold text-[#43506a]"
@@ -277,7 +258,6 @@ function Register() {
                 </label>
               </div>
 
-              {/* Email */}
               <div className="grid gap-2">
                 <label
                   className="text-xs font-bold text-[#43506a]"
@@ -299,13 +279,12 @@ function Register() {
                     onChange={handleChange}
                     autoComplete="email"
                     required
-                    placeholder="you@example.com"
+                    placeholder="Enter your email address"
                     className="min-h-11 w-full rounded-[10px] border border-[#dfe4ed] px-3 text-sm font-normal text-[#0d1b3d] outline-none transition focus:border-[#7568f7] focus:ring-4 focus:ring-[#7568f7]/10"
                   />
                 </label>
               </div>
 
-              {/* Password */}
               <div className="grid gap-2">
                 <label
                   className="text-xs font-bold text-[#43506a]"
@@ -438,7 +417,6 @@ function Register() {
                 )}
               </div>
 
-              {/* Confirm Password */}
               <div className="grid gap-2">
                 <label
                   className="text-xs font-bold text-[#43506a]"
@@ -474,7 +452,6 @@ function Register() {
                   )}
               </div>
 
-              {/* Role */}
               <div className="grid gap-2">
                 <label
                   className="text-xs font-bold text-[#43506a]"
@@ -508,51 +485,17 @@ function Register() {
                       Author
                     </option>
 
-                    <option value="reviewer">
-                      Reviewer
-                    </option>
-
                     <option value="organiser">
                       Organiser
-                    </option>
-
-                    <option value="admin">
-                      Administrator (invitation required)
                     </option>
                   </select>
                 </label>
 
                 <p className="text-[10px] leading-5 text-[#8b95a7]">
-                  Administrator signup requires the server-configured
-                  one-time invitation token.
+                  Choose how you primarily plan to use CMT. Administrator and Reviewer accounts are managed separately.
                 </p>
               </div>
 
-              {formData.role === "admin" && (
-                <div className="grid gap-2">
-                  <label
-                    className="text-xs font-bold text-[#43506a]"
-                    htmlFor="bootstrapToken"
-                  >
-                    Administrator invitation token
-                  </label>
-                  <input
-                    id="bootstrapToken"
-                    name="bootstrapToken"
-                    type="password"
-                    value={formData.bootstrapToken}
-                    onChange={handleChange}
-                    autoComplete="off"
-                    required
-                    className="min-h-11 w-full rounded-[10px] border border-[#dfe4ed] px-3 text-sm font-normal text-[#0d1b3d] outline-none transition focus:border-[#7568f7] focus:ring-4 focus:ring-[#7568f7]/10"
-                  />
-                  <p className="text-[10px] leading-5 text-[#8b95a7]">
-                    This token works once to create the initial administrator.
-                  </p>
-                </div>
-              )}
-
-              {/* Error */}
               {error && (
                 <p
                   role="alert"
@@ -562,7 +505,6 @@ function Register() {
                 </p>
               )}
 
-              {/* Success */}
               {success && (
                 <p
                   role="status"
@@ -573,7 +515,6 @@ function Register() {
                 </p>
               )}
 
-              {/* Submit */}
               <button
                 type="submit"
                 disabled={loading}
