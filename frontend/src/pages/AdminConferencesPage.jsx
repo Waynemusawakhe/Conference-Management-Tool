@@ -6,6 +6,7 @@ import {
   FileText,
   MapPin,
   Pencil,
+  Plus,
   Search,
   Sparkles,
   Trash2,
@@ -163,6 +164,7 @@ export default function AdminConferencesPage() {
       return [confName(c), loc, String(c.id ?? "")].join(" ").toLowerCase().includes(q);
     });
   }, [conferences, query]);
+  
   const visibleConferences = table.sortRows(filtered, {
     conference: (conf) => confName(conf),
     date: (conf) => conf.date ?? conf.start_date ?? conf.starts_at ?? conf.startDate ?? conf.started_at,
@@ -216,7 +218,18 @@ export default function AdminConferencesPage() {
   const submissionsLoading = submissionsRes.loading;
 
   return (
-    <AdminLayout subtitle="Platform" title="Conferences">
+    <AdminLayout 
+      subtitle="Platform" 
+      title="Conferences"
+      action={
+        <button
+          onClick={() => navigate("/create-conference")}
+          className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-br from-[#6655f6] to-[#7869ff] px-4 py-2.5 text-[11px] font-extrabold text-white shadow-[0_12px_28px_rgba(103,87,245,.28)] transition hover:-translate-y-px"
+        >
+          <Plus size={14} /> Create Conference
+        </button>
+      }
+    >
       {feedback && (
         <div
           role="alert"

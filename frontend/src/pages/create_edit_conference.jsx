@@ -13,7 +13,7 @@ import {
   Tag,
   Users,
 } from "lucide-react";
-import OrganiserLayout from "../components/OrganiserLayout";
+import RoleChrome from "../components/RoleChrome";
 import { conferencesApi } from "../api/conferencesApi";
 import { useAuth } from "../context/AuthContext";
 
@@ -204,17 +204,17 @@ export default function CreateEditConference() {
 
   if (loading) {
     return (
-      <OrganiserLayout>
+      <RoleChrome>
         <div className="grid min-h-[40vh] place-items-center text-[12px] text-[#66728b] dark:text-white/60">
           <Loader2 className="mr-2 animate-spin" size={18} /> Loading
           conference...
         </div>
-      </OrganiserLayout>
+      </RoleChrome>
     );
   }
 
   return (
-    <OrganiserLayout>
+    <RoleChrome>
       <div className="mb-8">
         <div className="mb-3 flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-[.14em] text-[#6757f5]">
           <Sparkles size={14} /> Conference studio
@@ -613,6 +613,6 @@ export default function CreateEditConference() {
           </div>
         </aside>
       </form>
-    </OrganiserLayout>
+    </RoleChrome>
   );
 }
