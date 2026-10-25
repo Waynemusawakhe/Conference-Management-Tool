@@ -16,9 +16,19 @@ import { useApiResource } from "../hooks/useApiResource";
 import { toArray } from "../api/normalize";
 import { testimonialsApi } from "../api/testimonialsApi";
 
-/* Defensive resolvers — guide §8.9 says fields require confirmation */
+const RATING_FILTERS = [
+  { key: "all", label: "All Ratings" },
+  { key: "5", label: "5 Stars" },
+  { key: "4", label: "4 Stars" },
+  { key: "3", label: "3 Stars" },
+  { key: "2", label: "2 Stars" },
+  { key: "1", label: "1 Star" },
+  { key: "0", label: "Unrated" },
+];
+
 const testimonialBody = (t) =>
   t.content ?? t.body ?? t.message ?? t.text ?? t.quote ?? "";
+
 const testimonialAuthorName = (t) =>
   t.author?.name ??
   t.user?.name ??
@@ -26,8 +36,10 @@ const testimonialAuthorName = (t) =>
   t.user_name ??
   t.name ??
   "Unknown user";
+
 const testimonialRole = (t) =>
   t.role ?? t.author?.role ?? t.user?.role ?? t.author_role ?? "";
+
 const testimonialRating = (t) => {
   const n = Number(t.rating ?? t.score ?? t.stars ?? 0);
   return Number.isFinite(n) && n > 0 ? Math.min(n, 5) : 0;
@@ -101,9 +113,6 @@ function LoadingCards({ rows = 4 }) {
   );
 }
 
-/* ------------------------------------------------------------------ *
- * Custom delete confirmation dialog
- * ------------------------------------------------------------------ */
 function DeleteConfirmDialog({ open, onClose, onConfirm, testimonial, busy }) {
   if (!open || !testimonial) return null;
 
@@ -130,7 +139,6 @@ function DeleteConfirmDialog({ open, onClose, onConfirm, testimonial, busy }) {
         className="cmt-dialog-in w-full max-w-[460px] overflow-hidden rounded-2xl bg-white shadow-[0_30px_80px_rgba(7,19,47,.35)]"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header with warning icon */}
         <div className="flex items-start gap-4 border-b border-[#edf0f5] px-6 py-5">
           <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-red-50 text-red-600">
             <TriangleAlert size={20} />
@@ -156,7 +164,6 @@ function DeleteConfirmDialog({ open, onClose, onConfirm, testimonial, busy }) {
           </button>
         </div>
 
-        {/* Preview of what's being deleted */}
         <div className="px-6 py-5">
           <div className="rounded-xl border border-[#eef1f7] bg-[#fafbff] p-4">
             <div className="flex items-center gap-3">
@@ -180,7 +187,6 @@ function DeleteConfirmDialog({ open, onClose, onConfirm, testimonial, busy }) {
           </div>
         </div>
 
-        {/* Actions */}
         <div className="flex justify-end gap-2 border-t border-[#edf0f5] bg-[#fafbff] px-6 py-4">
           <button
             type="button"
@@ -214,11 +220,9 @@ function DeleteConfirmDialog({ open, onClose, onConfirm, testimonial, busy }) {
   );
 }
 
-/* ------------------------------------------------------------------ *
- * Page
- * ------------------------------------------------------------------ */
 export default function AdminTestimonialsPage() {
   const [query, setQuery] = useState("");
+  const [ratingFilter, setRatingFilter] = useState("all");
   const [feedback, setFeedback] = useState(null);
   const [confirmTarget, setConfirmTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
@@ -229,24 +233,35 @@ export default function AdminTestimonialsPage() {
     [testimonialsRes.data]
   );
 
+  const ratingCounts = useMemo(() => {
+    const counts = { all: testimonials.length, 5: 0, 4: 0, 3: 0, 2: 0, 1: 0, 0: 0 };
+    testimonials.forEach((t) => {
+      const r = testimonialRating(t);
+      if (counts[r] !== undefined) counts[r] += 1;
+    });
+    return counts;
+  }, [testimonials]);
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return testimonials;
-    return testimonials.filter((t) =>
-      [testimonialBody(t), testimonialAuthorName(t), testimonialRole(t), String(t.id ?? "")]
+    return testimonials.filter((t) => {
+      const rating = testimonialRating(t);
+      
+      if (ratingFilter !== "all" && String(rating) !== ratingFilter) return false;
+      
+      if (!q) return true;
+      return [testimonialBody(t), testimonialAuthorName(t), testimonialRole(t), String(t.id ?? "")]
         .join(" ")
         .toLowerCase()
-        .includes(q)
-    );
-  }, [testimonials, query]);
+        .includes(q);
+    });
+  }, [testimonials, query, ratingFilter]);
 
-  /* ---- Open confirm dialog ---- */
   const handleDeleteClick = (t) => {
     setFeedback(null);
     setConfirmTarget(t);
   };
 
-  /* ---- Confirm delete ---- */
   const handleConfirmDelete = async () => {
     if (!confirmTarget) return;
     const author = testimonialAuthorName(confirmTarget);
@@ -271,7 +286,7 @@ export default function AdminTestimonialsPage() {
       let message = err?.message ?? "Failed to delete testimonial.";
       if (status === 403) {
         message =
-          "You don't have permission to delete testimonials. Ask the backend team to grant admins delete access on this endpoint (guide §8.9).";
+          "You don't have permission to delete testimonials. Ask the backend team to grant admins delete access on this endpoint.";
       } else if (status === 401) {
         message = "Your session expired. Please log in again.";
       } else if (status === 404) {
@@ -358,6 +373,35 @@ export default function AdminTestimonialsPage() {
           }
         />
 
+        {testimonials.length > 0 && (
+          <div className="flex flex-wrap gap-2 border-b border-[#edf0f5] px-5 py-3 sm:px-6">
+            {RATING_FILTERS.map((rf) => {
+              const isActive = ratingFilter === rf.key;
+              const count = ratingCounts[rf.key] || 0;
+              return (
+                <button
+                  key={rf.key}
+                  onClick={() => setRatingFilter(rf.key)}
+                  className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[10px] font-extrabold transition ${
+                    isActive
+                      ? "border-transparent bg-[#07132f] text-white shadow-[0_6px_18px_rgba(7,19,47,.18)]"
+                      : "border-[#e2e6ee] bg-white text-[#66728b] hover:border-[#d6dbe8] hover:bg-[#fafbff] hover:text-[#43506a]"
+                  }`}
+                >
+                  {rf.label}
+                  <span
+                    className={`rounded-full px-1.5 py-0.5 text-[9px] ${
+                      isActive ? "bg-white/20 text-white" : "bg-[#f1efff] text-[#5649dc]"
+                    }`}
+                  >
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+
         {testimonialsRes.loading && <LoadingCards />}
 
         {!testimonialsRes.loading && testimonialsRes.error && (
@@ -381,8 +425,16 @@ export default function AdminTestimonialsPage() {
               <p className="m-0 max-w-[400px] text-[11px] leading-5 text-[#8993a6]">
                 {testimonials.length === 0
                   ? "Testimonials posted by users will appear here for review."
-                  : "Try a different search term."}
+                  : "Try a different search term or rating filter."}
               </p>
+              {filtered.length === 0 && (query || ratingFilter !== "all") && (
+                <button
+                  onClick={() => { setQuery(""); setRatingFilter("all"); }}
+                  className="mt-1 rounded-lg bg-[#efedff] px-3 py-1.5 text-[10px] font-extrabold text-[#5649dc] hover:bg-[#e5e2ff]"
+                >
+                  Clear filters
+                </button>
+              )}
             </div>
           )}
 
@@ -444,7 +496,6 @@ export default function AdminTestimonialsPage() {
           )}
       </Card>
 
-      {/* Delete confirmation */}
       <DeleteConfirmDialog
         open={Boolean(confirmTarget)}
         onClose={() => !deleting && setConfirmTarget(null)}

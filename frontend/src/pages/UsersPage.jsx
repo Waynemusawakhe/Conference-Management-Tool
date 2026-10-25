@@ -1,5 +1,5 @@
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, Calendar, CheckCircle2, ChevronRight, Clock, Mail, Search, ShieldCheck, Users, UserCheck, Shield, X } from "lucide-react";
+import { ArrowLeft, Calendar, CheckCircle2, ChevronRight, Clock, Mail, Search, ShieldCheck, Users, UserCheck, Shield, User, X } from "lucide-react";
 
 import AdminLayout from "../components/AdminLayout";
 import { Card, CardHeader, StateBlock, formatDate } from "../components/AdminUI";
@@ -21,11 +21,8 @@ const ROLES = [
   { key: "admin", label: "Admins", match: (r) => r === "admin" },
   { key: "organiser", label: "Organisers", match: (r) => r === "organiser" },
   { key: "reviewer", label: "Reviewers", match: (r) => r === "reviewer" },
-  {
-    key: "author_attendee",
-    label: "Authors & Attendees",
-    match: (r) => r === "author" || r === "attendee",
-  },
+  { key: "author", label: "Authors", match: (r) => r === "author" },
+  { key: "attendee", label: "Attendees", match: (r) => r === "attendee" },
 ];
 
 const ROLE_STYLES = {
@@ -86,13 +83,14 @@ function RoleChip({ role }) {
 
 function StatStrip({ users }) {
   const counts = useMemo(() => {
-    const acc = { admin: 0, organiser: 0, reviewer: 0, authorAttendee: 0 };
+    const acc = { admin: 0, organiser: 0, reviewer: 0, author: 0, attendee: 0 };
     users.forEach((u) => {
       const r = userRole(u);
       if (r === "admin") acc.admin += 1;
       else if (r === "organiser") acc.organiser += 1;
       else if (r === "reviewer") acc.reviewer += 1;
-      else acc.authorAttendee += 1;
+      else if (r === "author") acc.author += 1;
+      else acc.attendee += 1;
     });
     return acc;
   }, [users]);
@@ -102,11 +100,12 @@ function StatStrip({ users }) {
     { label: "Admins", value: counts.admin, icon: <Shield size={14} />, tone: "text-[#5548d7] bg-[#f0efff]", tile: "border-[#b5b6ff] bg-[#f0efff] dark:border-[#7169b5] dark:bg-[#211d3d]", text: "text-[#5548d7] dark:text-[#c4bfff]" },
     { label: "Organisers", value: counts.organiser, icon: <UserCheck size={14} />, tone: "text-[#a55b25] bg-[#fff6ee]", tile: "border-[#e6b48f] bg-[#fff6ee] dark:border-[#96613d] dark:bg-[#2a1c14]", text: "text-[#a55b25] dark:text-[#f0b98e]" },
     { label: "Reviewers", value: counts.reviewer, icon: <UserCheck size={14} />, tone: "text-[#18794e] bg-[#effaf4]", tile: "border-[#9bd7b7] bg-[#effaf4] dark:border-[#347b52] dark:bg-[#10271d]", text: "text-[#18794e] dark:text-[#70d69d]" },
-    { label: "Authors & Attendees", value: counts.authorAttendee, icon: <Users size={14} />, tone: "text-[#1d5fa8] bg-[#eef5fd]", tile: "border-[#a9cdec] bg-[#eef5fd] dark:border-[#456d99] dark:bg-[#132338]", text: "text-[#1d5fa8] dark:text-[#8bc3f5]" },
+    { label: "Authors", value: counts.author, icon: <User size={14} />, tone: "text-[#1d5fa8] bg-[#eef5fd]", tile: "border-[#a9cdec] bg-[#eef5fd] dark:border-[#456d99] dark:bg-[#132338]", text: "text-[#1d5fa8] dark:text-[#8bc3f5]" },
+    { label: "Attendees", value: counts.attendee, icon: <Users size={14} />, tone: "text-[#59657d] bg-[#f5f6fa]", tile: "border-[#cbd2df] bg-[#f5f6fa] dark:border-[#4a5568] dark:bg-[#1a2332]", text: "text-[#59657d] dark:text-[#a0aec0]" },
   ];
 
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
       {items.map((it) => (
         <div
           key={it.label}
@@ -179,6 +178,7 @@ export default function UsersPage() {
         .includes(q);
     });
   }, [users, query, activeRole]);
+
   const visibleUsers = table.sortRows(filtered, {
     user: (u) => userName(u),
     email: (u) => u.email,
@@ -407,9 +407,15 @@ function UserDetailContent({ user, loading, error, onBack, onRetry }) {
 
   return (
     <div className="cmt-user-detail-body p-5 sm:p-6">
-      <button onClick={onBack} className="cmt-user-detail-back mb-5 inline-flex items-center gap-2 rounded-lg border border-[#07132f] bg-[#07132f] px-2.5 py-2 text-[11px] font-extrabold text-white transition hover:bg-[#10234a] dark:border-[#0b1224] dark:bg-[#0b1224] dark:hover:bg-[#080d19] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#6655f6]">
+      
+      {/* UPDATED BACK BUTTON UI */}
+      <button 
+        onClick={onBack} 
+        className="mb-5 inline-flex items-center gap-2 rounded-xl bg-gradient-to-br from-[#6655f6] to-[#7869ff] px-5 py-2.5 text-[11px] font-extrabold text-white shadow-[0_8px_20px_rgba(102,85,246,.28)] transition hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#6655f6]"
+      >
         <ArrowLeft size={14} /> Back to users
       </button>
+
       {loading ? (
         <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_260px]" aria-label="Loading user details">
           <div className="space-y-4 rounded-2xl border border-[#edf0f5] p-5">
