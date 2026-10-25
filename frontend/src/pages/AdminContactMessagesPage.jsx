@@ -178,7 +178,7 @@ export default function ContactMessagesPage() {
         </section>
       )}
 
-      <Card>
+      <Card className="overflow-hidden border-0 ring-1 ring-[#eef1f7] shadow-[0_20px_60px_-30px_rgba(23,35,66,.18)]">
         <CardHeader
           eyebrow="Messages"
           title={
@@ -238,7 +238,8 @@ export default function ContactMessagesPage() {
         </div>
 
         <AdminTableToolbar columns={MESSAGE_COLUMNS} controls={table} />
-        <div className="overflow-x-auto">
+        
+        <div className="overflow-x-auto custom-scrollbar">
           <table data-table-density={table.density} className="cmt-mobile-card-table admin-data-table w-full min-w-[820px] border-collapse text-left">
             <thead>
               <tr className="border-b border-[#edf0f5] text-[9px] font-extrabold uppercase tracking-[.08em] text-[#9ba4b5]">
@@ -246,7 +247,7 @@ export default function ContactMessagesPage() {
                 {table.columnVisible("message") && <SortableTh column={MESSAGE_COLUMNS[1]} controls={table} className="whitespace-nowrap px-4 py-2.5" />}
                 {table.columnVisible("status") && <SortableTh column={MESSAGE_COLUMNS[2]} controls={table} className="whitespace-nowrap px-4 py-2.5" />}
                 {table.columnVisible("received") && <SortableTh column={MESSAGE_COLUMNS[3]} controls={table} className="whitespace-nowrap px-4 py-2.5" />}
-                {table.columnVisible("actions") && <th className="px-6 py-2.5 text-right">Actions</th>}
+                {table.columnVisible("actions") && <th className="px-6 py-2.5 text-right whitespace-nowrap">Actions</th>}
               </tr>
             </thead>
             <tbody>
@@ -315,7 +316,7 @@ export default function ContactMessagesPage() {
                       {table.columnVisible("received") && <td data-label="Received" className="px-4 py-4 text-[10px] text-[#7b869b]">
                         {formatDateTime(m.created_at)}
                       </td>}
-                      {table.columnVisible("actions") && <td data-label="Actions" className="px-6 py-4 text-right">
+                      {table.columnVisible("actions") && <td data-label="Actions" className="px-6 py-4 text-right whitespace-nowrap">
                         <div className="flex items-center justify-end gap-1.5">
                           <button
                             onClick={(e) => handleDelete(e, m.id)}
@@ -336,11 +337,23 @@ export default function ContactMessagesPage() {
           </table>
         </div>
       </Card>
-      <nav aria-label="Contact message pages" className="flex items-center justify-end gap-3 text-xs">
-        <button disabled={page <= 1 || messagesRes.loading} onClick={() => setPage((value) => value - 1)}>Previous</button>
-        <span>Page {meta.current_page || page} of {meta.last_page || 1} · {meta.total || 0} messages</span>
-        <button disabled={page >= Number(meta.last_page || 1) || messagesRes.loading} onClick={() => setPage((value) => value + 1)}>Next</button>
+      
+      <nav aria-label="Contact message pages" className="mt-4 flex items-center justify-end gap-3 text-xs">
+        <button disabled={page <= 1 || messagesRes.loading} onClick={() => setPage((value) => value - 1)} className="rounded-lg border border-[#e2e6ee] bg-white px-3 py-1.5 font-semibold hover:bg-[#fafbff] disabled:opacity-50">Previous</button>
+        <span className="text-[#66728b]">Page {meta.current_page || page} of {meta.last_page || 1} · {meta.total || 0} messages</span>
+        <button disabled={page >= Number(meta.last_page || 1) || messagesRes.loading} onClick={() => setPage((value) => value + 1)} className="rounded-lg border border-[#e2e6ee] bg-white px-3 py-1.5 font-semibold hover:bg-[#fafbff] disabled:opacity-50">Next</button>
       </nav>
+
+      <style>{`
+        .custom-scrollbar {
+          scrollbar-width: thin;
+          scrollbar-color: #94a3b8 #f1f5f9;
+        }
+        .custom-scrollbar::-webkit-scrollbar { height: 14px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; border: 3px solid #f1f5f9; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+      `}</style>
     </AdminLayout>
   );
 }
