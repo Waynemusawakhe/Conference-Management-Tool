@@ -7,12 +7,7 @@ export const authApi = {
       body
     ),
 
-  bootstrapAdmin: (body) =>
-    http.post(
-      "/auth/bootstrap-admin",
-      body
-    ),
-
+ 
   login: (body) =>
     http.post(
       "/auth/login",
