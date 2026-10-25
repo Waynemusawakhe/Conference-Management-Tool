@@ -247,12 +247,16 @@ export default function AdminLayout({
   title,
   subtitle,
   action,
+  entranceAnimation = false,
 }) {
   const navigate =
     useNavigate();
 
   const { pathname } =
     useLocation();
+
+  const playEntrance =
+    entranceAnimation && pathname === "/admin-dashboard";
 
   const [
     sidebarOpen,
@@ -681,9 +685,9 @@ export default function AdminLayout({
     };
 
   return (
-    <div className="min-h-screen bg-[#f7f9fc] text-[#0d1b3d] transition-colors dark:bg-[#0a0f1f] dark:text-white">
-      <header className="sticky top-0 z-50 border-b border-white/10 bg-[#07132f]/95 text-white shadow-[0_8px_30px_rgba(7,19,47,.12)] backdrop-blur-xl">
-        <div className="mx-auto flex min-h-[76px] w-[min(1400px,calc(100%-32px))] items-center gap-4 sm:gap-6">
+    <div className={`min-h-screen bg-[#f7f9fc] text-[#0d1b3d] transition-colors dark:bg-[#0a0f1f] dark:text-white ${playEntrance ? "admin-intro" : ""}`}>
+      <header className={`sticky top-0 z-50 border-b border-white/10 bg-[#07132f]/95 text-white shadow-[0_8px_30px_rgba(7,19,47,.12)] backdrop-blur-xl ${playEntrance ? "admin-intro-topbar" : ""}`}>
+        <div className="admin-topbar-inner mx-auto flex min-h-[76px] w-[min(1400px,calc(100%-32px))] items-center gap-4 sm:gap-6">
           <button
             type="button"
             className="text-white/80 hover:text-white lg:hidden"
@@ -1040,7 +1044,7 @@ export default function AdminLayout({
         </div>
       </header>
 
-      <div className="mx-auto flex w-[min(1400px,calc(100%-32px))] gap-6 py-6 lg:gap-7">
+      <div className="admin-shell mx-auto flex w-[min(1400px,calc(100%-32px))] gap-6 py-6 lg:gap-7">
         {sidebarOpen && (
           <div
             className="fixed inset-0 z-40 bg-[#07132f]/60 backdrop-blur-sm lg:hidden"
@@ -1053,14 +1057,16 @@ export default function AdminLayout({
         )}
 
         <aside
-          className={`fixed inset-y-0 left-0 z-50 w-[260px] transform bg-white p-4 shadow-2xl transition-transform duration-300 dark:bg-[#0f172a] lg:sticky lg:top-[100px] lg:block lg:max-h-[calc(100vh-120px)] lg:w-[260px] lg:translate-x-0 lg:overflow-y-auto lg:rounded-2xl lg:border lg:border-[#e4e8f0] lg:bg-white lg:p-3 lg:shadow-none lg:dark:border-[#1e293b] lg:dark:bg-[#0f172a] ${
+          className={`admin-sidebar fixed inset-y-0 left-0 z-50 w-[260px] transform bg-white p-4 shadow-2xl transition-transform duration-300 dark:bg-[#0f172a] lg:sticky lg:top-[100px] lg:block lg:max-h-[calc(100vh-120px)] lg:w-[260px] lg:translate-x-0 lg:overflow-y-auto lg:rounded-2xl lg:border lg:border-[#e4e8f0] lg:bg-white lg:p-3 lg:shadow-none lg:dark:border-[#1e293b] lg:dark:bg-[#0f172a] ${
+            playEntrance ? "admin-intro-sidebar" : ""
+          } ${
             sidebarOpen
               ? "translate-x-0"
               : "-translate-x-full"
           }`}
         >
           <div className="mb-3 flex items-start justify-between gap-2 lg:block">
-            <div className="w-full rounded-xl bg-gradient-to-br from-[#111e4b] to-[#342b87] p-4 text-white">
+            <div className={`w-full rounded-xl bg-gradient-to-br from-[#111e4b] to-[#342b87] p-4 text-white ${playEntrance ? "admin-intro-sidebar-card" : ""}`}>
               <span className="mb-2 grid h-9 w-9 place-items-center rounded-lg bg-white/10">
                 <LayoutDashboard
                   size={17}
@@ -1100,7 +1106,7 @@ export default function AdminLayout({
             aria-label="Admin navigation"
           >
             {NAV_ITEMS.map(
-              (item) => {
+              (item, index) => {
                 const Icon =
                   item.icon;
 
@@ -1123,18 +1129,22 @@ export default function AdminLayout({
                     to={
                       item.to
                     }
+                    data-nav-label={item.label.toLowerCase().replaceAll(" ", "-")}
+                    style={playEntrance ? { "--intro-delay": `${100 + index * 50}ms` } : undefined}
+                    data-intro-item={playEntrance ? "true" : undefined}
                     onClick={() =>
                       setSidebarOpen(
                         false
                       )
                     }
-                    className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] transition-colors ${
+                    className={`admin-nav-link flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] transition-colors ${
                       active
-                        ? "bg-[#efedff] font-extrabold text-[#5649dc] dark:bg-[#2a2354] dark:text-[#a9a2ff]"
+                        ? "admin-nav-link-active bg-[#efedff] font-extrabold text-[#5649dc] dark:bg-[#2a2354] dark:text-[#a9a2ff]"
                         : "font-semibold text-[#66728b] hover:bg-[#f5f6fa] hover:text-[#1c2a4a] dark:text-[#94a3b8] dark:hover:bg-[#111c33] dark:hover:text-white"
                     }`}
                   >
                     <Icon
+                      className={active ? "admin-nav-icon" : undefined}
                       size={
                         16
                       }
@@ -1164,7 +1174,7 @@ export default function AdminLayout({
 
           <button
             type="button"
-            className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] font-semibold text-[#9a6470] hover:bg-[#fff4f5] dark:text-[#f08a9a] dark:hover:bg-[#2a1218]"
+            className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] font-semibold text-[#9a6470] transition-colors hover:bg-red-600 hover:text-white dark:text-[#f08a9a] dark:hover:bg-red-500"
             onClick={
               handleSignOut
             }
@@ -1176,7 +1186,7 @@ export default function AdminLayout({
           </button>
         </aside>
 
-        <main className="min-w-0 flex-1">
+        <main className="admin-page-content min-w-0 flex-1">
           {(title ||
             action) && (
             <div className="mb-5 flex flex-col justify-between gap-3 sm:flex-row sm:items-end">

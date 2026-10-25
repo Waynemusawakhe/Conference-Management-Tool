@@ -337,7 +337,7 @@ export default function AdminFaqsPage() {
               return (
                 <div
                   key={faq.id}
-                  className="group relative border-b border-[#f0f2f6] px-5 py-4 transition last:border-0 hover:bg-[#fafbff] sm:px-6"
+                  className="cmt-admin-list-card group relative border-b border-[#f0f2f6] px-5 py-4 transition last:border-0 hover:bg-[#fafbff] sm:px-6"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="min-w-0 flex-1">

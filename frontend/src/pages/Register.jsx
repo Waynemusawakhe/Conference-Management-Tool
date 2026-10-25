@@ -492,9 +492,7 @@ function Register() {
                 </label>
 
                 <p className="text-[10px] leading-5 text-[#8b95a7]">
-                  Choose how you primarily plan to use
-                  CMT. Administrator accounts are managed
-                  separately.
+                  Choose how you primarily plan to use CMT. Administrator and Reviewer accounts are managed separately.
                 </p>
               </div>
 
