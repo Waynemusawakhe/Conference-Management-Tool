@@ -18,7 +18,7 @@ import {
 import ReviewerLayout from "../components/ReviewerLayout";
 import { useAuth } from "../context/AuthContext";
 import { reviewsApi } from "../api/reviewsApi";
-import { tokenStore } from "../api/client";
+import { tokenStore, API_BASE_URL } from "../api/client";
 
 const SCORE_OPTIONS = [1, 2, 3, 4, 5];
 const SCORE_LABELS = ["Poor", "Fair", "Good", "Great", "Excellent"];
@@ -224,10 +224,6 @@ export default function ScoreSubmission() {
     );
   }, [score, comments, recommendation, locked]);
 
-  const baseUrl = import.meta.env.VITE_API_BASE_URL && import.meta.env.VITE_API_BASE_URL !== "undefined" 
-    ? import.meta.env.VITE_API_BASE_URL 
-    : "http://127.0.0.1:8000/api/v1";
-
   const submission = paper?.submission ?? paper?.data?.submission ?? {};
   
   const submissionId = 
@@ -239,9 +235,11 @@ export default function ScoreSubmission() {
   const title = submission?.title ?? paper?.title ?? `Review #${id}`;
   const abstract = submission?.abstract ?? paper?.abstract ?? "";
 
-  const apiFileUrl = submissionId
-    ? `${baseUrl}/submissions/${submissionId}/file`
-    : null;
+  // FIX: Use shared API_BASE_URL from client.js — no more hardcoded localhost fallback
+  const apiFileUrl =
+    submissionId && API_BASE_URL
+      ? `${API_BASE_URL}/submissions/${submissionId}/file`
+      : null;
 
   const fileExt = fileType === "word" ? "docx" : "pdf";
   const fileName = `submission-${submissionId ?? id}.${fileExt}`;

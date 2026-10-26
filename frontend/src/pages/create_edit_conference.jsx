@@ -140,7 +140,6 @@ export default function CreateEditConference() {
     };
     
     delete payload.customCategory;
-    delete payload.submission_status;
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -444,6 +443,27 @@ export default function CreateEditConference() {
                   />
                 </span>
                 <FieldError name="format" errors={fieldErrors} />
+              </label>
+              <label className="sm:col-span-2">
+                <span className="mb-1.5 block text-[11px] font-bold text-[#35415f] dark:text-white/75">
+                  Submission Status <b className="text-[#6757f5]">*</b>
+                </span>
+                <span className="relative block">
+                  <select
+                    name="submission_status"
+                    value={form.submission_status || "open"}
+                    onChange={updateField}
+                    className={`${inputClass("submission_status")} appearance-none`}
+                  >
+                    <option value="open">Open for submissions</option>
+                    <option value="closed">Closed (not accepting new submissions)</option>
+                  </select>
+                  <ChevronDown
+                    className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#8993a6]"
+                    size={15}
+                  />
+                </span>
+                <FieldError name="submission_status" errors={fieldErrors} />
               </label>
             </div>
           </section>
