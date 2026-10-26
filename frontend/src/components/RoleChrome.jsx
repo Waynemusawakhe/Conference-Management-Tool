@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   BookOpen,
   CalendarDays,
+  FileCheck2,
   FileText,
   LayoutDashboard,
   LoaderCircle,
@@ -40,9 +41,9 @@ const WORKSPACE_LABEL = {
 const AUTHOR_NAV = [
   { label: "Overview", to: "/author-dashboard", icon: LayoutDashboard },
   { label: "My proposals", to: "/author-dashboard#my-proposals", icon: FileText },
-     
+  { label: "Feedback", to: "/author-feedback", icon: FileCheck2 },
   { label: "Deadlines", to: "/author-dashboard#deadlines", icon: CalendarDays },
-  { label: "Browse conferences", to: "/conferences", icon: Search },
+  { label: "Browse conferences", to: "/author/conferences", icon: Search },
 ];
 
 function AuthorWorkspaceShell({ children }) {
