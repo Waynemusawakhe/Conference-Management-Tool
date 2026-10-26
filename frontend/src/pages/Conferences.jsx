@@ -419,23 +419,9 @@ export default function Conferences({ embedded = false }) {
       return endDate.getTime() >= today.getTime();
     });
 
-    if (query.trim()) {
-      const q = query.toLowerCase();
-      result = result.filter(
-        (c) =>
-          c.name.toLowerCase().includes(q) ||
-          c.code.toLowerCase().includes(q) ||
-          c.city.toLowerCase().includes(q) ||
-          c.category.toLowerCase().includes(q)
-      );
-    }
-
-    if (filters.category) result = result.filter((c) => c.category === filters.category);
-    if (filters.status) result = result.filter((c) => c.status === filters.status);
-    if (filters.format) result = result.filter((c) => c.format === filters.format);
 
     return result;
-  }, [conferences, query, filters]);
+  }, [conferences]);
 
   const upcomingConference = useMemo(() => {
     if (!displayConferences.length) return null;
@@ -529,6 +515,7 @@ export default function Conferences({ embedded = false }) {
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     className="h-10 w-full rounded-lg bg-transparent pl-10 pr-3 text-sm outline-none placeholder:text-[#8792a8] focus:bg-[#f7f9fc]"
+                    aria-label="Search conferences"
                     placeholder="Search conferences..."
                   />
                 </div>
@@ -537,6 +524,7 @@ export default function Conferences({ embedded = false }) {
 
                 <select
                   className="h-10 cursor-pointer rounded-lg border-0 bg-transparent px-3 text-xs font-semibold text-[#43506a] outline-none hover:bg-[#f7f9fc] focus:bg-[#f7f9fc]"
+                  aria-label="Category"
                   value={filters.category}
                   onChange={(e) => updateFilter("category", e.target.value)}
                 >
@@ -546,6 +534,7 @@ export default function Conferences({ embedded = false }) {
 
                 <select
                   className="h-10 cursor-pointer rounded-lg border-0 bg-transparent px-3 text-xs font-semibold text-[#43506a] outline-none hover:bg-[#f7f9fc] focus:bg-[#f7f9fc]"
+                  aria-label="Status"
                   value={filters.status}
                   onChange={(e) => updateFilter("status", e.target.value)}
                 >
@@ -555,6 +544,7 @@ export default function Conferences({ embedded = false }) {
 
                 <select
                   className="h-10 cursor-pointer rounded-lg border-0 bg-transparent px-3 text-xs font-semibold text-[#43506a] outline-none hover:bg-[#f7f9fc] focus:bg-[#f7f9fc]"
+                  aria-label="Format"
                   value={filters.format}
                   onChange={(e) => updateFilter("format", e.target.value)}
                 >
@@ -575,6 +565,7 @@ export default function Conferences({ embedded = false }) {
 
                 <select
                   className="h-10 cursor-pointer rounded-lg border-0 bg-transparent px-3 text-xs font-semibold text-[#43506a] outline-none hover:bg-[#f7f9fc] focus:bg-[#f7f9fc]"
+                  aria-label="Sort by"
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
                 >
@@ -587,6 +578,8 @@ export default function Conferences({ embedded = false }) {
                   <button
                     type="button"
                     className={`grid h-10 w-10 place-items-center transition ${view === "grid" ? "bg-[#efedff] text-[#5c50ec]" : "bg-transparent text-[#68748b] hover:bg-[#f7f9fc]"}`}
+                    aria-label="Grid view"
+                    aria-pressed={view === "grid"}
                     onClick={() => setView("grid")}
                   >
                     <LayoutGrid size={16} />
@@ -594,6 +587,8 @@ export default function Conferences({ embedded = false }) {
                   <button
                     type="button"
                     className={`grid h-10 w-10 place-items-center transition ${view === "list" ? "bg-[#efedff] text-[#5c50ec]" : "bg-transparent text-[#68748b] hover:bg-[#f7f9fc]"}`}
+                    aria-label="List view"
+                    aria-pressed={view === "list"}
                     onClick={() => setView("list")}
                   >
                     <List size={16} />

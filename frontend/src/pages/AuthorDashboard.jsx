@@ -426,7 +426,7 @@ export default function AuthorDashboard() {
                   <tbody>{filteredProposals.map((proposal) => {
                     const conferenceName = proposal.conference?.name || proposal.conference?.title || conferences.find((c) => c.id === proposal.conference_id)?.name || "Conference";
                     const status = proposal.status || "pending";
-                    const isUnderReview = status === "under_review";
+                    const canMutate = status === "pending";
                     const isWithdrawn = status === "withdrawn";
 
                     return (
@@ -441,15 +441,15 @@ export default function AuthorDashboard() {
                               <button title="View" onClick={() => { setSelected(proposal); setModal("view"); }} className="grid h-8 w-8 place-items-center rounded-lg bg-[#f4f6fa] text-[#647089] hover:bg-[#eceffa] hover:text-[#5548d7]"><Eye size={14}/></button>
                             )}
                             
-                            {!isUnderReview && !isWithdrawn && (
+                            {canMutate && (
                               <button title="Edit" onClick={() => openEdit(proposal)} className="grid h-8 w-8 place-items-center rounded-lg bg-[#f4f6fa] text-[#647089] hover:bg-[#eceffa] hover:text-[#5548d7]"><Pencil size={14}/></button>
                             )}
                             
-                            {!isUnderReview && !isWithdrawn && (
+                            {canMutate && (
                               <button title="Delete" onClick={() => requestAction("delete", proposal)} className="grid h-8 w-8 place-items-center rounded-lg bg-[#fff3f4] text-[#b13a3a] hover:bg-[#ffe6e8]"><Trash2 size={14}/></button>
                             )}
                             
-                            {!isUnderReview && !isWithdrawn && (
+                            {canMutate && (
                               <button title="Withdraw" onClick={() => requestAction("withdraw", proposal)} className="grid h-8 w-8 place-items-center rounded-lg bg-[#fff7ec] text-[#a55b25] hover:bg-[#ffeed8]"><RotateCcw size={14}/></button>
                             )}
                           </div>
@@ -463,7 +463,7 @@ export default function AuthorDashboard() {
                 {filteredProposals.map((proposal) => {
                   const status = proposal.status || "pending";
                   const conferenceName = proposal.conference?.name || proposal.conference?.title || conferences.find((c) => c.id === proposal.conference_id)?.name || "Conference";
-                  const isUnderReview = status === "under_review";
+                  const canMutate = status === "pending";
                   const isWithdrawn = status === "withdrawn";
 
                   return (
@@ -484,15 +484,15 @@ export default function AuthorDashboard() {
                             <button onClick={() => { setSelected(proposal); setModal("view"); }} className="rounded-lg bg-[#f4f6fa] px-2.5 py-1.5 font-bold">View</button>
                           )}
                           
-                          {!isUnderReview && !isWithdrawn && (
+                          {canMutate && (
                             <button onClick={() => openEdit(proposal)} className="rounded-lg bg-[#efedff] px-2.5 py-1.5 font-bold text-[#5548d7]">Edit</button>
                           )}
                           
-                          {!isUnderReview && !isWithdrawn && (
+                          {canMutate && (
                             <button onClick={() => requestAction("delete", proposal)} className="rounded-lg bg-[#fff2f2] px-2.5 py-1.5 font-bold text-[#b13a3a]">Delete</button>
                           )}
                           
-                          {!isUnderReview && !isWithdrawn && (
+                          {canMutate && (
                             <button onClick={() => requestAction("withdraw", proposal)} className="rounded-lg bg-[#fff7ec] px-2.5 py-1.5 font-bold text-[#a55b25]">Withdraw</button>
                           )}
                         </div>
@@ -593,7 +593,16 @@ export default function AuthorDashboard() {
             </button>
           </div>
         )}
-          <div className="flex justify-end border-t border-[#edf0f5] pt-4"><button onClick={()=>openEdit(selected)} className="inline-flex items-center gap-2 rounded-xl bg-[#efedff] px-4 py-2.5 text-xs font-extrabold text-[#5548d7]"><Pencil size={14}/> Edit proposal</button></div>
+          {selected.status === "pending" && (
+  <div className="flex justify-end border-t border-[#edf0f5] pt-4">
+    <button
+      onClick={() => openEdit(selected)}
+      className="inline-flex items-center gap-2 rounded-xl bg-[#efedff] px-4 py-2.5 text-xs font-extrabold text-[#5548d7]"
+    >
+      <Pencil size={14} /> Edit proposal
+    </button>
+  </div>
+)}
         </div>
       </Modal> : null}
 
