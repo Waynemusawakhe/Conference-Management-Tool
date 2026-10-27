@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Modules\Conferences\Models\Conference;
 use App\Modules\Submissions\Models\Submission;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
@@ -20,11 +21,14 @@ class SubmissionApiTest extends TestCase
 
     public function test_author_can_create_submission(): void
     {
+        Notification::fake();
+
         $author = User::factory()->create([
             'role' => 'author',
         ]);
 
-        $conference = Conference::factory()->create();
+        $organiser = User::factory()->create(['role' => 'organiser']);
+        $conference = Conference::factory()->for($organiser, 'organiser')->create();
 
         $response = $this
             ->actingAs($author, 'sanctum')
@@ -42,6 +46,16 @@ class SubmissionApiTest extends TestCase
             'conference_id' => $conference->id,
             'status' => 'pending',
         ]);
+
+        Notification::assertSentTo(
+            $organiser,
+            \App\Notifications\CmtNotification::class,
+            fn ($notification) => $notification->kind === 'proposal_submitted'
+                && $notification->metadata['submission_id'] === $response->json('id')
+                && $notification->actionUrl === '/submissions/'.$response->json('id')
+        );
+
+        Notification::assertNotSentTo($author, \App\Notifications\CmtNotification::class);
     }
 
     public function test_attendee_cannot_create_submission(): void

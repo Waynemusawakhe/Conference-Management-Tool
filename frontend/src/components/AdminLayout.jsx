@@ -32,6 +32,7 @@ import {
 } from "lucide-react";
 
 import Logo from "./Logo";
+import NotificationBell from "./NotificationBell";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { useApiResource } from "../hooks/useApiResource";
@@ -93,38 +94,11 @@ const NAV_ITEMS = [
   },
 ];
 
-const DISMISSED_KEY =
-  "cmt_admin_dismissed_notifications";
-
 function loadDismissed() {
-  try {
-    const raw =
-      localStorage.getItem(
-        DISMISSED_KEY
-      );
-
-    return raw
-      ? new Set(
-          JSON.parse(raw)
-        )
-      : new Set();
-  } catch {
-    return new Set();
-  }
+  return new Set();
 }
 
-function saveDismissed(set) {
-  try {
-    localStorage.setItem(
-      DISMISSED_KEY,
-      JSON.stringify([
-        ...set,
-      ])
-    );
-  } catch {
-    // Ignore unavailable storage.
-  }
-}
+function saveDismissed() {}
 
 function relativeTime(value) {
   if (!value) {
@@ -715,7 +689,9 @@ export default function AdminLayout({
           </div>
 
           <div className="ml-auto flex items-center gap-2">
+            <NotificationBell dark />
             <div
+              hidden
               className="relative"
               ref={
                 notificationsRef
