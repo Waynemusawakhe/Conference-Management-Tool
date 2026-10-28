@@ -9,4 +9,5 @@ export const usersApi = {
 
   getReviewers: () =>
     http.get("/users/reviewers"),
+  getAll: (params = {}) => http.get('/sessions', { params }),
 };
