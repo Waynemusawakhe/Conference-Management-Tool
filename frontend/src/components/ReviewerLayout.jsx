@@ -90,7 +90,7 @@ function reviewIsSubmitted(r) {
   );
 }
 
-export default function ReviewerLayout({ children }) {
+export default function ReviewerLayout({ children, focusMode = false }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -215,8 +215,8 @@ export default function ReviewerLayout({ children }) {
   };
 
   return (
-    <div className="min-h-screen bg-[#f7f9fc] text-[#0d1b3d] transition-colors dark:bg-[#0a0f1f] dark:text-white">
-      <header className="sticky top-0 z-50 border-b border-white/10 bg-[#07132f]/95 text-white shadow-[0_8px_30px_rgba(7,19,47,.12)] backdrop-blur-xl">
+    <div className={`min-h-screen bg-[#f7f9fc] text-[#0d1b3d] transition-colors dark:bg-[#0a0f1f] dark:text-white ${focusMode ? "bg-[#111827] dark:bg-[#111827]" : ""}`}>
+      {!focusMode && <header className="sticky top-0 z-50 border-b border-white/10 bg-[#07132f]/95 text-white shadow-[0_8px_30px_rgba(7,19,47,.12)] backdrop-blur-xl">
         <div className="mx-auto flex min-h-[76px] w-[min(1400px,calc(100%-32px))] items-center gap-4 sm:gap-6">
           <button
             className="lg:hidden text-white/80 hover:text-white"
@@ -375,17 +375,17 @@ export default function ReviewerLayout({ children }) {
             </div>
           </div>
         </div>
-      </header>
+      </header>}
 
-      <div className="mx-auto flex w-[min(1400px,calc(100%-32px))] gap-6 py-6 lg:gap-7">
-        {sidebarOpen && (
+      <div className={`${focusMode ? "w-full p-3 sm:p-5 lg:p-6" : "mx-auto flex w-[min(1400px,calc(100%-32px))] gap-6 py-6 lg:gap-7"}`}>
+        {!focusMode && sidebarOpen && (
           <div
             className="fixed inset-0 z-40 bg-[#07132f]/60 backdrop-blur-sm lg:hidden"
             onClick={() => setSidebarOpen(false)}
           />
         )}
 
-        <aside
+        {!focusMode && <aside
           className={`fixed inset-y-0 left-0 z-50 w-[260px] transform bg-white p-4 shadow-2xl transition-transform duration-300 dark:bg-[#0f172a] lg:sticky lg:top-[100px] lg:block lg:max-h-[calc(100vh-120px)] lg:w-[260px] lg:translate-x-0 lg:overflow-y-auto lg:rounded-2xl lg:border lg:border-[#e4e8f0] lg:bg-white lg:p-3 lg:shadow-none lg:dark:border-[#1e293b] lg:dark:bg-[#0f172a] ${
             sidebarOpen ? "translate-x-0" : "-translate-x-full"
           }`}
@@ -501,9 +501,9 @@ export default function ReviewerLayout({ children }) {
             )}
             {signingOut ? "Signing out..." : "Sign out"}
           </button>
-        </aside>
+        </aside>}
 
-        <main className="min-w-0 flex-1 space-y-5">{children}</main>
+        <main className={`min-w-0 flex-1 ${focusMode ? "space-y-4" : "space-y-5"}`}>{children}</main>
       </div>
     </div>
   );

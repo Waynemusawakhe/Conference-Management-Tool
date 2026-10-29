@@ -7,9 +7,14 @@ import {
   Download,
   ExternalLink,
   FileText,
+  Focus,
   Lightbulb,
   Lock,
   Maximize2,
+<<<<<<< Updated upstream
+=======
+  Minimize2,
+>>>>>>> Stashed changes
   Send,
   Star,
   X,
@@ -18,7 +23,11 @@ import {
 import ReviewerLayout from "../components/ReviewerLayout";
 import { useAuth } from "../context/AuthContext";
 import { reviewsApi } from "../api/reviewsApi";
+<<<<<<< Updated upstream
 import { tokenStore, API_BASE_URL } from "../api/client";
+=======
+import { API_BASE_URL, tokenStore } from "../api/client";
+>>>>>>> Stashed changes
 
 const SCORE_OPTIONS = [1, 2, 3, 4, 5];
 const SCORE_LABELS = ["Poor", "Fair", "Good", "Great", "Excellent"];
@@ -126,11 +135,18 @@ export default function ScoreSubmission() {
   const [recommendation, setRecommendation] = useState("accept");
 
   const baselineRef = useRef(null);
+  const viewerRef = useRef(null);
 
   const [fileData, setFileData] = useState(null);
   const [fileType, setFileType] = useState("pdf");
   const [fileState, setFileState] = useState("idle");
   const [fileError, setFileError] = useState("");
+  const [fileType, setFileType] = useState(null);
+  const [fileName, setFileName] = useState("");
+  const [fileRetry, setFileRetry] = useState(0);
+  const [focusMode, setFocusMode] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [viewerActionError, setViewerActionError] = useState("");
 
   const [confirmState, setConfirmState] = useState(null);
   const [fullscreenOpen, setFullscreenOpen] = useState(false);
@@ -235,6 +251,7 @@ export default function ScoreSubmission() {
   const title = submission?.title ?? paper?.title ?? `Review #${id}`;
   const abstract = submission?.abstract ?? paper?.abstract ?? "";
 
+<<<<<<< Updated upstream
   // FIX: Use shared API_BASE_URL from client.js — no more hardcoded localhost fallback
   const apiFileUrl =
     submissionId && API_BASE_URL
@@ -244,11 +261,20 @@ export default function ScoreSubmission() {
   const fileExt = fileType === "word" ? "docx" : "pdf";
   const fileName = `submission-${submissionId ?? id}.${fileExt}`;
 
+=======
+  const fileUrl = submissionId
+    ? `${API_BASE_URL}/submissions/${encodeURIComponent(submissionId)}/file`
+    : null;
+
+  /* Fetch file with bearer token */
+>>>>>>> Stashed changes
   useEffect(() => {
     if (!apiFileUrl) {
       setFileState("idle");
       setFileData(null);
       setFileError("");
+      setFileType(null);
+      setFileName("");
       return;
     }
 
@@ -257,6 +283,8 @@ export default function ScoreSubmission() {
     (async () => {
       setFileState("loading");
       setFileError("");
+      setBlobUrl(null);
+      setFileType(null);
 
       try {
         const token = tokenStore.get();
@@ -265,7 +293,15 @@ export default function ScoreSubmission() {
         });
 
         if (!response.ok) {
-          throw new Error(`HTTP ${response.status} ${response.statusText}`);
+          const messages = {
+            401: "Your session has expired. Please sign in again to view this file.",
+            403: "You don't have permission to view this submission file.",
+            404: "No document was found for this submission.",
+          };
+          throw new Error(
+            messages[response.status] ??
+              `The document server returned an error (${response.status}). Please try again.`,
+          );
         }
 
         const contentType = response.headers.get("content-type") || "";
@@ -285,6 +321,7 @@ export default function ScoreSubmission() {
 
         const arrayBuffer = await response.arrayBuffer();
         if (cancelled) return;
+<<<<<<< Updated upstream
 
         const blob = new Blob([arrayBuffer], { type: contentType || "application/octet-stream" });
         const reader = new FileReader();
@@ -296,6 +333,36 @@ export default function ScoreSubmission() {
         };
         
         reader.readAsDataURL(blob);
+=======
+        const disposition = response.headers.get("Content-Disposition") ?? "";
+        const utf8Match = disposition.match(/filename\*=UTF-8''([^;]+)/i);
+        const regularMatch = disposition.match(/filename="?([^";]+)"?/i);
+        let responseFileName = `submission-${submissionId ?? id}`;
+        const encodedName = utf8Match?.[1];
+        const headerFileName = encodedName
+          ? decodeURIComponent(encodedName)
+          : regularMatch?.[1];
+        if (headerFileName) responseFileName = headerFileName;
+
+        const contentType = (response.headers.get("Content-Type") ?? blob.type)
+          .split(";")[0]
+          .trim()
+          .toLowerCase();
+        const extension = responseFileName.split(".").pop()?.toLowerCase();
+        const isPdf =
+          contentType === "application/pdf" || extension === "pdf";
+        const isWord =
+          contentType.includes("wordprocessingml") ||
+          contentType === "application/msword" ||
+          extension === "doc" ||
+          extension === "docx";
+
+        objectUrl = URL.createObjectURL(blob);
+        setBlobUrl(objectUrl);
+        setFileName(responseFileName);
+        setFileType(isPdf ? "pdf" : isWord ? "word" : "other");
+        setFileState("ready");
+>>>>>>> Stashed changes
       } catch (err) {
         if (cancelled) return;
 
@@ -303,21 +370,30 @@ export default function ScoreSubmission() {
           err instanceof TypeError && /failed to fetch/i.test(err.message);
 
         console.error("[ScoreSubmission] file fetch failed:", {
+<<<<<<< Updated upstream
           apiFileUrl,
+=======
+>>>>>>> Stashed changes
           error: err,
         });
 
         if (isNetworkError) {
+<<<<<<< Updated upstream
           let origin = apiFileUrl;
           try {
             origin = new URL(apiFileUrl).origin;
           } catch {}
+=======
+>>>>>>> Stashed changes
           setFileError(
-            `Cannot reach ${origin}. This is a CORS or wrong-host problem, ` +
-              `not a permission problem.`
+            "The document server could not be reached. Check your connection or ask the organiser to verify the API address and file access.",
           );
         } else {
-          setFileError(err.message);
+          setFileError(
+            err instanceof Error
+              ? err.message
+              : "The document could not be loaded. Please try again.",
+          );
         }
         setFileState("error");
       }
@@ -326,6 +402,7 @@ export default function ScoreSubmission() {
     return () => {
       cancelled = true;
     };
+<<<<<<< Updated upstream
   }, [apiFileUrl]);
 
   function handleCommentsBlur() {
@@ -344,6 +421,35 @@ export default function ScoreSubmission() {
 
     if (corrected !== comments) {
       setComments(corrected);
+=======
+  }, [fileUrl, fileRetry]);
+
+  useEffect(() => {
+    const syncFullscreen = () => {
+      setIsFullscreen(document.fullscreenElement === viewerRef.current);
+    };
+    document.addEventListener("fullscreenchange", syncFullscreen);
+    return () => document.removeEventListener("fullscreenchange", syncFullscreen);
+  }, []);
+
+  async function toggleFullscreen() {
+    setViewerActionError("");
+    try {
+      if (document.fullscreenElement) {
+        await document.exitFullscreen();
+      } else if (viewerRef.current?.requestFullscreen) {
+        await viewerRef.current.requestFullscreen();
+      } else {
+        setViewerActionError(
+          "Fullscreen viewing is not supported by this browser. Focus Mode is available instead.",
+        );
+      }
+    } catch (err) {
+      console.error("[ScoreSubmission] fullscreen request failed:", err);
+      setViewerActionError(
+        "Fullscreen was blocked by the browser. You can still use Focus Mode to enlarge the reading space.",
+      );
+>>>>>>> Stashed changes
     }
   }
 
@@ -458,7 +564,7 @@ export default function ScoreSubmission() {
     : 0;
 
   return (
-    <ReviewerLayout>
+    <ReviewerLayout focusMode={focusMode}>
       <style>{`
         @keyframes cmtFadeUp {
           from { opacity: 0; transform: translateY(12px); }
@@ -479,6 +585,7 @@ export default function ScoreSubmission() {
         .cmt-star-pop  { animation: cmtStarPop .45s cubic-bezier(.34,1.56,.64,1); }
       `}</style>
 
+<<<<<<< Updated upstream
       <div className="mx-auto max-w-[1500px] flex flex-col gap-6">
         
         <div className="cmt-fade-up flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -498,6 +605,35 @@ export default function ScoreSubmission() {
             </h1>
           </div>
         </div>
+=======
+      {/* Header */}
+      <div className={`cmt-fade-up flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between ${focusMode ? "rounded-2xl border border-white/10 bg-[#07132f] p-4 text-white" : ""}`}>
+        <div>
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              onClick={() => navigate("/reviewer-dashboard")}
+              className="group inline-flex items-center gap-2 rounded-xl bg-[#2563eb] px-4 py-2.5 text-[11px] font-extrabold text-white shadow-[0_12px_28px_rgba(37,99,235,.28)] transition hover:-translate-y-px hover:bg-[#1d4ed8]"
+            >
+              <ArrowLeft size={14} className="transition group-hover:-translate-x-0.5" />
+              Back to dashboard
+            </button>
+            {paper && <StatusBadge state={reviewState} />}
+          </div>
+          <h1 className={`m-0 mt-3 text-[22px] font-bold tracking-[-.03em] ${focusMode ? "text-white" : "text-[#1c2a4a]"}`}>
+            {title}
+          </h1>
+        </div>
+        <button
+          type="button"
+          onClick={() => setFocusMode((enabled) => !enabled)}
+          aria-pressed={focusMode}
+          className="inline-flex items-center justify-center gap-2 self-start rounded-xl border border-[#d6dbe8] bg-white px-4 py-2.5 text-[11px] font-extrabold text-[#43506a] transition hover:border-[#8175ef] hover:text-[#4f46c7] sm:self-center"
+        >
+          <Focus size={14} />
+          {focusMode ? "Exit Focus Mode" : "Focus Mode"}
+        </button>
+      </div>
+>>>>>>> Stashed changes
 
         {dirty && alreadySubmitted && !locked && (
           <div className="cmt-fade-up flex items-center gap-2 rounded-xl border border-[#dbeafe] bg-[#eff6ff] px-4 py-2.5 text-[11px] font-semibold text-[#1d4ed8]">
@@ -552,6 +688,7 @@ export default function ScoreSubmission() {
           </div>
         )}
 
+<<<<<<< Updated upstream
         {paper && (
           <>
             {error && (
@@ -564,12 +701,40 @@ export default function ScoreSubmission() {
               >
                 <AlertCircle size={16} className="mt-0.5 shrink-0" />
                 <span>{error}</span>
+=======
+          {locked && (
+            <div className="cmt-fade-up flex items-center gap-2 rounded-xl border border-[#bfe5d1] bg-[#effaf4] p-4 text-[12px] font-semibold text-[#18794e]">
+              <Lock size={16} /> This review is locked. No further changes are possible.
+            </div>
+          )}
+
+          <div className={`grid gap-4 sm:gap-6 ${focusMode ? "lg:grid-cols-[minmax(0,1.8fr)_minmax(320px,0.8fr)]" : "lg:grid-cols-2"}`}>
+            {/* ============ Submission ============ */}
+            <section
+              className={`cmt-fade-up flex min-w-0 flex-col gap-5 rounded-2xl border border-[#e4e8f0] bg-white p-4 shadow-[0_10px_30px_rgba(15,28,65,.035)] transition hover:shadow-[0_14px_40px_rgba(15,28,65,.06)] sm:p-6 ${focusMode ? "lg:p-5" : ""}`}
+              style={{ animationDelay: "60ms" }}
+            >
+              <div>
+                <span className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-[#dbeafe] to-[#e0e7ff] px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-[.06em] text-[#1e40af]">
+                  <FileText size={11} /> Submission details
+                </span>
+>>>>>>> Stashed changes
               </div>
             )}
 
+<<<<<<< Updated upstream
             {locked && (
               <div className="cmt-fade-up flex items-center gap-2 rounded-xl border border-[#bfe5d1] bg-[#effaf4] p-4 text-[12px] font-semibold text-[#18794e]">
                 <Lock size={16} /> This review is locked. No further changes are possible.
+=======
+              <div className={focusMode ? "hidden" : ""}>
+                <strong className="mb-2 block text-[10px] font-extrabold uppercase tracking-[.1em] text-[#9ba4b5]">
+                  Abstract
+                </strong>
+                <p className="m-0 rounded-xl border border-[#eef1f7] bg-gradient-to-br from-[#fafbff] to-[#f4f6fb] p-4 text-[12px] leading-6 text-[#374151]">
+                  {abstract || "No abstract available for this submission."}
+                </p>
+>>>>>>> Stashed changes
               </div>
             )}
 
@@ -589,6 +754,7 @@ export default function ScoreSubmission() {
                   <strong className="mb-2 block text-[10px] font-extrabold uppercase tracking-[.1em] text-[#9ba4b5]">
                     Abstract
                   </strong>
+<<<<<<< Updated upstream
                   <p className="m-0 rounded-xl border border-[#eef1f7] bg-gradient-to-br from-[#fafbff] to-[#f4f6fb] p-4 text-[12px] leading-6 text-[#374151]">
                     {abstract || "No abstract available for this submission."}
                   </p>
@@ -699,14 +865,167 @@ export default function ScoreSubmission() {
                       <code className="max-w-full break-all rounded-lg bg-white px-3 py-2 text-[11px] text-[#7a5c10]">
                         {apiFileUrl}
                       </code>
+=======
+                  {fileState === "ready" && blobUrl && (
+                    <div className="flex flex-wrap items-center justify-end gap-1.5">
+                      <a
+                        href={blobUrl}
+                        download={fileName}
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-[#2563eb] px-3 py-1.5 text-[10px] font-extrabold text-white shadow-[0_8px_18px_-6px_rgba(37,99,235,.55)] transition hover:-translate-y-px hover:bg-[#1d4ed8]"
+                      >
+                        <Download size={12} /> Download
+                      </a>
+                      {fileType === "pdf" && (
+                        <>
+                          <a
+                            href={blobUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-[#e4e8f0] bg-white px-3 py-1.5 text-[10px] font-bold text-[#43506a] transition hover:bg-[#fafbff]"
+                          >
+                            <ExternalLink size={12} /> Open
+                          </a>
+                          <button
+                            type="button"
+                            onClick={toggleFullscreen}
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-[#e4e8f0] bg-white px-3 py-1.5 text-[10px] font-bold text-[#43506a] transition hover:bg-[#fafbff]"
+                          >
+                            {isFullscreen ? <Minimize2 size={12} /> : <Maximize2 size={12} />}
+                            {isFullscreen ? "Exit fullscreen" : "Fullscreen"}
+                          </button>
+                        </>
+                      )}
+>>>>>>> Stashed changes
                     </div>
                   )}
                 </div>
               </section>
 
+<<<<<<< Updated upstream
               <section
                 className="cmt-fade-up flex flex-col rounded-2xl border border-[#e4e8f0] bg-white p-6 shadow-[0_10px_30px_rgba(15,28,65,.035)] lg:sticky lg:top-6 lg:h-fit"
                 style={{ animationDelay: "140ms" }}
+=======
+                {focusMode && (
+                  <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                    <span className="text-[11px] text-[#66728b]">
+                      Focus Mode keeps your scoring controls available beside the document.
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => document.getElementById("review-controls")?.scrollIntoView({ behavior: "smooth", block: "start" })}
+                      className="rounded-lg border border-[#d6dbe8] bg-white px-3 py-2 text-[10px] font-extrabold text-[#43506a] hover:border-[#8175ef] hover:text-[#4f46c7] lg:hidden"
+                    >
+                      Jump to scoring
+                    </button>
+                  </div>
+                )}
+
+                {viewerActionError && (
+                  <p role="alert" className="mb-2 rounded-lg border border-[#e9d9a7] bg-[#fff9e9] p-3 text-[11px] text-[#7a5c10]">
+                    {viewerActionError}
+                  </p>
+                )}
+
+                {!fileUrl && (
+                  <div className={`flex ${focusMode ? "h-[55vh] sm:h-[65vh]" : "h-[400px]"} flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-[#e5e7eb] bg-[#f9fafb] p-6 text-center`}>
+                    <FileText size={28} className="text-[#aeb6c6]" />
+                    <strong className="text-[12px] font-bold text-[#43506a]">
+                      No document attached
+                    </strong>
+                    <span className="max-w-[280px] text-[11px] leading-5 text-[#8993a6]">
+                      This submission doesn't have a file attached.
+                    </span>
+                  </div>
+                )}
+
+                {fileUrl && fileState === "loading" && (
+                  <div className={`flex ${focusMode ? "h-[55vh] sm:h-[65vh]" : "h-[400px]"} items-center justify-center rounded-xl border border-[#e5e7eb] bg-[#f9fafb] text-[12px] font-semibold text-[#8a95a8]`}>
+                    Loading document…
+                  </div>
+                )}
+
+                {fileUrl && fileState === "ready" && blobUrl && (
+                  <div
+                    ref={viewerRef}
+                    className={`relative overflow-hidden rounded-xl border border-[#e5e7eb] bg-[#f9fafb] ${isFullscreen ? "h-screen rounded-none border-0" : ""}`}
+                  >
+                    {isFullscreen && (
+                      <button
+                        type="button"
+                        onClick={toggleFullscreen}
+                        className="absolute right-4 top-4 z-10 inline-flex items-center gap-2 rounded-lg bg-[#07132f]/90 px-3 py-2 text-[11px] font-bold text-white shadow-lg"
+                      >
+                        <Minimize2 size={13} /> Exit fullscreen
+                      </button>
+                    )}
+                    {fileType === "pdf" ? (
+                      <iframe
+                        src={blobUrl}
+                        title="Submission PDF preview"
+                        className={`block w-full ${isFullscreen ? "h-screen" : focusMode ? "h-[55vh] sm:h-[65vh] lg:h-[72vh]" : "h-[400px] sm:h-[500px]"}`}
+                      />
+                    ) : (
+                      <div className={`flex ${focusMode ? "h-[55vh] sm:h-[65vh]" : "h-[400px]"} flex-col items-center justify-center gap-3 p-6 text-center`}>
+                        <FileText size={32} className="text-[#4f46c7]" />
+                        <strong className="text-[13px] font-bold text-[#1c2a4a]">
+                          {fileType === "word" ? "Word document ready to download" : "Preview unavailable"}
+                        </strong>
+                        <p className="max-w-[440px] text-[11px] leading-5 text-[#66728b]">
+                          {fileType === "word"
+                            ? "Word documents can't be previewed in this browser. Download the file and open it with Microsoft Word or another compatible editor."
+                            : "This file type can't be previewed here. Download it to open it with a compatible application."}
+                        </p>
+                        <a
+                          href={blobUrl}
+                          download={fileName}
+                          className="inline-flex items-center gap-2 rounded-lg bg-[#2563eb] px-4 py-2.5 text-[11px] font-extrabold text-white hover:bg-[#1d4ed8]"
+                        >
+                          <Download size={13} /> Download {fileType === "word" ? "Word document" : "file"}
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {fileUrl && fileState === "error" && (
+                  <div className={`flex ${focusMode ? "h-[55vh] sm:h-[65vh]" : "h-[400px]"} flex-col items-center justify-center gap-3 rounded-xl border border-[#e9d9a7] bg-[#fff9e9] p-6 text-center`}>
+                    <AlertCircle size={28} className="text-[#9b7414]" />
+                    <strong className="text-[12px] font-bold text-[#7a5c10]">
+                      Document is unavailable
+                    </strong>
+                    <span className="max-w-[420px] text-[11px] leading-5 text-[#7a5c10]/85">
+                      {fileError}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setFileRetry((attempt) => attempt + 1)}
+                      className="rounded-lg bg-[#7a5c10] px-3 py-2 text-[10px] font-bold text-white hover:bg-[#62490d]"
+                    >
+                      Retry document
+                    </button>
+                  </div>
+                )}
+              </div>
+            </section>
+
+            {/* ============ Form ============ */}
+            <section
+              id="review-controls"
+              className={`cmt-fade-up flex flex-col rounded-2xl border border-[#e4e8f0] bg-white p-4 shadow-[0_10px_30px_rgba(15,28,65,.035)] transition hover:shadow-[0_14px_40px_rgba(15,28,65,.06)] sm:p-6 ${focusMode ? "lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] lg:self-start lg:overflow-y-auto" : ""}`}
+              style={{ animationDelay: "140ms" }}
+            >
+              <h3 className="m-0 mb-6 flex items-center gap-2 border-b border-[#edf0f5] pb-4 text-[16px] font-bold">
+                <span className="grid h-7 w-7 place-items-center rounded-lg bg-gradient-to-br from-[#2563eb] to-[#60a5fa] text-white shadow-[0_8px_18px_-6px_rgba(37,99,235,.55)]">
+                  <Star size={13} />
+                </span>
+                {locked ? "Your review" : "Evaluation & scoring"}
+              </h3>
+
+              <form
+                onSubmit={handleSubmit}
+                className="flex flex-1 flex-col justify-between gap-6"
+>>>>>>> Stashed changes
               >
                 <h3 className="m-0 mb-6 flex items-center gap-2 border-b border-[#edf0f5] pb-4 text-[16px] font-bold">
                   <span className="grid h-7 w-7 place-items-center rounded-lg bg-gradient-to-br from-[#2563eb] to-[#60a5fa] text-white shadow-[0_8px_18px_-6px_rgba(37,99,235,.55)]">
