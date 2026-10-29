@@ -15,7 +15,7 @@ import { authApi } from "../api/authApi";
 
 const MIN_PASSWORD_LENGTH = 8;
 
-const PUBLIC_ROLES = ["author", "organiser", "attendee"];
+const PUBLIC_ROLES = ["author", "reviewer", "organiser", "attendee"];
 
 function getPasswordStrength(password) {
   if (!password) {
@@ -126,12 +126,6 @@ function Register() {
       return;
     }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.email.trim())) {
-      setError("Please enter a valid email address.");
-      return;
-    }
-
     if (formData.password.length < MIN_PASSWORD_LENGTH) {
       setError(
         `Password must be at least ${MIN_PASSWORD_LENGTH} characters.`,
@@ -231,6 +225,7 @@ function Register() {
               onSubmit={handleSubmit}
               className="mt-6 grid gap-5"
             >
+              {/* Full Name */}
               <div className="grid gap-2">
                 <label
                   className="text-xs font-bold text-[#43506a]"
@@ -258,6 +253,7 @@ function Register() {
                 </label>
               </div>
 
+              {/* Email */}
               <div className="grid gap-2">
                 <label
                   className="text-xs font-bold text-[#43506a]"
@@ -279,12 +275,13 @@ function Register() {
                     onChange={handleChange}
                     autoComplete="email"
                     required
-                    placeholder="Enter your email address"
+                    placeholder="you@example.com"
                     className="min-h-11 w-full rounded-[10px] border border-[#dfe4ed] px-3 text-sm font-normal text-[#0d1b3d] outline-none transition focus:border-[#7568f7] focus:ring-4 focus:ring-[#7568f7]/10"
                   />
                 </label>
               </div>
 
+              {/* Password */}
               <div className="grid gap-2">
                 <label
                   className="text-xs font-bold text-[#43506a]"
@@ -417,6 +414,7 @@ function Register() {
                 )}
               </div>
 
+              {/* Confirm Password */}
               <div className="grid gap-2">
                 <label
                   className="text-xs font-bold text-[#43506a]"
@@ -452,6 +450,7 @@ function Register() {
                   )}
               </div>
 
+              {/* Role */}
               <div className="grid gap-2">
                 <label
                   className="text-xs font-bold text-[#43506a]"
@@ -485,6 +484,10 @@ function Register() {
                       Author
                     </option>
 
+                    <option value="reviewer">
+                      Reviewer
+                    </option>
+
                     <option value="organiser">
                       Organiser
                     </option>
@@ -492,10 +495,13 @@ function Register() {
                 </label>
 
                 <p className="text-[10px] leading-5 text-[#8b95a7]">
-                  Choose how you primarily plan to use CMT. Administrator and Reviewer accounts are managed separately.
+                  Choose how you primarily plan to use
+                  CMT. Administrator accounts are managed
+                  separately.
                 </p>
               </div>
 
+              {/* Error */}
               {error && (
                 <p
                   role="alert"
@@ -505,6 +511,7 @@ function Register() {
                 </p>
               )}
 
+              {/* Success */}
               {success && (
                 <p
                   role="status"
@@ -515,6 +522,7 @@ function Register() {
                 </p>
               )}
 
+              {/* Submit */}
               <button
                 type="submit"
                 disabled={loading}

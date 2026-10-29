@@ -48,8 +48,6 @@ function Login() {
         .toLowerCase();
 
       const requested = safeReturnPath(location.state?.from);
-      const destination = requested || (normalizedRole === "admin" ? "/admin-dashboard" : null);
-
       if (requested) {
         navigate(requested, { replace: true });
         return;

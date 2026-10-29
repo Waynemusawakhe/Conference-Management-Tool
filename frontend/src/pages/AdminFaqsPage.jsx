@@ -3,13 +3,11 @@ import { useNavigate } from "react-router-dom";
 import {
   ChevronRight,
   HelpCircle,
-  Loader2,
   Pencil,
   Plus,
   Search,
   Tag,
   Trash2,
-  TriangleAlert,
   X,
 } from "lucide-react";
 import AdminLayout from "../components/AdminLayout";
@@ -18,6 +16,9 @@ import { useApiResource } from "../hooks/useApiResource";
 import { toArray } from "../api/normalize";
 import { faqsApi } from "../api/faqsApi";
 
+/* ------------------------------------------------------------------ *
+ * Helpers
+ * ------------------------------------------------------------------ */
 const faqQuestion = (f) => f.question ?? f.title ?? `FAQ #${f.id}`;
 const faqAnswer = (f) => f.answer ?? f.body ?? "";
 const faqCategory = (f) => {
@@ -27,6 +28,9 @@ const faqCategory = (f) => {
   return null;
 };
 
+/* ------------------------------------------------------------------ *
+ * Stat strip
+ * ------------------------------------------------------------------ */
 function StatStrip({ faqs, categories }) {
   const items = [
     {
@@ -71,6 +75,9 @@ function StatStrip({ faqs, categories }) {
   );
 }
 
+/* ------------------------------------------------------------------ *
+ * Loading skeleton
+ * ------------------------------------------------------------------ */
 function LoadingRows({ rows = 5 }) {
   return Array.from({ length: rows }).map((_, i) => (
     <div key={i} className="border-b border-[#f0f2f6] px-5 py-4 last:border-0">
@@ -84,79 +91,19 @@ function LoadingRows({ rows = 5 }) {
   ));
 }
 
-function ConfirmDeleteModal({ open, onClose, onConfirm, faq, busy }) {
-  if (!open || !faq) return null;
-
-  return (
-    <div
-      className="fixed inset-0 z-[100] grid place-items-center bg-[#07132f]/60 p-4 backdrop-blur-sm"
-      onClick={busy ? undefined : onClose}
-      role="dialog"
-      aria-modal="true"
-    >
-      <div
-        className="w-full max-w-[420px] overflow-hidden rounded-[22px] bg-white shadow-[0_30px_90px_rgba(7,19,47,.3)] animate-[scaleIn_.15s_ease-out]"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex flex-col items-center p-6 text-center">
-          <div className="mb-4 grid h-14 w-14 place-items-center rounded-full bg-red-50 text-red-500">
-            <TriangleAlert size={28} />
-          </div>
-          <h2 className="text-[18px] font-extrabold text-[#1c2a4a]">Delete this FAQ?</h2>
-          <p className="mt-2 text-[12px] leading-6 text-[#66728b]">
-            Are you sure you want to delete <strong>"{faqQuestion(faq)}"</strong>? This action cannot be undone and will remove it from the Help & FAQ page.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-2 gap-3 border-t border-[#edf0f5] bg-[#fafbfe] p-4">
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={busy}
-            className="inline-flex min-h-11 items-center justify-center rounded-xl border border-[#e4e8f0] bg-white px-4 text-[12px] font-extrabold text-[#5c6880] transition hover:bg-[#f3f5f9] disabled:opacity-50"
-          >
-            No, cancel
-          </button>
-          <button
-            type="button"
-            onClick={onConfirm}
-            disabled={busy}
-            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-red-600 px-4 text-[12px] font-extrabold text-white shadow-[0_8px_20px_rgba(220,38,38,.25)] transition hover:bg-red-700 hover:shadow-[0_12px_25px_rgba(220,38,38,.35)] disabled:opacity-50"
-          >
-            {busy ? (
-              <>
-                <Loader2 size={16} className="animate-spin" /> Deleting...
-              </>
-            ) : (
-              <>
-                <Trash2 size={16} /> Yes, delete
-              </>
-            )}
-          </button>
-        </div>
-      </div>
-      <style>{`
-        @keyframes scaleIn {
-          from { opacity: 0; transform: scale(0.95); }
-          to { opacity: 1; transform: scale(1); }
-        }
-      `}</style>
-    </div>
-  );
-}
-
+/* ------------------------------------------------------------------ *
+ * Page
+ * ------------------------------------------------------------------ */
 export default function AdminFaqsPage() {
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [feedback, setFeedback] = useState(null);
-  
-  const [deleteTarget, setDeleteTarget] = useState(null);
-  const [isDeleting, setIsDeleting] = useState(false);
 
   const faqsRes = useApiResource(() => faqsApi.getAll(), []);
   const faqs = useMemo(() => toArray(faqsRes.data), [faqsRes.data]);
 
+  /* Categories in the data */
   const categories = useMemo(() => {
     const set = new Set();
     faqs.forEach((f) => {
@@ -166,6 +113,7 @@ export default function AdminFaqsPage() {
     return Array.from(set).sort((a, b) => a.localeCompare(b));
   }, [faqs]);
 
+  /* Filter chips */
   const filterChips = useMemo(
     () => [
       { key: "all", label: "All" },
@@ -175,6 +123,7 @@ export default function AdminFaqsPage() {
     [categories]
   );
 
+  /* Filtered list */
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return faqs.filter((f) => {
@@ -192,28 +141,26 @@ export default function AdminFaqsPage() {
     });
   }, [faqs, query, categoryFilter]);
 
-  const requestDelete = (faq) => {
-    setFeedback(null);
-    setDeleteTarget(faq);
-  };
+  /* Delete */
+  const handleDelete = async (faq) => {
+    const label = faqQuestion(faq);
+    if (
+      !window.confirm(
+        `Delete this FAQ?\n\n"${label}"\n\nThis cannot be undone.`
+      )
+    )
+      return;
 
-  const confirmDelete = async () => {
-    if (!deleteTarget) return;
-    
-    setIsDeleting(true);
+    setFeedback(null);
     try {
-      await faqsApi.remove(deleteTarget.id);
+      await faqsApi.remove(faq.id);
       await faqsRes.reload();
-      setFeedback({ type: "success", message: "FAQ deleted successfully." });
-      setDeleteTarget(null);
+      setFeedback({ type: "success", message: "FAQ deleted." });
     } catch (err) {
       setFeedback({
         type: "error",
         message: err?.message ?? "Failed to delete FAQ.",
       });
-      setDeleteTarget(null);
-    } finally {
-      setIsDeleting(false);
     }
   };
 
@@ -230,6 +177,7 @@ export default function AdminFaqsPage() {
         </button>
       }
     >
+      {/* Feedback banner */}
       {feedback && (
         <div
           role="alert"
@@ -250,6 +198,7 @@ export default function AdminFaqsPage() {
         </div>
       )}
 
+      {/* Stats */}
       {!faqsRes.loading && !faqsRes.error && faqs.length > 0 && (
         <div className="mb-5">
           <StatStrip faqs={faqs} categories={categories} />
@@ -294,6 +243,7 @@ export default function AdminFaqsPage() {
           }
         />
 
+        {/* Category filter chips */}
         {filterChips.length > 1 && (
           <div className="flex flex-wrap gap-2 border-b border-[#edf0f5] px-5 py-3 sm:px-6">
             {filterChips.map((r) => {
@@ -328,6 +278,7 @@ export default function AdminFaqsPage() {
           </div>
         )}
 
+        {/* List */}
         <div>
           {faqsRes.loading && <LoadingRows />}
 
@@ -386,7 +337,7 @@ export default function AdminFaqsPage() {
               return (
                 <div
                   key={faq.id}
-                  className="cmt-admin-list-card group relative border-b border-[#f0f2f6] px-5 py-4 transition last:border-0 hover:bg-[#fafbff] sm:px-6"
+                  className="group relative border-b border-[#f0f2f6] px-5 py-4 transition last:border-0 hover:bg-[#fafbff] sm:px-6"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="min-w-0 flex-1">
@@ -423,6 +374,7 @@ export default function AdminFaqsPage() {
                       </div>
                     </div>
 
+                    {/* Actions */}
                     <div className="flex shrink-0 items-center gap-1.5">
                       <button
                         onClick={() => navigate(`/admin/faqs/${faq.id}/edit`)}
@@ -431,7 +383,7 @@ export default function AdminFaqsPage() {
                         <Pencil size={12} /> Edit
                       </button>
                       <button
-                        onClick={() => requestDelete(faq)}
+                        onClick={() => handleDelete(faq)}
                         className="inline-flex items-center gap-1.5 rounded-lg bg-red-50 px-2.5 py-1.5 text-[10px] font-bold text-red-600 transition hover:bg-red-100"
                         aria-label={`Delete ${faqQuestion(faq)}`}
                       >
@@ -447,14 +399,6 @@ export default function AdminFaqsPage() {
             })}
         </div>
       </Card>
-
-      <ConfirmDeleteModal
-        open={Boolean(deleteTarget)}
-        onClose={() => setDeleteTarget(null)}
-        onConfirm={confirmDelete}
-        faq={deleteTarget}
-        busy={isDeleting}
-      />
     </AdminLayout>
   );
 }
