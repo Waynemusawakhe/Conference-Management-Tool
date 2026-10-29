@@ -9,5 +9,8 @@ export const usersApi = {
 
   getReviewers: () =>
     http.get("/users/reviewers"),
-  getAll: (params = {}) => http.get('/sessions', { params }),
+  
+  updateRole: (id, role) =>
+    http.patch(`/users/${encodeURIComponent(id)}/role`, { role }),
+
 };
