@@ -22,6 +22,7 @@ import { collectPages } from "../utils/pagination";
 import { useAuth } from "../context/AuthContext";
 import { conferencesApi } from "../api/conferencesApi";
 import { registrationsApi } from "../api/registrationsApi";
+import QrPassButton from "../components/QRPassButton";
 
 const REGISTRATION_STATUS_LABELS = {
   pending: "Pending",
@@ -695,7 +696,13 @@ export default function MyConferences() {
                     >
                       <Eye size={12} /> View
                     </button>
-
+                      {attending && conference && (
+                      <QRPassButton
+                        registration={attending}
+                        conference={conference}
+                        attendeeName={user?.name}
+                      />
+                    )}
                     {canCancel && (
                       <button
                         type="button"
