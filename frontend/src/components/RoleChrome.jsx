@@ -13,7 +13,7 @@ import {
   Settings as SettingsIcon,
   Sparkles,
   Ticket,
-  UserRound,
+  UserRound,   
   X,
 } from "lucide-react";
 import Logo from "./Logo";
@@ -40,9 +40,8 @@ const WORKSPACE_LABEL = {
 const AUTHOR_NAV = [
   { label: "Overview", to: "/author-dashboard", icon: LayoutDashboard },
   { label: "My proposals", to: "/author-dashboard#my-proposals", icon: FileText },
-     
   { label: "Deadlines", to: "/author-dashboard#deadlines", icon: CalendarDays },
-  { label: "Browse conferences", to: "/conferences", icon: Search },
+  { label: "Browse conferences", to: "/author/conferences", icon: Search },
 ];
 
 function AuthorWorkspaceShell({ children }) {

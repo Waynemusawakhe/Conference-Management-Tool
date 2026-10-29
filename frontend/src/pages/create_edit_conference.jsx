@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   CalendarDays,
@@ -13,7 +13,7 @@ import {
   Tag,
   Users,
 } from "lucide-react";
-import OrganiserLayout from "../components/OrganiserLayout";
+import RoleChrome from "../components/RoleChrome";
 import { conferencesApi } from "../api/conferencesApi";
 import { useAuth } from "../context/AuthContext";
 
@@ -70,6 +70,7 @@ export default function CreateEditConference() {
   const dashboardPath =
     role === "admin" ? "/admin-dashboard" : "/organiser-dashboard";
   const isEdit = Boolean(id);
+  
   const [form, setForm] = useState(emptyConference);
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
@@ -137,13 +138,15 @@ export default function CreateEditConference() {
         .map((topic) => topic.trim())
         .filter(Boolean),
     };
+    
     delete payload.customCategory;
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const start = new Date(form.start_date);
-    const end = new Date(form.end_date);
-    const deadline = new Date(form.submission_deadline);
+    
+    const start = new Date(form.start_date + "T00:00:00");
+    const end = new Date(form.end_date + "T00:00:00");
+    const deadline = new Date(form.submission_deadline + "T00:00:00");
 
     if (
       !form.code.trim() ||
@@ -200,17 +203,17 @@ export default function CreateEditConference() {
 
   if (loading) {
     return (
-      <OrganiserLayout>
+      <RoleChrome>
         <div className="grid min-h-[40vh] place-items-center text-[12px] text-[#66728b] dark:text-white/60">
           <Loader2 className="mr-2 animate-spin" size={18} /> Loading
           conference...
         </div>
-      </OrganiserLayout>
+      </RoleChrome>
     );
   }
 
   return (
-    <OrganiserLayout>
+    <RoleChrome>
       <div className="mb-8">
         <div className="mb-3 flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-[.14em] text-[#6757f5]">
           <Sparkles size={14} /> Conference studio
@@ -441,19 +444,19 @@ export default function CreateEditConference() {
                 </span>
                 <FieldError name="format" errors={fieldErrors} />
               </label>
-              <label>
+              <label className="sm:col-span-2">
                 <span className="mb-1.5 block text-[11px] font-bold text-[#35415f] dark:text-white/75">
-                  Submission status
+                  Submission Status <b className="text-[#6757f5]">*</b>
                 </span>
                 <span className="relative block">
                   <select
                     name="submission_status"
-                    value={form.submission_status}
+                    value={form.submission_status || "open"}
                     onChange={updateField}
                     className={`${inputClass("submission_status")} appearance-none`}
                   >
                     <option value="open">Open for submissions</option>
-                    <option value="closed">Closed</option>
+                    <option value="closed">Closed (not accepting new submissions)</option>
                   </select>
                   <ChevronDown
                     className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#8993a6]"
@@ -630,6 +633,6 @@ export default function CreateEditConference() {
           </div>
         </aside>
       </form>
-    </OrganiserLayout>
+    </RoleChrome>
   );
 }

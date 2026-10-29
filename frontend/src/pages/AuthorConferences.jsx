@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  ArrowLeft,
   CalendarDays,
   CheckCircle2,
   FileText,
@@ -7,13 +8,12 @@ import {
   List,
   LoaderCircle,
   Search,
-  Send,
   SlidersHorizontal,
   Sparkles,
   Upload,
   X,
 } from "lucide-react";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import AuthorLayout from "../components/AuthorLayout";
 import ConferenceCard from "../components/ConferenceCard";
 import SectionHeading from "../components/SectionHeading";
@@ -370,6 +370,7 @@ function SubmitProposalModal({ open, conference, onClose, onSubmitted }) {
 }
 
 export default function AuthorConferences() {
+  const navigate = useNavigate();
   const requestVersion = useRef(0);
   const [searchParams] = useSearchParams();
 
@@ -475,7 +476,11 @@ export default function AuthorConferences() {
 
   const handleSubmitted = () => {
     setSuccessMessage("Your proposal has been submitted successfully.");
-    window.setTimeout(() => setSuccessMessage(""), 5000);
+    // Auto-redirect to the proposals list so the author can see their submission
+    window.setTimeout(() => {
+      setSuccessMessage("");
+      navigate("/author-dashboard#my-proposals");
+    }, 1500);
   };
 
   return (
@@ -483,10 +488,23 @@ export default function AuthorConferences() {
       <section className="relative overflow-hidden rounded-[22px] bg-[radial-gradient(circle_at_75%_32%,rgba(98,83,245,.2),transparent_27%),linear-gradient(135deg,#07132f_0%,#0a1740_52%,#15165a_100%)] px-6 py-10 text-white shadow-[0_18px_55px_rgba(15,28,65,.12)] sm:px-8">
         <div className="absolute inset-0 opacity-[.16] [background-image:radial-gradient(rgba(255,255,255,.15)_0.7px,transparent_0.7px)] [background-size:22px_22px]" />
         <div className="relative z-[2]">
-          <span className="inline-flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-[.12em] text-[#b9b3ff]">
-            <Sparkles size={14} />
-            Browse conferences
-          </span>
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              onClick={() => navigate("/author-dashboard")}
+              className="group inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/[.06] px-3.5 py-2 text-[11px] font-extrabold text-white backdrop-blur-md transition hover:-translate-y-px hover:border-[#b9b3ff]/50 hover:bg-white/[.12]"
+            >
+              <ArrowLeft
+                size={13}
+                className="transition group-hover:-translate-x-0.5"
+              />
+              Back to dashboard
+            </button>
+            <span className="inline-flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-[.12em] text-[#b9b3ff]">
+              <Sparkles size={14} />
+              Browse conferences
+            </span>
+          </div>
           <h1 className="mb-2 mt-3 text-[clamp(24px,3.4vw,36px)] font-bold leading-tight tracking-[-.04em]">
             Find the right conference for your research.
           </h1>
@@ -504,7 +522,7 @@ export default function AuthorConferences() {
         >
           <span className="flex items-center gap-2">
             <CheckCircle2 size={16} />
-            {successMessage}
+            {successMessage} Redirecting to your proposals…
           </span>
           <button
             type="button"

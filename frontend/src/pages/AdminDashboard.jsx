@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useLayoutEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   BarChart3,
@@ -6,6 +6,7 @@ import {
   ChevronRight,
   FileCheck2,
   FileText,
+  Inbox,
   LayoutDashboard,
   Mail,
   TrendingUp,
@@ -70,40 +71,98 @@ const subTitle = (s) => s.title ?? s.name ?? `Submission #${s.id}`;
 const subAuthor = (s) => s.author?.name ?? s.author_name ?? s.user?.name ?? "—";
 const userName = (u) => u.name ?? u.full_name ?? `User #${u.id}`;
 
-function StatCard({ icon, value, label, note, tint, loading }) {
+function CountUp({ value, animate, delay = 0 }) {
+  const target = Number(value) || 0;
+  const [shown, setShown] = useState(animate ? 0 : target);
+
+  useEffect(() => {
+    if (!animate || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setShown(target);
+      return undefined;
+    }
+
+    let frameId;
+    const delayId = window.setTimeout(() => {
+      let startTime;
+      const tick = (now) => {
+        if (startTime === undefined) startTime = now;
+        const progress = Math.min((now - startTime) / 1200, 1);
+        setShown(Math.round(target * (1 - Math.pow(1 - progress, 3))));
+        if (progress < 1) frameId = window.requestAnimationFrame(tick);
+      };
+      frameId = window.requestAnimationFrame(tick);
+    }, delay);
+
+    return () => {
+      window.clearTimeout(delayId);
+      if (frameId) window.cancelAnimationFrame(frameId);
+    };
+  }, [target, animate, delay]);
+
+  return <>{shown.toLocaleString()}</>;
+}
+
+function HoverTile({ as: Element = "article", children, className = "", contentClassName = "", style, onClick, ariaLabel }) {
+  const isButton = Element === "button";
+
   return (
-    <article className="group relative overflow-hidden rounded-[18px] border border-[#e4e8f0] bg-white p-5 shadow-[0_10px_28px_rgba(15,28,65,.04)] transition hover:-translate-y-px hover:shadow-[0_16px_40px_rgba(15,28,65,.07)]">
-      <div className="flex items-start justify-between">
-        <span className={`grid h-10 w-10 place-items-center rounded-xl ${tint}`}>
-          {icon}
-        </span>
-        <TrendingUp size={13} className="text-[#dfe4ed] opacity-0 transition group-hover:opacity-100" />
-      </div>
-      <strong className="mt-4 block text-[28px] leading-none font-bold tracking-[-.04em] text-[#1c2a4a]">
-        {loading ? "…" : value}
-      </strong>
-      <p className="m-0 mt-2 text-[11px] font-bold text-[#35415f]">{label}</p>
-      {note && <span className="mt-0.5 block text-[9px] text-[#8b95a8]">{note}</span>}
-    </article>
+    <Element
+      type={isButton ? "button" : undefined}
+      onClick={onClick}
+      tabIndex={isButton ? undefined : 0}
+      aria-label={ariaLabel}
+      className={`cmt-hover-tile group relative isolate ${className}`}
+      style={style}
+    >
+      <span aria-hidden="true" className="cmt-hover-tile__fill" />
+      <span className={`cmt-hover-tile__surface ${contentClassName}`}>{children}</span>
+      <span aria-hidden="true" className="cmt-hover-tile__arrow">→</span>
+    </Element>
   );
 }
 
-function QuickTile({ icon, label, tint, count, loading, onClick }) {
+function StatCard({ icon, value, label, note, tint, loading, intro, index }) {
+  return (
+    <HoverTile
+      className={`cmt-dashboard-summary-tile rounded-[18px] border border-[#e4e8f0] bg-white shadow-[0_10px_28px_rgba(15,28,65,.04)] ${intro ? "admin-intro-card" : ""}`}
+      contentClassName="cmt-stat-tile p-5"
+      style={intro ? { "--intro-delay": `${1180 + index * 90}ms` } : undefined}
+      ariaLabel={`${label}: ${loading ? "loading" : value}`}
+    >
+      <div className="cmt-hover-tile__icon-row flex items-start justify-between">
+        <span className={`cmt-hover-tile__icon grid h-10 w-10 place-items-center rounded-xl ${tint}`}>
+          {icon}
+        </span>
+        <TrendingUp size={13} className="cmt-hover-tile__trend text-[#dfe4ed] opacity-0 transition group-hover:opacity-100" />
+      </div>
+      <strong className="cmt-hover-tile__number mt-4 block text-[28px] leading-none font-bold tracking-[-.04em] text-[#1c2a4a]">
+        {loading ? "…" : value == null ? "—" : <CountUp value={value} animate={intro} delay={1300 + index * 90} />}
+      </strong>
+      <p className="cmt-hover-tile__title m-0 mt-2 text-[11px] font-bold text-[#35415f]">{label}</p>
+      {note && <span className="cmt-hover-tile__description mt-0.5 block text-[9px] text-[#8b95a8]">{note}</span>}
+    </HoverTile>
+  );
+}
+
+function QuickTile({ icon, label, tint, count, loading, onClick, intro, index }) {
   return (
     <button
       onClick={onClick}
-      className="group flex items-center gap-3 rounded-[16px] border border-[#e4e8f0] bg-white p-4 text-left shadow-[0_6px_18px_rgba(15,28,65,.03)] transition hover:-translate-y-px hover:border-[#d6dbe8] hover:shadow-[0_12px_30px_rgba(15,28,65,.06)]"
+      className={`group cmt-dashboard-manage-tile cmt-manage-hover relative isolate w-full rounded-[16px] border border-[#e4e8f0] bg-white text-left shadow-[0_6px_18px_rgba(15,28,65,.03)] ${intro ? "admin-intro-card" : ""}`}
+      style={intro ? { "--intro-delay": `${1760 + index * 90}ms` } : undefined}
     >
-      <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${tint}`}>
-        {icon}
-      </span>
-      <div className="min-w-0 flex-1">
-        <strong className="block truncate text-[12px] font-bold text-[#1c2a4a]">{label}</strong>
-        <span className="mt-0.5 block text-[10px] text-[#8a95a8]">
-          {loading ? "…" : count != null ? `${count} total` : "Open"}
+      <span className="cmt-manage-hover__surface flex items-center gap-3 p-4">
+        <span className={`cmt-manage-hover__icon grid h-10 w-10 shrink-0 place-items-center rounded-xl ${tint}`}>
+          {icon}
         </span>
-      </div>
-      <ChevronRight size={16} className="shrink-0 text-[#c4c8d4] transition group-hover:translate-x-0.5 group-hover:text-[#5c50ec]" />
+        <span className="min-w-0 flex-1">
+          <strong className="cmt-manage-hover__title block truncate text-[12px] font-bold text-[#1c2a4a]">{label}</strong>
+          <span className="mt-0.5 block text-[10px] text-[#8a95a8]">
+            {loading ? "…" : count === "unavailable" ? "Unavailable" : count != null ? `${count} total` : "Open"}
+          </span>
+        </span>
+        <ChevronRight size={16} className="cmt-manage-hover__chevron shrink-0 text-[#c4c8d4]" />
+      </span>
     </button>
   );
 }
@@ -112,7 +171,7 @@ function RecentRow({ primary, secondary, meta, badge, onClick }) {
   return (
     <button
       onClick={onClick}
-      className="group flex w-full items-center gap-3 border-b border-[#f2f4f9] px-5 py-3.5 text-left transition last:border-0 hover:bg-[#fafbff]"
+      className="cmt-admin-list-card group flex w-full items-center gap-3 border-b border-[#f2f4f9] px-5 py-3.5 text-left transition last:border-0 hover:bg-[#fafbff]"
     >
       <div className="min-w-0 flex-1">
         <strong className="block truncate text-[12px] font-semibold text-[#1c2a4a]">{primary}</strong>
@@ -127,8 +186,16 @@ function RecentRow({ primary, secondary, meta, badge, onClick }) {
   );
 }
 
-function RecentEmpty({ message }) {
-  return <div className="px-5 py-10 text-center text-[11px] text-[#8993a6]">{message}</div>;
+function RecentEmpty({ message, onRetry }) {
+  return (
+    <div className="cmt-admin-state flex flex-col items-center gap-2.5 px-5 py-9 text-center text-[11px] text-[#8993a6]" role={onRetry ? "alert" : "status"}>
+      <span className="cmt-admin-state__icon grid h-10 w-10 place-items-center rounded-2xl bg-[#efedff] text-[#5b4fe3]">
+        <Inbox size={18} strokeWidth={1.8} />
+      </span>
+      <span className="max-w-[320px] leading-5">{message}</span>
+      {onRetry && <button type="button" onClick={onRetry} className="min-h-11 rounded-lg bg-[#efedff] px-4 text-[11px] font-extrabold text-[#5548d7] hover:bg-[#e5e2ff] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#6655f6]">Retry</button>}
+    </div>
+  );
 }
 
 function RecentLoading({ rows = 4 }) {
@@ -151,6 +218,18 @@ export default function AdminDashboard() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const displayName = user?.name || user?.full_name || "Admin";
+  const [intro, setIntro] = useState(
+    () => !window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  );
+
+  useLayoutEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setIntro(false);
+      return undefined;
+    }
+    const timeout = window.setTimeout(() => setIntro(false), 2900);
+    return () => window.clearTimeout(timeout);
+  }, []);
 
   const conferencesRes = useApiResource(() => conferencesApi.getAll(), []);
   const submissionsRes = useApiResource(() => submissionsApi.getAll(), []);
@@ -169,40 +248,33 @@ export default function AdminDashboard() {
       {
         icon: <CalendarDays size={17} />,
         tint: "bg-[#efedff] text-[#4f46c7]",
-        value:
-          pickNumber(dashboard?.total_conferences, dashboard?.conferences_count) ??
-          conferences.length,
+        value: pickNumber(dashboard?.total_conferences),
         label: "Conferences",
         note: "On the platform",
       },
       {
         icon: <FileText size={17} />,
         tint: "bg-[#eef5fd] text-[#1d5fa8]",
-        value:
-          pickNumber(dashboard?.total_submissions, dashboard?.submissions_count) ??
-          submissions.length,
+        value: pickNumber(dashboard?.total_submissions),
         label: "Submissions",
         note: "All conferences",
       },
       {
         icon: <Users size={17} />,
         tint: "bg-[#effaf4] text-[#18794e]",
-        value:
-          pickNumber(dashboard?.total_users, dashboard?.users_count) ?? users.length,
+        value: pickNumber(dashboard?.total_users),
         label: "Users",
         note: "Across every role",
       },
       {
         icon: <FileCheck2 size={17} />,
         tint: "bg-[#fff6ee] text-[#a55b25]",
-        value:
-          pickNumber(dashboard?.accepted_submissions, dashboard?.accepted_count) ??
-          submissions.filter((s) => statusKey(s.status) === "accepted").length,
+        value: pickNumber(dashboard?.accepted_submissions),
         label: "Accepted",
         note: "Ready for publication",
       },
     ],
-    [dashboard, conferences.length, submissions, users.length]
+    [dashboard]
   );
 
   const recentSubmissions = useMemo(() => submissions.slice(0, 5), [submissions]);
@@ -216,6 +288,7 @@ export default function AdminDashboard() {
       tint: "bg-[#efedff] text-[#4f46c7]",
       count: conferences.length,
       loading: conferencesRes.loading,
+      error: conferencesRes.error,
     },
     {
       label: "Users",
@@ -224,6 +297,7 @@ export default function AdminDashboard() {
       tint: "bg-[#effaf4] text-[#18794e]",
       count: users.length,
       loading: usersRes.loading,
+      error: usersRes.error,
     },
     {
       label: "Contact Messages",
@@ -232,6 +306,7 @@ export default function AdminDashboard() {
       tint: "bg-[#eef5fd] text-[#1d5fa8]",
       count: messages.length,
       loading: messagesRes.loading,
+      error: messagesRes.error,
     },
     {
       label: "Reports",
@@ -244,8 +319,8 @@ export default function AdminDashboard() {
   ];
 
   return (
-    <AdminLayout>
-      <section className="relative overflow-hidden rounded-[22px] bg-[radial-gradient(circle_at_78%_18%,rgba(121,104,255,.22),transparent_25%),radial-gradient(circle_at_100%_100%,rgba(27,94,255,.18),transparent_36%),linear-gradient(135deg,#07132f_0%,#0a1740_52%,#15165a_100%)] p-6 text-white shadow-[0_18px_55px_rgba(15,28,65,.12)] sm:p-8">
+    <AdminLayout entranceAnimation={intro}>
+      <section className={`relative overflow-hidden rounded-[22px] bg-[radial-gradient(circle_at_78%_18%,rgba(121,104,255,.22),transparent_25%),radial-gradient(circle_at_100%_100%,rgba(27,94,255,.18),transparent_36%),linear-gradient(135deg,#07132f_0%,#0a1740_52%,#15165a_100%)] p-6 text-white shadow-[0_18px_55px_rgba(15,28,65,.12)] sm:p-8 ${intro ? "admin-intro-card" : ""}`} style={intro ? { "--intro-delay": "1040ms" } : undefined}>
         <div className="absolute inset-0 opacity-[.16] [background-image:radial-gradient(rgba(255,255,255,.15)_0.7px,transparent_0.7px)] [background-size:22px_22px]" />
         <div className="relative flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-end">
           <div>
@@ -261,29 +336,30 @@ export default function AdminDashboard() {
           </div>
           <button
             onClick={() => navigate("/admin/reports")}
-            className="mt-5 w-full shrink-0 inline-flex items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/[.06] px-4 py-3 text-[12px] font-extrabold text-white transition hover:-translate-y-px hover:bg-white/10 sm:w-auto"
+            className="mt-5 w-full shrink-0 inline-flex items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/[.06] px-4 py-3 text-[12px] font-extrabold text-white transition hover:-translate-y-px hover:border-[#10b981] hover:bg-[#10b981] sm:w-auto"
           >
             <BarChart3 size={16} /> Open Reports
           </button>
         </div>
       </section>
 
-      <section className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {stats.map((stat) => (
-          <StatCard
-            key={stat.label}
-            icon={stat.icon}
-            tint={stat.tint}
-            value={stat.value}
-            label={stat.label}
-            note={stat.note}
-            loading={reportsRes.loading && stat.value == null}
-          />
-        ))}
-      </section>
+      {reportsRes.loading ? (
+        <section aria-label="Loading dashboard totals" aria-busy="true" className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {stats.map((stat) => <div key={stat.label} className="h-[132px] animate-pulse rounded-[18px] border border-[#e4e8f0] bg-white p-5 dark:border-[#1e293b] dark:bg-[#0f172a]"><div className="h-10 w-10 rounded-xl bg-[#eef1f7] dark:bg-[#1e293b]" /><div className="mt-4 h-7 w-20 rounded bg-[#eef1f7] dark:bg-[#1e293b]" /><div className="mt-2 h-3 w-24 rounded bg-[#eef1f7] dark:bg-[#1e293b]" /></div>)}
+        </section>
+      ) : reportsRes.error ? (
+        <section role="alert" className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#f1c8c8] bg-[#fff2f2] px-5 py-4 text-[12px] font-semibold text-[#9f3030] dark:border-[#5b1e1e] dark:bg-[#2a1218] dark:text-[#f08a9a]">
+          <span>Dashboard totals could not be loaded: {reportsRes.error.message}</span>
+          <button type="button" onClick={reportsRes.reload} className="min-h-11 rounded-lg bg-white px-4 text-[11px] font-extrabold text-[#9f3030] shadow-sm hover:bg-[#fff8f8] focus-visible:outline focus-visible:outline-2 focus-visible:outline-red-500 dark:bg-[#3a1515] dark:text-[#f08a9a]">Retry</button>
+        </section>
+      ) : (
+        <section className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {stats.map((stat, index) => <StatCard key={stat.label} icon={stat.icon} tint={stat.tint} value={stat.value} label={stat.label} note={stat.note} intro={intro} index={index} />)}
+        </section>
+      )}
 
       <section className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-3">
-        <div className="overflow-hidden rounded-[20px] border border-[#e4e8f0] bg-white shadow-[0_10px_30px_rgba(15,28,65,.035)] lg:col-span-2">
+        <div className={`overflow-hidden rounded-[20px] border border-[#e4e8f0] bg-white shadow-[0_10px_30px_rgba(15,28,65,.035)] lg:col-span-2 ${intro ? "admin-intro-card" : ""}`} style={intro ? { "--intro-delay": "1580ms" } : undefined}>
           <header className="flex items-center justify-between gap-3 border-b border-[#edf0f5] px-5 py-4">
             <div className="flex items-center gap-2">
               <span className="grid h-7 w-7 place-items-center rounded-lg bg-gradient-to-br from-[#6655f6] to-[#8b7bff] text-white shadow-[0_8px_18px_-6px_rgba(102,85,246,.55)]">
@@ -301,7 +377,7 @@ export default function AdminDashboard() {
           {submissionsRes.loading ? (
             <RecentLoading />
           ) : submissionsRes.error ? (
-            <RecentEmpty message={submissionsRes.error.message} />
+            <RecentEmpty message={submissionsRes.error.message} onRetry={submissionsRes.reload} />
           ) : recentSubmissions.length === 0 ? (
             <RecentEmpty message="No submissions yet." />
           ) : (
@@ -329,7 +405,7 @@ export default function AdminDashboard() {
           )}
         </div>
 
-        <div className="overflow-hidden rounded-[20px] border border-[#e4e8f0] bg-white shadow-[0_10px_30px_rgba(15,28,65,.035)]">
+        <div className={`overflow-hidden rounded-[20px] border border-[#e4e8f0] bg-white shadow-[0_10px_30px_rgba(15,28,65,.035)] ${intro ? "admin-intro-card" : ""}`} style={intro ? { "--intro-delay": "1670ms" } : undefined}>
           <header className="flex items-center justify-between gap-3 border-b border-[#edf0f5] px-5 py-4">
             <div className="flex items-center gap-2">
               <span className="grid h-7 w-7 place-items-center rounded-lg bg-gradient-to-br from-[#0ea5e9] to-[#38bdf8] text-white shadow-[0_8px_18px_-6px_rgba(14,165,233,.55)]">
@@ -348,7 +424,7 @@ export default function AdminDashboard() {
           {messagesRes.loading ? (
             <RecentLoading rows={5} />
           ) : messagesRes.error ? (
-            <RecentEmpty message={messagesRes.error.message} />
+            <RecentEmpty message={messagesRes.error.message} onRetry={messagesRes.reload} />
           ) : recentMessages.length === 0 ? (
             <RecentEmpty message="Inbox is empty." />
           ) : (
@@ -380,15 +456,17 @@ export default function AdminDashboard() {
           <span className="text-[10px] font-semibold text-[#8a95a8]">Jump to a section</span>
         </header>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {quickLinks.map((q) => (
+          {quickLinks.map((q, index) => (
             <QuickTile
               key={q.label}
               icon={q.icon}
               tint={q.tint}
               label={q.label}
-              count={q.count}
+              count={q.error ? "unavailable" : q.count}
               loading={q.loading}
               onClick={() => navigate(q.to)}
+              intro={intro}
+              index={index}
             />
           ))}
         </div>

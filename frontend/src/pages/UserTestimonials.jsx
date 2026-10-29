@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
+  AlertTriangle,
   CalendarDays,
   Loader2,
   MessageSquareQuote,
@@ -8,6 +9,7 @@ import {
   Plus,
   Quote,
   Star,
+  Trash2,
   X,
 } from "lucide-react";
 import RoleChrome from "../components/RoleChrome";
@@ -85,7 +87,7 @@ function StarRow({ value, size = 14 }) {
   );
 }
 
-function TestimonialCard({ item, isOwn, onEdit }) {
+function TestimonialCard({ item, isOwn, onEdit, onRequestDelete, isDeleting }) {
   return (
     <article className="flex flex-col rounded-[17px] border border-[#e9ecf2] bg-white p-5 shadow-[0_10px_28px_rgba(15,28,65,.04)]">
       <Quote size={18} className="text-[#6757f5]" />
@@ -114,17 +116,89 @@ function TestimonialCard({ item, isOwn, onEdit }) {
             </p>
           )}
         </div>
+        
         {isOwn && (
-          <button
-            type="button"
-            onClick={() => onEdit(item)}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-[#efedff] px-2.5 py-1.5 text-[10px] font-extrabold text-[#5649dc] transition hover:bg-[#e5e2ff]"
-          >
-            <Pencil size={11} /> Edit yours
-          </button>
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => onEdit(item)}
+              disabled={isDeleting}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-[#efedff] px-2.5 py-1.5 text-[10px] font-extrabold text-[#5649dc] transition hover:bg-[#e5e2ff] disabled:opacity-50"
+            >
+              <Pencil size={11} /> Edit
+            </button>
+            <button
+              type="button"
+              onClick={() => onRequestDelete(item)}
+              disabled={isDeleting}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-red-50 px-2.5 py-1.5 text-[10px] font-extrabold text-red-600 transition hover:bg-red-100 disabled:opacity-50"
+            >
+              {isDeleting ? (
+                <Loader2 size={11} className="animate-spin" />
+              ) : (
+                <Trash2 size={11} />
+              )}
+              Delete
+            </button>
+          </div>
         )}
       </div>
     </article>
+  );
+}
+
+function ConfirmDeleteModal({ open, onClose, onConfirm, isDeleting }) {
+  if (!open) return null;
+
+  return (
+    <div
+      className="fixed inset-0 z-[110] grid place-items-center bg-[#07132f]/60 p-4 backdrop-blur-sm transition-all"
+      onClick={isDeleting ? undefined : onClose}
+    >
+      <div
+        className="w-full max-w-[400px] overflow-hidden rounded-2xl bg-white shadow-[0_30px_90px_rgba(7,19,47,.3)] animate-[cmtScaleIn_.2s_ease-out]"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex flex-col items-center p-6 text-center">
+          <div className="mb-4 grid h-14 w-14 place-items-center rounded-full bg-red-50 text-red-500">
+            <AlertTriangle size={28} />
+          </div>
+          <h2 className="text-[18px] font-extrabold text-[#1c2a4a]">
+            Delete testimonial?
+          </h2>
+          <p className="mt-2 text-[13px] leading-6 text-[#66728b]">
+            Are you sure you want to delete your testimonial? This action cannot be undone and will permanently remove it from the platform.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3 border-t border-[#edf0f5] bg-[#fafbfe] p-4">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={isDeleting}
+            className="inline-flex min-h-11 items-center justify-center rounded-xl border border-[#e4e8f0] bg-white px-4 text-[12px] font-extrabold text-[#5c6880] transition hover:bg-[#f3f5f9] disabled:opacity-50"
+          >
+            No, keep it
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            disabled={isDeleting}
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-red-600 px-4 text-[12px] font-extrabold text-white shadow-[0_8px_20px_rgba(220,38,38,.25)] transition hover:bg-red-700 hover:shadow-[0_12px_25px_rgba(220,38,38,.35)] disabled:opacity-50"
+          >
+            {isDeleting ? (
+              <>
+                <Loader2 size={16} className="animate-spin" /> Deleting...
+              </>
+            ) : (
+              <>
+                <Trash2 size={16} /> Yes, delete
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -404,6 +478,9 @@ export default function UserTestimonials() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState(null);
 
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
   const loadTestimonials = useCallback(async () => {
     setLoading(true);
     try {
@@ -455,6 +532,36 @@ export default function UserTestimonials() {
   const handleEdit = (item) => {
     setEditing(item._raw ?? item);
     setDialogOpen(true);
+  };
+
+  const requestDelete = (item) => {
+    setDeleteTarget(item);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+
+    setIsDeleting(true);
+    setError("");
+    setFeedback("");
+    
+    try {
+      await testimonialsApi.remove(deleteTarget.id);
+      await loadTestimonials();
+      setFeedback("Your testimonial has been deleted.");
+      window.setTimeout(() => setFeedback(""), 4000);
+      setDeleteTarget(null);
+    } catch (err) {
+      if (err?.status === 401) {
+        await logout();
+        navigate("/login", { replace: true });
+        return;
+      }
+      setError(err?.message || "Failed to delete testimonial.");
+      setDeleteTarget(null);
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const handleClose = () => {
@@ -593,6 +700,8 @@ export default function UserTestimonials() {
                   item={item}
                   isOwn={isOwn}
                   onEdit={handleEdit}
+                  onRequestDelete={requestDelete}
+                  isDeleting={isDeleting && deleteTarget?.id === item.id}
                 />
               );
             })}
@@ -609,6 +718,13 @@ export default function UserTestimonials() {
         existing={editing}
         userRole={user?.role}
         userName={user?.name || user?.full_name || ""}
+      />
+
+      <ConfirmDeleteModal
+        open={Boolean(deleteTarget)}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={confirmDelete}
+        isDeleting={isDeleting}
       />
     </RoleChrome>
   );

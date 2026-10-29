@@ -1,11 +1,14 @@
 import { useNavigate } from "react-router-dom";
-import { useEffect, useState, useRef } from "react";
+import { useCallback, useEffect, useState, useMemo } from "react";
 import {
   ArrowRight,
   CalendarDays,
   CheckCircle2,
+  Clock3,
+  Compass,
   FileText,
   Globe2,
+  MapPin,
   Sparkles,
   Users,
 } from "lucide-react";
@@ -15,9 +18,9 @@ import StatCard from "../components/StatCard";
 import ConferenceCard from "../components/ConferenceCard";
 import HeroVisual from "../components/HeroVisual";
 import SectionHeading from "../components/SectionHeading";
-import { getFeaturedConferences } from "../services/conferenceService";
+import { conferencesApi } from "../api/conferencesApi";
 
-const topics = [
+const TOPICS = [
   "AI & Machine Learning",
   "Computer Science",
   "Engineering",
@@ -25,47 +28,124 @@ const topics = [
   "Education",
 ];
 
+function unwrapList(response) {
+  if (Array.isArray(response)) return response;
+  if (Array.isArray(response?.data)) return response.data;
+  if (Array.isArray(response?.data?.data)) return response.data.data;
+  if (Array.isArray(response?.data?.items)) return response.data.items;
+  if (Array.isArray(response?.items)) return response.items;
+  return [];
+}
+
+function toDate(value) {
+  if (!value) return null;
+  const valueString = String(value);
+  const date = /^\d{4}-\d{2}-\d{2}$/.test(valueString)
+    ? new Date(`${valueString}T00:00:00`)
+    : new Date(valueString);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function formatDate(value, options = { day: "2-digit", month: "short", year: "numeric" }) {
+  const date = toDate(value);
+  return date ? date.toLocaleDateString("en-ZA", options) : "Date to be announced";
+}
+
+function endOfEvent(conference) {
+  const date = toDate(conference.rawEndDate || conference.rawStartDate);
+  if (!date) return null;
+  date.setHours(23, 59, 59, 999);
+  return date;
+}
+
+function normaliseConference(conference) {
+  return {
+    ...conference,
+    id: conference.id,
+    code: conference.code || conference.acronym || "",
+    name: conference.name || "Untitled conference",
+    description: conference.description || "Explore this conference and its research opportunities.",
+    category: conference.category || "General",
+    topics: Array.isArray(conference.topics) ? conference.topics : [],
+    format: conference.format || "",
+    status: conference.submission_status || "",
+    rawStartDate: conference.start_date || null,
+    rawEndDate: conference.end_date || null,
+    rawSubmissionDeadline: conference.submission_deadline || null,
+    location: conference.venue_name || "Venue to be announced",
+    city: conference.city || "",
+    country: conference.country || "",
+  };
+}
+
 export default function Home() {
   const navigate = useNavigate();
-  const version = useRef(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [query, setQuery] = useState("");
-  const [conferences, setConferences] = useState([]);
   const [filters, setFilters] = useState({ category: "", country: "" });
+  const [now, setNow] = useState(() => Date.now());
 
-  const load = async (request) => {
-    const current = ++version.current;
+  const [allConferences, setAllConferences] = useState([]);
+  const [totalConferences, setTotalConferences] = useState(0);
+
+  const fetchConferences = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
-      const items = await request();
-      if (current === version.current) setConferences(items);
+      const response = await conferencesApi.getAll({ per_page: 100 });
+      const items = unwrapList(response).map(normaliseConference);
+      setAllConferences(items);
+      const total = Number(response?.meta?.total ?? response?.data?.meta?.total ?? items.length);
+      setTotalConferences(Number.isFinite(total) ? total : items.length);
     } catch (err) {
-      if (current === version.current)
-        setError(err?.message || "Unable to load conferences.");
+      setError(err?.message || "We couldn't load conferences. Please try again.");
+      setAllConferences([]);
     } finally {
-      if (current === version.current) setLoading(false);
+      setLoading(false);
     }
-  };
-  useEffect(() => {
-    load(() => getFeaturedConferences());
-    return () => {
-      version.current += 1;
-    };
   }, []);
-  const handleSearch = () => {
-    const params = new URLSearchParams({ search: query, ...filters });
-    navigate(`/conferences?${params}`);
+
+  useEffect(() => {
+    fetchConferences();
+  }, [fetchConferences]);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 60000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  const upcomingList = useMemo(() => {
+    const dayStart = new Date(now);
+    dayStart.setHours(0, 0, 0, 0);
+    return allConferences
+      .filter((conference) => {
+        const end = endOfEvent(conference);
+        return !end || end >= dayStart;
+      })
+      .sort((a, b) => {
+        const ax = toDate(a.rawStartDate)?.getTime() ?? Infinity;
+        const bx = toDate(b.rawStartDate)?.getTime() ?? Infinity;
+        return ax - bx;
+      });
+  }, [allConferences, now]);
+
+  const searchConferences = () => {
+    const params = new URLSearchParams();
+    if (query.trim()) params.set("search", query.trim());
+    if (filters.category) params.set("category", filters.category);
+    if (filters.country) params.set("country", filters.country);
+    navigate(`/conferences${params.toString() ? `?${params}` : ""}`);
   };
+
   const chooseTopic = (topic) =>
     navigate(`/conferences?search=${encodeURIComponent(topic)}`);
 
   return (
-    <div className="min-h-screen overflow-clip bg-[#f7f9fc] text-[#0d1b3d]">
+    <div className="min-h-screen overflow-x-clip bg-[#f7f9fc] text-[#0d1b3d]">
       <div id="top" />
       <Navbar />
-
+      
       <main>
         <section className="relative min-h-[560px] overflow-hidden bg-[radial-gradient(circle_at_75%_32%,rgba(98,83,245,.2),transparent_27%),radial-gradient(circle_at_100%_100%,rgba(27,94,255,.16),transparent_34%),linear-gradient(135deg,#07132f_0%,#0a1740_52%,#15165a_100%)] text-white">
           <div className="absolute inset-0 opacity-[.18] [background-image:radial-gradient(rgba(255,255,255,.14)_0.7px,transparent_0.7px)] [background-size:22px_22px]" />
@@ -86,14 +166,14 @@ export default function Home() {
               <SearchBar
                 value={query}
                 onChange={setQuery}
-                onSearch={handleSearch}
+                onSearch={searchConferences}
                 filters={filters}
                 onFiltersChange={setFilters}
               />
 
               <div className="mt-[15px] flex flex-wrap items-center gap-2 text-[11px] text-white/55">
                 <span>Popular topics:</span>
-                {topics.map((topic) => (
+                {TOPICS.map((topic) => (
                   <button
                     className="rounded-full border border-white/10 bg-white/[.08] px-2.5 py-1.5 text-[11px] text-white/80 transition hover:bg-white/[.14]"
                     key={topic}
@@ -138,7 +218,7 @@ export default function Home() {
           <div className="mx-auto grid w-[min(1200px,calc(100%-40px))] grid-cols-4 overflow-hidden rounded-[18px] border border-[#e8ebf2] bg-white shadow-[0_18px_55px_rgba(15,28,65,.1)] max-[820px]:grid-cols-2 max-[560px]:grid-cols-1">
             <StatCard
               icon={<CalendarDays size={22} />}
-              value="1,250+"
+              value={loading ? "…" : `${totalConferences}+`}
               label="Conferences"
             />
             <StatCard
@@ -159,23 +239,27 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="bg-white px-0 py-[88px]" id="featured-conferences">
+        <section className="bg-white px-5 py-24" id="featured-conferences">
           <div className="mx-auto w-[min(1200px,calc(100%-40px))]">
             <SectionHeading
               eyebrow="Featured conferences"
-              title={query ? `Results for “${query}”` : "Upcoming conferences"}
+              title={query ? `Results for "${query}"` : "Upcoming conferences"}
               description="Explore relevant events and find the right opportunity for your next presentation, collaboration or research connection."
               action={
                 <button
-                  className="inline-flex items-center gap-2 border-0 bg-transparent text-xs font-extrabold text-[#574af0]"
+                  className="group relative inline-flex items-center gap-2 overflow-hidden rounded-xl bg-gradient-to-r from-[#6655f6] to-[#7869ff] px-5 py-2.5 text-xs font-extrabold text-white shadow-[0_8px_20px_rgba(102,85,246,0.2)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_12px_25px_rgba(102,85,246,0.4)]"
                   onClick={() => navigate("/conferences")}
                 >
-                  View all conferences <ArrowRight size={18} />
+                  <span className="relative z-10 flex items-center gap-2">
+                    View all conferences
+                    <ArrowRight size={16} className="transition-transform duration-300 group-hover:translate-x-1" />
+                  </span>
+                  <div className="absolute inset-0 z-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full transition-transform duration-500 group-hover:translate-x-full" />
                 </button>
               }
             />
 
-            <div className="grid grid-cols-3 gap-6 max-[820px]:grid-cols-2 max-[560px]:grid-cols-1">
+            <div className="mt-10 grid grid-cols-3 gap-6 max-[820px]:grid-cols-2 max-[560px]:grid-cols-1">
               {loading ? (
                 <p role="status" className="col-span-full">
                   Loading conferences...
@@ -183,33 +267,26 @@ export default function Home() {
               ) : error ? (
                 <div role="alert" className="col-span-full">
                   {error}{" "}
-                  <button onClick={() => load(() => getFeaturedConferences())}>
+                  <button onClick={fetchConferences} className="font-bold text-[#6655f6] underline">
                     Retry
                   </button>
                 </div>
-              ) : conferences.length ? (
-                conferences.map((conference) => (
+              ) : upcomingList.length ? (
+                upcomingList.slice(0, 6).map((conference) => (
                   <ConferenceCard key={conference.id} conference={conference} />
                 ))
               ) : (
                 <div className="col-span-full rounded-[18px] border border-dashed border-[#ccd3df] bg-[#fafbfe] p-[35px] text-center">
-                  <SearchBar
-                    value={query}
-                    onChange={setQuery}
-                    onSearch={handleSearch}
-                    filters={filters}
-                    onFiltersChange={setFilters}
-                  />
-                  <h3 className="mb-1.5 font-bold">No conferences found yet</h3>
+                  <h3 className="mb-1.5 font-bold">No upcoming conferences found</h3>
                   <p className="mb-[18px] text-xs text-[#66728b]">
-                    Try another topic, conference name or location.
+                    Check back later or try resetting your search.
                   </p>
                   <button
-                    className="rounded-[11px] border-0 bg-gradient-to-br from-[#6655f6] to-[#7869ff] px-[18px] py-[11px] text-[13px] font-bold text-white"
+                    className="rounded-[11px] border-0 bg-gradient-to-br from-[#6655f6] to-[#7869ff] px-[18px] py-[11px] text-[13px] font-bold text-white shadow-md hover:-translate-y-0.5"
                     onClick={() => {
                       setQuery("");
                       setFilters({ category: "", country: "" });
-                      load(() => getFeaturedConferences());
+                      fetchConferences();
                     }}
                   >
                     Reset search
@@ -220,95 +297,41 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="bg-[#f7f9fc] px-0 py-[88px]">
-          <div className="mx-auto w-[min(1200px,calc(100%-40px))]">
-            <SectionHeading
-              eyebrow="One connected workflow"
-              title="Everything starts with discovery."
-              description="The first CMT release is designed around a simple journey that can grow into the full conference management platform."
-            />
-
-            <div className="grid grid-cols-4 gap-[17px] max-[820px]:grid-cols-2 max-[560px]:grid-cols-1">
+        <section className="bg-[#f7f9fc] px-5 py-24">
+          <div className="mx-auto max-w-[1200px]">
+            <SectionHeading eyebrow="A simpler journey" title="From discovery to impact." description="Discover, organise and revisit conference opportunities without losing track of what matters." />
+            <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
               {[
-                {
-                  icon: <Globe2 />,
-                  number: "01",
-                  title: "Discover",
-                  text: "Find conferences by topic, location, date and research area.",
-                },
-                {
-                  icon: <FileText />,
-                  number: "02",
-                  title: "Participate",
-                  text: "Prepare submissions and follow important conference information.",
-                },
-                {
-                  icon: <Users />,
-                  number: "03",
-                  title: "Connect",
-                  text: "Build meaningful connections with researchers and organisers.",
-                },
-                {
-                  icon: <CheckCircle2 />,
-                  number: "04",
-                  title: "Advance",
-                  text: "Turn opportunities into presentations, collaborations and impact.",
-                },
-              ].map((item) => (
-                <article
-                  className="rounded-[15px] border border-[#e4e8f0] bg-white p-[23px] shadow-[0_10px_28px_rgba(15,28,65,.035)]"
-                  key={item.number}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="grid h-[42px] w-[42px] place-items-center rounded-xl bg-[#efedff] text-[#5c50ec]">
-                      {item.icon}
-                    </div>
-                    <span className="text-[10px] font-extrabold text-[#b0b7c7]">
-                      {item.number}
-                    </span>
-                  </div>
-                  <h3 className="mb-2 mt-[22px] text-[17px] font-bold">
-                    {item.title}
-                  </h3>
-                  <p className="m-0 text-[11px] leading-7 text-[#788398]">
-                    {item.text}
-                  </p>
+                { icon: <Compass size={22}/>, no: "01", title: "Discover", description: "Search research fields, places and upcoming conferences." },
+                { icon: <CalendarDays size={22}/>, no: "02", title: "Plan", description: "Export conference dates straight to your calendar." },
+                { icon: <Users size={22}/>, no: "03", title: "Connect", description: "Build meaningful connections with researchers and organisers." },
+                { icon: <CheckCircle2 size={22}/>, no: "04", title: "Advance", description: "Turn opportunities into presentations, collaborations and impact." },
+              ].map((step) => (
+                <article key={step.no} className="group relative overflow-hidden rounded-[22px] border border-[#e7e9f1] bg-white p-7 transition hover:-translate-y-1 hover:border-[#cbc6ff] hover:shadow-[0_18px_35px_rgba(15,28,65,.065)]">
+                  <div className="flex items-start justify-between"><span className="grid h-12 w-12 place-items-center rounded-2xl bg-[#efedff] text-[#5c50ec]">{step.icon}</span><span className="text-3xl font-extrabold text-[#e4e0ff]">{step.no}</span></div>
+                  <h3 className="mt-8 text-lg font-extrabold tracking-[-.025em]">{step.title}</h3>
+                  <p className="mt-2 text-[13px] leading-7 text-[#778198]">{step.description}</p>
                 </article>
               ))}
             </div>
           </div>
         </section>
+
+        <section className="bg-white px-5 pb-24 pt-5">
+          <div className="relative mx-auto flex max-w-[1200px] flex-col items-start justify-between gap-7 overflow-hidden rounded-[28px] bg-[linear-gradient(120deg,#07132f,#15165a)] px-8 py-12 text-white sm:px-12 lg:flex-row lg:items-center">
+            <div className="pointer-events-none absolute -right-16 -top-36 h-80 w-80 rounded-full border-[55px] border-[#6655f6]/20" />
+            <div className="relative z-10"><span className="text-[11px] font-extrabold uppercase tracking-[.16em] text-[#b9b3ff]">Your next opportunity starts here</span><h2 className="mt-3 max-w-2xl text-3xl font-extrabold leading-tight tracking-[-.04em] sm:text-4xl">Great ideas deserve a great stage.</h2><p className="mt-3 text-sm text-white/65">Find a conference worth attending, sharing or presenting at.</p></div>
+            <button type="button" onClick={() => navigate("/conferences")} className="relative z-10 inline-flex shrink-0 items-center gap-2 rounded-xl bg-[#6655f6] px-6 py-3.5 text-sm font-extrabold text-white transition hover:bg-[#7968ff]">Explore conferences <ArrowRight size={17}/></button>
+          </div>
+        </section>
       </main>
 
       <footer className="bg-[#07132f] text-white/60">
-        <div className="mx-auto flex min-h-[100px] w-[min(1200px,calc(100%-40px))] items-center justify-between gap-5 text-[10px] max-[560px]:block max-[560px]:py-6">
-          <div>
-            <LogoFallback />
-            <p>Conference Management Tool</p>
-          </div>
-          <span>
-            © {new Date().getFullYear()} CMT. Conference Management Tool.
-          </span>
+        <div className="mx-auto flex max-w-[1200px] flex-col gap-5 px-5 py-9 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3"><img className="h-9 w-9 object-contain" src="/cmt-mark.png" alt="CMT logo" /><div><strong className="block text-xl font-extrabold tracking-[-.04em] text-white">CMT</strong><span className="text-[10px]">Conference Management Tool</span></div></div>
+          <p className="text-xs">© {new Date().getFullYear()} CMT. Connecting research communities.</p>
         </div>
       </footer>
-    </div>
-  );
-}
-
-function LogoFallback() {
-  return (
-    <div className="flex items-center gap-2.5 text-white">
-      <img
-        className="h-[34px] w-[34px] object-contain"
-        src="/cmt-mark.png"
-        alt="CMT logo"
-      />
-      <div className="flex flex-col leading-[1.05]">
-        <strong className="text-xl tracking-[-.04em]">CMT</strong>
-        <span className="mt-1 whitespace-nowrap text-[9px] text-white/70">
-          Conference Management Tool
-        </span>
-      </div>
     </div>
   );
 }
