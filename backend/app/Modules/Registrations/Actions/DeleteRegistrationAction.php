@@ -3,23 +3,39 @@
 namespace App\Modules\Registrations\Actions;
 
 use App\Modules\Registrations\Models\Registration;
-use App\Modules\Registrations\Notifications\RegistrationCancelledNotification;  // ← THIS LINE MUST EXIST
+use App\Modules\Registrations\Notifications\RegistrationCancelledNotification;
 
 class DeleteRegistrationAction
 {
-    public function execute(int $id): bool
+    public function execute(int $id): Registration
     {
-        $registration = Registration::findOrFail($id);
+        $registration = Registration::query()
+            ->with([
+                'conference',
+                'user',
+            ])
+            ->findOrFail($id);
 
+        /*
+         * Cancellation is idempotent.
+         * A second DELETE keeps the historical row instead of
+         * permanently deleting it.
+         */
         if ($registration->isCancelled()) {
-            return $registration->delete();
+            return $registration;
         }
 
         $registration->cancel();
+        $registration->refresh();
+        $registration->loadMissing([
+            'conference',
+            'user',
+        ]);
 
-        // Send cancellation email
-        $registration->user->notify(new RegistrationCancelledNotification($registration));
+        $registration->user?->notify(
+            new RegistrationCancelledNotification($registration)
+        );
 
-        return true;
+        return $registration;
     }
 }

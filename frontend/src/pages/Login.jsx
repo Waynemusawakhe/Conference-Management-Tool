@@ -1,9 +1,17 @@
 import { useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import Logo from "../components/Logo";
 import Navbar from "../components/Navbar";
-import { ArrowRight, LockKeyhole, Mail, ShieldCheck, Sparkles } from "lucide-react";
+import {
+  ArrowRight,
+  LockKeyhole,
+  Mail,
+  ShieldCheck,
+  Sparkles,
+} from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
+
+import { safeReturnPath } from "../utils/navigation";
 
 function Login() {
   const navigate = useNavigate();
@@ -34,37 +42,42 @@ function Login() {
 
       const user = response?.user || response?.data?.user || response;
       const role = user?.role || user?.user_type || user?.account_type;
-      const normalizedRole = String(role || "").trim().toLowerCase();
-      const requestedPath = location.state?.from;
-      const isSafeRequestedPath =
-        typeof requestedPath === "string" &&
-        requestedPath.startsWith("/") &&
-        !requestedPath.startsWith("//") &&
-        !requestedPath.includes("\\") &&
-        !["/login", "/register"].includes(requestedPath);
 
-      let dashboardPath;
+      const normalizedRole = String(role || "")
+        .trim()
+        .toLowerCase();
+
+      const requested = safeReturnPath(location.state?.from);
+      const destination = requested || (normalizedRole === "admin" ? "/admin-dashboard" : null);
+
+      if (requested) {
+        navigate(requested, { replace: true });
+        return;
+      }
       switch (normalizedRole) {
         case "author":
-          dashboardPath = "/author-dashboard";
+          navigate("/author-dashboard", { replace: true });
           break;
+
         case "reviewer":
-          dashboardPath = "/reviewer-dashboard";
+          navigate("/reviewer-dashboard", { replace: true });
           break;
+
         case "organiser":
-          dashboardPath = "/organiser-dashboard";
+          navigate("/organiser-dashboard", { replace: true });
           break;
+
         case "admin":
-          dashboardPath = "/admin-dashboard";
+          navigate("/admin-dashboard", { replace: true });
           break;
+
         case "attendee":
-          dashboardPath = "/attendee-dashboard";
+          navigate("/attendee-dashboard", { replace: true });
           break;
+
         default:
           throw new Error(`Unsupported user role: ${role || "unknown"}`);
       }
-
-      navigate(isSafeRequestedPath ? requestedPath : dashboardPath, { replace: true });
     } catch (err) {
       if (err.status === 422 && err.errors) {
         const details = Object.values(err.errors).flat().join(" ");
@@ -90,7 +103,8 @@ function Login() {
               Continue your research journey.
             </h1>
             <p className="mt-5 max-w-[430px] text-sm leading-7 text-white/65">
-              Access your conferences, submissions, reviews and professional network from one focused workspace.
+              Access your conferences, submissions, reviews and professional
+              network from one focused workspace.
             </p>
             <div className="cmt-float mt-10 flex w-fit items-center gap-3 rounded-2xl border border-white/15 bg-white/10 px-4 py-3 backdrop-blur">
               <ShieldCheck className="text-[#8b7eff]" size={20} />
@@ -108,14 +122,19 @@ function Login() {
             <span className="text-[10px] font-extrabold uppercase tracking-[.12em] text-[#5c50ec]">
               Member access
             </span>
-            <h2 className="mt-2 text-3xl font-bold tracking-[-.04em]">Log in to CMT</h2>
+            <h2 className="mt-2 text-3xl font-bold tracking-[-.04em]">
+              Log in to CMT
+            </h2>
             <p className="mt-2 text-xs leading-6 text-[#788398]">
               Pick up where your conference work left off.
             </p>
 
             <form onSubmit={handleSubmit} className="grid gap-5">
               <div className="grid gap-2">
-                <label className="text-xs font-bold text-[#43506a]" htmlFor="email">
+                <label
+                  className="text-xs font-bold text-[#43506a]"
+                  htmlFor="email"
+                >
                   <span className="mb-2 flex items-center gap-2">
                     <Mail size={14} className="text-[#5c50ec]" /> Email
                   </span>
@@ -132,9 +151,13 @@ function Login() {
               </div>
 
               <div className="grid gap-2">
-                <label className="text-xs font-bold text-[#43506a]" htmlFor="password">
+                <label
+                  className="text-xs font-bold text-[#43506a]"
+                  htmlFor="password"
+                >
                   <span className="mb-2 flex items-center gap-2">
-                    <LockKeyhole size={14} className="text-[#5c50ec]" /> Password
+                    <LockKeyhole size={14} className="text-[#5c50ec]" />{" "}
+                    Password
                   </span>
                   <input
                     id="password"
@@ -171,7 +194,10 @@ function Login() {
 
               <p className="text-center text-xs text-[#788398]">
                 Don't have an account?{" "}
-                <Link to="/register" className="font-bold text-[#5c50ec] hover:underline">
+                <Link
+                  to="/register"
+                  className="font-bold text-[#5c50ec] hover:underline"
+                >
                   Register
                 </Link>
               </p>
@@ -184,4 +210,3 @@ function Login() {
 }
 
 export default Login;
-

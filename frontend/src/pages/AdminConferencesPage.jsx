@@ -6,6 +6,7 @@ import {
   FileText,
   MapPin,
   Pencil,
+  Plus,
   Search,
   Sparkles,
   Trash2,
@@ -17,6 +18,15 @@ import { useApiResource } from "../hooks/useApiResource";
 import { toArray } from "../api/normalize";
 import { conferencesApi } from "../api/conferencesApi";
 import { submissionsApi } from "../api/submissionsApi";
+import { AdminTableToolbar, SortableTh, useAdminTableControls } from "../components/AdminTableControls";
+
+const CONFERENCE_COLUMNS = [
+  { key: "conference", label: "Conference" },
+  { key: "date", label: "Date" },
+  { key: "location", label: "Location" },
+  { key: "submissions", label: "Submissions" },
+  { key: "actions", label: "Actions" },
+];
 
 const confName = (c) => c.name ?? c.title ?? `Conference #${c.id}`;
 const confDate = (c) =>
@@ -62,7 +72,7 @@ function SubmissionBadge({ count, loading }) {
   if (loading) return <span className="inline-block h-6 w-10 animate-pulse rounded-lg bg-[#eef1f7]" />;
   if (count === 0)
     return (
-      <span className="inline-flex min-w-[32px] justify-center rounded-lg border border-[#edf0f5] bg-[#fafbfe] px-2 py-1 text-[10px] font-bold text-[#aeb6c6]">
+      <span className="cmt-conference-row__pill inline-flex min-w-[32px] justify-center rounded-lg border border-[#edf0f5] bg-[#fafbfe] px-2 py-1 text-[10px] font-bold text-[#aeb6c6]">
         0
       </span>
     );
@@ -73,25 +83,29 @@ function SubmissionBadge({ count, loading }) {
       ? "border-[#e2d9f5] bg-[#f1efff] text-[#5b4fe3]"
       : "border-[#d9e3ee] bg-[#f5f8fc] text-[#4a637a]";
   return (
-    <span className={`inline-flex min-w-[32px] justify-center rounded-lg border px-2 py-1 text-[10px] font-extrabold ${tone}`}>
+    <span className={`cmt-conference-row__pill inline-flex min-w-[32px] justify-center rounded-lg border px-2 py-1 text-[10px] font-extrabold ${tone}`}>
       {count}
     </span>
   );
 }
 
-function StatCard({ icon, tint, value, label, note, loading }) {
+function StatCard({ icon, tint, tone, value, label, note, loading }) {
   return (
-    <div className="group relative overflow-hidden rounded-[16px] border border-[#e4e8f0] bg-white p-4 shadow-[0_10px_28px_rgba(15,28,65,.04)] transition hover:-translate-y-px hover:shadow-[0_14px_36px_rgba(15,28,65,.07)]">
+    <article data-tone={tone} tabIndex={0} aria-label={`${label}: ${loading ? "loading" : value}`} className="cmt-conference-stat-tile cmt-hover-tile group relative isolate rounded-[16px] border shadow-[0_10px_28px_rgba(15,28,65,.04)]">
+      <span aria-hidden="true" className="cmt-hover-tile__fill" />
+      <span className="cmt-hover-tile__surface cmt-stat-tile p-4">
       <div className="flex items-start justify-between">
-        <span className={`grid h-9 w-9 place-items-center rounded-[10px] ${tint}`}>{icon}</span>
-        <Sparkles size={12} className="text-[#dfe4ed] opacity-0 transition group-hover:opacity-100" />
+        <span className={`cmt-hover-tile__icon grid h-9 w-9 place-items-center rounded-[10px] ${tint}`}>{icon}</span>
+        <Sparkles size={12} className="cmt-hover-tile__trend text-[#dfe4ed] opacity-0 transition group-hover:opacity-100" />
       </div>
-      <strong className="mt-4 block text-[24px] leading-none tracking-[-.04em] text-[#1c2a4a]">
+      <strong className="cmt-hover-tile__number mt-4 block text-[24px] leading-none tracking-[-.04em] text-[#1c2a4a]">
         {loading ? "…" : value}
       </strong>
-      <p className="m-0 mt-1.5 text-[11px] font-bold text-[#35415f]">{label}</p>
-      {note && <span className="mt-0.5 block text-[9px] text-[#8b95a8]">{note}</span>}
-    </div>
+      <p className="cmt-hover-tile__title m-0 mt-1.5 text-[11px] font-bold text-[#35415f]">{label}</p>
+      {note && <span className="cmt-hover-tile__description mt-0.5 block text-[9px] text-[#8b95a8]">{note}</span>}
+      </span>
+      <span aria-hidden="true" className="cmt-hover-tile__arrow">→</span>
+    </article>
   );
 }
 
@@ -125,6 +139,7 @@ export default function AdminConferencesPage() {
 
   const conferences = useMemo(() => toArray(conferencesRes.data), [conferencesRes.data]);
   const submissions = useMemo(() => toArray(submissionsRes.data), [submissionsRes.data]);
+  const table = useAdminTableControls("conferences", CONFERENCE_COLUMNS);
 
   const submissionCounts = useMemo(() => {
     const map = new Map();
@@ -149,6 +164,14 @@ export default function AdminConferencesPage() {
       return [confName(c), loc, String(c.id ?? "")].join(" ").toLowerCase().includes(q);
     });
   }, [conferences, query]);
+  
+  const visibleConferences = table.sortRows(filtered, {
+    conference: (conf) => confName(conf),
+    date: (conf) => conf.date ?? conf.start_date ?? conf.starts_at ?? conf.startDate ?? conf.started_at,
+    location: (conf) => resolveLocation(conf),
+    submissions: (conf) => resolveSubmissionCount(conf, submissionCounts),
+  });
+  const visibleColumnCount = CONFERENCE_COLUMNS.filter((column) => table.columnVisible(column.key)).length;
 
   const stats = useMemo(() => {
     const total = conferences.length;
@@ -195,7 +218,18 @@ export default function AdminConferencesPage() {
   const submissionsLoading = submissionsRes.loading;
 
   return (
-    <AdminLayout subtitle="Platform" title="Conferences">
+    <AdminLayout 
+      subtitle="Platform" 
+      title="Conferences"
+      action={
+        <button
+          onClick={() => navigate("/create-conference")}
+          className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-br from-[#6655f6] to-[#7869ff] px-4 py-2.5 text-[11px] font-extrabold text-white shadow-[0_12px_28px_rgba(103,87,245,.28)] transition hover:-translate-y-px"
+        >
+          <Plus size={14} /> Create Conference
+        </button>
+      }
+    >
       {feedback && (
         <div
           role="alert"
@@ -223,10 +257,10 @@ export default function AdminConferencesPage() {
 
       {!conferencesRes.loading && !conferencesRes.error && conferences.length > 0 && (
         <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <StatCard icon={<CalendarDays size={17} />} tint="bg-[#efedff] text-[#4f46c7]" value={stats.total} label="Conferences" note="Across the platform" />
-          <StatCard icon={<FileText size={17} />} tint="bg-[#eef5fd] text-[#1d5fa8]" value={stats.totalSubmissions} label="Submissions" note="Total received" loading={submissionsLoading} />
-          <StatCard icon={<Sparkles size={17} />} tint="bg-[#effaf4] text-[#18794e]" value={stats.withSubmissions} label="Active" note="With submissions" loading={submissionsLoading} />
-          <StatCard icon={<Search size={17} />} tint="bg-[#fff6ee] text-[#a55b25]" value={filtered.length} label={query ? "Matching" : "Ready to manage"} note={query ? "Search results" : "All editable"} />
+          <StatCard tone="violet" icon={<CalendarDays size={17} />} tint="bg-[#efedff] text-[#4f46c7]" value={stats.total} label="Conferences" note="Across the platform" />
+          <StatCard tone="blue" icon={<FileText size={17} />} tint="bg-[#eef5fd] text-[#1d5fa8]" value={stats.totalSubmissions} label="Submissions" note="Total received" loading={submissionsLoading} />
+          <StatCard tone="green" icon={<Sparkles size={17} />} tint="bg-[#effaf4] text-[#18794e]" value={stats.withSubmissions} label="Active" note="With submissions" loading={submissionsLoading} />
+          <StatCard tone="amber" icon={<Search size={17} />} tint="bg-[#fff6ee] text-[#a55b25]" value={filtered.length} label={query ? "Matching" : "Ready to manage"} note={query ? "Search results" : "All editable"} />
         </div>
       )}
 
@@ -265,15 +299,16 @@ export default function AdminConferencesPage() {
           }
         />
 
+        <AdminTableToolbar columns={CONFERENCE_COLUMNS} controls={table} className="cmt-conference-table-toolbar" />
         <div className="overflow-x-auto">
-          <table className="w-full border-collapse text-left">
+          <table data-table-density={table.density} className="cmt-mobile-card-table admin-data-table w-full min-w-[760px] border-collapse text-left">
             <thead>
               <tr className="border-b border-[#edf0f5] bg-gradient-to-b from-[#fafbff] to-[#f4f6fb] text-[9px] font-extrabold uppercase tracking-[.08em] text-[#9ba4b5]">
-                <th className="px-6 py-3">Conference</th>
-                <th className="px-4 py-3">Date</th>
-                <th className="px-4 py-3">Location</th>
-                <th className="px-4 py-3">Submissions</th>
-                <th className="px-6 py-3 text-right">Actions</th>
+                {table.columnVisible("conference") && <SortableTh column={CONFERENCE_COLUMNS[0]} controls={table} className="sticky left-0 z-20 bg-[#fafbff] px-6 py-2.5 dark:bg-[#0f172a]" />}
+                {table.columnVisible("date") && <SortableTh column={CONFERENCE_COLUMNS[1]} controls={table} className="whitespace-nowrap px-4 py-2.5" />}
+                {table.columnVisible("location") && <SortableTh column={CONFERENCE_COLUMNS[2]} controls={table} className="whitespace-nowrap px-4 py-2.5" />}
+                {table.columnVisible("submissions") && <SortableTh column={CONFERENCE_COLUMNS[3]} controls={table} className="whitespace-nowrap px-4 py-2.5" />}
+                {table.columnVisible("actions") && <th className="px-6 py-2.5 text-right">Actions</th>}
               </tr>
             </thead>
             <tbody>
@@ -281,7 +316,7 @@ export default function AdminConferencesPage() {
 
               {!conferencesRes.loading && conferencesRes.error && (
                 <tr>
-                  <td colSpan={5}>
+                  <td colSpan={visibleColumnCount}>
                     <StateBlock kind="error" message={conferencesRes.error.message} onRetry={conferencesRes.reload} />
                   </td>
                 </tr>
@@ -289,7 +324,7 @@ export default function AdminConferencesPage() {
 
               {!conferencesRes.loading && !conferencesRes.error && filtered.length === 0 && (
                 <tr>
-                  <td colSpan={5}>
+                  <td colSpan={visibleColumnCount}>
                     <div className="flex flex-col items-center gap-3 px-6 py-14 text-center">
                       <span className="grid h-12 w-12 place-items-center rounded-2xl bg-[#efedff] text-[#5c50ec]">
                         <CalendarDays size={22} />
@@ -317,7 +352,7 @@ export default function AdminConferencesPage() {
 
               {!conferencesRes.loading &&
                 !conferencesRes.error &&
-                filtered.map((conf) => {
+                visibleConferences.map((conf) => {
                   const name = confName(conf);
                   const location = resolveLocation(conf);
                   const count = resolveSubmissionCount(conf, submissionCounts);
@@ -325,36 +360,36 @@ export default function AdminConferencesPage() {
                     <tr
                       key={conf.id}
                       onClick={() => navigate(`/admin/conferences/${conf.id}/edit`)}
-                      className="group cursor-pointer border-b border-[#f0f2f6] transition-colors last:border-0 hover:bg-[#fafbff]"
+                      className="group cmt-conference-row cursor-pointer border-b border-[#f0f2f6] last:border-0"
                     >
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <span className="relative grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-[#efedff] to-[#e0dcff] text-[11px] font-extrabold text-[#4f46c7] shadow-[0_6px_14px_-4px_rgba(102,85,246,.28)]">
+                      {table.columnVisible("conference") && <td data-label="Conference" className="px-6 py-4">
+                        <div className="cmt-conference-row__lead relative flex items-center gap-3">
+                          <span className="cmt-conference-row__avatar relative grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-[#efedff] to-[#e0dcff] text-[11px] font-extrabold text-[#4f46c7] shadow-[0_6px_14px_-4px_rgba(102,85,246,.28)]">
                             {getInitials(name) === "?" ? <CalendarDays size={16} /> : getInitials(name)}
-                            <span className="absolute -bottom-0.5 -right-0.5 grid h-4 w-4 place-items-center rounded-full border-2 border-white bg-gradient-to-br from-[#6655f6] to-[#8b7bff] text-white">
+                            <span className="cmt-conference-row__badge absolute -bottom-0.5 -right-0.5 grid h-4 w-4 place-items-center rounded-full border-2 border-white bg-gradient-to-br from-[#6655f6] to-[#8b7bff] text-white">
                               <CalendarDays size={8} strokeWidth={3} />
                             </span>
                           </span>
                           <div className="min-w-0">
-                            <strong className="block truncate text-[11px] font-bold text-[#1c2a4a]">
+                            <strong className="cmt-conference-name block truncate text-[11px] font-bold text-[#1c2a4a]">
                               {name}
                             </strong>
-                            <span className="text-[9px] font-semibold text-[#929bad]">#{conf.id}</span>
+                            <span className="cmt-conference-row__meta text-[9px] font-semibold text-[#929bad]">#{conf.id}</span>
                           </div>
                         </div>
-                      </td>
+                      </td>}
 
-                      <td className="px-4 py-4">
-                        <span className="inline-flex items-center gap-1.5 rounded-lg border border-[#edf0f5] bg-[#fafbfe] px-2 py-1 text-[10px] font-semibold text-[#5c6880]">
+                      {table.columnVisible("date") && <td data-label="Date" className="px-4 py-4">
+                          <span className="cmt-conference-row__pill inline-flex items-center gap-1.5 rounded-lg border border-[#edf0f5] bg-[#fafbfe] px-2 py-1 text-[10px] font-semibold text-[#5c6880]">
                           <CalendarDays size={11} className="text-[#aeb6c6]" />
                           {confDate(conf)}
                         </span>
-                      </td>
+                      </td>}
 
-                      <td className="px-4 py-4">
+                      {table.columnVisible("location") && <td data-label="Location" className="px-4 py-4">
                         {location ? (
-                          <span className="inline-flex max-w-[220px] items-center gap-1.5 text-[10px] text-[#5c6880]">
-                            <MapPin size={12} className="shrink-0 text-[#aeb6c6]" />
+                          <span className="cmt-conference-row__location inline-flex max-w-[220px] items-center gap-1.5 text-[10px] text-[#5c6880]">
+                            <MapPin size={12} className="cmt-conference-row__location-icon shrink-0 text-[#aeb6c6]" />
                             <span className="truncate">{location}</span>
                           </span>
                         ) : (
@@ -362,35 +397,35 @@ export default function AdminConferencesPage() {
                             Not specified
                           </span>
                         )}
-                      </td>
+                      </td>}
 
-                      <td className="px-4 py-4">
+                      {table.columnVisible("submissions") && <td data-label="Submissions" className="px-4 py-4">
                         <SubmissionBadge count={count} loading={submissionsLoading} />
-                      </td>
+                      </td>}
 
-                      <td className="px-6 py-4">
+                      {table.columnVisible("actions") && <td data-label="Actions" className="px-6 py-4">
                         <div className="flex items-center justify-end gap-1.5">
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
                               navigate(`/admin/conferences/${conf.id}/edit`);
                             }}
-                            className="inline-flex items-center gap-1.5 rounded-lg bg-blue-50 px-2.5 py-1.5 text-[10px] font-bold text-blue-600 transition hover:bg-blue-100"
+                            className="cmt-conference-row__edit inline-flex items-center gap-1.5 rounded-lg bg-blue-50 px-2.5 py-1.5 text-[10px] font-bold text-blue-600 transition-colors"
                           >
                             <Pencil size={12} /> Edit
                           </button>
                           <button
                             onClick={(e) => handleDelete(e, conf)}
-                            className="inline-flex items-center gap-1.5 rounded-lg bg-red-50 px-2.5 py-1.5 text-[10px] font-bold text-red-600 transition hover:bg-red-100"
+                            className="cmt-conference-row__delete inline-flex items-center gap-1.5 rounded-lg bg-red-50 px-2.5 py-1.5 text-[10px] font-bold text-red-600 transition-colors"
                             aria-label={`Delete ${name}`}
                           >
                             <Trash2 size={12} /> Delete
                           </button>
-                          <span className="ml-1 inline-grid h-7 w-7 place-items-center rounded-full text-[#aeb6c6] transition group-hover:bg-[#efedff] group-hover:text-[#5649dc]">
+                          <span className="cmt-conference-row__chevron ml-1 inline-grid h-7 w-7 place-items-center rounded-full text-[#aeb6c6]">
                             <ChevronRight size={16} />
                           </span>
                         </div>
-                      </td>
+                      </td>}
                     </tr>
                   );
                 })}

@@ -10,6 +10,7 @@ class NotificationController extends Controller
     public function index(Request $request): JsonResponse
     {
         $notifications = $request->user()->notifications()->latest()->limit(30)->get();
+
         return response()->json([
             'success' => true,
             'data' => $notifications,
@@ -31,12 +32,14 @@ class NotificationController extends Controller
         if (is_null($notification->read_at)) {
             $notification->markAsRead();
         }
+
         return response()->json(['success' => true, 'data' => $notification]);
     }
 
     public function readAll(Request $request): JsonResponse
     {
         $request->user()->unreadNotifications->markAsRead();
+
         return response()->json(['success' => true]);
     }
 }

@@ -22,6 +22,16 @@ import { toArray } from "../api/normalize";
 import { reviewsApi } from "../api/reviewsApi";
 import { submissionsApi } from "../api/submissionsApi";
 import { usersApi } from "../api/usersApi";
+import { AdminTableToolbar, SortableTh, useAdminTableControls } from "../components/AdminTableControls";
+
+const REVIEW_COLUMNS = [
+  { key: "submission", label: "Submission" },
+  { key: "reviewer", label: "Reviewer" },
+  { key: "score", label: "Score" },
+  { key: "recommendation", label: "Recommendation" },
+  { key: "status", label: "Status" },
+  { key: "actions", label: "Actions" },
+];
 
 /* Guide §8.8 — confirmed recommendation values */
 const RECOMMENDATIONS = [
@@ -216,6 +226,7 @@ export default function AdminReviewsPage() {
   const reviews = useMemo(() => toArray(reviewsRes.data), [reviewsRes.data]);
   const submissions = useMemo(() => toArray(submissionsRes.data), [submissionsRes.data]);
   const users = useMemo(() => toArray(usersRes.data), [usersRes.data]);
+  const table = useAdminTableControls("reviews", REVIEW_COLUMNS);
 
   /* Filter reviewers from users */
   const reviewers = useMemo(
@@ -243,6 +254,14 @@ export default function AdminReviewsPage() {
         .includes(q);
     });
   }, [reviews, query, filter]);
+  const visibleReviews = table.sortRows(filtered, {
+    submission: (review) => submissionName(review),
+    reviewer: (review) => reviewerName(review),
+    score: (review) => Number(reviewScore(review)) || null,
+    recommendation: (review) => reviewRecommendation(review),
+    status: (review) => reviewSubmittedAt(review) ? "submitted" : "awaiting",
+  });
+  const visibleColumnCount = REVIEW_COLUMNS.filter((column) => table.columnVisible(column.key)).length;
 
   /* ---- Mutations ---- */
   const runMutation = async (action, successMessage) => {
@@ -363,28 +382,29 @@ export default function AdminReviewsPage() {
           })}
         </div>
 
+        <AdminTableToolbar columns={REVIEW_COLUMNS} controls={table} />
         <div className="overflow-x-auto">
-          <table className="w-full border-collapse text-left">
+          <table data-table-density={table.density} className="cmt-mobile-card-table admin-data-table w-full min-w-[900px] border-collapse text-left">
             <thead>
               <tr className="border-b border-[#edf0f5] bg-gradient-to-b from-[#fafbff] to-[#f4f6fb] text-[9px] font-extrabold uppercase tracking-[.08em] text-[#9ba4b5]">
-                <th className="px-6 py-3">Submission</th>
-                <th className="px-4 py-3">Reviewer</th>
-                <th className="px-4 py-3">Score</th>
-                <th className="px-4 py-3">Recommendation</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-6 py-3 text-right">Actions</th>
+                {table.columnVisible("submission") && <SortableTh column={REVIEW_COLUMNS[0]} controls={table} className="sticky left-0 z-20 bg-[#fafbff] px-6 py-2.5 dark:bg-[#0f172a]" />}
+                {table.columnVisible("reviewer") && <SortableTh column={REVIEW_COLUMNS[1]} controls={table} className="whitespace-nowrap px-4 py-2.5" />}
+                {table.columnVisible("score") && <SortableTh column={REVIEW_COLUMNS[2]} controls={table} className="whitespace-nowrap px-4 py-2.5" />}
+                {table.columnVisible("recommendation") && <SortableTh column={REVIEW_COLUMNS[3]} controls={table} className="whitespace-nowrap px-4 py-2.5" />}
+                {table.columnVisible("status") && <SortableTh column={REVIEW_COLUMNS[4]} controls={table} className="whitespace-nowrap px-4 py-2.5" />}
+                {table.columnVisible("actions") && <th className="px-6 py-2.5 text-right">Actions</th>}
               </tr>
             </thead>
             <tbody>
               {reviewsRes.loading && <LoadingRows />}
 
               {!reviewsRes.loading && reviewsRes.error && (
-                <tr><td colSpan={6}><StateBlock kind="error" message={reviewsRes.error.message} onRetry={reviewsRes.reload} /></td></tr>
+                <tr><td colSpan={visibleColumnCount}><StateBlock kind="error" message={reviewsRes.error.message} onRetry={reviewsRes.reload} /></td></tr>
               )}
 
               {!reviewsRes.loading && !reviewsRes.error && filtered.length === 0 && (
                 <tr>
-                  <td colSpan={6}>
+                  <td colSpan={visibleColumnCount}>
                     <div className="flex flex-col items-center gap-3 px-6 py-14 text-center">
                       <span className="grid h-12 w-12 place-items-center rounded-2xl bg-[#efedff] text-[#5c50ec]"><FileCheck2 size={22} /></span>
                       <h3 className="m-0 text-[13px] font-bold text-[#1c2a4a]">
@@ -411,12 +431,12 @@ export default function AdminReviewsPage() {
                 </tr>
               )}
 
-              {!reviewsRes.loading && !reviewsRes.error && filtered.map((r) => {
+              {!reviewsRes.loading && !reviewsRes.error && visibleReviews.map((r) => {
                 const rec = REC_MAP[reviewRecommendation(r)];
                 const locked = reviewIsLocked(r);
                 return (
-                  <tr key={reviewId(r)} className="group border-b border-[#f0f2f6] transition-colors last:border-0 hover:bg-[#fafbff]">
-                    <td className="px-6 py-4">
+                  <tr key={reviewId(r)} className="cmt-admin-list-row group border-b border-[#f0f2f6] transition-colors last:border-0 hover:bg-[#fafbff]">
+                    {table.columnVisible("submission") && <td data-label="Submission" className="sticky left-0 z-10 bg-white px-6 py-4 dark:bg-[#0f172a]">
                       <div className="flex items-center gap-3">
                         <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-[#efedff] to-[#e0dcff] text-[11px] font-extrabold text-[#4f46c7]">
                           <FileCheck2 size={15} />
@@ -426,20 +446,20 @@ export default function AdminReviewsPage() {
                           <span className="text-[9px] text-[#929bad]">Review #{r.id}</span>
                         </div>
                       </div>
-                    </td>
-                    <td className="px-4 py-4">
+                    </td>}
+                    {table.columnVisible("reviewer") && <td data-label="Reviewer" className="px-4 py-4">
                       <span className="inline-flex items-center gap-1.5 text-[10px] text-[#5c6880]">
                         <User size={12} className="text-[#aeb6c6]" />
                         {reviewerName(r)}
                       </span>
-                    </td>
-                    <td className="px-4 py-4">
+                    </td>}
+                    {table.columnVisible("score") && <td data-label="Score" className="px-4 py-4">
                       <span className="inline-flex items-center gap-1 text-[11px] font-extrabold text-[#1c2a4a]">
                         <Star size={12} className="text-[#f59e0b]" />
                         {reviewScore(r)}
                       </span>
-                    </td>
-                    <td className="px-4 py-4">
+                    </td>}
+                    {table.columnVisible("recommendation") && <td data-label="Recommendation" className="px-4 py-4">
                       {rec ? (
                         <span className={`inline-flex rounded-full border px-2.5 py-1 text-[9px] font-extrabold uppercase tracking-[.06em] ${rec.tone}`}>
                           {rec.label}
@@ -447,8 +467,8 @@ export default function AdminReviewsPage() {
                       ) : (
                         <span className="text-[10px] text-[#aeb6c6]">—</span>
                       )}
-                    </td>
-                    <td className="px-4 py-4">
+                    </td>}
+                    {table.columnVisible("status") && <td data-label="Status" className="px-4 py-4">
                       {locked ? (
                         <span className="inline-flex items-center gap-1 rounded-full border border-[#c9dff5] bg-[#eef5fd] px-2.5 py-1 text-[9px] font-extrabold uppercase tracking-[.06em] text-[#1d5fa8]">
                           <Lock size={10} /> Locked
@@ -462,8 +482,8 @@ export default function AdminReviewsPage() {
                           Awaiting
                         </span>
                       )}
-                    </td>
-                    <td className="px-6 py-4">
+                    </td>}
+                    {table.columnVisible("actions") && <td data-label="Actions" className="px-6 py-4">
                       <div className="flex items-center justify-end gap-1.5">
                         {!locked && reviewSubmittedAt(r) && (
                           <button onClick={() => handleLock(r)} className="inline-flex items-center gap-1.5 rounded-lg bg-blue-50 px-2.5 py-1.5 text-[10px] font-bold text-blue-600 hover:bg-blue-100">
@@ -478,7 +498,7 @@ export default function AdminReviewsPage() {
                           <Trash2 size={12} /> Remove
                         </button>
                       </div>
-                    </td>
+                    </td>}
                   </tr>
                 );
               })}

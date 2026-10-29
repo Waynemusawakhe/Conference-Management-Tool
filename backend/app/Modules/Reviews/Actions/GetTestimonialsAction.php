@@ -10,6 +10,10 @@ class GetTestimonialsAction
     public function execute(): Collection
     {
         return Testimonial::query()
+            ->with([
+                'user:id,name,role',
+                'conference:id,name,code',
+            ])
             ->orderByDesc('created_at')
             ->get();
     }

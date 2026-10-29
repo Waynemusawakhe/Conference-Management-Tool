@@ -7,10 +7,12 @@ import {
   Clock,
   Hash,
   HelpCircle,
+  Loader2,
   MessageSquare,
   Save,
   Tag,
   Trash2,
+  TriangleAlert,
   Type,
 } from "lucide-react";
 import AdminLayout from "../components/AdminLayout";
@@ -21,9 +23,6 @@ import { faqsApi } from "../api/faqsApi";
 const QUESTION_MAX = 500;
 const CATEGORY_MAX = 255;
 
-/* ------------------------------------------------------------------ *
- * Field wrapper
- * ------------------------------------------------------------------ */
 function Field({ icon, label, error, hint, children }) {
   return (
     <div className="grid gap-2">
@@ -58,16 +57,72 @@ function inputClass(error, extra = "") {
   return `${base} ${tone} ${extra}`;
 }
 
-/* ------------------------------------------------------------------ *
- * Page — handles BOTH create (/admin/faqs/new) and edit
- * (/admin/faqs/:id/edit)
- * ------------------------------------------------------------------ */
+function ConfirmDeleteModal({ open, onClose, onConfirm, faq, busy }) {
+  if (!open || !faq) return null;
+
+  return (
+    <div
+      className="fixed inset-0 z-[100] grid place-items-center bg-[#07132f]/60 p-4 backdrop-blur-sm"
+      onClick={busy ? undefined : onClose}
+      role="dialog"
+      aria-modal="true"
+    >
+      <div
+        className="w-full max-w-[420px] overflow-hidden rounded-[22px] bg-white shadow-[0_30px_90px_rgba(7,19,47,.3)] animate-[scaleIn_.15s_ease-out]"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex flex-col items-center p-6 text-center">
+          <div className="mb-4 grid h-14 w-14 place-items-center rounded-full bg-red-50 text-red-500">
+            <TriangleAlert size={28} />
+          </div>
+          <h2 className="text-[18px] font-extrabold text-[#1c2a4a]">Delete this FAQ?</h2>
+          <p className="mt-2 text-[12px] leading-6 text-[#66728b]">
+            Are you sure you want to delete this FAQ? This action cannot be undone and will remove it from the Help & FAQ page.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3 border-t border-[#edf0f5] bg-[#fafbfe] p-4">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={busy}
+            className="inline-flex min-h-11 items-center justify-center rounded-xl border border-[#e4e8f0] bg-white px-4 text-[12px] font-extrabold text-[#5c6880] transition hover:bg-[#f3f5f9] disabled:opacity-50"
+          >
+            No, cancel
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            disabled={busy}
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-red-600 px-4 text-[12px] font-extrabold text-white shadow-[0_8px_20px_rgba(220,38,38,.25)] transition hover:bg-red-700 hover:shadow-[0_12px_25px_rgba(220,38,38,.35)] disabled:opacity-50"
+          >
+            {busy ? (
+              <>
+                <Loader2 size={16} className="animate-spin" /> Deleting...
+              </>
+            ) : (
+              <>
+                <Trash2 size={16} /> Yes, delete
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+      <style>{`
+        @keyframes scaleIn {
+          from { opacity: 0; transform: scale(0.95); }
+          to { opacity: 1; transform: scale(1); }
+        }
+      `}</style>
+    </div>
+  );
+}
+
 export default function AdminFaqEditPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const isEdit = Boolean(id);
 
-  /* Only fetch when editing */
   const faqRes = useApiResource(
     () => (isEdit ? faqsApi.getById(id) : Promise.resolve(null)),
     [id, isEdit]
@@ -82,9 +137,9 @@ export default function AdminFaqEditPage() {
   const [errors, setErrors] = useState({});
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [banner, setBanner] = useState(null);
 
-  /* Populate form on edit */
   useEffect(() => {
     if (!isEdit || !faq) return;
     setForm({
@@ -103,8 +158,6 @@ export default function AdminFaqEditPage() {
   const questionCount = form.question.length;
   const categoryCount = form.category.length;
 
-  /* Validation — mirrors the guide: question ≤ 500, answer required,
-     category optional ≤ 255 */
   const validate = () => {
     const next = {};
     if (!form.question.trim()) next.question = "Question is required.";
@@ -120,7 +173,6 @@ export default function AdminFaqEditPage() {
     return Object.keys(next).length === 0;
   };
 
-  /* Submit — POST for create, PUT for update */
   const handleSubmit = async (e) => {
     e.preventDefault();
     setBanner(null);
@@ -155,31 +207,25 @@ export default function AdminFaqEditPage() {
     }
   };
 
-  /* Delete — only in edit mode */
-  const handleDelete = async () => {
-    if (
-      !window.confirm(
-        `Delete this FAQ?\n\n"${form.question || faq?.question || ""}"\n\nThis cannot be undone.`
-      )
-    )
-      return;
-
+  const confirmDelete = async () => {
+    if (!faq) return;
+    
     setDeleting(true);
     setBanner(null);
     try {
-      await faqsApi.remove(id);
+      await faqsApi.remove(faq.id);
       navigate("/admin/faqs");
     } catch (err) {
       setBanner({
         type: "error",
         text: err?.message ?? "Failed to delete FAQ.",
       });
+      setShowDeleteConfirm(false);
     } finally {
       setDeleting(false);
     }
   };
 
-  /* ---------- Loading / error guards (edit only) ---------- */
   if (isEdit && faqRes.loading) {
     return (
       <AdminLayout subtitle="FAQ" title="Edit FAQ">
@@ -235,7 +281,6 @@ export default function AdminFaqEditPage() {
       )}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {/* ---------- Form ---------- */}
         <Card className="overflow-hidden lg:col-span-2">
           <CardHeader
             eyebrow={isEdit ? "Edit" : "Create"}
@@ -336,9 +381,7 @@ export default function AdminFaqEditPage() {
           </form>
         </Card>
 
-        {/* ---------- Sidebar ---------- */}
         <aside className="space-y-6">
-          {/* Live preview */}
           <Card className="overflow-hidden">
             <CardHeader eyebrow="Preview" title="How it reads" />
             <div className="p-5 sm:p-6">
@@ -365,7 +408,6 @@ export default function AdminFaqEditPage() {
             </div>
           </Card>
 
-          {/* Metadata (edit only) */}
           {isEdit && faq && (
             <Card className="overflow-hidden">
               <CardHeader eyebrow="Metadata" title="Record info" />
@@ -389,7 +431,6 @@ export default function AdminFaqEditPage() {
             </Card>
           )}
 
-          {/* Danger zone (edit only) */}
           {isEdit && (
             <div className="overflow-hidden rounded-[20px] border border-[#f0d4d4] bg-gradient-to-b from-[#fffafa] to-[#fff5f5] p-6">
               <div className="flex items-center gap-2">
@@ -406,24 +447,28 @@ export default function AdminFaqEditPage() {
               </p>
               <button
                 type="button"
-                onClick={handleDelete}
-                disabled={deleting}
+                onClick={() => setShowDeleteConfirm(true)}
                 className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-[#f0c8c8] bg-white px-4 py-2.5 text-[11px] font-extrabold text-red-600 transition hover:border-[#e8a8a8] hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <Trash2 size={13} />
-                {deleting ? "Deleting…" : "Delete FAQ"}
+                Delete FAQ
               </button>
             </div>
           )}
         </aside>
       </div>
+
+      <ConfirmDeleteModal
+        open={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={confirmDelete}
+        faq={faq}
+        busy={deleting}
+      />
     </AdminLayout>
   );
 }
 
-/* ------------------------------------------------------------------ *
- * MetaRow
- * ------------------------------------------------------------------ */
 function MetaRow({ icon, label, value }) {
   return (
     <div className="flex items-center justify-between gap-3 py-3.5">

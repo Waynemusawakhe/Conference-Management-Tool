@@ -33,11 +33,12 @@ class ConferencePolicy
                 && $user->id === $conference->organiser_id);
     }
 
-    public function viewRelated(User $user,Conference $conference): bool {
-    return $user->role === 'admin'
-        || (
-            $user->role === 'organiser'
-            && $user->id === $conference->organiser_id
-        );
+    public function viewRelated(User $user, Conference $conference): bool
+    {
+        return $user->role === 'admin'
+            || (
+                $user->role === 'organiser'
+                && $user->id === $conference->organiser_id
+            );
     }
 }

@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { pageMeta } from "../utils/pagination";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ChevronRight,
@@ -16,6 +17,15 @@ import { Card, CardHeader, StateBlock, formatDateTime } from "../components/Admi
 import { useApiResource } from "../hooks/useApiResource";
 import { toArray } from "../api/normalize";
 import { contactMessagesApi } from "../api/contactMessagesApi";
+import { AdminTableToolbar, SortableTh, useAdminTableControls } from "../components/AdminTableControls";
+
+const MESSAGE_COLUMNS = [
+  { key: "sender", label: "From" },
+  { key: "message", label: "Message" },
+  { key: "status", label: "Status" },
+  { key: "received", label: "Received" },
+  { key: "actions", label: "Actions" },
+];
 
 const STATUS_CONFIG = {
   new: {
@@ -52,7 +62,7 @@ function statusConfig(raw) {
 
 function StatStrip({ counts }) {
   const items = [
-    { label: "Total", value: counts.all, icon: <Inbox size={14} />, tone: "text-[#4f46c7] bg-[#efedff]" },
+    { label: "On this page", value: counts.all, icon: <Inbox size={14} />, tone: "text-[#4f46c7] bg-[#efedff]" },
     { label: "New", value: counts.new, icon: <Mail size={14} />, tone: "text-[#5548d7] bg-[#f0efff]" },
     { label: "In progress", value: counts.in_progress, icon: <Clock size={14} />, tone: "text-[#9b7414] bg-[#fff9e9]" },
     { label: "Resolved", value: counts.resolved, icon: <CheckCircle2 size={14} />, tone: "text-[#18794e] bg-[#effaf4]" },
@@ -105,8 +115,17 @@ export default function ContactMessagesPage() {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("all");
 
-  const messagesRes = useApiResource(() => contactMessagesApi.getAll(), []);
+  const [page, setPage] = useState(1);
+  const messagesRes = useApiResource(() => contactMessagesApi.getAll({ page, per_page: 25, status: filter === "all" ? undefined : filter }), [page, filter]);
+  const meta = pageMeta(messagesRes.data);
   const messages = useMemo(() => toArray(messagesRes.data), [messagesRes.data]);
+  const table = useAdminTableControls("contact-messages", MESSAGE_COLUMNS);
+
+  useEffect(() => {
+    if (messagesRes.loading || messagesRes.error || !messagesRes.data) return;
+    const lastPage = Math.max(1, Number(meta.last_page || 1));
+    if (page > lastPage) setPage(lastPage);
+  }, [messagesRes.loading, messagesRes.error, messagesRes.data, meta.last_page, page]);
 
   const counts = useMemo(() => {
     const c = { all: messages.length, new: 0, in_progress: 0, resolved: 0 };
@@ -129,6 +148,13 @@ export default function ContactMessagesPage() {
         .includes(q);
     });
   }, [messages, query, filter]);
+  const visibleMessages = table.sortRows(filtered, {
+    sender: (message) => message.name ?? message.email,
+    message: (message) => message.message,
+    status: (message) => statusKey(message.status),
+    received: (message) => message.created_at,
+  });
+  const visibleColumnCount = MESSAGE_COLUMNS.filter((column) => table.columnVisible(column.key)).length;
 
   const handleDelete = async (e, id) => {
     e.stopPropagation();
@@ -144,12 +170,15 @@ export default function ContactMessagesPage() {
   return (
     <AdminLayout subtitle="Inbox" title="Contact Messages">
       {!messagesRes.loading && !messagesRes.error && messages.length > 0 && (
-        <div className="mb-5">
+        <section aria-label="Current page message counts" className="mb-5">
+          <p className="mb-2 text-xs text-[#66728b]">
+            Counts for the current page · Status: {FILTERS.find((item) => item.key === filter)?.label}
+          </p>
           <StatStrip counts={counts} />
-        </div>
+        </section>
       )}
 
-      <Card>
+      <Card className="overflow-hidden border-0 ring-1 ring-[#eef1f7] shadow-[0_20px_60px_-30px_rgba(23,35,66,.18)]">
         <CardHeader
           eyebrow="Messages"
           title={
@@ -166,7 +195,7 @@ export default function ContactMessagesPage() {
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search name, email, message…"
+                placeholder="Search this page…"
                 className="h-10 w-full rounded-[10px] border border-[#e2e6ee] bg-[#fafbfe] pl-9 pr-9 text-[11px] outline-none transition focus:border-[#8175ef] focus:bg-white focus:ring-2 focus:ring-[#8175ef]/10"
               />
               {query && (
@@ -188,7 +217,7 @@ export default function ContactMessagesPage() {
             return (
               <button
                 key={f.key}
-                onClick={() => setFilter(f.key)}
+                onClick={() => { setFilter(f.key); setPage(1); }}
                 className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[10px] font-extrabold transition ${
                   isActive
                     ? "border-transparent bg-[#07132f] text-white shadow-[0_6px_18px_rgba(7,19,47,.18)]"
@@ -208,15 +237,17 @@ export default function ContactMessagesPage() {
           })}
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse text-left">
+        <AdminTableToolbar columns={MESSAGE_COLUMNS} controls={table} />
+        
+        <div className="overflow-x-auto custom-scrollbar">
+          <table data-table-density={table.density} className="cmt-mobile-card-table admin-data-table w-full min-w-[820px] border-collapse text-left">
             <thead>
               <tr className="border-b border-[#edf0f5] text-[9px] font-extrabold uppercase tracking-[.08em] text-[#9ba4b5]">
-                <th className="px-6 py-3">From</th>
-                <th className="px-4 py-3">Message</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3">Received</th>
-                <th className="px-6 py-3 text-right">Actions</th>
+                {table.columnVisible("sender") && <SortableTh column={MESSAGE_COLUMNS[0]} controls={table} className="sticky left-0 z-20 bg-[#fafbff] px-6 py-2.5 dark:bg-[#0f172a]" />}
+                {table.columnVisible("message") && <SortableTh column={MESSAGE_COLUMNS[1]} controls={table} className="whitespace-nowrap px-4 py-2.5" />}
+                {table.columnVisible("status") && <SortableTh column={MESSAGE_COLUMNS[2]} controls={table} className="whitespace-nowrap px-4 py-2.5" />}
+                {table.columnVisible("received") && <SortableTh column={MESSAGE_COLUMNS[3]} controls={table} className="whitespace-nowrap px-4 py-2.5" />}
+                {table.columnVisible("actions") && <th className="px-6 py-2.5 text-right whitespace-nowrap">Actions</th>}
               </tr>
             </thead>
             <tbody>
@@ -224,7 +255,7 @@ export default function ContactMessagesPage() {
 
               {!messagesRes.loading && messagesRes.error && (
                 <tr>
-                  <td colSpan={5}>
+                  <td colSpan={visibleColumnCount}>
                     <StateBlock kind="error" message={messagesRes.error.message} onRetry={messagesRes.reload} />
                   </td>
                 </tr>
@@ -232,7 +263,7 @@ export default function ContactMessagesPage() {
 
               {!messagesRes.loading && !messagesRes.error && filtered.length === 0 && (
                 <tr>
-                  <td colSpan={5}>
+                  <td colSpan={visibleColumnCount}>
                     <StateBlock
                       message={
                         messages.length === 0
@@ -248,16 +279,16 @@ export default function ContactMessagesPage() {
 
               {!messagesRes.loading &&
                 !messagesRes.error &&
-                filtered.map((m) => {
+                visibleMessages.map((m) => {
                   const key = statusKey(m.status);
                   const config = statusConfig(m.status);
                   return (
                     <tr
                       key={m.id}
                       onClick={() => navigate(`/admin/contact-messages/${m.id}`)}
-                      className="group cursor-pointer border-b border-[#f0f2f6] transition-colors last:border-0 hover:bg-[#fafbff]"
+                      className="cmt-admin-list-row group cursor-pointer border-b border-[#f0f2f6] transition-colors last:border-0 hover:bg-[#fafbff]"
                     >
-                      <td className="px-6 py-4">
+                      {table.columnVisible("sender") && <td data-label="Sender" className="sticky left-0 z-10 bg-white px-6 py-4 dark:bg-[#0f172a]">
                         <div className="flex items-center gap-3">
                           <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-full ${config.icon}`}>
                             {key === "resolved" ? <MailOpen size={15} /> : <Mail size={15} />}
@@ -271,21 +302,21 @@ export default function ContactMessagesPage() {
                             </span>
                           </div>
                         </div>
-                      </td>
-                      <td className="px-4 py-4 max-w-[360px]">
+                      </td>}
+                      {table.columnVisible("message") && <td data-label="Message" className="px-4 py-4 max-w-[360px]">
                         <p className="m-0 line-clamp-2 text-[11px] text-[#5c6880]">
                           {m.message ?? "—"}
                         </p>
-                      </td>
-                      <td className="px-4 py-4">
+                      </td>}
+                      {table.columnVisible("status") && <td data-label="Status" className="px-4 py-4">
                         <span className={`inline-flex rounded-full border px-2.5 py-1 text-[9px] font-extrabold uppercase tracking-[.06em] ${config.chip}`}>
                           {config.label}
                         </span>
-                      </td>
-                      <td className="px-4 py-4 text-[10px] text-[#7b869b]">
+                      </td>}
+                      {table.columnVisible("received") && <td data-label="Received" className="px-4 py-4 text-[10px] text-[#7b869b]">
                         {formatDateTime(m.created_at)}
-                      </td>
-                      <td className="px-6 py-4 text-right">
+                      </td>}
+                      {table.columnVisible("actions") && <td data-label="Actions" className="px-6 py-4 text-right whitespace-nowrap">
                         <div className="flex items-center justify-end gap-1.5">
                           <button
                             onClick={(e) => handleDelete(e, m.id)}
@@ -298,7 +329,7 @@ export default function ContactMessagesPage() {
                             <ChevronRight size={16} />
                           </span>
                         </div>
-                      </td>
+                      </td>}
                     </tr>
                   );
                 })}
@@ -306,6 +337,23 @@ export default function ContactMessagesPage() {
           </table>
         </div>
       </Card>
+      
+      <nav aria-label="Contact message pages" className="mt-4 flex items-center justify-end gap-3 text-xs">
+        <button disabled={page <= 1 || messagesRes.loading} onClick={() => setPage((value) => value - 1)} className="rounded-lg border border-[#e2e6ee] bg-white px-3 py-1.5 font-semibold hover:bg-[#fafbff] disabled:opacity-50">Previous</button>
+        <span className="text-[#66728b]">Page {meta.current_page || page} of {meta.last_page || 1} · {meta.total || 0} messages</span>
+        <button disabled={page >= Number(meta.last_page || 1) || messagesRes.loading} onClick={() => setPage((value) => value + 1)} className="rounded-lg border border-[#e2e6ee] bg-white px-3 py-1.5 font-semibold hover:bg-[#fafbff] disabled:opacity-50">Next</button>
+      </nav>
+
+      <style>{`
+        .custom-scrollbar {
+          scrollbar-width: thin;
+          scrollbar-color: #94a3b8 #f1f5f9;
+        }
+        .custom-scrollbar::-webkit-scrollbar { height: 14px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; border: 3px solid #f1f5f9; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+      `}</style>
     </AdminLayout>
   );
 }

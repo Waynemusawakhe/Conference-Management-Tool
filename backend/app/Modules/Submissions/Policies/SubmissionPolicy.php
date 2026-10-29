@@ -9,24 +9,51 @@ class SubmissionPolicy
 {
     public function viewAny(User $user): bool
     {
-        return in_array($user->role, ['organiser', 'admin'], true);
+        return in_array(
+            $user->role,
+            ['organiser', 'admin'],
+            true
+        );
     }
 
-    public function view(User $user, Submission $submission): bool
-    {
-        return $user->id === $submission->author_id
-            || $user->role === 'admin'
-            || $user->role === 'organiser'
-            || $submission->reviews()->where('reviewer_id', $user->id)->exists();
+    public function view(
+        User $user,
+        Submission $submission
+    ): bool {
+        if (
+            $user->id === $submission->author_id ||
+            $user->role === 'admin'
+        ) {
+            return true;
+        }
+
+        if ($user->role === 'organiser') {
+            return $submission->conference
+                ?->organiser_id === $user->id;
+        }
+
+        if ($user->role === 'reviewer') {
+            return $submission
+                ->reviews()
+                ->where(
+                    'reviewer_id',
+                    $user->id
+                )
+                ->exists();
+        }
+
+        return false;
     }
 
     public function create(User $user): bool
     {
-        return true;
+        return $user->role === 'author';
     }
 
-    public function update(User $user, Submission $submission): bool
-    {
+    public function update(
+        User $user,
+        Submission $submission
+    ): bool {
         if ($user->role === 'admin') {
             return true;
         }
@@ -35,8 +62,10 @@ class SubmissionPolicy
             && $submission->status === 'pending';
     }
 
-    public function delete(User $user, Submission $submission): bool
-    {
+    public function delete(
+        User $user,
+        Submission $submission
+    ): bool {
         if ($user->role === 'admin') {
             return true;
         }
@@ -45,8 +74,19 @@ class SubmissionPolicy
             && $submission->status === 'pending';
     }
 
-    public function decide(User $user, Submission $submission): bool
-    {
-        return in_array($user->role, ['organiser', 'admin'], true);
+    public function decide(
+        User $user,
+        Submission $submission
+    ): bool {
+        if ($user->role === 'admin') {
+            return true;
+        }
+
+        if ($user->role !== 'organiser') {
+            return false;
+        }
+
+        return $submission->conference
+            ?->organiser_id === $user->id;
     }
 }

@@ -1,19 +1,19 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Save, Loader2 } from "lucide-react";
+import { useAuth } from "../hooks/useAuth";
+import { getDashboardPath } from "../utils/roleRoutes";
 import { submissionsApi } from "../api/submissionsApi";
-import { useAuth } from "../context/AuthContext";
 
 export default function EditSubmissionPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { role } = useAuth();
-  const dashboardPath = role === "author" ? "/author-dashboard" : "/admin-dashboard";
-  const [formData, setFormData] = useState({ title: "", abstract: "" });
+  const dashboardPath =getDashboardPath(role);
+  const [formData, setFormData] = useState({ title: "", abstract: "", status: "pending" });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
-  const [canEdit, setCanEdit] = useState(true);
 
   useEffect(() => {
     submissionsApi.getById(id)
@@ -22,12 +22,12 @@ export default function EditSubmissionPage() {
         setFormData({
           title: data.title || "",
           abstract: data.abstract || "",
+          status: data.status || "pending",
         });
-        setCanEdit(role === "admin" || data.status === "pending");
       })
       .catch((err) => setError(err.message || "Failed to load submission"))
       .finally(() => setLoading(false));
-  }, [id, role]);
+  }, [id]);
 
   const handleChange = (e) => setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
 
@@ -47,20 +47,9 @@ export default function EditSubmissionPage() {
 
   if (loading) return <div className="p-10 text-center text-[11px] text-[#8993a6]">Loading submission…</div>;
 
-  if (!canEdit) {
-    return (
-      <div className="rounded-[20px] border border-[#e4e8f0] bg-white p-6 shadow-[0_10px_30px_rgba(15,28,65,.035)]">
-        <p className="text-[12px] text-[#59657d]">Only pending submissions can be edited by their author.</p>
-        <button onClick={() => navigate(dashboardPath)} className="mt-3 text-[11px] font-bold text-[#6655f6] hover:underline">
-          Back to Dashboard
-        </button>
-      </div>
-    );
-  }
-
   return (
     <div className="rounded-[20px] border border-[#e4e8f0] bg-white p-6 shadow-[0_10px_30px_rgba(15,28,65,.035)]">
-      <button onClick={() => navigate(dashboardPath)} className="mb-6 flex items-center gap-2 text-[11px] font-bold text-[#6655f6] hover:underline">
+      <button onClick={() => navigate("/admin-dashboard")} className="mb-6 flex items-center gap-2 text-[11px] font-bold text-[#6655f6] hover:underline">
         <ArrowLeft size={14} /> Back to Dashboard
       </button>
 
@@ -80,12 +69,23 @@ export default function EditSubmissionPage() {
           <label className="mb-1.5 block text-[11px] font-bold text-[#35415f]">Abstract</label>
           <textarea name="abstract" value={formData.abstract} onChange={handleChange} rows={5} className="w-full rounded-[10px] border border-[#e2e6ee] bg-[#fafbfe] px-3 py-3 text-[12px] outline-none focus:border-[#8175ef]" />
         </div>
+        <div>
+          <label className="mb-1.5 block text-[11px] font-bold text-[#35415f]">Status</label>
+          <select name="status" value={formData.status} onChange={handleChange} className="h-11 w-full rounded-[10px] border border-[#e2e6ee] bg-[#fafbfe] px-3 text-[12px] outline-none focus:border-[#8175ef]">
+            <option value="pending">Pending</option>
+            <option value="under_review">Under review</option>
+            <option value="accepted">Accepted</option>
+            <option value="rejected">Rejected</option>
+            <option value="revision_requested">Revision requested</option>
+          </select>
+        </div>
+
         <div className="flex gap-3 pt-2">
           <button type="submit" disabled={saving} className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-br from-[#6655f6] to-[#7869ff] px-5 py-3 text-[12px] font-extrabold text-white shadow-[0_12px_28px_rgba(103,87,245,.28)] disabled:opacity-50">
             {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
             {saving ? "Saving…" : "Save Changes"}
           </button>
-          <button type="button" onClick={() => navigate(dashboardPath)} className="rounded-xl border border-[#e2e6ee] bg-white px-5 py-3 text-[12px] font-bold text-[#59657d] hover:bg-[#f0f2f6]">
+          <button type="button" onClick={() => navigate("/admin-dashboard")} className="rounded-xl border border-[#e2e6ee] bg-white px-5 py-3 text-[12px] font-bold text-[#59657d] hover:bg-[#f0f2f6]">
             Cancel
           </button>
         </div>

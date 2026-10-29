@@ -1,4 +1,4 @@
-import { Search } from "lucide-react";
+import { CircleAlert, Inbox, Search, SearchX } from "lucide-react";
 
 export function Card({ children, className = "" }) {
   return (
@@ -31,13 +31,21 @@ export function CardHeader({ eyebrow, title, action }) {
 export function StateBlock({ kind = "empty", message, onRetry }) {
   const tone =
     kind === "error" ? "text-[#b13a3a]" : "text-[#8993a6]";
+  const Icon =
+    kind === "error" ? CircleAlert : /match|search|filter/i.test(message) ? SearchX : Inbox;
   return (
-    <div className={`flex flex-col items-center gap-2 p-10 text-center text-[11px] ${tone}`}>
-      <span>{message}</span>
+    <div
+      role={kind === "error" ? "alert" : "status"}
+      className={`cmt-admin-state flex flex-col items-center gap-2.5 p-10 text-center text-[11px] ${tone}`}
+    >
+      <span className={`cmt-admin-state__icon grid h-11 w-11 place-items-center rounded-2xl ${kind === "error" ? "bg-[#fff1f1] text-[#b13a3a]" : "bg-[#efedff] text-[#5b4fe3]"}`}>
+        <Icon size={19} strokeWidth={1.8} />
+      </span>
+      <span className="max-w-[420px] leading-5">{message}</span>
       {onRetry && (
         <button
           onClick={onRetry}
-          className="rounded-lg bg-[#efedff] px-3 py-1.5 text-[10px] font-extrabold text-[#5649dc] hover:bg-[#e5e2ff]"
+          className="mt-1 rounded-lg bg-[#efedff] px-3 py-1.5 text-[10px] font-extrabold text-[#5649dc] transition hover:bg-[#e5e2ff] active:scale-[0.98] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#6655f6]"
         >
           Retry
         </button>

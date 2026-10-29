@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
+  AlertTriangle,
   BookOpen, CalendarDays, ChevronRight, Clock3, FileCheck2, FileText,
-  Filter, LayoutDashboard, LoaderCircle, LogOut, Menu, Plus, Search, Settings, Sparkles,
-  Trash2, Upload, UserRound, X, Eye, Pencil, RotateCcw, AlertCircle
+  Filter, LayoutDashboard, Loader2, LoaderCircle, LogOut, Menu, Plus, Search, Settings, Sparkles,
+  Trash2, Upload, UserRound, X, Eye, Pencil, RotateCcw, AlertCircle, Download
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Logo from "../components/Logo";
@@ -10,7 +11,6 @@ import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
 import { submissionsApi } from "../api/submissionsApi";
 import { conferencesApi } from "../api/conferencesApi";
-import { http } from "../api/client";
 import NotificationBell from "../components/NotificationBell";
 
 const STATUS_LABELS = {
@@ -84,6 +84,71 @@ function Modal({ title, children, onClose, wide = false }) {
   );
 }
 
+function ConfirmDialog({ state, onCancel, onConfirm, isProcessing }) {
+  if (!state) return null;
+
+  const isDelete = state.type === "delete";
+  const Icon = isDelete ? Trash2 : RotateCcw;
+  
+  const theme = isDelete
+    ? {
+        iconBg: "bg-red-50 text-red-600",
+        confirmBtn: "bg-gradient-to-br from-[#ef4444] to-[#dc2626] hover:from-[#dc2626] hover:to-[#b91c1c] shadow-[0_8px_20px_rgba(239,68,68,.3)]",
+        title: "Delete this proposal?",
+        message: `Are you sure you want to permanently delete "${state.proposal.title}"? This action cannot be undone.`
+      }
+    : {
+        iconBg: "bg-[#fff9e9] text-[#9b7414]",
+        confirmBtn: "bg-gradient-to-br from-[#f59e0b] to-[#d97706] hover:from-[#d97706] hover:to-[#b45309] shadow-[0_8px_20px_rgba(245,158,11,.3)]",
+        title: "Withdraw this proposal?",
+        message: `Are you sure you want to withdraw "${state.proposal.title}"? The reviewers will no longer be able to evaluate it.`
+      };
+
+  return (
+    <div className="fixed inset-0 z-[110] grid place-items-center bg-[#07132f]/55 p-4 backdrop-blur-sm animate-[fadeIn_.15s_ease-out]">
+      <div className="w-full max-w-[440px] overflow-hidden rounded-[22px] bg-white shadow-[0_30px_90px_rgba(7,19,47,.3)] animate-[scaleIn_.2s_cubic-bezier(.22,1,.36,1)]" onClick={(e) => e.stopPropagation()}>
+        <div className="flex flex-col items-center p-6 text-center">
+          <div className={`mb-4 grid h-14 w-14 place-items-center rounded-full ${theme.iconBg}`}>
+            <AlertTriangle size={28} />
+          </div>
+          <h2 className="text-[18px] font-extrabold text-[#1c2a4a]">{theme.title}</h2>
+          <p className="mt-2 text-[12px] leading-6 text-[#66728b]">
+            {theme.message}
+          </p>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3 border-t border-[#edf0f5] bg-[#fafbfe] p-4">
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={isProcessing}
+            className="inline-flex min-h-11 items-center justify-center rounded-xl border border-[#e4e8f0] bg-white px-4 text-[12px] font-extrabold text-[#5c6880] transition hover:bg-[#f3f5f9] disabled:opacity-50"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            disabled={isProcessing}
+            className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 text-[12px] font-extrabold text-white transition disabled:opacity-50 ${theme.confirmBtn}`}
+          >
+            {isProcessing ? (
+              <Loader2 size={16} className="animate-spin" />
+            ) : (
+              <Icon size={16} />
+            )}
+            {isProcessing ? "Processing..." : isDelete ? "Yes, delete" : "Yes, withdraw"}
+          </button>
+        </div>
+      </div>
+      <style>{`
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes scaleIn { from { opacity: 0; transform: scale(.95); } to { opacity: 1; transform: scale(1); } }
+      `}</style>
+    </div>
+  );
+}
+
 export default function AuthorDashboard() {
   const navigate = useNavigate();
   const { dark, toggleTheme } = useTheme();
@@ -101,6 +166,9 @@ export default function AuthorDashboard() {
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState("");
   const [selected, setSelected] = useState(null);
+
+  const [confirmState, setConfirmState] = useState(null);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const emptyForm = {
     conference_id: "",
@@ -160,10 +228,19 @@ export default function AuthorDashboard() {
     revision: proposals.filter((p) => p.status === "revision_requested").length,
   }), [proposals]);
 
-  const deadlines = useMemo(() => conferences
-    .filter((c) => c.submission_deadline)
-    .sort((a, b) => new Date(a.submission_deadline) - new Date(b.submission_deadline))
-    .slice(0, 4), [conferences]);
+  const deadlines = useMemo(() => {
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    
+    return conferences
+      .filter((c) => {
+        if (!c.submission_deadline) return false;
+        const deadlineDate = new Date(c.submission_deadline);
+        return deadlineDate >= now;
+      })
+      .sort((a, b) => new Date(a.submission_deadline) - new Date(b.submission_deadline))
+      .slice(0, 4);
+  }, [conferences]);
 
   const openCreate = () => {
     setForm(emptyForm);
@@ -206,6 +283,7 @@ export default function AuthorDashboard() {
         setFormError("Only PDF, DOC or DOCX files are allowed.");
         return;
       }
+
       if (form.file.size > 10 * 1024 * 1024) {
         setFormError("The file must be 10MB or smaller.");
         return;
@@ -229,10 +307,7 @@ export default function AuthorDashboard() {
       if (modal === "create") {
         await submissionsApi.create(body);
       } else {
-        // Laravel can't parse multipart PUT bodies. Use POST + _method=PUT
-        // (method spoofing) so the file actually reaches the backend.
-        body.append("_method", "PUT");
-        await http.post(`/submissions/${selected.id}`, body);
+        await submissionsApi.update(selected.id, body);
       }
       setModal(null);
       await loadData();
@@ -244,25 +319,29 @@ export default function AuthorDashboard() {
     }
   };
 
-  const removeProposal = async (proposal) => {
-    if (!window.confirm(`Delete "${proposal.title}"? This action cannot be undone.`)) return;
+  const requestAction = (type, proposal) => {
     setError("");
-    try {
-      await submissionsApi.remove(proposal.id);
-      await loadData();
-    } catch (err) {
-      setError(getErrorMessage(err));
-    }
+    setConfirmState({ type, proposal });
   };
 
-  const withdrawProposal = async (proposal) => {
-    if (!window.confirm(`Withdraw "${proposal.title}"?`)) return;
-    setError("");
+  const executeAction = async () => {
+    if (!confirmState) return;
+    const { type, proposal } = confirmState;
+
+    setIsProcessing(true);
     try {
-      await submissionsApi.withdraw(proposal.id);
+      if (type === "delete") {
+        await submissionsApi.remove(proposal.id);
+      } else if (type === "withdraw") {
+        await submissionsApi.withdraw(proposal.id);
+      }
       await loadData();
+      setConfirmState(null);
     } catch (err) {
       setError(getErrorMessage(err));
+      setConfirmState(null);
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -344,23 +423,94 @@ export default function AuthorDashboard() {
             {loading ? <div className="grid place-items-center p-12 text-xs font-semibold text-[#7c879a]">Loading your proposals…</div> : filteredProposals.length ? <>
               <div className="hidden overflow-x-auto md:block">
                 <table className="w-full border-collapse text-left"><thead><tr className="border-b border-[#edf0f5] text-[9px] font-extrabold uppercase tracking-[.08em] text-[#9ba4b5]"><th className="px-6 py-3">Proposal</th><th className="px-4 py-3">Conference</th><th className="px-4 py-3">Submitted</th><th className="px-4 py-3">Status</th><th className="px-6 py-3 text-right">Actions</th></tr></thead>
-                  <tbody>{filteredProposals.map((proposal) => { const conferenceName = proposal.conference?.name || proposal.conference?.title || conferences.find((c) => c.id === proposal.conference_id)?.name || "Conference"; const status = proposal.status || "pending"; const editable = status === "pending"; return <tr key={proposal.id} className="border-b border-[#f0f2f6] last:border-0 hover:bg-[#fbfbfe]">
-                    <td className="px-6 py-4"><div className="flex items-center gap-3"><span className="grid h-9 w-9 place-items-center rounded-[10px] bg-[#f1efff] text-[#5b4fe3]"><FileText size={16} /></span><div><strong className="block max-w-[290px] truncate text-[11px] text-[#1c2a4a]">{proposal.title}</strong><span className="text-[9px] text-[#929bad]">#{proposal.id} · {proposal.track || "General track"}</span></div></div></td>
-                    <td className="px-4 py-4 text-[10px] font-semibold text-[#5c6880]">{conferenceName}</td><td className="px-4 py-4 text-[10px] text-[#7b869b]">{dateLabel(proposal.created_at)}</td>
-                    <td className="px-4 py-4"><span className={`inline-flex rounded-full border px-2.5 py-1 text-[9px] font-extrabold ${STATUS_STYLES[status] || STATUS_STYLES.pending}`}>{STATUS_LABELS[status] || status}</span></td>
-                    <td className="px-6 py-4"><div className="flex justify-end gap-1.5"><button title="View" onClick={() => { setSelected(proposal); setModal("view"); }} className="grid h-8 w-8 place-items-center rounded-lg bg-[#f4f6fa] text-[#647089] hover:bg-[#eceffa] hover:text-[#5548d7]"><Eye size={14}/></button>{editable && <button title="Edit" onClick={() => openEdit(proposal)} className="grid h-8 w-8 place-items-center rounded-lg bg-[#f4f6fa] text-[#647089] hover:bg-[#eceffa] hover:text-[#5548d7]"><Pencil size={14}/></button>}{editable && <button title="Delete" onClick={() => removeProposal(proposal)} className="grid h-8 w-8 place-items-center rounded-lg bg-[#fff3f4] text-[#b13a3a] hover:bg-[#ffe6e8]"><Trash2 size={14}/></button>}{["under_review","revision_requested"].includes(status) && <button title="Withdraw" onClick={() => withdrawProposal(proposal)} className="grid h-8 w-8 place-items-center rounded-lg bg-[#fff7ec] text-[#a55b25] hover:bg-[#ffeed8]"><RotateCcw size={14}/></button>}</div></td>
-                  </tr>})}</tbody>
+                  <tbody>{filteredProposals.map((proposal) => {
+                    const conferenceName = proposal.conference?.name || proposal.conference?.title || conferences.find((c) => c.id === proposal.conference_id)?.name || "Conference";
+                    const status = proposal.status || "pending";
+                    const canMutate = status === "pending";
+                    const isWithdrawn = status === "withdrawn";
+
+                    return (
+                      <tr key={proposal.id} className="border-b border-[#f0f2f6] last:border-0 hover:bg-[#fbfbfe]">
+                        <td className="px-6 py-4"><div className="flex items-center gap-3"><span className="grid h-9 w-9 place-items-center rounded-[10px] bg-[#f1efff] text-[#5b4fe3]"><FileText size={16} /></span><div><strong className="block max-w-[290px] truncate text-[11px] text-[#1c2a4a]">{proposal.title}</strong><span className="text-[9px] text-[#929bad]">#{proposal.id} · {proposal.track || "General track"}</span></div></div></td>
+                        <td className="px-4 py-4 text-[10px] font-semibold text-[#5c6880]">{conferenceName}</td>
+                        <td className="px-4 py-4 text-[10px] text-[#7b869b]">{dateLabel(proposal.created_at)}</td>
+                        <td className="px-4 py-4"><span className={`inline-flex rounded-full border px-2.5 py-1 text-[9px] font-extrabold ${STATUS_STYLES[status] || STATUS_STYLES.pending}`}>{STATUS_LABELS[status] || status}</span></td>
+                        <td className="px-6 py-4">
+                          <div className="flex justify-end gap-1.5">
+                            {!isWithdrawn && (
+                              <button title="View" onClick={() => { setSelected(proposal); setModal("view"); }} className="grid h-8 w-8 place-items-center rounded-lg bg-[#f4f6fa] text-[#647089] hover:bg-[#eceffa] hover:text-[#5548d7]"><Eye size={14}/></button>
+                            )}
+                            
+                            {canMutate && (
+                              <button title="Edit" onClick={() => openEdit(proposal)} className="grid h-8 w-8 place-items-center rounded-lg bg-[#f4f6fa] text-[#647089] hover:bg-[#eceffa] hover:text-[#5548d7]"><Pencil size={14}/></button>
+                            )}
+                            
+                            {canMutate && (
+                              <button title="Delete" onClick={() => requestAction("delete", proposal)} className="grid h-8 w-8 place-items-center rounded-lg bg-[#fff3f4] text-[#b13a3a] hover:bg-[#ffe6e8]"><Trash2 size={14}/></button>
+                            )}
+                            
+                            {canMutate && (
+                              <button title="Withdraw" onClick={() => requestAction("withdraw", proposal)} className="grid h-8 w-8 place-items-center rounded-lg bg-[#fff7ec] text-[#a55b25] hover:bg-[#ffeed8]"><RotateCcw size={14}/></button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}</tbody>
                 </table>
               </div>
-              <div className="divide-y divide-[#edf0f5] md:hidden">{filteredProposals.map((proposal) => { const status=proposal.status||"pending"; const conferenceName=proposal.conference?.name || proposal.conference?.title || conferences.find((c)=>c.id===proposal.conference_id)?.name || "Conference"; const editable=status==="pending"; return <article key={proposal.id} className="p-4"><div className="flex gap-3"><span className="grid h-9 w-9 shrink-0 place-items-center rounded-[10px] bg-[#f1efff] text-[#5b4fe3]"><FileText size={16}/></span><div className="min-w-0 flex-1"><strong className="block text-[11px]">{proposal.title}</strong><p className="mb-2 mt-1 text-[9px] text-[#8c96a9]">{conferenceName}</p><span className={`inline-flex rounded-full border px-2.5 py-1 text-[9px] font-extrabold ${STATUS_STYLES[status] || STATUS_STYLES.pending}`}>{STATUS_LABELS[status] || status}</span></div></div><div className="mt-3 flex flex-wrap justify-between gap-2 text-[9px] text-[#8c96a9]"><span>Submitted {dateLabel(proposal.created_at)}</span><div className="flex gap-1.5"><button onClick={()=>{setSelected(proposal);setModal("view")}} className="rounded-lg bg-[#f4f6fa] px-2.5 py-1.5 font-bold">View</button>{editable&&<button onClick={()=>openEdit(proposal)} className="rounded-lg bg-[#efedff] px-2.5 py-1.5 font-bold text-[#5548d7]">Edit</button>}{editable&&<button onClick={()=>removeProposal(proposal)} className="rounded-lg bg-[#fff2f2] px-2.5 py-1.5 font-bold text-[#b13a3a]">Delete</button>}</div></div></article>})}</div>
+              <div className="divide-y divide-[#edf0f5] md:hidden">
+                {filteredProposals.map((proposal) => {
+                  const status = proposal.status || "pending";
+                  const conferenceName = proposal.conference?.name || proposal.conference?.title || conferences.find((c) => c.id === proposal.conference_id)?.name || "Conference";
+                  const canMutate = status === "pending";
+                  const isWithdrawn = status === "withdrawn";
+
+                  return (
+                    <article key={proposal.id} className="p-4">
+                      <div className="flex gap-3">
+                        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-[10px] bg-[#f1efff] text-[#5b4fe3]"><FileText size={16}/></span>
+                        <div className="min-w-0 flex-1">
+                          <strong className="block text-[11px]">{proposal.title}</strong>
+                          <p className="mb-2 mt-1 text-[9px] text-[#8c96a9]">{conferenceName}</p>
+                          <span className={`inline-flex rounded-full border px-2.5 py-1 text-[9px] font-extrabold ${STATUS_STYLES[status] || STATUS_STYLES.pending}`}>{STATUS_LABELS[status] || status}</span>
+                        </div>
+                      </div>
+                      <div className="mt-3 flex flex-wrap justify-between gap-2 text-[9px] text-[#8c96a9]">
+                        <span>Submitted {dateLabel(proposal.created_at)}</span>
+                        <div className="flex flex-wrap gap-1.5">
+                          
+                          {!isWithdrawn && (
+                            <button onClick={() => { setSelected(proposal); setModal("view"); }} className="rounded-lg bg-[#f4f6fa] px-2.5 py-1.5 font-bold">View</button>
+                          )}
+                          
+                          {canMutate && (
+                            <button onClick={() => openEdit(proposal)} className="rounded-lg bg-[#efedff] px-2.5 py-1.5 font-bold text-[#5548d7]">Edit</button>
+                          )}
+                          
+                          {canMutate && (
+                            <button onClick={() => requestAction("delete", proposal)} className="rounded-lg bg-[#fff2f2] px-2.5 py-1.5 font-bold text-[#b13a3a]">Delete</button>
+                          )}
+                          
+                          {canMutate && (
+                            <button onClick={() => requestAction("withdraw", proposal)} className="rounded-lg bg-[#fff7ec] px-2.5 py-1.5 font-bold text-[#a55b25]">Withdraw</button>
+                          )}
+                        </div>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
             </> : <div className="p-12 text-center"><Search size={20} className="mx-auto text-[#aeb6c6]" /><h3 className="mb-1 mt-3 text-[13px] font-bold">No proposals found</h3><p className="m-0 text-[10px] text-[#8993a6]">Try another search/status filter or submit a new proposal.</p></div>}
           </section>
 
           <section id="deadlines" className="mt-6 grid scroll-mt-24 grid-cols-[1.25fr_.75fr] gap-5 max-[900px]:grid-cols-1">
             <article className="rounded-[20px] border border-[#e4e8f0] bg-white p-5 shadow-[0_10px_30px_rgba(15,28,65,.035)] sm:p-6"><div className="mb-5 flex items-start justify-between"><div><span className="text-[10px] font-extrabold uppercase tracking-[.1em] text-[#6655f6]">Stay ahead</span><h2 className="mb-0 mt-1 text-[20px] font-bold tracking-[-.03em]">Upcoming deadlines</h2></div><CalendarDays size={19} className="text-[#6a5af2]" /></div><div className="space-y-3">{deadlines.length ? deadlines.map((c)=><div key={c.id} className="flex items-center gap-3 rounded-[13px] border border-[#edf0f5] bg-[#fafbfe] p-3"><div className="grid h-11 w-12 shrink-0 place-items-center rounded-[10px] bg-[#efedff] text-center"><strong className="block text-[10px] font-extrabold text-[#5649dc]">{new Date(c.submission_deadline).toLocaleDateString(undefined,{month:"short",day:"2-digit"})}</strong></div><div className="min-w-0 flex-1"><strong className="block truncate text-[11px]">{c.name}</strong><span className="text-[9px] text-[#8a95a8]">Submission deadline</span></div><ChevronRight size={15} className="text-[#a7afbd]" /></div>) : <p className="m-0 text-xs text-[#8a95a8]">No conference deadlines are available yet.</p>}</div></article>
-            <article className="rounded-[20px] bg-gradient-to-br from-[#111e4b] to-[#342b87] p-6 text-white shadow-[0_18px_45px_rgba(20,28,80,.15)]"><span className="grid h-10 w-10 place-items-center rounded-xl bg-white/10"><BookOpen size={18} /></span><h2 className="mb-2 mt-5 text-[20px] font-bold tracking-[-.03em]">Ready for your next submission?</h2><p className="m-0 text-[10px] leading-6 text-white/60">Browse open conferences and submit directly into the CMT workflow.</p><button onClick={()=>navigate("/conferences")} className="mt-5 inline-flex items-center gap-2 rounded-[10px] border border-white/15 bg-white/[.08] px-3.5 py-2.5 text-[10px] font-extrabold text-white hover:bg-white/[.14]">Browse conferences <ChevronRight size={14}/></button></article>
+            <article className="rounded-[20px] bg-gradient-to-br from-[#111e4b] to-[#342b87] p-6 text-white shadow-[0_18px_45px_rgba(20,28,80,.15)]"><span className="grid h-10 w-10 place-items-center rounded-xl bg-white/10"><BookOpen size={18} /></span><h2 className="mb-2 mt-5 text-[20px] font-bold tracking-[-.03em]">Ready for your next submission?</h2><p className="m-0 text-[10px] leading-6 text-white/60">Browse open conferences and submit directly into the CMT workflow.</p><button onClick={()=>navigate("/author/conferences")} className="mt-5 inline-flex items-center gap-2 rounded-[10px] border border-white/15 bg-white/[.08] px-3.5 py-2.5 text-[10px] font-extrabold text-white hover:bg-white/[.14]">Browse conferences <ChevronRight size={14}/></button></article>
           </section>
+
           <footer className="flex flex-wrap items-center justify-between gap-3 px-1 py-8 text-[9px] text-[#8c96a9]"><span>CMT Author Workspace · API connected</span><span>Submission permissions are enforced by the backend.</span></footer>
+
         </main>
       </div>
 
@@ -405,10 +555,63 @@ export default function AuthorDashboard() {
           <div><span className="text-[9px] font-extrabold uppercase tracking-wide text-[#9aa3b3]">Conference</span><p className="mb-0 mt-1 text-sm font-bold">{selected.conference?.name || conferences.find((c)=>c.id===selected.conference_id)?.name || "Conference"}</p></div>
           <div><span className="text-[9px] font-extrabold uppercase tracking-wide text-[#9aa3b3]">Track</span><p className="mb-0 mt-1 text-sm">{selected.track || "General track"}</p></div>
           <div><span className="text-[9px] font-extrabold uppercase tracking-wide text-[#9aa3b3]">Abstract</span><p className="mb-0 mt-2 whitespace-pre-wrap text-sm leading-7 text-[#536079]">{selected.abstract || "The API did not return an abstract for this submission."}</p></div>
-          {selected.file_path && <div className="rounded-xl border border-[#e5e8ef] p-3 text-xs text-[#66728b]">A submission file is attached to this record. Downloading private files is not exposed by the supplied API contract.</div>}
-          {selected.status === "pending" && <div className="flex justify-end border-t border-[#edf0f5] pt-4"><button onClick={()=>openEdit(selected)} className="inline-flex items-center gap-2 rounded-xl bg-[#efedff] px-4 py-2.5 text-xs font-extrabold text-[#5548d7]"><Pencil size={14}/> Edit proposal</button></div>}
+          {selected.has_file && (
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#e5e8ef] bg-[#fafbfe] p-4">
+            <div>
+              <p className="m-0 text-[11px] font-extrabold text-[#35415f]">
+                Submission document
+              </p>
+              <p className="mb-0 mt-1 text-[9px] text-[#8993a6]">
+                {selected.file_size_bytes
+                  ? `${(
+                      selected.file_size_bytes /
+                      1024 /
+                      1024
+                    ).toFixed(2)} MB`
+                  : "Document attached"}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={async () => {
+                setError("");
+                try {
+                  await submissionsApi.downloadFile(
+                    selected.id
+                  );
+                } catch (err) {
+                  setError(
+                    err?.message ||
+                      "Unable to download submission file."
+                  );
+                }
+              }}
+              className="inline-flex items-center gap-2 rounded-xl bg-[#efedff] px-3.5 py-2.5 text-[10px] font-extrabold text-[#5548d7] transition hover:bg-[#e5e2ff]"
+            >
+              <Download size={14} />
+              Download file
+            </button>
+          </div>
+        )}
+          {selected.status === "pending" && (
+  <div className="flex justify-end border-t border-[#edf0f5] pt-4">
+    <button
+      onClick={() => openEdit(selected)}
+      className="inline-flex items-center gap-2 rounded-xl bg-[#efedff] px-4 py-2.5 text-xs font-extrabold text-[#5548d7]"
+    >
+      <Pencil size={14} /> Edit proposal
+    </button>
+  </div>
+)}
         </div>
       </Modal> : null}
+
+      <ConfirmDialog
+        state={confirmState}
+        onCancel={() => setConfirmState(null)}
+        onConfirm={executeAction}
+        isProcessing={isProcessing}
+      />
     </div>
   );
 }

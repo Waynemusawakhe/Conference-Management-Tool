@@ -1,10 +1,9 @@
 import {
   Compass,
-  ClipboardCheck,
-  FilePlus2,
   LayoutDashboard,
   LoaderCircle,
   LogOut,
+  MessageSquareQuote,
   Settings,
   TicketCheck,
   UserRound,
@@ -43,9 +42,13 @@ export default function AttendeeSidebar({ open, onClose }) {
 
   const handleLogout = async () => {
     if (signingOut) return;
+
     setSigningOut(true);
     await logout();
-    navigate("/login", { replace: true });
+
+    navigate("/login", {
+      replace: true,
+    });
   };
 
   return (
@@ -62,50 +65,56 @@ export default function AttendeeSidebar({ open, onClose }) {
       <aside
         className={`${
           open ? "fixed left-4 top-[88px] z-40 block" : "hidden"
-        } w-[250px] shrink-0 rounded-2xl border border-[#e4e8f0] bg-white p-3 shadow-[0_18px_45px_rgba(15,28,65,.12)] lg:sticky lg:top-[100px] lg:block lg:h-[calc(100vh-124px)] lg:shadow-none`}
+        } w-[250px] shrink-0 rounded-2xl border border-[#e4e8f0] bg-white p-3 shadow-[0_18px_45px_rgba(15,28,65,.12)] lg:sticky lg:top-[100px] lg:block lg:h-[calc(100vh-124px)] lg:overflow-y-auto lg:shadow-none`}
       >
         <div className="mb-3 rounded-xl bg-gradient-to-br from-[#111e4b] to-[#342b87] p-4 text-white">
           <span className="mb-2 grid h-9 w-9 place-items-center rounded-lg bg-white/10">
             <TicketCheck size={17} />
           </span>
-          <strong className="block text-[13px]">Your conference hub</strong>
+
+          <strong className="block text-[13px]">
+            Your conference hub
+          </strong>
+
           <p className="mt-1 text-[10px] leading-5 text-white/60">
             Track your registrations and discover upcoming conferences.
           </p>
         </div>
 
-        <nav className="space-y-1" aria-label="Attendee dashboard navigation">
+        <nav
+          className="space-y-1"
+          aria-label="Attendee dashboard navigation"
+        >
           <NavItem
             icon={<LayoutDashboard size={16} />}
             label="Overview"
             active={location.pathname === "/attendee-dashboard"}
             onClick={() => goTo("/attendee-dashboard")}
           />
+
           <NavItem
             icon={<TicketCheck size={16} />}
             label="My registrations"
             active={location.pathname === "/my-conferences"}
             onClick={() => goTo("/my-conferences")}
           />
+
           <NavItem
             icon={<Compass size={16} />}
             label="Browse conferences"
             active={location.pathname === "/conferences"}
             onClick={() => goTo("/conferences")}
           />
-          <NavItem
-            icon={<FilePlus2 size={16} />}
-            label="Submit a proposal"
-            active={location.pathname.startsWith("/submit-proposal")}
-            onClick={() => goTo("/submit-proposal")}
-          />
-          <NavItem
-            icon={<ClipboardCheck size={16} />}
-            label="Proposal status"
-            active={location.pathname === "/attendee-proposals"}
-            onClick={() => goTo("/attendee-proposals")}
-          />
         </nav>
+
+        <div className="my-4 border-t border-[#edf0f5]" />
+
+        <NavItem
+          icon={<MessageSquareQuote size={16} />}
+          label="Testimonials"
+          active={location.pathname === "/user-testimonials"}
+          onClick={() => goTo("/user-testimonials")}
+        />
 
         <div className="my-4 border-t border-[#edf0f5]" />
 
@@ -115,12 +124,14 @@ export default function AttendeeSidebar({ open, onClose }) {
           active={location.pathname === "/profile"}
           onClick={() => goTo("/profile")}
         />
+
         <NavItem
           icon={<Settings size={16} />}
           label="Settings"
           active={location.pathname === "/settings"}
           onClick={() => goTo("/settings")}
         />
+
         <button
           type="button"
           onClick={handleLogout}
@@ -133,6 +144,7 @@ export default function AttendeeSidebar({ open, onClose }) {
           ) : (
             <LogOut size={16} />
           )}
+
           {signingOut ? "Signing out..." : "Sign out"}
         </button>
       </aside>
