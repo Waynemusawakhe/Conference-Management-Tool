@@ -38,7 +38,7 @@ function Register() {
     email: "",
     password: "",
     confirmPassword: "",
-    role: "", // No default — user must choose
+    role: "", // No default - user must choose
   });
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
@@ -68,7 +68,7 @@ function Register() {
     setError("");
     setSuccess(false);
 
-    // Client-side validation (UX only — backend validates too)
+    // Client-side validation (UX only - backend validates too)
     if (
       !formData.fullName ||
       !formData.email ||
@@ -230,18 +230,17 @@ function Register() {
                       </span>
                     </div>
                     <ul className="mt-1 grid gap-1 text-[11px] text-[#788398]">
-                      <li className={formData.password.length >= MIN_PASSWORD_LENGTH ? "text-green-600" : ""}>
-                        {formData.password.length >= MIN_PASSWORD_LENGTH ? "✓" : "•"} At least {MIN_PASSWORD_LENGTH} characters
-                      </li>
-                      <li className={/[A-Z]/.test(formData.password) && /[a-z]/.test(formData.password) ? "text-green-600" : ""}>
-                        {/[A-Z]/.test(formData.password) && /[a-z]/.test(formData.password) ? "✓" : "•"} Upper and lower case
-                      </li>
-                      <li className={/\d/.test(formData.password) ? "text-green-600" : ""}>
-                        {/\d/.test(formData.password) ? "✓" : "•"} At least one number
-                      </li>
-                      <li className={/[^A-Za-z0-9]/.test(formData.password) ? "text-green-600" : ""}>
-                        {/[^A-Za-z0-9]/.test(formData.password) ? "✓" : "•"} At least one symbol
-                      </li>
+                      {[
+                        { met: formData.password.length >= MIN_PASSWORD_LENGTH, label: `At least ${MIN_PASSWORD_LENGTH} characters` },
+                        { met: /[A-Z]/.test(formData.password) && /[a-z]/.test(formData.password), label: "Upper and lower case" },
+                        { met: /\d/.test(formData.password), label: "At least one number" },
+                        { met: /[^A-Za-z0-9]/.test(formData.password), label: "At least one symbol" },
+                      ].map((requirement) => (
+                        <li key={requirement.label} className={`inline-flex items-center gap-1.5 ${requirement.met ? "text-green-600" : ""}`}>
+                          {requirement.met ? <CheckCircle2 size={12} aria-hidden="true" /> : <span className="h-1.5 w-1.5 rounded-full bg-current" aria-hidden="true" />}
+                          {requirement.label}
+                        </li>
+                      ))}
                     </ul>
                   </div>
                 )}
@@ -302,7 +301,7 @@ function Register() {
               {/* Success Message (Auto-hides and redirects) */}
               {success && (
                 <p className="rounded-lg bg-green-50 px-3 py-2 text-xs font-semibold text-green-700">
-                  ✅ Account created! Redirecting to login...
+                  Account created! Redirecting to login...
                 </p>
               )}
 

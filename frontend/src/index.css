@@ -810,3 +810,137 @@ html.dark [class*="border-[#dfe4ed]"] { border-color: rgba(255,255,255,.12); }
   border-color: #7568f7;
   box-shadow: 0 0 0 3px rgba(117, 104, 247, .12);
 }
+
+/* Shared navigation refresh */
+.cmt-navbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  color: #fff;
+  background: rgba(7, 19, 47, .94);
+  border-bottom: 1px solid rgba(255, 255, 255, .075);
+  backdrop-filter: blur(18px);
+}
+
+.cmt-navbar-inner {
+  display: flex;
+  width: min(1240px, calc(100% - 48px));
+  min-height: 72px;
+  align-items: center;
+  gap: clamp(16px, 3vw, 42px);
+  margin-inline: auto;
+}
+
+.cmt-navbar-brand { flex: 0 0 auto; padding: 0; border: 0; background: none; text-align: left; }
+.cmt-navbar-brand > div { gap: 9px; }
+.cmt-navbar-brand img { width: 36px; height: 36px; }
+.cmt-navbar-brand strong { font-size: 21px; }
+.cmt-navbar-brand span { color: rgba(246, 247, 255, .58); font-size: 8px; }
+.cmt-navbar-links { display: flex; flex: 1; align-items: center; justify-content: center; gap: clamp(10px, 1.8vw, 25px); }
+.cmt-nav-link { position: relative; padding: 12px 0; border: 0; color: rgba(242, 243, 255, .67); background: transparent; font-size: 11px; font-weight: 600; transition: color .16s ease; }
+.cmt-nav-link::after { position: absolute; right: 50%; bottom: 4px; left: 50%; height: 2px; border-radius: 2px; background: #9b8fff; content: ""; transition: left .18s ease, right .18s ease; }
+.cmt-nav-link:hover, .cmt-nav-link.is-active { color: #fff; }
+.cmt-nav-link:hover::after, .cmt-nav-link.is-active::after { right: 0; left: 0; }
+.cmt-navbar-actions, .cmt-nav-auth { display: flex; align-items: center; gap: 8px; }
+.cmt-navbar-actions { flex: 0 0 auto; }
+.cmt-theme-toggle { display: grid; width: 36px; height: 36px; flex: 0 0 auto; place-items: center; border: 1px solid rgba(255, 255, 255, .15); border-radius: 10px; color: rgba(249, 249, 255, .82); background: rgba(255, 255, 255, .035); transition: border-color .16s ease, background .16s ease, color .16s ease; }
+.cmt-theme-toggle:hover { border-color: rgba(183, 174, 255, .46); color: #fff; background: rgba(255, 255, 255, .09); }
+.cmt-nav-login, .cmt-nav-register { min-height: 36px; padding: 0 13px; border-radius: 9px; font-size: 10px; font-weight: 700; transition: transform .16s ease, background .16s ease, border-color .16s ease; }
+.cmt-nav-login { border: 1px solid rgba(255, 255, 255, .17); color: #f8f8ff; background: transparent; }
+.cmt-nav-login:hover { border-color: rgba(255, 255, 255, .36); background: rgba(255, 255, 255, .07); }
+.cmt-nav-register { display: inline-flex; align-items: center; gap: 9px; border: 1px solid #8e82ff; color: #fff; background: #685be2; box-shadow: 0 5px 14px rgba(71, 59, 170, .23); }
+.cmt-nav-register:hover { transform: translateY(-1px); background: #7669ee; }
+.cmt-nav-register span { color: #d1ccff; font-size: 12px; }
+.cmt-mobile-menu, .cmt-mobile-panel { display: none; }
+
+/* Conference cards shared by the home page and conference browser */
+.conference-card-modern { display: flex; min-width: 0; height: 100%; flex-direction: column; overflow: hidden; border: 1px solid #e6e8ef; border-radius: 16px; background: #fff; box-shadow: 0 5px 18px rgba(17, 30, 64, .045); transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease; }
+.conference-card-modern:hover { transform: translateY(-3px); border-color: #d9d5f8; box-shadow: 0 15px 32px rgba(17, 30, 64, .09); }
+.conference-artwork { position: relative; display: flex; min-height: 166px; flex-direction: column; justify-content: space-between; overflow: hidden; padding: 15px 17px; color: #fff; isolation: isolate; }
+.conference-artwork.accent-violet { background: linear-gradient(132deg, #172248, #38377f); }
+.conference-artwork.accent-sage { background: linear-gradient(132deg, #173940, #34746b); }
+.conference-artwork.accent-clay { background: linear-gradient(132deg, #3d2d3b, #955944); }
+.conference-artwork::before, .conference-artwork::after { position: absolute; z-index: -1; content: ""; pointer-events: none; }
+.conference-artwork::before { top: -62px; right: -35px; width: 190px; height: 190px; border: 1px solid rgba(255, 255, 255, .16); border-radius: 50%; box-shadow: 0 0 0 24px rgba(255,255,255,.025), 0 0 0 49px rgba(255,255,255,.025); }
+.conference-artwork::after { right: 0; bottom: 0; left: 0; height: 48%; background: linear-gradient(0deg, rgba(5, 12, 36, .27), transparent); }
+.conference-artwork-lines { position: absolute; inset: 0; z-index: -1; opacity: .13; background: repeating-linear-gradient(135deg, transparent 0 17px, rgba(255,255,255,.2) 18px, transparent 19px 34px); mask-image: linear-gradient(90deg, transparent, #000 62%); }
+.conference-artwork-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.conference-artwork-header > span { color: rgba(255, 255, 255, .67); font-size: 8px; font-weight: 800; letter-spacing: .18em; }
+.conference-artwork-header time { padding: 7px 9px; border: 1px solid rgba(255, 255, 255, .2); border-radius: 7px; color: #fff; background: rgba(10, 16, 42, .22); font-size: 9px; font-weight: 700; backdrop-filter: blur(8px); }
+.conference-artwork-center { display: flex; align-items: flex-end; justify-content: space-between; gap: 8px; }
+.conference-artwork-code { max-width: 72%; overflow: hidden; color: #fff; font-size: clamp(30px, 3.4vw, 43px); font-weight: 760; line-height: .95; letter-spacing: -.075em; text-overflow: ellipsis; white-space: nowrap; }
+.conference-artwork-caption { padding-bottom: 3px; color: rgba(255, 255, 255, .64); font-size: 8px; }
+.conference-artwork-ring { position: absolute; right: 15%; bottom: -50px; width: 112px; height: 112px; border: 1px solid rgba(255, 255, 255, .2); border-radius: 50%; }
+.conference-card-content { display: flex; flex: 1; flex-direction: column; padding: 17px 18px 0; }
+.conference-card-labels { display: flex; min-height: 24px; flex-wrap: wrap; align-items: center; gap: 5px; }
+.conference-category-label, .conference-status-label, .conference-format-label { display: inline-flex; min-height: 21px; align-items: center; padding: 4px 8px; border-radius: 6px; font-size: 8px; font-weight: 750; }
+.conference-category-label.accent-violet { color: #5148b5; background: #f0efff; }
+.conference-category-label.accent-sage { color: #28715c; background: #eaf6f1; }
+.conference-category-label.accent-clay { color: #9a562f; background: #fff1e8; }
+.conference-status-label { color: #327957; background: #eef7f1; }
+.conference-format-label { color: #66718a; background: #f2f4f8; }
+.conference-card-content h3 { display: -webkit-box; min-height: 44px; overflow: hidden; margin: 12px 0 0; color: #182647; font-size: 15px; font-weight: 720; line-height: 1.42; letter-spacing: -.025em; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.conference-card-description { display: -webkit-box; overflow: hidden; margin: 7px 0 0; color: #788398; font-size: 10px; line-height: 1.65; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.conference-card-details { display: grid; gap: 10px; margin-top: 16px; padding-top: 13px; border-top: 1px solid #f0f1f5; }
+.conference-card-details > div { display: flex; min-width: 0; align-items: flex-start; gap: 9px; color: #7268d4; }
+.conference-card-details > div > svg { flex: 0 0 auto; margin-top: 2px; }
+.conference-card-details span { display: block; min-width: 0; }
+.conference-card-details small { display: block; margin-bottom: 3px; color: #a0a8b8; font-size: 8px; font-weight: 650; }
+.conference-card-details strong { display: block; overflow: hidden; color: #59657c; font-size: 9px; font-weight: 600; line-height: 1.4; text-overflow: ellipsis; }
+.conference-card-topics { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 13px; }
+.conference-card-topics span { max-width: 100%; overflow: hidden; padding: 5px 7px; border: 1px solid #eceef4; border-radius: 6px; color: #768198; background: #fbfbfd; font-size: 8px; text-overflow: ellipsis; white-space: nowrap; }
+.conference-card-action { margin: auto -18px 0; padding: 14px 18px; border-top: 1px solid #f0f1f5; }
+.conference-card-action button { display: inline-flex; align-items: center; gap: 7px; padding: 0; border: 0; color: #584dcc; background: transparent; font-size: 10px; font-weight: 750; transition: gap .16s ease, color .16s ease; }
+.conference-card-action button:hover { gap: 10px; color: #3e35a1; }
+.conference-card-action button:disabled { cursor: not-allowed; opacity: .45; }
+.conference-card-modern.is-list { flex-direction: row; }
+.conference-card-modern.is-list .conference-artwork { width: 34%; min-width: 230px; min-height: 255px; }
+.conference-card-modern.is-list .conference-card-content { padding-top: 20px; }
+
+html.dark .conference-card-modern { border-color: rgba(255, 255, 255, .1); background: #101d3b; }
+html.dark .conference-artwork.accent-violet { background: linear-gradient(132deg, #1a2950, #373772); }
+html.dark .conference-artwork.accent-sage { background: linear-gradient(132deg, #163b40, #32665f); }
+html.dark .conference-artwork.accent-clay { background: linear-gradient(132deg, #3d2d3b, #80513f); }
+html.dark .conference-card-content h3 { color: #f0f2ff; }
+html.dark .conference-card-description { color: #a3aec5; }
+html.dark .conference-card-details { border-color: rgba(255, 255, 255, .08); }
+html.dark .conference-card-details strong { color: #c3cadd; }
+html.dark .conference-card-details small { color: #8491ac; }
+html.dark .conference-card-topics span { border-color: rgba(255, 255, 255, .08); color: #a4aec4; background: rgba(255, 255, 255, .035); }
+html.dark .conference-card-action { border-color: rgba(255, 255, 255, .08); }
+
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 3px solid rgba(141, 130, 255, .8); outline-offset: 3px; }
+
+@media (max-width: 1100px) {
+  .cmt-navbar-inner { width: calc(100% - 36px); gap: 20px; }
+  .cmt-navbar-links { gap: 12px; }
+  .cmt-nav-link { font-size: 10px; }
+  .cmt-nav-login, .cmt-nav-register { padding-inline: 10px; }
+  .conference-card-modern.is-list .conference-artwork { width: 31%; min-width: 205px; }
+}
+
+@media (max-width: 860px) {
+  .cmt-navbar-inner { min-height: 66px; }
+  .cmt-navbar-links, .cmt-navbar-actions { display: none; }
+  .cmt-mobile-menu { display: grid; width: 37px; height: 37px; margin-left: auto; place-items: center; border: 1px solid rgba(255,255,255,.16); border-radius: 10px; color: #fff; background: rgba(255,255,255,.04); }
+  .cmt-mobile-panel { display: block; padding: 8px max(18px, calc((100% - 700px) / 2)) 18px; border-top: 1px solid rgba(255,255,255,.08); background: #091633; }
+  .cmt-nav-link.is-mobile { display: block; width: 100%; padding: 12px 2px; border-bottom: 1px solid rgba(255,255,255,.06); text-align: left; }
+  .cmt-nav-link.is-mobile::after { display: none; }
+  .cmt-nav-link.is-mobile.is-active { color: #c6beff; }
+  .cmt-mobile-actions { display: flex; align-items: center; gap: 10px; padding-top: 14px; }
+  .cmt-nav-auth.is-mobile { flex: 1; }
+  .cmt-nav-auth.is-mobile button { flex: 1; min-height: 40px; }
+  .conference-card-modern.is-list .conference-artwork { width: 30%; min-width: 180px; }
+}
+
+@media (max-width: 540px) {
+  .cmt-navbar-inner { width: calc(100% - 30px); }
+  .cmt-navbar-brand img { width: 33px; height: 33px; }
+  .cmt-navbar-brand strong { font-size: 19px; }
+  .conference-card-modern.is-list { flex-direction: column; }
+  .conference-card-modern.is-list .conference-artwork { width: 100%; min-width: 0; min-height: 155px; }
+  .conference-card-modern.is-list .conference-card-content { padding-top: 17px; }
+}
+
+html.dark .cmt-navbar { background: rgba(6, 15, 36, .95); }
+html.dark .cmt-mobile-panel { background: #07132f; }

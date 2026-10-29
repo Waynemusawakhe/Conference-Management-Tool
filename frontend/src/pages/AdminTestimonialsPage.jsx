@@ -15,6 +15,7 @@ import { Card, CardHeader, StateBlock } from "../components/AdminUI";
 import { useApiResource } from "../hooks/useApiResource";
 import { toArray } from "../api/normalize";
 import { testimonialsApi } from "../api/testimonialsApi";
+import { useAuth } from "../context/AuthContext";
 
 /* Defensive resolvers — guide §8.9 says fields require confirmation */
 const testimonialBody = (t) =>
@@ -218,6 +219,7 @@ function DeleteConfirmDialog({ open, onClose, onConfirm, testimonial, busy }) {
  * Page
  * ------------------------------------------------------------------ */
 export default function AdminTestimonialsPage() {
+  const { user } = useAuth();
   const [query, setQuery] = useState("");
   const [feedback, setFeedback] = useState(null);
   const [confirmTarget, setConfirmTarget] = useState(null);
@@ -395,6 +397,7 @@ export default function AdminTestimonialsPage() {
                 const role = testimonialRole(t);
                 const rating = testimonialRating(t);
                 const body = testimonialBody(t);
+                const canDelete = String(t.user_id ?? "") === String(user?.id ?? "");
 
                 return (
                   <article
@@ -428,14 +431,16 @@ export default function AdminTestimonialsPage() {
                         </span>
                       </div>
 
-                      <button
-                        onClick={() => handleDeleteClick(t)}
-                        className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-red-50 px-2.5 py-1.5 text-[10px] font-bold text-red-600 transition hover:bg-red-100"
-                        aria-label={`Delete testimonial from ${author}`}
-                      >
-                        <Trash2 size={12} />
-                        Delete
-                      </button>
+                      {canDelete && (
+                        <button
+                          onClick={() => handleDeleteClick(t)}
+                          className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-red-50 px-2.5 py-1.5 text-[10px] font-bold text-red-600 transition hover:bg-red-100"
+                          aria-label={`Delete testimonial from ${author}`}
+                        >
+                          <Trash2 size={12} />
+                          Delete
+                        </button>
+                      )}
                     </div>
                   </article>
                 );

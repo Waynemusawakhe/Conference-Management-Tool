@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import Logo from "../components/Logo";
 import Navbar from "../components/Navbar";
 import { ArrowRight, LockKeyhole, Mail, ShieldCheck, Sparkles } from "lucide-react";
@@ -7,6 +7,7 @@ import { useAuth } from "../hooks/useAuth";
 
 function Login() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { login } = useAuth();
 
   const [formData, setFormData] = useState({ email: "", password: "" });
@@ -30,40 +31,41 @@ function Login() {
 
     try {
       const response = await login(formData);
-      console.log("Full login response object:", response);
 
       const user = response?.user || response?.data?.user || response;
       const role = user?.role || user?.user_type || user?.account_type;
-      console.log("Extracted user:", user, "Extracted role:", role);
-
       const normalizedRole = String(role || "").trim().toLowerCase();
+      const requestedPath = location.state?.from;
+      const isSafeRequestedPath =
+        typeof requestedPath === "string" &&
+        requestedPath.startsWith("/") &&
+        !requestedPath.startsWith("//") &&
+        !requestedPath.includes("\\") &&
+        !["/login", "/register"].includes(requestedPath);
 
-switch (normalizedRole) {
-  case "author":
-    navigate("/author-dashboard", { replace: true });
-    break;
+      let dashboardPath;
+      switch (normalizedRole) {
+        case "author":
+          dashboardPath = "/author-dashboard";
+          break;
+        case "reviewer":
+          dashboardPath = "/reviewer-dashboard";
+          break;
+        case "organiser":
+          dashboardPath = "/organiser-dashboard";
+          break;
+        case "admin":
+          dashboardPath = "/admin-dashboard";
+          break;
+        case "attendee":
+          dashboardPath = "/attendee-dashboard";
+          break;
+        default:
+          throw new Error(`Unsupported user role: ${role || "unknown"}`);
+      }
 
-  case "reviewer":
-    navigate("/reviewer-dashboard", { replace: true });
-    break;
-
-  case "organiser":
-    navigate("/organiser-dashboard", { replace: true });
-    break;
-
-  case "admin":
-    navigate("/admin-dashboard", { replace: true });
-    break;
-
-  case "attendee":
-    navigate("/attendee-dashboard", { replace: true });
-    break;
-
-  default:
-    throw new Error(`Unsupported user role: ${role || "unknown"}`);
-}
+      navigate(isSafeRequestedPath ? requestedPath : dashboardPath, { replace: true });
     } catch (err) {
-      console.error("Login caught error:", err);
       if (err.status === 422 && err.errors) {
         const details = Object.values(err.errors).flat().join(" ");
         setError(details || err.message);

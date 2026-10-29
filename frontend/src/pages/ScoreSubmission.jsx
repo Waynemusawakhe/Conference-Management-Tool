@@ -20,9 +20,19 @@ import { useAuth } from "../context/AuthContext";
 import { reviewsApi } from "../api/reviewsApi";
 import { tokenStore } from "../api/client";
 
-/* Score range — provisional until the backend confirms the range. */
-const SCORE_OPTIONS = [1, 2, 3, 4, 5];
-const SCORE_LABELS = ["Poor", "Fair", "Good", "Great", "Excellent"];
+const SCORE_OPTIONS = Array.from({ length: 10 }, (_, index) => index + 1);
+const SCORE_LABELS = [
+  "Poor",
+  "Weak",
+  "Below average",
+  "Fair",
+  "Satisfactory",
+  "Good",
+  "Very good",
+  "Great",
+  "Excellent",
+  "Outstanding",
+];
 
 const RECOMMENDATIONS = [
   {
@@ -103,14 +113,13 @@ export default function ScoreSubmission() {
 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [locking, setLocking] = useState(false);
   const [error, setError] = useState(null);
   const [errorKind, setErrorKind] = useState(null);
   const [fieldErrors, setFieldErrors] = useState({});
   const [successKind, setSuccessKind] = useState(null);
 
   const [paper, setPaper] = useState(null);
-  const [score, setScore] = useState(3);
+  const [score, setScore] = useState(5);
   const [comments, setComments] = useState("");
   const [recommendation, setRecommendation] = useState("accept");
 
@@ -157,7 +166,7 @@ export default function ScoreSubmission() {
 
         setPaper(review);
 
-        const initialScore = review.score != null ? Number(review.score) : 3;
+        const initialScore = review.score != null ? Number(review.score) : 5;
         const initialComments = review.comments ?? review.comment ?? "";
         const initialRecommendation = review.recommendation
           ? String(review.recommendation).toLowerCase()
@@ -200,8 +209,8 @@ export default function ScoreSubmission() {
     };
   }, [id]);
 
-  const locked = Boolean(paper?.locked ?? paper?.is_locked);
   const alreadySubmitted = Boolean(paper?.submitted_at ?? paper?.submittedAt);
+  const locked = Boolean(paper?.locked ?? paper?.is_locked) || alreadySubmitted;
   const reviewState = locked ? "locked" : alreadySubmitted ? "submitted" : "pending";
 
   const dirty = useMemo(() => {
@@ -301,11 +310,10 @@ export default function ScoreSubmission() {
 
     setConfirmState({
       kind: "submit",
-      title: alreadySubmitted ? "Update this review?" : "Submit this review?",
-      message: alreadySubmitted
-        ? "Your previous submission will be replaced with the new score, comments, and recommendation."
-        : "Your evaluation will be sent to the organiser. You can still update it before locking.",
-      confirmLabel: alreadySubmitted ? "Update review" : "Submit review",
+      title: "Submit this review?",
+      message:
+        "Your evaluation will be sent to the organiser and will be final. You will not be able to change it after submission.",
+      confirmLabel: "Submit review",
       tone: "primary",
       onConfirm: doSubmit,
     });
@@ -366,47 +374,6 @@ export default function ScoreSubmission() {
   /* ============================================================== *
    * 🔴 CHANGED — Lock flow also uses the modal.
    * ============================================================== */
-  function handleLock() {
-    if (locking) return;
-
-    setConfirmState({
-      kind: "lock",
-      title: "Lock this review?",
-      message:
-        "Locking is permanent. Once locked, you cannot edit your score, comments, or recommendation.",
-      confirmLabel: "Lock review",
-      tone: "warning",
-      onConfirm: doLock,
-    });
-  }
-
-  async function doLock() {
-    setConfirmState(null);
-
-    setLocking(true);
-    setError(null);
-    setErrorKind(null);
-
-    try {
-      if (typeof reviewsApi?.lock !== "function") {
-        throw { message: "reviewsApi.lock is not defined." };
-      }
-      await reviewsApi.lock(id);
-
-      const response = await reviewsApi.getById(id);
-      const data = response?.data ?? response;
-      setPaper(data?.data ?? data ?? null);
-      setSuccessKind("locked");
-    } catch (err) {
-      console.error("[ScoreSubmission] lock failed:", err);
-      setError(err?.message ?? "Failed to lock review.");
-      setErrorKind("generic");
-    } finally {
-      setLocking(false);
-    }
-  }
-  /* 🔴 END CHANGED */
-
   const wordCount = comments.trim()
     ? comments.trim().split(/\s+/).length
     : 0;
@@ -473,7 +440,7 @@ export default function ScoreSubmission() {
                 Review submitted
               </strong>
               <span className="mt-0.5 block text-[11px] leading-5 text-[#5548d7]/85">
-                The organiser can now see your score. You can still update it, or lock it when you're ready.
+                This review has been submitted and is final. It can no longer be changed.
               </span>
             </div>
           </div>
@@ -648,9 +615,9 @@ export default function ScoreSubmission() {
                 {/* Score */}
                 <div>
                   <label className="mb-3 block text-[10px] font-extrabold uppercase tracking-[.1em] text-[#6b7280]">
-                    Score — 1 Poor to 5 Excellent
+                    Score - 1 Poor to 10 Outstanding
                   </label>
-                  <div className="flex gap-2.5">
+                  <div className="grid grid-cols-5 gap-2.5">
                     {SCORE_OPTIONS.map((num) => {
                       const active = score === num;
                       return (
@@ -766,51 +733,14 @@ export default function ScoreSubmission() {
 
                 {/* Actions */}
                 {!locked && (
-                  <>
-                    {!alreadySubmitted ? (
-                      <button
-                        type="submit"
-                        disabled={submitting}
-                        className="group relative mt-auto flex w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-gradient-to-br from-[#2563eb] to-[#1d4ed8] py-4 text-sm font-extrabold text-white shadow-[0_16px_36px_-8px_rgba(37,99,235,.55)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_20px_44px_-8px_rgba(37,99,235,.65)] active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
-                      >
-                        <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
-                        <Send size={15} />
-                        {submitting ? "Submitting review…" : "Submit final review"}
-                      </button>
-                    ) : (
-                      <div className="mt-auto flex flex-col gap-2">
-                        <button
-                          type="button"
-                          onClick={() => navigate("/reviewer-dashboard")}
-                          className="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-gradient-to-br from-[#2563eb] to-[#1d4ed8] py-4 text-sm font-extrabold text-white shadow-[0_16px_36px_-8px_rgba(37,99,235,.55)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_20px_44px_-8px_rgba(37,99,235,.65)]"
-                        >
-                          <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
-                          <ArrowLeft size={15} />
-                          Back to dashboard
-                        </button>
-
-                        <div className="grid grid-cols-2 gap-2">
-                          <button
-                            type="submit"
-                            disabled={submitting || !dirty}
-                            className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#e4e8f0] bg-white py-3 text-[12px] font-extrabold text-[#43506a] transition hover:-translate-y-px hover:border-[#93c5fd] hover:bg-[#eff6ff] disabled:cursor-not-allowed disabled:opacity-50"
-                          >
-                            <Send size={13} />
-                            {submitting ? "Saving…" : "Update review"}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={handleLock}
-                            disabled={locking}
-                            className="inline-flex items-center justify-center gap-2 rounded-xl border-2 border-[#bfdbfe] bg-[#eff6ff] py-3 text-[12px] font-extrabold text-[#1d4ed8] transition hover:-translate-y-px hover:border-[#93c5fd] hover:bg-[#dbeafe] disabled:opacity-50"
-                          >
-                            <Lock size={13} />
-                            {locking ? "Locking…" : "Lock review"}
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </>
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className="group relative mt-auto flex w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-gradient-to-br from-[#2563eb] to-[#1d4ed8] py-4 text-sm font-extrabold text-white shadow-[0_16px_36px_-8px_rgba(37,99,235,.55)] transition-all duration-200 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    <Send size={15} />
+                    {submitting ? "Submitting review..." : "Submit final review"}
+                  </button>
                 )}
 
                 {locked && (
@@ -968,7 +898,7 @@ function SuccessOverlay({ kind, onDismiss }) {
   const headline = isLock ? "Review locked" : "Review submitted!";
   const subtext = isLock
     ? "This review is final and can no longer be edited."
-    : "Your evaluation has been sent to the organiser.";
+    : "Your evaluation was sent to the organiser and is final. It can no longer be changed.";
 
   return (
     <div

@@ -1,11 +1,20 @@
-import { mockConferences } from "../data/mockConferences";
+import { conferencesApi } from "../api/conferencesApi";
 
-export async function getFeaturedConferences(limit = 3) {
-  return mockConferences.slice(0, limit);
+function unwrapList(response) {
+  if (Array.isArray(response)) return response;
+  if (Array.isArray(response?.data)) return response.data;
+  if (Array.isArray(response?.data?.data)) return response.data.data;
+  if (Array.isArray(response?.data?.items)) return response.data.items;
+  if (Array.isArray(response?.items)) return response.items;
+  return [];
 }
 
 export async function getAllConferences() {
-  return mockConferences;
+  return unwrapList(await conferencesApi.getAll({ per_page: 100 }));
+}
+
+export async function getFeaturedConferences(limit = 3) {
+  return (await getAllConferences()).slice(0, limit);
 }
 
 export async function searchConferences(query = "", filters = {}) {
@@ -16,103 +25,75 @@ export async function searchConferences(query = "", filters = {}) {
   const status = (filters.status || "").toLowerCase();
   const format = (filters.format || "").toLowerCase();
 
-  return data.filter((c) => {
+  return data.filter((conference) => {
+    const topics = Array.isArray(conference.topics) ? conference.topics : [];
     const haystack = [
-      c.title,
-      c.shortTitle,
-      c.acronym,
-      c.category,
-      c.location,
-      c.city,
-      c.country,
-      c.description,
-      c.status,
-      ...(c.topics || []),
+      conference.name,
+      conference.title,
+      conference.shortTitle,
+      conference.code,
+      conference.acronym,
+      conference.category,
+      conference.location,
+      conference.city,
+      conference.country,
+      conference.description,
+      conference.status,
+      conference.submission_status,
+      conference.format,
+      ...topics,
     ]
       .filter(Boolean)
       .join(" ")
       .toLowerCase();
 
-    const matchesQuery = !q || haystack.includes(q);
-    const matchesCategory = !category || c.category.toLowerCase() === category;
-    const matchesCountry = !country || c.country.toLowerCase() === country;
-    const matchesStatus = !status || (c.status || "").toLowerCase() === status;
-    const matchesFormat = !format || (c.format || "").toLowerCase() === format;
-
     return (
-      matchesQuery &&
-      matchesCategory &&
-      matchesCountry &&
-      matchesStatus &&
-      matchesFormat
+      (!q || haystack.includes(q)) &&
+      (!category || String(conference.category || "").toLowerCase().includes(category)) &&
+      (!country || String(conference.country || "").toLowerCase().includes(country)) &&
+      (!status || String(conference.submission_status || conference.status || "").toLowerCase().includes(status)) &&
+      (!format || String(conference.format || "").toLowerCase().includes(format))
     );
   });
 }
 
-export function sortConferences(list, sortBy = "deadline") {
-  const copy = [...list];
-  if (sortBy === "deadline") {
-    return copy.sort((a, b) =>
-      (a.submissionDeadline || "").localeCompare(b.submissionDeadline || "")
-    );
-  }
-  if (sortBy === "date") {
-    return copy.sort((a, b) =>
-      (a.startDate || "").localeCompare(b.startDate || "")
-    );
-  }
-  return copy.sort((a, b) =>
-    (a.shortTitle || a.title).localeCompare(b.shortTitle || b.title)
-  );
-}
-
-
-
 export const reviewerService = {
-    getPendingReviews: async () => {
-        const response = await fetch('http://127.0.0.1:8000/api/v1/reviewer/pending', {
-            headers: {
-                'Authorization': `Bearer ${localStorage.getItem('token')}`,
-                'Accept': 'application/json'
-            }
-        });
-        const data = await response.json();
-        return data.data; 
-    },
+  getPendingReviews: async () => {
+    const response = await fetch("http://127.0.0.1:8000/api/v1/reviewer/pending", {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+        Accept: "application/json",
+      },
+    });
+    const data = await response.json();
+    return data.data;
+  },
 
-    approveReview: async (id, comments = '') => {
-        const response = await fetch(`http://127.0.0.1:8000/api/v1/reviewer/items/${id}/approve`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${localStorage.getItem('token')}`,
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
-            body: JSON.stringify({
-                score: 10,
-                comments: comments,
-                recommendation: 'accept'
-            })
-        });
-        const data = await response.json();
-        return data.data;
-    },
+  approveReview: async (id, comments = "") => {
+    const response = await fetch(`http://127.0.0.1:8000/api/v1/reviewer/items/${id}/approve`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({ score: 10, comments, recommendation: "accept" }),
+    });
+    const data = await response.json();
+    return data.data;
+  },
 
-    rejectReview: async (id, reason = '') => {
-        const response = await fetch(`http://127.0.0.1:8000/api/v1/reviewer/items/${id}/reject`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${localStorage.getItem('token')}`,
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
-            body: JSON.stringify({
-                score: 0,
-                comments: reason,
-                recommendation: 'reject'
-            })
-        });
-        const data = await response.json();
-        return data.data;
-    },
-  };
+  rejectReview: async (id, reason = "") => {
+    const response = await fetch(`http://127.0.0.1:8000/api/v1/reviewer/items/${id}/reject`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({ score: 0, comments: reason, recommendation: "reject" }),
+    });
+    const data = await response.json();
+    return data.data;
+  },
+};
