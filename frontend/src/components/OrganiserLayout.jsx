@@ -13,6 +13,7 @@ import {
   MessageSquareQuote,
   Moon,
   Plus,
+  ScanLine,
   Settings as SettingsIcon,
   Sun,
   UserRound,
@@ -29,6 +30,7 @@ const PRIMARY_NAV = [
   { label: "My conferences", to: "/organiser/conferences", icon: CalendarDays },
   { label: "Reviews", to: "/organiser/reviews", icon: CheckCheck },
   { label: "Attendees", to: "/organiser/registrations", icon: Users },
+  { label: "QR check-in", to: "/organiser/scanner", icon: ScanLine },
   { label: "Create conference", to: "/create-conference", icon: Plus },
 ];
 

@@ -42,7 +42,7 @@ const AuthorConferences = lazy(() => import("./pages/AuthorConferences"));
 const OrganiserConferences = lazy(() => import("./pages/OrganiserConferences"));
 const OrganiserReviews = lazy(() => import("./pages/OrganiserReviews"));
 const OrganiserRegistrations = lazy(() => import("./pages/OrganiserRegistrations"));
-
+const OrganiserQrScanner = lazy(() => import("./pages/OrganiserQrScanner"));
 /* ---------- Admin pages ---------- */
 const AdminReportsPage = lazy(() => import("./pages/AdminReportsPage"));
 const AdminUserDetailPage = lazy(() => import("./pages/AdminUserDetailPage"));
@@ -238,7 +238,14 @@ export default function App() {
               </ProtectedRoute>
             }
           />
-
+          <Route
+            path="/organiser/scanner"
+            element={
+              <ProtectedRoute roles={["organiser", "admin"]}>
+                <OrganiserQrScanner />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/create-conference"
             element={
@@ -265,6 +272,8 @@ export default function App() {
               </ProtectedRoute>
             }
           />
+
+          
 
           {/* ==================== ADMIN ==================== */}
 

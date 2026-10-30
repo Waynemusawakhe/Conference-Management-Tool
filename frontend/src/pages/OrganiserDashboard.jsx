@@ -4,8 +4,6 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-
-
 import {
 
 
@@ -51,6 +49,9 @@ import {
 
 
   Plus,
+
+
+  ScanLine,
 
 
 
@@ -1998,7 +1999,7 @@ const assignReviewer = async (e) => {
 
 
 
-              Run your conferences from one workspace â€” monitor submissions,
+              Run your conferences from one workspace — monitor submissions,
 
 
 
@@ -2338,7 +2339,7 @@ const assignReviewer = async (e) => {
 
 
 
-            Loading your conferencesâ€¦
+            Loading your conferences
 
 
 
@@ -2715,6 +2716,20 @@ const assignReviewer = async (e) => {
 
 
                 </button>
+                
+                <button
+                  type="button"
+                  onClick={() =>
+                    navigate(
+                      `/organiser/scanner?conferenceId=${encodeURIComponent(
+                        selectedConference.id
+                      )}`
+                    )
+                  }
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-white/15 bg-white/10 px-3 py-2 text-xs font-bold text-white hover:bg-white/15"
+                >
+                  QR check-in
+                </button> 
 
 
 
@@ -2998,7 +3013,7 @@ const assignReviewer = async (e) => {
 
 
 
-            Loading submissions, reviews and attendee dataâ€¦
+            Loading submissions, reviews and attendee data
 
 
 
