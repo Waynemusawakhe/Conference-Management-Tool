@@ -10,7 +10,8 @@ export const registrationsApi = {
     http.get(
       `/registrations/${encodeURIComponent(id)}`
     ),
-
+  getPass: (id) =>
+  http.get(`/registrations/${id}/pass`),
   create: (body) =>
     http.post(
       "/registrations",
