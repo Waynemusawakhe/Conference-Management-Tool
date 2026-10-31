@@ -688,7 +688,11 @@ export default function AuthorConferences() {
                 }
               >
                 {displayConferences.map((conference) => {
-                  const closed = conference.status === "closed";
+                  const deadlinePassed =
+                    Boolean(conference.submission_deadline) &&
+                    String(conference.submission_deadline).slice(0, 10) <
+                       new Date().toLocaleDateString("en-CA");
+                  const closed = conference.status === "closed" || deadlinePassed;
                   return (
                     <div key={conference.id} className="min-w-0">
                       <ConferenceCard
