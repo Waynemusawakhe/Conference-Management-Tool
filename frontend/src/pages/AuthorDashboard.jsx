@@ -1,3 +1,14 @@
+const todayISO = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
+
+// True when the deadline date is before today. The deadline day itself still counts as open.
+const isDeadlinePassed = (c) =>
+  Boolean(c?.submission_deadline) &&
+  String(c.submission_deadline).slice(0, 10) < todayISO();
+
+
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   AlertTriangle,
@@ -516,7 +527,7 @@ export default function AuthorDashboard() {
 
       {modal === "create" || modal === "edit" ? <Modal title={modal === "create" ? "Submit a proposal" : "Edit proposal"} onClose={()=>setModal(null)} wide>
         <form onSubmit={submitForm} className="grid gap-4">
-          {modal === "create" && <label className="grid gap-1.5 text-[11px] font-bold text-[#43506a]">Conference<select value={form.conference_id} onChange={(e)=>setForm((v)=>({...v,conference_id:e.target.value}))} className="h-11 rounded-xl border border-[#dfe4ed] bg-white px-3 text-sm font-normal outline-none focus:border-[#7568f7]"><option value="">Select a conference</option>{conferences.filter((c)=>c.submission_status !== "closed").map((c)=><option key={c.id} value={c.id}>{c.name}</option>)}</select></label>}
+          {modal === "create" && <label className="grid gap-1.5 text-[11px] font-bold text-[#43506a]">Conference<select value={form.conference_id} onChange={(e)=>setForm((v)=>({...v,conference_id:e.target.value}))} className="h-11 rounded-xl border border-[#dfe4ed] bg-white px-3 text-sm font-normal outline-none focus:border-[#7568f7]"><option value="">Select a conference</option>{conferences.filter((c)=>c.submission_status !== "closed" && !isDeadlinePassed(c)).map((c)=><option key={c.id} value={c.id}>{c.name}</option>)}</select></label>}
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="grid gap-1.5 text-[11px] font-bold text-[#43506a] sm:col-span-2">Title<input value={form.title} onChange={(e)=>setForm((v)=>({...v,title:e.target.value}))} maxLength={255} className="h-11 rounded-xl border border-[#dfe4ed] px-3 text-sm font-normal outline-none focus:border-[#7568f7]" placeholder="Research proposal title" /></label>
             <label className="grid gap-1.5 text-[11px] font-bold text-[#43506a]">Track<input value={form.track} onChange={(e)=>setForm((v)=>({...v,track:e.target.value}))} maxLength={255} className="h-11 rounded-xl border border-[#dfe4ed] px-3 text-sm font-normal outline-none focus:border-[#7568f7]" placeholder="e.g. Artificial Intelligence" /></label>
