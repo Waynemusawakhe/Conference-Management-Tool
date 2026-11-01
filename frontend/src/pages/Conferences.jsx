@@ -67,7 +67,6 @@ function normaliseConference(conference) {
     shortTitle: conference.name || conference.code || "Untitled Conference",
     description: conference.description || "Conference information and submission details.",
     category: conference.category || "Computer Science",
-    topics: Array.isArray(conference.topics) ? conference.topics : [],
     format: conference.format || "",
     status: conference.submission_status || "",
     submissionDeadline: formatDate(conference.submission_deadline),
@@ -283,6 +282,21 @@ export default function Conferences({ embedded = false }) {
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+    const [selectedForCompare, setSelectedForCompare] = useState([]);
+  const [showCompareModal, setShowCompareModal] = useState(false);
+
+  const toggleCompare = (conference) => {
+    setSelectedForCompare((prev) => {
+      const exists = prev.find((c) => c.id === conference.id);
+      if (exists) return prev.filter((c) => c.id !== conference.id);
+      if (prev.length >= 3) {
+        alert("You can only compare up to 3 conferences at a time.");
+        return prev;
+      }
+      return [...prev, conference];
+    });
+  };
+
   const loadConferences = useCallback(
     async ({ page = 1, append = false } = {}) => {
       const version = ++requestVersion.current;
@@ -294,10 +308,10 @@ export default function Conferences({ embedded = false }) {
         const response = await conferencesApi.getAll({
           page,
           per_page: 50,
-          search: query.trim(),
-          category: filters.category,
-          submission_status: filters.status,
-          format: filters.format,
+          search: query.trim() || undefined,  
+          category: filters.category || undefined,
+          submission_status: filters.status || undefined,
+          format: filters.format || undefined,
           sort: sortBy,
         });
 
@@ -306,8 +320,9 @@ export default function Conferences({ embedded = false }) {
 
         setConferences((current) => (append ? [...current, ...data] : data));
         setCurrentPage(page);
-        setHasMore(page < Number(response?.meta?.last_page ?? page));
-        setTotalConferences(Number(response?.meta?.total ?? data.length));
+        const meta = response?.meta || response?.data?.meta || response?.data?.data?.meta;
+        setHasMore(page < Number(meta?.last_page ?? page));
+        setTotalConferences(Number(meta?.total ?? data.length));
       } catch (err) {
         if (version !== requestVersion.current) return;
         setError(
@@ -416,6 +431,7 @@ export default function Conferences({ embedded = false }) {
     result = result.filter((c) => {
       if (!c.rawStartDate) return true;
       const endDate = c.rawEndDate ? new Date(c.rawEndDate) : new Date(c.rawStartDate);
+      endDate.setHours(23, 59, 59, 999); 
       return endDate.getTime() >= today.getTime();
     });
 
@@ -465,26 +481,22 @@ export default function Conferences({ embedded = false }) {
 
         <main className={showAttendeeChrome ? "min-w-0 flex-1" : ""}>
           
-          {!embedded && (
-            upcomingConference && !loading ? (
-              <HugeCountdownHero conference={upcomingConference} />
-            ) : (
-              <section className="relative overflow-hidden bg-[radial-gradient(circle_at_75%_32%,rgba(98,83,245,.2),transparent_27%),linear-gradient(135deg,#07132f_0%,#0a1740_52%,#15165a_100%)] px-5 py-24 text-white">
-                <div className="relative z-[2] mx-auto flex w-[min(1200px,100%)] flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
-                  <div>
-                    <span className="inline-flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-[.1em] text-[#b9b3ff]">
-                      Browse conferences
-                    </span>
-                    <h1 className="my-4 max-w-[720px] text-[clamp(34px,4.4vw,54px)] font-bold leading-tight tracking-[-.05em]">
-                      Find the right conference for your research.
-                    </h1>
-                    <p className="max-w-[620px] text-[15px] leading-7 text-white/75">
-                      Search by topic, filter by status and format, and find conferences created by organisers on the platform.
-                    </p>
-                  </div>
+         {!embedded && (
+            <section className="relative overflow-hidden bg-[radial-gradient(circle_at_75%_32%,rgba(98,83,245,.2),transparent_27%),linear-gradient(135deg,#07132f_0%,#0a1740_52%,#15165a_100%)] px-5 py-24 text-white">
+              <div className="relative z-[2] mx-auto flex w-[min(1200px,100%)] flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <span className="inline-flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-[.1em] text-[#b9b3ff]">
+                    Browse conferences
+                  </span>
+                  <h1 className="my-4 max-w-[720px] text-[clamp(34px,4.4vw,54px)] font-bold leading-tight tracking-[-.05em]">
+                    Find the right conference for your research.
+                  </h1>
+                  <p className="max-w-[620px] text-[15px] leading-7 text-white/75">
+                    Search by topic, filter by status and format, and find conferences created by organisers on the platform.
+                  </p>
                 </div>
-              </section>
-            )
+              </div>
+            </section>
           )}
 
           {embedded && (
@@ -660,7 +672,22 @@ export default function Conferences({ embedded = false }) {
                     return (
                       <div key={conference.id} className="min-w-0">
                         <ConferenceCard conference={conference} layout={view} />
-                        <div className="mt-3 flex justify-end">
+                                                <div className="mt-3 flex justify-end gap-2">
+                          
+                          {/* Compare Button */}
+                          <button
+                            type="button"
+                            onClick={() => toggleCompare(conference)}
+                            className={`inline-flex min-h-10 items-center justify-center rounded-[10px] px-4 text-[11px] font-extrabold transition ${
+                              selectedForCompare.find((c) => c.id === conference.id)
+                                ? "bg-[#07132f] text-white"
+                                : "border border-[#dfe4ed] bg-white text-[#59657d] hover:bg-[#f5f6fa]"
+                            }`}
+                          >
+                            {selectedForCompare.find((c) => c.id === conference.id) ? "Selected ✓" : "Compare"}
+                          </button>
+
+                          {/* Register Button */}
                           <button
                             type="button"
                             disabled={isRegistering}
@@ -742,6 +769,68 @@ export default function Conferences({ embedded = false }) {
             <span>© {new Date().getFullYear()} CMT. Conference Management Tool.</span>
           </div>
         </footer>
+      )}
+      {selectedForCompare.length >= 2 && (
+        <div className="fixed bottom-6 left-1/2 z-[90] flex -translate-x-1/2 items-center gap-4 rounded-full bg-[#07132f] px-6 py-3 text-white shadow-[0_20px_50px_rgba(0,0,0,0.3)]">
+          <span className="text-[12px] font-bold">{selectedForCompare.length} conferences selected</span>
+          <button onClick={() => setShowCompareModal(true)} className="rounded-full bg-[#6655f6] px-5 py-2 text-[11px] font-extrabold text-white shadow-md transition hover:bg-[#7869ff]">
+            Compare Now
+          </button>
+          <button onClick={() => setSelectedForCompare([])} className="text-[11px] font-bold text-white/60 hover:text-white">
+            Clear
+          </button>
+        </div>
+      )}
+
+      {showCompareModal && selectedForCompare.length > 0 && (
+        <div className="fixed inset-0 z-[100] grid place-items-center bg-[#07132f]/60 p-4 backdrop-blur-sm">
+          <div className="flex max-h-[90vh] w-full max-w-[900px] flex-col overflow-hidden rounded-[22px] bg-white shadow-2xl">
+            <div className="flex items-center justify-between border-b border-[#edf0f5] p-6">
+              <h2 className="text-xl font-bold text-[#0d1b3d]">Conference Comparison</h2>
+              <button onClick={() => setShowCompareModal(false)} className="text-sm font-bold text-[#66728b] hover:text-red-500">
+                Close ✕
+              </button>
+            </div>
+            <div className="overflow-auto p-6">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr>
+                    <th className="p-3 border-b bg-[#fafbfe] text-[11px] font-extrabold uppercase text-[#8993a6] w-1/4">Feature</th>
+                    {selectedForCompare.map((c) => (
+                      <th key={c.id} className="p-3 border-b bg-[#fafbfe] text-[13px] font-bold text-[#0d1b3d]">{c.name}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="text-[12px] text-[#43506a]">
+                  <tr>
+                    <td className="p-3 border-b font-bold">Dates</td>
+                    {selectedForCompare.map((c) => (
+                      <td key={c.id} className="p-3 border-b">{c.startDate} - {c.endDate}</td>
+                    ))}
+                  </tr>
+                  <tr>
+                    <td className="p-3 border-b font-bold">Location</td>
+                    {selectedForCompare.map((c) => (
+                      <td key={c.id} className="p-3 border-b">{c.city}, {c.country}</td>
+                    ))}
+                  </tr>
+                  <tr>
+                    <td className="p-3 border-b font-bold">Format</td>
+                    {selectedForCompare.map((c) => (
+                      <td key={c.id} className="p-3 border-b capitalize">{c.format?.replace("_", " ")}</td>
+                    ))}
+                  </tr>
+                  <tr>
+                    <td className="p-3 border-b font-bold">Deadline</td>
+                    {selectedForCompare.map((c) => (
+                      <td key={c.id} className="p-3 border-b text-red-600 font-semibold">{c.submissionDeadline}</td>
+                    ))}
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
