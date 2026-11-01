@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { CalendarDays, FilePlus2, MapPin } from "lucide-react";
+import DocumentInspector from "../components/DocumentInspector";
+import { inspectDocument } from "../utils/documentInspector";
 import { submissionsApi } from "../api/submissionsApi";
 import { conferencesApi } from "../api/conferencesApi";
 
@@ -151,20 +153,8 @@ function SubmitProposal() {
   };
 
   /* ---- File picker ---- */
-  const handleFileChange = (e) => {
+    const handleFileChange = (e) => {
     const selected = e.target.files?.[0] ?? null;
-    if (!selected) {
-      setFile(null);
-      setError("");
-      return;
-    }
-    const validationError = validateFile(selected);
-    if (validationError) {
-      setError(validationError);
-      setFile(null);
-      e.target.value = "";
-      return;
-    }
     setError("");
     setFile(selected);
   };
@@ -189,13 +179,15 @@ function SubmitProposal() {
       setError("Title, track, and abstract are required.");
       return;
     }
-    if (file) {
-      const fileError = validateFile(file);
-      if (fileError) {
-        setError(fileError);
-        return;
-      }
-    }
+  if (file) {
+          const inspected = inspectDocument(file);
+          const fileError =
+            inspected && !inspected.valid ? inspected.problems[0] : null;
+            if (fileError) {
+              setError(fileError);
+              return;
+            }
+  }
 
     setSubmitting(true);
     try {
@@ -440,51 +432,7 @@ function SubmitProposal() {
             PDF, DOC or DOCX, maximum 10MB
           </p>
 
-          {file && (
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "10px",
-                marginTop: "10px",
-                padding: "8px 12px",
-                border: "1px solid var(--border, #e4e8f0)",
-                borderRadius: "10px",
-                background: "#fafbff",
-                fontSize: "12px",
-              }}
-            >
-              <span
-                style={{
-                  flex: 1,
-                  minWidth: 0,
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                <strong>{file.name}</strong>
-                <span style={{ color: "var(--muted)" }}>
-                  {" "}
-                  · {formatBytes(file.size)}
-                </span>
-              </span>
-              <button
-                type="button"
-                onClick={handleRemoveFile}
-                style={{
-                  border: "none",
-                  background: "transparent",
-                  color: "#b13a3a",
-                  fontWeight: 700,
-                  fontSize: "11px",
-                  cursor: "pointer",
-                }}
-              >
-                Remove
-              </button>
-            </div>
-          )}
+          <DocumentInspector file={file} />
         </div>
 
         {error && <p className="auth-error">{error}</p>}
