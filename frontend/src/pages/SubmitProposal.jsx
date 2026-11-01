@@ -112,7 +112,14 @@ function SubmitProposal() {
         const response = await conferencesApi.getById(conferenceId);
         const data = response?.data ?? response;
         const conf = data?.data ?? data ?? null;
-        if (!cancelled) setConference(conf);
+        if (!cancelled) {
+          if (conf && !isConferenceOpen(conf)) {
+            setConference(null);
+            setLoadError("Submissions are closed for this conference. The deadline has passed.");
+          } else {
+            setConference(conf);
+          }
+        }
       } catch (err) {
         if (!cancelled)
           setLoadError(err?.message || "Couldn't load this conference.");
