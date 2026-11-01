@@ -81,6 +81,11 @@ function normaliseConference(conference) {
     websiteLink: conference.website_link || "",
     accent: getAccent(conference.category),
     isLive: getIsLive(conference),
+    topics: Array.isArray(conference.topics) 
+      ? conference.topics 
+      : typeof conference.topics === "string"
+        ? conference.topics.split(",").map(t => t.trim())
+        : [],
   };
 }
 
@@ -262,6 +267,7 @@ export default function Conferences({ embedded = false }) {
     category: searchParams.get("category") || "",
     status: "",
     format: "",
+    country: "", 
   });
 
   const [sortBy, setSortBy] = useState("deadline");
@@ -284,17 +290,25 @@ export default function Conferences({ embedded = false }) {
 
     const [selectedForCompare, setSelectedForCompare] = useState([]);
   const [showCompareModal, setShowCompareModal] = useState(false);
+  const [compareError, setCompareError] = useState("");
+  const compareButtonRef = useRef(null);
 
   const toggleCompare = (conference) => {
-    setSelectedForCompare((prev) => {
-      const exists = prev.find((c) => c.id === conference.id);
-      if (exists) return prev.filter((c) => c.id !== conference.id);
-      if (prev.length >= 3) {
-        alert("You can only compare up to 3 conferences at a time.");
-        return prev;
-      }
-      return [...prev, conference];
-    });
+    setCompareError(""); // Clear previous errors
+    const exists = selectedForCompare.find((c) => c.id === conference.id);
+    
+    if (exists) {
+      setSelectedForCompare((prev) => prev.filter((c) => c.id !== conference.id));
+      return;
+    }
+    
+    if (selectedForCompare.length >= 3) {
+      setCompareError("You can only compare up to 3 conferences at a time.");
+      setTimeout(() => setCompareError(""), 4000); // Auto-hide after 4 seconds
+      return;
+    }
+    
+    setSelectedForCompare((prev) => [...prev, conference]);
   };
 
   const loadConferences = useCallback(
@@ -312,6 +326,7 @@ export default function Conferences({ embedded = false }) {
           category: filters.category || undefined,
           submission_status: filters.status || undefined,
           format: filters.format || undefined,
+          country: filters.country || undefined, 
           sort: sortBy,
         });
 
@@ -383,6 +398,24 @@ export default function Conferences({ embedded = false }) {
   useEffect(() => {
     loadMyRegistrations();
   }, [loadMyRegistrations]);
+
+  useEffect(() => {
+    if (showCompareModal) {
+      document.body.style.overflow = "hidden";
+      const handleEscape = (e) => {
+        if (e.key === "Escape") setShowCompareModal(false);
+      };
+      document.addEventListener("keydown", handleEscape);
+      
+      return () => {
+        document.body.style.overflow = "unset";
+        document.removeEventListener("keydown", handleEscape);
+        if (compareButtonRef.current) {
+          compareButtonRef.current.focus();
+        }
+      };
+    }
+  }, [showCompareModal]);
 
   const handleRegister = async (conference) => {
     setRegistrationMessage("");
@@ -457,7 +490,7 @@ export default function Conferences({ embedded = false }) {
 
   const clearFilters = () => {
     setQuery("");
-    setFilters({ category: "", status: "", format: "" });
+    setFilters({ category: "", status: "", format: "", country: "" }); 
   };
 
   const hasActiveFilters = Boolean(query.trim()) || Boolean(filters.category) || Boolean(filters.status) || Boolean(filters.format);
@@ -481,22 +514,26 @@ export default function Conferences({ embedded = false }) {
 
         <main className={showAttendeeChrome ? "min-w-0 flex-1" : ""}>
           
-         {!embedded && (
-            <section className="relative overflow-hidden bg-[radial-gradient(circle_at_75%_32%,rgba(98,83,245,.2),transparent_27%),linear-gradient(135deg,#07132f_0%,#0a1740_52%,#15165a_100%)] px-5 py-24 text-white">
-              <div className="relative z-[2] mx-auto flex w-[min(1200px,100%)] flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
-                <div>
-                  <span className="inline-flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-[.1em] text-[#b9b3ff]">
-                    Browse conferences
-                  </span>
-                  <h1 className="my-4 max-w-[720px] text-[clamp(34px,4.4vw,54px)] font-bold leading-tight tracking-[-.05em]">
-                    Find the right conference for your research.
-                  </h1>
-                  <p className="max-w-[620px] text-[15px] leading-7 text-white/75">
-                    Search by topic, filter by status and format, and find conferences created by organisers on the platform.
-                  </p>
+          {!embedded && (
+            upcomingConference && !loading ? (
+              <HugeCountdownHero conference={upcomingConference} />
+            ) : (
+              <section className="relative overflow-hidden bg-[radial-gradient(circle_at_75%_32%,rgba(98,83,245,.2),transparent_27%),linear-gradient(135deg,#07132f_0%,#0a1740_52%,#15165a_100%)] px-5 py-24 text-white">
+                <div className="relative z-[2] mx-auto flex w-[min(1200px,100%)] flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <span className="inline-flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-[.1em] text-[#b9b3ff]">
+                      Browse conferences
+                    </span>
+                    <h1 className="my-4 max-w-[720px] text-[clamp(34px,4.4vw,54px)] font-bold leading-tight tracking-[-.05em]">
+                      Find the right conference for your research.
+                    </h1>
+                    <p className="max-w-[620px] text-[15px] leading-7 text-white/75">
+                      Search by topic, filter by status and format, and find conferences created by organisers on the platform.
+                    </p>
+                  </div>
                 </div>
-              </div>
-            </section>
+              </section>
+            )
           )}
 
           {embedded && (
@@ -531,6 +568,17 @@ export default function Conferences({ embedded = false }) {
                     placeholder="Search conferences..."
                   />
                 </div>
+
+                <div className="hidden h-6 w-px bg-[#e4e8f0] xl:block" />
+                
+                {/* Country Input goes here */}
+                <input
+                  type="text"
+                  placeholder="Country..."
+                  className="h-10 w-24 rounded-lg border border-[#e4e8f0] bg-transparent px-3 text-xs font-semibold text-[#43506a] outline-none hover:bg-[#f7f9fc] focus:bg-[#f7f9fc]"
+                  value={filters.country}
+                  onChange={(e) => updateFilter("country", e.target.value)}
+                />
 
                 <div className="hidden h-6 w-px bg-[#e4e8f0] xl:block" />
 
@@ -770,10 +818,21 @@ export default function Conferences({ embedded = false }) {
           </div>
         </footer>
       )}
+
+      {compareError && (
+        <div className="fixed bottom-24 left-1/2 z-[90] -translate-x-1/2 rounded-xl bg-red-600 px-6 py-3 text-[12px] font-bold text-white shadow-lg">
+          {compareError}
+        </div>
+      )}
+
       {selectedForCompare.length >= 2 && (
         <div className="fixed bottom-6 left-1/2 z-[90] flex -translate-x-1/2 items-center gap-4 rounded-full bg-[#07132f] px-6 py-3 text-white shadow-[0_20px_50px_rgba(0,0,0,0.3)]">
           <span className="text-[12px] font-bold">{selectedForCompare.length} conferences selected</span>
-          <button onClick={() => setShowCompareModal(true)} className="rounded-full bg-[#6655f6] px-5 py-2 text-[11px] font-extrabold text-white shadow-md transition hover:bg-[#7869ff]">
+          <button 
+            ref={compareButtonRef}
+            onClick={() => setShowCompareModal(true)} 
+            className="rounded-full bg-[#6655f6] px-5 py-2 text-[11px] font-extrabold text-white shadow-md transition hover:bg-[#7869ff]"
+           >
             Compare Now
           </button>
           <button onClick={() => setSelectedForCompare([])} className="text-[11px] font-bold text-white/60 hover:text-white">
@@ -783,7 +842,12 @@ export default function Conferences({ embedded = false }) {
       )}
 
       {showCompareModal && selectedForCompare.length > 0 && (
-        <div className="fixed inset-0 z-[100] grid place-items-center bg-[#07132f]/60 p-4 backdrop-blur-sm">
+        <div 
+          className="fixed inset-0 z-[100] grid place-items-center bg-[#07132f]/60 p-4 backdrop-blur-sm"
+          role="dialog" 
+          aria-modal="true"
+          onKeyDown={(e) => { if (e.key === "Escape") setShowCompareModal(false); }}
+          tabIndex={-1}>
           <div className="flex max-h-[90vh] w-full max-w-[900px] flex-col overflow-hidden rounded-[22px] bg-white shadow-2xl">
             <div className="flex items-center justify-between border-b border-[#edf0f5] p-6">
               <h2 className="text-xl font-bold text-[#0d1b3d]">Conference Comparison</h2>
@@ -792,6 +856,7 @@ export default function Conferences({ embedded = false }) {
               </button>
             </div>
             <div className="overflow-auto p-6">
+              <div className="min-w-[600px]"> {/* ADD THIS WRAPPER */}
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr>
@@ -826,8 +891,19 @@ export default function Conferences({ embedded = false }) {
                       <td key={c.id} className="p-3 border-b text-red-600 font-semibold">{c.submissionDeadline}</td>
                     ))}
                   </tr>
+                  <tr>
+                    <td className="p-3 border-b font-bold">Topics</td>
+                    {selectedForCompare.map((c) => (
+                      <td key={c.id} className="p-3 border-b">
+                        {c.topics && c.topics.length > 0 
+                          ? c.topics.join(", ") 
+                          : <span className="text-gray-400 italic">No topics listed</span>}
+                      </td>
+                    ))}
+                  </tr>
                 </tbody>
               </table>
+            </div>
             </div>
           </div>
         </div>
