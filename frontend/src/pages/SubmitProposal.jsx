@@ -21,6 +21,14 @@ function unwrapList(response) {
   return [];
 }
 
+const isConferenceOpen = (c) =>
+  c?.submission_status !== "closed" &&
+  !(
+    c?.submission_deadline &&
+    String(c.submission_deadline).slice(0, 10) <
+      new Date().toLocaleDateString("en-CA")
+  );
+
 function validateFile(file) {
   if (!file) return null;
   const ext = String(file.name).toLowerCase().split(".").pop();
@@ -270,9 +278,9 @@ function SubmitProposal() {
           </div>
         )}
 
-        {availableConferences.length ? (
+        {availableConferences.filter(isConferenceOpen).length ? (
           <div className="divide-y divide-[#edf0f5] rounded-xl border border-[#edf0f5]">
-            {availableConferences.map((item) => (
+            {availableConferences.filter(isConferenceOpen).map((item) => (
               <article
                 key={item.id}
                 className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between"
