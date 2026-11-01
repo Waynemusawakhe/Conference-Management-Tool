@@ -20,6 +20,8 @@ import SectionHeading from "../components/SectionHeading";
 import { conferencesApi } from "../api/conferencesApi";
 import { submissionsApi } from "../api/submissionsApi";
 
+import DocumentInspector from "../components/DocumentInspector";
+import { inspectDocument } from "../utils/documentInspector";
 const CATEGORIES = [
   "AI & Machine Learning",
   "Computer Science",
@@ -200,21 +202,9 @@ function SubmitProposalModal({ open, conference, onClose, onSubmitted }) {
     }
 
     if (file) {
-      const allowedTypes = [
-        "application/pdf",
-        "application/msword",
-        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-      ];
-      const extension = file.name.toLowerCase().split(".").pop();
-      if (
-        !allowedTypes.includes(file.type) &&
-        !["pdf", "doc", "docx"].includes(extension)
-      ) {
-        setError("Only PDF, DOC or DOCX files are allowed.");
-        return;
-      }
-      if (file.size > 10 * 1024 * 1024) {
-        setError("The file must be 10MB or smaller.");
+      const inspected = inspectDocument(file);
+      if (inspected && !inspected.valid) {
+        setError(inspected.problems[0]);
         return;
       }
     }
@@ -312,14 +302,9 @@ function SubmitProposalModal({ open, conference, onClose, onSubmitted }) {
               <span className="font-normal text-[9px] text-[#8a95a8]">
                 Optional · PDF, DOC or DOCX · maximum 10MB
               </span>
-              {file && (
-                <span className="mt-1 flex items-center gap-1.5 rounded-md bg-[#effaf4] px-2 py-1 text-[10px] font-medium text-[#18794e]">
-                  <Upload size={11} />
-                  {file.name} ({(file.size / 1024).toFixed(1)} KB)
-                </span>
-              )}
             </label>
           </div>
+            <DocumentInspector file={file} />
 
           <label className="grid gap-1.5 text-[11px] font-bold text-[#43506a]">
             Abstract

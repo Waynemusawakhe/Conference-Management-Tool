@@ -93,7 +93,7 @@ function SubmitProposal() {
         })
         .catch((err) => {
           if (!cancelled) {
-            setLoadError(err?.message || "Couldn't load conferences.");
+      setLoadError("We couldn't find this conference. Please go back and choose another one.");
           }
         })
         .finally(() => {
@@ -122,7 +122,7 @@ function SubmitProposal() {
         }
       } catch (err) {
         if (!cancelled)
-          setLoadError(err?.message || "Couldn't load this conference.");
+      setLoadError("We couldn't find this conference. Please go back and choose another one.");
       } finally {
         if (!cancelled) setLoadingConference(false);
       }
@@ -354,7 +354,7 @@ function SubmitProposal() {
   if (loadError) {
     return renderPage(
       <div className="auth-card" style={{ textAlign: "center" }}>
-        <h1 className="auth-title">Couldn't load conference</h1>
+        <h1 className="auth-title">This conference isn't available</h1>
         <p className="auth-error">{loadError}</p>
       </div>,
     );
