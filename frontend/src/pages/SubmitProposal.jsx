@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { CalendarDays, FilePlus2, MapPin } from "lucide-react";
 import { submissionsApi } from "../api/submissionsApi";
 import { conferencesApi } from "../api/conferencesApi";
+import UnsavedChangesGuard from "../components/UnsavedChangesGuard";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const ALLOWED_EXTENSIONS = ["pdf", "doc", "docx"];
@@ -62,6 +63,7 @@ function SubmitProposal() {
   const [error, setError] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [isDirty, setIsDirty] = useState(false);
 
   /* ---- Load conference ---- */
   useEffect(() => {
@@ -148,6 +150,7 @@ function SubmitProposal() {
 
   const handleChange = (e) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    setIsDirty(true);
   };
 
   /* ---- File picker ---- */
@@ -167,6 +170,7 @@ function SubmitProposal() {
     }
     setError("");
     setFile(selected);
+    setIsDirty(true);
   };
 
   const handleRemoveFile = () => {
@@ -174,6 +178,7 @@ function SubmitProposal() {
     setError("");
     const input = document.getElementById("file");
     if (input) input.value = "";
+    setIsDirty(true);
   };
 
   /* ---- Submit ---- */
@@ -199,16 +204,15 @@ function SubmitProposal() {
 
     setSubmitting(true);
     try {
-      // Use FormData so the file is uploaded as multipart/form-data.
       const payload = new FormData();
       payload.append("conference_id", String(conferenceId));
       payload.append("title", formData.title.trim());
       payload.append("track", formData.track.trim());
       payload.append("abstract", formData.abstract.trim());
-      // status is set to "pending" by the backend on creation
       if (file) payload.append("file", file);
 
       await submissionsApi.create(payload);
+      setIsDirty(false); // Reset dirty flag so the guard allows navigation on success
       setSubmitted(true);
     } catch (err) {
       const status = err?.status ?? err?.response?.status ?? null;
@@ -356,6 +360,9 @@ function SubmitProposal() {
   /* ---- Form ---- */
   return renderPage(
     <div className="auth-card" style={{ maxWidth: "560px" }}>
+      {/* Activate the Unsaved Changes Guard */}
+      <UnsavedChangesGuard isDirty={isDirty} />
+
       <h1 className="auth-title">Submit a Proposal</h1>
       <p
         style={{
