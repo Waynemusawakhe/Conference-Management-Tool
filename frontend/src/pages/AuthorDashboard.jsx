@@ -291,21 +291,6 @@ export default function AuthorDashboard() {
         setFormError(inspected.problems[0]);
         return;
       }
-      const allowedTypes = [
-        "application/pdf",
-        "application/msword",
-        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-      ];
-      const extension = form.file.name.toLowerCase().split(".").pop();
-      if (!allowedTypes.includes(form.file.type) && !["pdf", "doc", "docx"].includes(extension)) {
-        setFormError("Only PDF, DOC or DOCX files are allowed.");
-        return;
-      }
-
-      if (form.file.size > 10 * 1024 * 1024) {
-        setFormError("The file must be 10MB or smaller.");
-        return;
-      }
     }
 
     const body = new FormData();
