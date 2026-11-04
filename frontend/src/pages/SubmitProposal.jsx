@@ -6,14 +6,6 @@ import { inspectDocument } from "../utils/documentInspector";
 import { submissionsApi } from "../api/submissionsApi";
 import { conferencesApi } from "../api/conferencesApi";
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024;
-const ALLOWED_EXTENSIONS = ["pdf", "doc", "docx"];
-const ALLOWED_MIME_TYPES = [
-  "application/pdf",
-  "application/msword",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-];
-
 function unwrapList(response) {
   if (Array.isArray(response)) return response;
   if (Array.isArray(response?.data)) return response.data;
@@ -28,27 +20,6 @@ const isConferenceOpen = (c) =>
     String(c.submission_deadline).slice(0, 10) <
       new Date().toLocaleDateString("en-CA")
   );
-
-function validateFile(file) {
-  if (!file) return null;
-  const ext = String(file.name).toLowerCase().split(".").pop();
-  const typeOk =
-    ALLOWED_MIME_TYPES.includes(file.type) || ALLOWED_EXTENSIONS.includes(ext);
-  if (!typeOk) {
-    return "Only PDF, DOC, or DOCX files are allowed.";
-  }
-  if (file.size > MAX_FILE_SIZE) {
-    return "The file must be 10MB or smaller.";
-  }
-  return null;
-}
-
-function formatBytes(bytes) {
-  if (!bytes) return "";
-  const kb = bytes / 1024;
-  if (kb < 1024) return `${kb.toFixed(1)} KB`;
-  return `${(kb / 1024).toFixed(2)} MB`;
-}
 
 function SubmitProposal() {
   const { conferenceId } = useParams();
@@ -93,7 +64,7 @@ function SubmitProposal() {
         })
         .catch((err) => {
           if (!cancelled) {
-      setLoadError("We couldn't find this conference. Please go back and choose another one.");
+      setLoadError(err?.message || "Couldn't load conferences. Please try again.");
           }
         })
         .finally(() => {
@@ -122,7 +93,7 @@ function SubmitProposal() {
         }
       } catch (err) {
         if (!cancelled)
-      setLoadError("We couldn't find this conference. Please go back and choose another one.");
+      setLoadError(err?.kind === "not_found" ? "We couldn't find this conference. Please go back and choose another one." : err?.message || "Something went wrong while loading this conference. Please try again.");
       } finally {
         if (!cancelled) setLoadingConference(false);
       }
@@ -354,7 +325,7 @@ function SubmitProposal() {
   if (loadError) {
     return renderPage(
       <div className="auth-card" style={{ textAlign: "center" }}>
-        <h1 className="auth-title">This conference isn't available</h1>
+        <h1 className="auth-title">We couldn't open this page</h1>
         <p className="auth-error">{loadError}</p>
       </div>,
     );
@@ -447,7 +418,7 @@ function SubmitProposal() {
             PDF, DOC or DOCX, maximum 10MB
           </p>
 
-          <DocumentInspector file={file} />
+          <DocumentInspector file={file} onRemove={handleRemoveFile} />
         </div>
 
         {error && <p className="auth-error">{error}</p>}
