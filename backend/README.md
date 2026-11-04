@@ -199,6 +199,48 @@ Implemented functionality includes:
 6. The authenticated user can access authorized resources.
 7. The user can log out and invalidate their authentication session/token.
 
+### Email Verification Delivery
+
+The application uses SMTP by default and does not store outbound email content
+in local logs. Set the SMTP host, port, encryption scheme, username, password,
+and a sender address authorized by your provider in the backend environment.
+Until those values are configured, delivery will fail rather than write the
+email to local storage. Verification URLs are never exposed in API responses.
+
+Application notifications are delivered to both the in-app Notification Centre
+and the recipient's email address, independent of user role. This includes
+proposal/review updates, conference reminders, and registration confirmations
+or cancellations. Configure the mail transport in the deployed environment;
+do not commit provider credentials. After configuration, send a test through
+the deployed app and verify its accepted/delivered status in the provider's
+activity logs. A provider acceptance is not a guarantee that a recipient's
+mailbox will accept or display the message.
+
+For example, for Gmail or Google Workspace, enable 2-Step Verification and
+create an App Password; use that App Password (not the normal account password)
+for `MAIL_PASSWORD`. For another provider, use the SMTP settings it supplies:
+
+```env
+MAIL_MAILER=smtp
+MAIL_SCHEME=smtps
+MAIL_HOST=smtp.gmail.com
+MAIL_PORT=465
+MAIL_USERNAME=your-sending-address@gmail.com
+MAIL_PASSWORD=your-google-app-password
+MAIL_FROM_ADDRESS=your-sending-address@gmail.com
+MAIL_FROM_NAME="Conference Management Tool"
+```
+
+Alternatively, use `MAIL_SCHEME=smtp` and port `587` when required by the SMTP
+provider. Keep credentials in local environment files or deployment secrets;
+never commit them. Set `APP_URL` to the public HTTPS backend URL and
+`FRONTEND_URL` to the public HTTPS frontend URL so signed links work when
+opened from mobile email apps, desktop mail clients, Android, and iOS. After
+changing environment values, clear Laravel's configuration cache and restart
+the backend. The API does not expose verification URLs; it reports delivery
+failure when SMTP is unavailable or throws an error. Verify actual delivery to
+a controlled mailbox before launch.
+
 ### Authentication Endpoints
 
 | Method | Endpoint                                | Description                              |

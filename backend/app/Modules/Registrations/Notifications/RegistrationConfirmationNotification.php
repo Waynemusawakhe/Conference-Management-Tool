@@ -20,7 +20,21 @@ class RegistrationConfirmationNotification extends Notification
 
     public function via($notifiable): array
     {
-        return ['mail'];
+        return ['database', 'mail'];
+    }
+
+    public function toDatabase($notifiable): array
+    {
+        $conferenceName = $this->registration->conference->name ?? 'Conference';
+
+        return [
+            'title' => 'Registration confirmed',
+            'message' => 'You are registered for '.$conferenceName.'.',
+            'action_url' => '/my-conferences',
+            'kind' => 'registration_confirmation',
+            'registration_id' => $this->registration->id,
+            'conference_id' => $this->registration->conference_id,
+        ];
     }
 
     public function toMail($notifiable): MailMessage
