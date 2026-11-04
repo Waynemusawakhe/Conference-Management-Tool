@@ -62,6 +62,7 @@ class Conference extends Model
 
         return true;
     }
+
     public function organiser(): BelongsTo
     {
         return $this->belongsTo(User::class, 'organiser_id');
