@@ -278,15 +278,9 @@ backend/
 
 # 🌿 Git Workflow
 
-The frontend team should **not work directly on `main`**.
-
-The current frontend development branch is:
-
-```text
-Frontend-setup
-```
-
-Developers can create their own feature branches from the latest appropriate branch when working on new features.
+Use the latest `main` branch to run the integrated application. For development
+work, create a feature branch from the latest `main` rather than committing
+directly to `main`.
 
 For example:
 
@@ -320,22 +314,23 @@ cd CMT
 
 ---
 
-## 2. Pull the Latest Changes
+## 2. Use the Latest Integrated Code
 
-Before starting work:
-
-```bash
-git pull origin main
-```
-
-If the frontend team is currently working from `Frontend-setup`:
+From the repository root, switch to and update `main`:
 
 ```bash
-git checkout Frontend-setup
-git pull origin Frontend-setup
+git switch main
+git pull --ff-only origin main
 ```
 
-> **Always make sure you are working from the latest version before starting a new feature.**
+If you are contributing changes, create a feature branch after updating `main`:
+
+```bash
+git switch -c feature/your-change
+```
+
+> Run the integrated application from `main`; older feature branches may not
+> include the latest merged changes.
 
 ---
 
@@ -360,6 +355,37 @@ npm run dev
 ```
 
 Vite will provide the **local development URL** in the terminal.
+
+## 5. Connect to the Backend and Database
+
+The frontend talks to the Laravel API; it does not connect to the database
+directly. The frontend reads `VITE_API_BASE_URL` from `frontend/.env.local`.
+If you do not already have a `frontend/.env.local`, copy the example from the
+repository root (PowerShell):
+
+```powershell
+Copy-Item .\frontend\.env.example .\frontend\.env.local
+```
+
+The example points to a local Laravel API:
+
+```text
+VITE_API_BASE_URL=http://127.0.0.1:8000/api/v1
+```
+
+In a second terminal, start Laravel from `backend/`:
+
+```bash
+php artisan config:clear
+php artisan serve --host=127.0.0.1 --port=8000
+```
+
+The database connection is configured separately in `backend/.env`. To use a
+hosted database with the local API, configure that backend file for the hosted
+database, clear Laravel's config cache, and restart the Laravel server. To use
+a deployed API instead, set `VITE_API_BASE_URL` to that API's public base URL
+ending in `/api/v1`, then restart Vite. Never put database credentials in the
+frontend environment file.
 
 ---
 

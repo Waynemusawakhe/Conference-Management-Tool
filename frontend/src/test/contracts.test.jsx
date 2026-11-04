@@ -1,6 +1,12 @@
 import React from "react";
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { MemoryRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AuthContext } from "../context/authContextInstance";
 import ConferenceCard from "../components/ConferenceCard";
@@ -9,6 +15,7 @@ import Login from "../pages/Login";
 import SubmitProposal from "../pages/SubmitProposal";
 import Conferences from "../pages/Conferences";
 import MyConferences from "../pages/MyConferences";
+import ReviewerDashboard from "../pages/ReviewerDashboard";
 import ScoreSubmission from "../pages/ScoreSubmission";
 import Settings from "../pages/Settings";
 import Home from "../pages/Home";
@@ -47,6 +54,10 @@ vi.mock("../api/reviewsApi", () => ({
     lock: vi.fn(),
   },
 }));
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 const conference = {
   id: 21,
@@ -479,5 +490,140 @@ describe("review lifecycle and account settings", () => {
     expect(
       screen.queryByRole("button", { name: "Cancel" }),
     ).not.toBeInTheDocument();
+  });
+});
+
+describe("reviewer document workspace", () => {
+  function mockDocumentResponse(contentType, fileName) {
+    URL.createObjectURL = vi.fn(() => "blob:submission-file");
+    URL.revokeObjectURL = vi.fn();
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        headers: {
+          get: (name) =>
+            name === "Content-Type"
+              ? contentType
+              : name === "Content-Disposition"
+                ? `attachment; filename="${fileName}"`
+                : null,
+        },
+        blob: async () => new Blob(["document"], { type: contentType }),
+      }),
+    );
+  }
+
+  it("previews PDFs and keeps review controls available in Focus Mode", async () => {
+    mockDocumentResponse("application/pdf", "paper.pdf");
+    reviewsApi.getById.mockResolvedValue({
+      data: {
+        id: 8,
+        submission_id: 44,
+        submission: { id: 44, title: "Review paper" },
+      },
+    });
+
+    wrapper(
+      <Routes>
+        <Route path="/reviewer/evaluate/:id" element={<ScoreSubmission />} />
+      </Routes>,
+      auth("reviewer"),
+      ["/reviewer/evaluate/8"],
+    );
+
+    expect(await screen.findByTitle("Submission PDF preview")).toBeInTheDocument();
+    expect(fetch).toHaveBeenCalledWith(
+      expect.stringMatching(/\/submissions\/44\/file$/),
+      expect.any(Object),
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Focus Mode" }));
+
+    expect(
+      screen.getByRole("button", { name: "Exit Focus Mode" }),
+    ).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: "Jump to scoring" })).toBeInTheDocument();
+    expect(screen.getByRole("textbox")).toBeEnabled();
+    expect(screen.getByRole("button", { name: /3 Good/ })).toBeEnabled();
+  });
+
+  it("provides a downloadable fallback for Word documents", async () => {
+    mockDocumentResponse(
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "paper.docx",
+    );
+    reviewsApi.getById.mockResolvedValue({
+      data: {
+        id: 8,
+        submission_id: 44,
+        submission: { id: 44, title: "Review paper" },
+      },
+    });
+
+    wrapper(
+      <Routes>
+        <Route path="/reviewer/evaluate/:id" element={<ScoreSubmission />} />
+      </Routes>,
+      auth("reviewer"),
+      ["/reviewer/evaluate/8"],
+    );
+
+    expect(
+      await screen.findByText("Word document ready to download"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/Word documents can't be previewed in this browser/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Download Word document" }),
+    ).toHaveAttribute("download", "paper.docx");
+    expect(
+      screen.queryByTitle("Submission PDF preview"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("distinguishes locked reviews from submitted reviews on the dashboard", async () => {
+    reviewsApi.getAll.mockResolvedValue({
+      data: [
+        {
+          id: 8,
+          score: 4,
+          recommendation: "accept",
+          submitted_at: "2026-10-06",
+          locked: true,
+          submission: { id: 44, title: "Completed review" },
+        },
+        {
+          id: 9,
+          score: 3,
+          recommendation: "revise",
+          submitted_at: "2026-10-06",
+          locked: false,
+          submission: { id: 45, title: "Submitted review" },
+        },
+      ],
+    });
+
+    wrapper(
+      <ReviewerDashboard />,
+      auth("reviewer"),
+      ["/reviewer-dashboard"],
+    );
+
+    const lockedCard = (await screen.findByText("Completed and locked")).closest(
+      "article",
+    );
+    const submittedCard = screen.getByText("Awaiting lock").closest("article");
+
+    expect(lockedCard).toHaveTextContent("Locked");
+    expect(
+      within(lockedCard).getByRole("button", { name: /View review/ }),
+    ).toBeInTheDocument();
+    expect(submittedCard).toHaveTextContent("Submitted");
+    expect(
+      within(submittedCard).getByRole("button", { name: "Lock / view" }),
+    ).toBeInTheDocument();
   });
 });
