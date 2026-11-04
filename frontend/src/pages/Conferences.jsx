@@ -50,12 +50,40 @@ function unwrapList(response) {
   return [];
 }
 
+// Treat conference dates as local calendar days, not UTC timestamps.
+function parseConferenceDate(value) {
+  if (!value) return null;
+  const match = String(value).match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (match) {
+    const year = Number(match[1]);
+    const month = Number(match[2]) - 1;
+    const day = Number(match[3]);
+    const date = new Date(year, month, day);
+    // Reject impossible dates rather than silently rolling to another month.
+    if (
+      date.getFullYear() !== year ||
+      date.getMonth() !== month ||
+      date.getDate() !== day
+    ) return null;
+    return date;
+  }
+
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime())
+    ? null
+    : new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate());
+}
+
 function getIsLive(conference) {
-  const now = new Date();
-  const start = new Date(conference.rawStartDate);
-  const end = new Date(conference.rawEndDate || conference.rawStartDate);
-  end.setHours(23, 59, 59, 999);
-  return now >= start && now <= end;
+  const start = parseConferenceDate(conference.start_date ?? conference.rawStartDate);
+  const end = parseConferenceDate(
+    conference.end_date ?? conference.rawEndDate ?? conference.start_date ?? conference.rawStartDate,
+  );
+  if (!start || !end) return false;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return start <= today && today <= end;
 }
 
 function normaliseConference(conference) {
@@ -66,7 +94,7 @@ function normaliseConference(conference) {
     name: conference.name || "Untitled Conference",
     shortTitle: conference.name || conference.code || "Untitled Conference",
     description: conference.description || "Conference information and submission details.",
-    category: conference.category || "Computer Science",
+    category: conference.category || "Uncategorised",
     format: conference.format || "",
     status: conference.submission_status || "",
     submissionDeadline: formatDate(conference.submission_deadline),
@@ -116,25 +144,27 @@ function getRegistrationConferenceId(registration) {
   );
 }
 
+
 function calculateTimeLeft(targetDate) {
-  if (!targetDate) return { days: 0, hours: 0, minutes: 0, seconds: 0 };
-  
-  const target = new Date(targetDate).getTime();
-  if (isNaN(target)) return { days: 0, hours: 0, minutes: 0, seconds: 0 };
+  const target = parseConferenceDate(targetDate);
 
-  const difference = target - Date.now();
-  let timeLeft = { days: 0, hours: 0, minutes: 0, seconds: 0 };
-
-  if (difference > 0) {
-    timeLeft = {
-      days: Math.floor(difference / (1000 * 60 * 60 * 24)),
-      hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
-      minutes: Math.floor((difference / 1000 / 60) % 60),
-      seconds: Math.floor((difference / 1000) % 60),
-    };
+  if (!target) {
+    return { days: 0, hours: 0, minutes: 0, seconds: 0 };
   }
-  return timeLeft;
+
+  const difference = Math.max(
+    0,
+    target.getTime() - Date.now()
+  );
+
+  return {
+    days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+    hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+    minutes: Math.floor((difference / (1000 * 60)) % 60),
+    seconds: Math.floor((difference / 1000) % 60),
+  };
 }
+
 
 function Typewriter({ text, speed = 150 }) {
   const [currentText, setCurrentText] = useState("");
@@ -260,20 +290,32 @@ export default function Conferences({ embedded = false }) {
   const { user, status: authStatus } = useAuth();
   const isAttendee = authStatus === "authenticated" && user?.role === "attendee";
 
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [query, setQuery] = useState(() => searchParams.get("search") || "");
 
-  const [filters, setFilters] = useState({
+  const [filters, setFilters] = useState(() => ({
     category: searchParams.get("category") || "",
     status: "",
     format: "",
-    country: "", 
-  });
+    country: searchParams.get("country") || "",
+  }));
+
+  // Keep deep-linked searches in sync when the URL changes (e.g. browser Back).
+  useEffect(() => {
+    setQuery(searchParams.get("search") || "");
+    setFilters((current) => ({
+      ...current,
+      category: searchParams.get("category") || "",
+      country: searchParams.get("country") || "",
+    }));
+  }, [searchParams]);
 
   const [sortBy, setSortBy] = useState("deadline");
   const [view, setView] = useState("grid");
 
   const [conferences, setConferences] = useState([]);
+  const [featuredUpcoming, setFeaturedUpcoming] = useState(null);
+  const [featuredLoading, setFeaturedLoading] = useState(!embedded);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -288,7 +330,7 @@ export default function Conferences({ embedded = false }) {
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-    const [selectedForCompare, setSelectedForCompare] = useState([]);
+  const [selectedForCompare, setSelectedForCompare] = useState([]);
   const [showCompareModal, setShowCompareModal] = useState(false);
   const [compareError, setCompareError] = useState("");
   const compareButtonRef = useRef(null);
@@ -326,7 +368,7 @@ export default function Conferences({ embedded = false }) {
           category: filters.category || undefined,
           submission_status: filters.status || undefined,
           format: filters.format || undefined,
-          country: filters.country || undefined, 
+          country: filters.country.trim() || undefined,
           sort: sortBy,
         });
 
@@ -367,6 +409,62 @@ export default function Conferences({ embedded = false }) {
       requestVersion.current += 1;
     };
   }, [loadConferences]);
+
+ 
+  useEffect(() => {
+    if (embedded) {
+      setFeaturedLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setFeaturedLoading(true);
+
+    (async () => {
+      try {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        // Laravel supports date sorting, but not a 'starts after today' filter.
+        // Read sorted pages until the first upcoming event appears.
+        let page = 1;
+        let lastPage = 1;
+        let upcoming = null;
+        do {
+          if (cancelled) return;
+          const response = await conferencesApi.getAll({
+            page,
+            per_page: 100,
+            sort: "date",
+          });
+          const entries = unwrapList(response);
+          upcoming = entries.find((conference) => {
+            const start = parseConferenceDate(conference.start_date);
+            return start && start >= today;
+          });
+          if (upcoming) break;
+
+          const meta = response?.meta ?? response?.data?.meta ?? {};
+          lastPage = Number(meta.last_page ?? page);
+          page += 1;
+        } while (page <= lastPage);
+
+        if (!cancelled) {
+          setFeaturedUpcoming(upcoming ? normaliseConference(upcoming) : null);
+        }
+      } catch (err) {
+        
+        console.warn("Unable to load the next upcoming conference:", err);
+        if (!cancelled) setFeaturedUpcoming(null);
+      } finally {
+        if (!cancelled) setFeaturedLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [embedded]);
 
   const loadMyRegistrations = useCallback(async () => {
     if (authStatus !== "authenticated" || !user?.id) {
@@ -462,27 +560,12 @@ export default function Conferences({ embedded = false }) {
     today.setHours(0, 0, 0, 0);
 
     result = result.filter((c) => {
-      if (!c.rawStartDate) return true;
-      const endDate = c.rawEndDate ? new Date(c.rawEndDate) : new Date(c.rawStartDate);
-      endDate.setHours(23, 59, 59, 999); 
-      return endDate.getTime() >= today.getTime();
+      const endDate = parseConferenceDate(c.rawEndDate || c.rawStartDate);
+      return !endDate || endDate >= today;
     });
-
 
     return result;
   }, [conferences]);
-
-  const upcomingConference = useMemo(() => {
-    if (!displayConferences.length) return null;
-    const now = new Date();
-    now.setHours(0, 0, 0, 0);
-
-    const upcoming = displayConferences
-      .filter((c) => c.rawStartDate && new Date(c.rawStartDate).getTime() >= now.getTime())
-      .sort((a, b) => new Date(a.rawStartDate).getTime() - new Date(b.rawStartDate).getTime());
-
-    return upcoming.length > 0 ? upcoming[0] : null;
-  }, [displayConferences]);
 
   const updateFilter = (key, value) => {
     setFilters((previous) => ({ ...previous, [key]: value }));
@@ -490,10 +573,16 @@ export default function Conferences({ embedded = false }) {
 
   const clearFilters = () => {
     setQuery("");
-    setFilters({ category: "", status: "", format: "", country: "" }); 
+    setFilters({ category: "", status: "", format: "", country: "" });
+    setSearchParams({});
   };
 
-  const hasActiveFilters = Boolean(query.trim()) || Boolean(filters.category) || Boolean(filters.status) || Boolean(filters.format);
+  const hasActiveFilters =
+    Boolean(query.trim()) ||
+    Boolean(filters.category) ||
+    Boolean(filters.status) ||
+    Boolean(filters.format) ||
+    Boolean(filters.country.trim());
   const showAttendeeChrome = isAttendee && !embedded;
 
   return (
@@ -515,8 +604,8 @@ export default function Conferences({ embedded = false }) {
         <main className={showAttendeeChrome ? "min-w-0 flex-1" : ""}>
           
           {!embedded && (
-            upcomingConference && !loading ? (
-              <HugeCountdownHero conference={upcomingConference} />
+            featuredUpcoming && !featuredLoading ? (
+              <HugeCountdownHero conference={featuredUpcoming} />
             ) : (
               <section className="relative overflow-hidden bg-[radial-gradient(circle_at_75%_32%,rgba(98,83,245,.2),transparent_27%),linear-gradient(135deg,#07132f_0%,#0a1740_52%,#15165a_100%)] px-5 py-24 text-white">
                 <div className="relative z-[2] mx-auto flex w-[min(1200px,100%)] flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
@@ -656,9 +745,9 @@ export default function Conferences({ embedded = false }) {
                 </div>
               </div>
 
-              {!upcomingConference && !loading && conferences.length > 0 && (
+              {!featuredUpcoming && !featuredLoading && !loading && !hasActiveFilters && conferences.length > 0 && displayConferences.length === 0 && (
                 <div className="mb-6 flex items-center gap-2 rounded-xl bg-[#f0f2f6] px-4 py-3 text-[11px] font-semibold text-[#66728b]">
-                  <Clock size={14} /> No upcoming conferences found. All listed events are in the past.
+                  <Clock size={14} /> No upcoming conferences found in the current conference data.
                 </div>
               )}
 
@@ -842,12 +931,17 @@ export default function Conferences({ embedded = false }) {
       )}
 
       {showCompareModal && selectedForCompare.length > 0 && (
-        <div 
+        <div
           className="fixed inset-0 z-[100] grid place-items-center bg-[#07132f]/60 p-4 backdrop-blur-sm"
-          role="dialog" 
+          role="dialog"
           aria-modal="true"
-          onKeyDown={(e) => { if (e.key === "Escape") setShowCompareModal(false); }}
-          tabIndex={-1}>
+          aria-label="Conference Comparison"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) {
+              setShowCompareModal(false);
+            }
+          }}
+        >
           <div className="flex max-h-[90vh] w-full max-w-[900px] flex-col overflow-hidden rounded-[22px] bg-white shadow-2xl">
             <div className="flex items-center justify-between border-b border-[#edf0f5] p-6">
               <h2 className="text-xl font-bold text-[#0d1b3d]">Conference Comparison</h2>
@@ -856,7 +950,7 @@ export default function Conferences({ embedded = false }) {
               </button>
             </div>
             <div className="overflow-auto p-6">
-              <div className="min-w-[600px]"> {/* ADD THIS WRAPPER */}
+              <div className="min-w-[600px]">
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr>
