@@ -19,6 +19,7 @@ import ConferenceCard from "../components/ConferenceCard";
 import HeroVisual from "../components/HeroVisual";
 import SectionHeading from "../components/SectionHeading";
 import { conferencesApi } from "../api/conferencesApi";
+import Chatbot from "../components/ChatBot";
 
 const TOPICS = [
   "AI & Machine Learning",
@@ -330,6 +331,7 @@ export default function Home() {
         <div className="mx-auto flex max-w-[1200px] flex-col gap-5 px-5 py-9 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3"><img className="h-9 w-9 object-contain" src="/cmt-mark.png" alt="CMT logo" /><div><strong className="block text-xl font-extrabold tracking-[-.04em] text-white">CMT</strong><span className="text-[10px]">Conference Management Tool</span></div></div>
           <p className="text-xs">© {new Date().getFullYear()} CMT. Connecting research communities.</p>
+           <Chatbot />
         </div>
       </footer>
     </div>
