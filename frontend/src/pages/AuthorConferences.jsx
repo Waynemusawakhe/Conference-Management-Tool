@@ -296,7 +296,7 @@ function SubmitProposalModal({ open, conference, onClose, onSubmitted }) {
               <input
                 type="file"
                 accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                onChange={(e) => setFile(e.target.files?.[0] || null)}
+                id="proposal-file-conferences" onChange={(e) => setFile(e.target.files?.[0] || null)}
                 className="block h-11 w-full rounded-xl border border-[#dfe4ed] bg-white px-2 py-2 text-[11px]"
               />
               <span className="font-normal text-[9px] text-[#8a95a8]">
@@ -304,7 +304,7 @@ function SubmitProposalModal({ open, conference, onClose, onSubmitted }) {
               </span>
             </label>
           </div>
-            <DocumentInspector file={file} />
+            <DocumentInspector file={file} onRemove={() => { setFile(null); const i = document.getElementById("proposal-file-conferences"); if (i) i.value = ""; }} />
 
           <label className="grid gap-1.5 text-[11px] font-bold text-[#43506a]">
             Abstract

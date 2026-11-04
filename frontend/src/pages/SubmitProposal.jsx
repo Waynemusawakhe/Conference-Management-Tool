@@ -447,7 +447,7 @@ function SubmitProposal() {
             PDF, DOC or DOCX, maximum 10MB
           </p>
 
-          <DocumentInspector file={file} />
+          <DocumentInspector file={file} onRemove={handleRemoveFile} />
         </div>
 
         {error && <p className="auth-error">{error}</p>}

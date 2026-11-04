@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { CheckCircle2, XCircle, FileText, Download } from "lucide-react";
 import { inspectDocument } from "../utils/documentInspector";
 
@@ -6,26 +6,30 @@ import { inspectDocument } from "../utils/documentInspector";
  * Shows file name, size and a pass/fail result for a chosen File.
  * Props:
  *  - file: the File object (or null)
- *  - onInspect: optional callback, called with the result when the file changes
+ *  - onInspect: optional, called with the result when the file changes
+ *  - onRemove: optional, shows a Remove button that calls it
  */
-export default function DocumentInspector({ file, onInspect }) {
+export default function DocumentInspector({ file, onInspect, onRemove }) {
   const result = useMemo(() => inspectDocument(file), [file]);
+  const [preview, setPreview] = useState(null);
 
   useEffect(() => {
     if (onInspect) onInspect(result);
   }, [result]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Object URL for preview/download. Revoked when the file changes.
-  const url = useMemo(
-    () => (file && result?.valid ? URL.createObjectURL(file) : null),
-    [file, result],
-  );
-
+  // Create and revoke the object URL in the same effect so it never outlives it.
   useEffect(() => {
-    return () => {
-      if (url) URL.revokeObjectURL(url);
-    };
-  }, [url]);
+    if (!file || !result?.valid) {
+      setPreview(null);
+      return undefined;
+    }
+    const objectUrl = URL.createObjectURL(file);
+    setPreview({ file, url: objectUrl });
+    return () => URL.revokeObjectURL(objectUrl);
+  }, [file, result?.valid]);
+
+  // Only use a URL that belongs to the current file.
+  const url = preview && preview.file === file ? preview.url : null;
 
   if (!result) return null;
 
@@ -48,21 +52,32 @@ export default function DocumentInspector({ file, onInspect }) {
             </strong>
             <span className="text-[#66728b]">
               {result.extension ? result.extension.toUpperCase() : "No extension"}{" "}
-              · {result.sizeLabel}
+              &middot; {result.sizeLabel}
             </span>
           </div>
         </div>
 
-        <span
-          className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-1 font-bold ${
-            result.valid
-              ? "bg-[#dcf5e9] text-[#159b64]"
-              : "bg-[#fde2e2] text-[#c0392b]"
-          }`}
-        >
-          {result.valid ? <CheckCircle2 size={13} /> : <XCircle size={13} />}
-          {result.valid ? "Passed" : "Failed"}
-        </span>
+        <div className="flex shrink-0 items-center gap-2">
+          <span
+            className={`inline-flex items-center gap-1 rounded-full px-2 py-1 font-bold ${
+              result.valid
+                ? "bg-[#dcf5e9] text-[#159b64]"
+                : "bg-[#fde2e2] text-[#c0392b]"
+            }`}
+          >
+            {result.valid ? <CheckCircle2 size={13} /> : <XCircle size={13} />}
+            {result.valid ? "Passed" : "Failed"}
+          </span>
+          {onRemove && (
+            <button
+              type="button"
+              onClick={onRemove}
+              className="border-0 bg-transparent p-0 text-[11px] font-bold text-[#b13a3a] hover:underline"
+            >
+              Remove
+            </button>
+          )}
+        </div>
       </div>
 
       {!result.valid && (
