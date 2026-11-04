@@ -25,6 +25,7 @@ const SubmitProposal = lazy(() => import("./pages/SubmitProposal"));
 
 const CreateEditConference = lazy(() => import("./pages/create_edit_conference"));
 const EditSubmissionPage = lazy(() => import("./pages/EditSubmissionPage"));
+const SubmissionDetailPage = lazy(() => import("./pages/SubmissionDetailPage"));
 const AssignReviewersPage = lazy(() => import("./pages/AssignReviewersPage"));
 const ScoreSubmission = lazy(() => import("./pages/ScoreSubmission"));
 const AttendeeDashboard = lazy(() => import("./pages/AttendeeDashboard"));
@@ -56,6 +57,9 @@ const AdminReviewsPage = lazy(() => import("./pages/AdminReviewsPage"));
 const AdminRegistrationsPage = lazy(() => import("./pages/AdminRegistrationsPage"));
 const AdminTestimonialsPage = lazy(() => import("./pages/AdminTestimonialsPage"));
 const AdminSubmissionsPage = lazy(() => import("./pages/AdminSubmissionsPage"));
+
+/* ---------- Notification pages ---------- */
+const NotificationCentre = lazy(() => import("./pages/NotificationCentre"));
 
 import { ThemeProvider } from "./context/ThemeContext";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -90,6 +94,8 @@ export default function App() {
           <Route path="/testimonials" element={<Testimonials />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/email-verified" element={<EmailVerified />} />
+          <Route path="/notifications" element={<ProtectedRoute roles={ALL_ROLES}> <NotificationCentre /></ProtectedRoute>} />
+          <Route path="/submissions/:id" element={<ProtectedRoute roles={ALL_ROLES}> <SubmissionDetailPage /></ProtectedRoute>} />
 
           {/* ==================== SHARED AUTHENTICATED ==================== */}
 

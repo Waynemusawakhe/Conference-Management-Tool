@@ -20,7 +20,21 @@ class RegistrationCancelledNotification extends Notification
 
     public function via($notifiable): array
     {
-        return ['mail'];
+        return ['database', 'mail'];
+    }
+
+    public function toDatabase($notifiable): array
+    {
+        $conferenceName = $this->registration->conference->name ?? 'Conference';
+
+        return [
+            'title' => 'Registration cancelled',
+            'message' => 'Your registration for '.$conferenceName.' has been cancelled.',
+            'action_url' => '/my-conferences',
+            'kind' => 'registration_cancelled',
+            'registration_id' => $this->registration->id,
+            'conference_id' => $this->registration->conference_id,
+        ];
     }
 
     public function toMail($notifiable): MailMessage

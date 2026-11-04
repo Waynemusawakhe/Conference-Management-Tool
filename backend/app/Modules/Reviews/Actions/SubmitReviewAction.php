@@ -53,7 +53,7 @@ class SubmitReviewAction
                         'A reviewer has submitted a review for "'.
                             $review->submission->title.
                             '".',
-                        '/author-dashboard',
+                        '/submissions/'.$review->submission_id,
                         'proposal_reviewed',
                         [
                             'submission_id' => $review->submission_id,

@@ -20,6 +20,7 @@ import {
   X,
 } from "lucide-react";
 import Logo from "./Logo";
+import NotificationBell from "./NotificationBell";
 import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
 import { submissionsApi } from "../api/submissionsApi";
@@ -32,21 +33,10 @@ const PRIMARY_NAV = [
   { label: "Create conference", to: "/create-conference", icon: Plus },
 ];
 
-const DISMISSED_KEY = "cmt_organiser_dismissed_notifications";
-
 function loadDismissed() {
-  try {
-    const raw = localStorage.getItem(DISMISSED_KEY);
-    return raw ? new Set(JSON.parse(raw)) : new Set();
-  } catch {
-    return new Set();
-  }
+  return new Set();
 }
-function saveDismissed(set) {
-  try {
-    localStorage.setItem(DISMISSED_KEY, JSON.stringify([...set]));
-  } catch {}
-}
+function saveDismissed() {}
 
 function relativeTime(value) {
   if (!value) return "";
@@ -219,7 +209,8 @@ export default function OrganiserLayout({ children }) {
           </div>
 
           <div className="ml-auto flex items-center gap-2">
-            <div className="relative" ref={notificationsRef}>
+            <NotificationBell dark />
+            <div hidden className="relative" ref={notificationsRef}>
               <button
                 onClick={() => setShowNotifications((v) => !v)}
                 className="relative grid h-10 w-10 place-items-center rounded-xl border border-white/10 bg-white/[.04] text-white/85 transition hover:bg-white/10"
