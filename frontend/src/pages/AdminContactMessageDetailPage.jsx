@@ -9,12 +9,11 @@ import {
   MailOpen,
   Send,
   Trash2,
-  AlertCircle,
 } from "lucide-react";
 import AdminLayout from "../components/AdminLayout";
 import { Card, CardHeader, StateBlock, formatDateTime } from "../components/AdminUI";
 import { useApiResource } from "../hooks/useApiResource";
-import { http } from "../api/client";
+import { contactMessagesApi } from "../api/contactMessagesApi";
 
 const STATUS_CONFIG = {
   new: {
@@ -56,51 +55,26 @@ export default function ContactMessageDetailPage() {
   const [saving, setSaving] = useState(false);
   const [feedback, setFeedback] = useState(null);
 
-  const messageRes = useApiResource(() => http.get(`/contact-messages/${id}`), [id]);
+  const messageRes = useApiResource(() => contactMessagesApi.getById(id), [id]);
   const message = messageRes.data?.data ?? messageRes.data ?? null;
   const key = statusKey(message?.status);
   const config = statusConfig(message?.status);
 
   const setStatus = async (next) => {
     if (next === key) return;
-
     setSaving(true);
     setFeedback(null);
-
     try {
-      // Bypass the API wrapper and send directly — this guarantees the body is
-      // exactly { status: "resolved" } and not nested.
-      console.log("[Status Update] Sending PATCH with body:", { status: next });
-      await http.patch(`/contact-messages/${id}/status`, { status: next });
-      
+      await contactMessagesApi.updateStatus(id, { status: next });
       await messageRes.reload();
       setFeedback({
         type: "success",
         message: `Status updated to ${STATUS_CONFIG[next]?.label ?? next}.`,
       });
     } catch (err) {
-      console.error("[Status Update] Failed:", err);
-
-      const responseData = err?.response?.data || err?.data || {};
-      const errors = responseData?.errors || err?.errors || {};
-
-      let firstError = null;
-      for (const fieldErrors of Object.values(errors)) {
-        if (Array.isArray(fieldErrors) && fieldErrors.length > 0) {
-          firstError = fieldErrors[0];
-          break;
-        }
-      }
-
-      const backendMessage =
-        firstError ||
-        responseData?.message ||
-        err?.message ||
-        "Failed to update status.";
-
       setFeedback({
         type: "error",
-        message: `Backend says: "${backendMessage}". Open DevTools → Network → status request → Payload tab to verify the body.`,
+        message: err?.message ?? "Failed to update status.",
       });
     } finally {
       setSaving(false);
@@ -110,7 +84,7 @@ export default function ContactMessageDetailPage() {
   const handleDelete = async () => {
     if (!window.confirm("Delete this message permanently?")) return;
     try {
-      await http.delete(`/contact-messages/${id}`);
+      await contactMessagesApi.remove(id);
       navigate("/admin/contact-messages");
     } catch (err) {
       window.alert(err?.message ?? "Failed to delete.");
@@ -157,17 +131,13 @@ export default function ContactMessageDetailPage() {
           {feedback && (
             <div
               role="alert"
-              className={`mb-4 flex items-start gap-3 rounded-xl border px-4 py-3 text-[11px] font-semibold ${
+              className={`mb-4 flex items-start justify-between gap-4 rounded-xl border px-4 py-3 text-[11px] font-semibold ${
                 feedback.type === "success"
                   ? "border-[#bfe5d1] bg-[#effaf4] text-[#18794e]"
                   : "border-[#f1c8c8] bg-[#fff2f2] text-[#b13a3a]"
               }`}
             >
-              {feedback.type === "error" && <AlertCircle size={14} className="mt-0.5 shrink-0" />}
-              <span className="flex-1">{feedback.message}</span>
-              <button onClick={() => setFeedback(null)} className="shrink-0 text-lg leading-none opacity-60 hover:opacity-100" aria-label="Dismiss">
-                ×
-              </button>
+              <span>{feedback.message}</span>
             </div>
           )}
 
