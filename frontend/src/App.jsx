@@ -4,6 +4,7 @@ import { LoaderCircle } from "lucide-react";
 import Logo from "./components/Logo";
 import { useAuth } from "./context/AuthContext";
 
+import { useAuth } from "./context/AuthContext";
 const ChatBot = lazy(() => import("./components/Chatbot"));
 
 const UserConferencePage = lazy(() => import("./pages/UserConferencePage"));
@@ -36,6 +37,8 @@ const AttendeeDashboard = lazy(() => import("./pages/AttendeeDashboard"));
 const MyConferences = lazy(() => import("./pages/MyConferences"));
 const UsersPage = lazy(() => import("./pages/UsersPage"));
 
+
+/* ---------- Shared authenticated ---------- */
 const UserTestimonials = lazy(() => import("./pages/UserTestimonials"));
 const AuthorConferences = lazy(() => import("./pages/AuthorConferences"));
 const OrganiserConferences = lazy(() => import("./pages/OrganiserConferences"));
@@ -99,8 +102,7 @@ function PageLoader() {
 }
 
 export default function App() {
-  const { status, role } = useAuth();
-
+   const { status, role } = useAuth();
   return (
     <ThemeProvider>
       <Suspense fallback={<PageLoader />}>
@@ -465,10 +467,12 @@ export default function App() {
           <Route path="*" element={<NotFound />} />
         </Routes>
 
-        <ChatBot
-          key={status === "authenticated" ? "signed-in" : "visitor"}
-          role={status === "authenticated" ? role : null}
-        />
+      
+      <ChatBot
+         key={status === "authenticated" ? "signed-in" : "visitor"}
+         role={status === "authenticated" ? role : null}
+      />
+
       </Suspense>
     </ThemeProvider>
   );
