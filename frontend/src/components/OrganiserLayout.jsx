@@ -106,7 +106,7 @@ export default function OrganiserLayout({ children }) {
           list.filter((s) => {
             const k = statusKey(s.status);
             return k === "pending" || k === "";
-          })
+          }),
         );
       } catch (err) {
         if (import.meta.env.DEV) {
@@ -136,12 +136,12 @@ export default function OrganiserLayout({ children }) {
           const tb = b.time ? new Date(b.time).getTime() : 0;
           return tb - ta;
         }),
-    [pendingSubmissions]
+    [pendingSubmissions],
   );
 
   const visibleNotifications = useMemo(
     () => notifications.filter((n) => !dismissed.has(n.id)),
-    [notifications, dismissed]
+    [notifications, dismissed],
   );
   const notificationCount = visibleNotifications.length;
 
@@ -194,12 +194,19 @@ export default function OrganiserLayout({ children }) {
 
   const isActiveRoute = (to) => location.pathname === to;
 
+  const navItemClass = (to) =>
+    `flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] transition-colors ${
+      isActiveRoute(to)
+        ? "bg-[#07132f] font-extrabold text-white shadow-[0_4px_12px_rgba(7,19,47,.25)] dark:bg-[#2a2354] dark:text-white"
+        : "font-semibold text-[#66728b] hover:bg-[#07132f] hover:text-white dark:text-[#94a3b8] dark:hover:bg-[#1e293b]"
+    }`;
+
   return (
     <div className="min-h-screen bg-[#f7f9fc] text-[#0d1b3d] transition-colors dark:bg-[#0a0f1f] dark:text-white">
       <header className="sticky top-0 z-50 border-b border-white/10 bg-[#07132f]/95 text-white backdrop-blur-xl">
         <div className="mx-auto flex min-h-[76px] w-[min(1400px,calc(100%-32px))] items-center gap-4">
           <button
-            className="lg:hidden text-white/80 hover:text-white"
+            className="text-white/80 hover:text-white lg:hidden"
             onClick={() => setSidebarOpen(true)}
             aria-label="Open navigation"
           >
@@ -222,7 +229,7 @@ export default function OrganiserLayout({ children }) {
             <div className="relative" ref={notificationsRef}>
               <button
                 onClick={() => setShowNotifications((v) => !v)}
-                className="relative grid h-10 w-10 place-items-center rounded-xl border border-white/10 bg-white/[.04] text-white/85 transition hover:bg-white/10"
+                className="relative grid h-10 w-10 place-items-center rounded-xl border border-white/10 bg-white/[.04] text-white/85 transition hover:bg-white hover:text-[#07132f]"
                 aria-label={`Notifications${notificationCount ? ` (${notificationCount} new)` : ""}`}
                 aria-expanded={showNotifications}
               >
@@ -253,7 +260,7 @@ export default function OrganiserLayout({ children }) {
                     {notificationCount > 0 && (
                       <button
                         onClick={dismissAll}
-                        className="inline-flex items-center gap-1 text-[10px] font-extrabold text-[#6655f6] hover:underline dark:text-[#a9a2ff]"
+                        className="inline-flex items-center gap-1 text-[10px] font-extrabold text-[#6655f6] transition hover:text-[#07132f] hover:underline dark:text-[#a9a2ff] dark:hover:text-white"
                       >
                         <CheckCheck size={12} /> Mark all read
                       </button>
@@ -277,7 +284,7 @@ export default function OrganiserLayout({ children }) {
                         {visibleNotifications.map((n) => (
                           <li
                             key={n.id}
-                            className="group relative flex items-start gap-3 px-4 py-3 transition hover:bg-[#fafbff] dark:hover:bg-[#111c33]"
+                            className="group relative flex items-start gap-3 px-4 py-3 transition hover:bg-[#f7f8fc] dark:hover:bg-[#111c33]"
                           >
                             <button
                               onClick={() => {
@@ -303,7 +310,7 @@ export default function OrganiserLayout({ children }) {
                             </button>
                             <button
                               onClick={() => dismissOne(n.id)}
-                              className="absolute right-3 top-3 grid h-6 w-6 place-items-center rounded-full text-[#c4c8d4] opacity-0 transition hover:bg-[#f1f2f6] hover:text-[#5c6880] group-hover:opacity-100 dark:hover:bg-[#1e293b]"
+                              className="absolute right-3 top-3 grid h-6 w-6 place-items-center rounded-full text-[#c4c8d4] opacity-0 transition hover:bg-[#07132f] hover:text-white group-hover:opacity-100 dark:hover:bg-[#334155]"
                               aria-label="Dismiss"
                             >
                               <X size={12} />
@@ -319,8 +326,9 @@ export default function OrganiserLayout({ children }) {
 
             <button
               onClick={toggleTheme}
-              className="grid h-10 w-10 place-items-center rounded-xl border border-white/10 bg-white/[.04] text-white/85 transition hover:bg-white/10"
-              aria-label={dark ? "Light mode" : "Dark mode"}
+              className="grid h-10 w-10 place-items-center rounded-xl border border-white/10 bg-white/[.04] text-white/85 transition hover:bg-white hover:text-[#07132f]"
+              aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
+              title={dark ? "Switch to light mode" : "Switch to dark mode"}
             >
               {dark ? <Sun size={17} /> : <Moon size={17} />}
             </button>
@@ -345,7 +353,7 @@ export default function OrganiserLayout({ children }) {
       <div className="mx-auto flex w-[min(1400px,calc(100%-32px))] gap-6 py-6">
         {sidebarOpen && (
           <div
-            className="fixed inset-0 z-40 bg-[#07132f]/60 backdrop-blur-sm lg:hidden"
+            className="fixed inset-0 z-40 bg-[#030814]/70 backdrop-blur-sm lg:hidden"
             onClick={() => setSidebarOpen(false)}
           />
         )}
@@ -356,7 +364,7 @@ export default function OrganiserLayout({ children }) {
           }`}
         >
           <div className="mb-3 flex items-start justify-between gap-2">
-            <div className="w-full rounded-xl bg-gradient-to-br from-[#111e4b] to-[#342b87] p-4 text-white">
+            <div className="w-full rounded-xl bg-gradient-to-br from-[#07132f] to-[#342b87] p-4 text-white">
               <span className="mb-2 grid h-9 w-9 place-items-center rounded-lg bg-white/10">
                 <BookOpen size={17} />
               </span>
@@ -367,7 +375,7 @@ export default function OrganiserLayout({ children }) {
             </div>
             <button
               onClick={() => setSidebarOpen(false)}
-              className="lg:hidden ml-2 text-[#66728b] dark:text-[#94a3b8]"
+              className="ml-2 text-[#66728b] transition hover:text-[#07132f] lg:hidden dark:text-[#94a3b8] dark:hover:text-white"
               aria-label="Close sidebar"
             >
               <X size={20} />
@@ -377,20 +385,15 @@ export default function OrganiserLayout({ children }) {
           <nav className="space-y-1">
             {PRIMARY_NAV.map((item) => {
               const Icon = item.icon;
-              const active = isActiveRoute(item.to);
               return (
                 <Link
                   key={item.to}
                   to={item.to}
                   onClick={() => setSidebarOpen(false)}
-                  className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] transition ${
-                    active
-                      ? "bg-[#efedff] font-extrabold text-[#5649dc] dark:bg-[#2a2354] dark:text-[#a9a2ff]"
-                      : "font-semibold text-[#66728b] hover:bg-[#f5f6fa] dark:text-[#94a3b8] dark:hover:bg-[#111c33]"
-                  }`}
+                  className={navItemClass(item.to)}
                 >
                   <Icon size={16} />
-                  <span className="truncate flex-1">{item.label}</span>
+                  <span className="flex-1 truncate">{item.label}</span>
                 </Link>
               );
             })}
@@ -401,11 +404,7 @@ export default function OrganiserLayout({ children }) {
           <Link
             to="/user-testimonials"
             onClick={() => setSidebarOpen(false)}
-            className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] transition ${
-              isActiveRoute("/user-testimonials")
-                ? "bg-[#efedff] font-extrabold text-[#5649dc] dark:bg-[#2a2354] dark:text-[#a9a2ff]"
-                : "font-semibold text-[#66728b] hover:bg-[#f5f6fa] dark:text-[#94a3b8] dark:hover:bg-[#111c33]"
-            }`}
+            className={navItemClass("/user-testimonials")}
           >
             <MessageSquareQuote size={16} />
             <span className="truncate">Testimonials</span>
@@ -416,11 +415,7 @@ export default function OrganiserLayout({ children }) {
           <Link
             to="/profile"
             onClick={() => setSidebarOpen(false)}
-            className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] transition ${
-              isActiveRoute("/profile")
-                ? "bg-[#efedff] font-extrabold text-[#5649dc] dark:bg-[#2a2354] dark:text-[#a9a2ff]"
-                : "font-semibold text-[#66728b] hover:bg-[#f5f6fa] dark:text-[#94a3b8] dark:hover:bg-[#111c33]"
-            }`}
+            className={navItemClass("/profile")}
           >
             <UserRound size={16} />
             <span className="truncate">Profile</span>
@@ -429,11 +424,7 @@ export default function OrganiserLayout({ children }) {
           <Link
             to="/settings"
             onClick={() => setSidebarOpen(false)}
-            className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] transition ${
-              isActiveRoute("/settings")
-                ? "bg-[#efedff] font-extrabold text-[#5649dc] dark:bg-[#2a2354] dark:text-[#a9a2ff]"
-                : "font-semibold text-[#66728b] hover:bg-[#f5f6fa] dark:text-[#94a3b8] dark:hover:bg-[#111c33]"
-            }`}
+            className={navItemClass("/settings")}
           >
             <SettingsIcon size={16} />
             <span className="truncate">Settings</span>
@@ -443,7 +434,7 @@ export default function OrganiserLayout({ children }) {
             onClick={handleSignOut}
             disabled={signingOut}
             aria-busy={signingOut}
-            className="mt-1 flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] font-semibold text-[#9a6470] transition hover:bg-[#fff4f5] dark:hover:bg-[#2a1218]"
+            className="mt-1 flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] font-semibold text-[#9a6470] transition-colors hover:bg-[#7f1d1d] hover:text-white disabled:cursor-wait disabled:opacity-70"
           >
             {signingOut ? (
               <LoaderCircle size={16} className="animate-spin" />
