@@ -82,7 +82,7 @@ class DeleteAccountAction
                     ->tokens()
                     ->delete();
 
-                $user->delete();
+                $user->forceDelete();
             }
         );
 

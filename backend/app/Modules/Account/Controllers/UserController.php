@@ -121,7 +121,13 @@ class UserController extends Controller
         // Fetch the user first using the team's existing action
         $user = $getUserAction->execute($id);
 
-        $this->assertMayManage($request->user(), $user);
+        if ($request->user()->is($user)) {
+            throw ValidationException::withMessages([
+                'role' => [
+                    'Administrators cannot change their own role from the user directory.',
+                ],
+            ]);
+        }
 
         if (
             $user->role === 'admin'
