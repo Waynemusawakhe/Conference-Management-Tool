@@ -12,10 +12,20 @@ use Illuminate\Validation\ValidationException;
 
 class DeleteAccountAction
 {
+
+
     public function execute(
         User $user,
         array $data
     ): void {
+
+    if ($user->role === 'admin') {
+            throw ValidationException::withMessages([
+                'account' => [
+                    'Administrator accounts cannot be deleted from account settings.',
+                ],
+            ]);
+        }
         if (! Hash::check(
             $data['current_password'],
             $user->password
