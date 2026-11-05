@@ -2,6 +2,9 @@ import { lazy, Suspense } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { LoaderCircle } from "lucide-react";
 import Logo from "./components/Logo";
+import { useAuth } from "./context/AuthContext";
+
+const ChatBot = lazy(() => import("./components/Chatbot"));
 
 const UserConferencePage = lazy(() => import("./pages/UserConferencePage"));
 const Home = lazy(() => import("./pages/Home"));
@@ -33,30 +36,33 @@ const AttendeeDashboard = lazy(() => import("./pages/AttendeeDashboard"));
 const MyConferences = lazy(() => import("./pages/MyConferences"));
 const UsersPage = lazy(() => import("./pages/UsersPage"));
 
-/* ---------- Shared authenticated ---------- */
 const UserTestimonials = lazy(() => import("./pages/UserTestimonials"));
-
-/* ---------- Author sub-pages ---------- */
- 
 const AuthorConferences = lazy(() => import("./pages/AuthorConferences"));
-
-/* ---------- Organiser sub-pages ---------- */
 const OrganiserConferences = lazy(() => import("./pages/OrganiserConferences"));
 const OrganiserReviews = lazy(() => import("./pages/OrganiserReviews"));
 const OrganiserRegistrations = lazy(() => import("./pages/OrganiserRegistrations"));
 
-/* ---------- Admin pages ---------- */
 const AdminReportsPage = lazy(() => import("./pages/AdminReportsPage"));
 const AdminUserDetailPage = lazy(() => import("./pages/AdminUserDetailPage"));
-const AdminContactMessagesPage = lazy(() => import("./pages/AdminContactMessagesPage"));
-const AdminContactMessageDetailPage = lazy(() => import("./pages/AdminContactMessageDetailPage"));
+const AdminContactMessagesPage = lazy(() =>
+  import("./pages/AdminContactMessagesPage"),
+);
+const AdminContactMessageDetailPage = lazy(() =>
+  import("./pages/AdminContactMessageDetailPage"),
+);
 const AdminFaqsPage = lazy(() => import("./pages/AdminFaqsPage"));
 const AdminFaqEditPage = lazy(() => import("./pages/AdminFaqEditPage"));
 const AdminConferencesPage = lazy(() => import("./pages/AdminConferencesPage"));
-const AdminEditConferencePage = lazy(() => import("./pages/AdminEditConferencePage"));
+const AdminEditConferencePage = lazy(() =>
+  import("./pages/AdminEditConferencePage"),
+);
 const AdminReviewsPage = lazy(() => import("./pages/AdminReviewsPage"));
-const AdminRegistrationsPage = lazy(() => import("./pages/AdminRegistrationsPage"));
-const AdminTestimonialsPage = lazy(() => import("./pages/AdminTestimonialsPage"));
+const AdminRegistrationsPage = lazy(() =>
+  import("./pages/AdminRegistrationsPage"),
+);
+const AdminTestimonialsPage = lazy(() =>
+  import("./pages/AdminTestimonialsPage"),
+);
 const AdminSubmissionsPage = lazy(() => import("./pages/AdminSubmissionsPage"));
 
 import { ThemeProvider } from "./context/ThemeContext";
@@ -78,6 +84,7 @@ function PageLoader() {
         <div className="rounded-2xl bg-[#07132f] px-5 py-3 shadow-[0_14px_36px_rgba(7,19,47,.16)]">
           <Logo />
         </div>
+
         <div className="flex items-center gap-2 text-sm font-semibold">
           <LoaderCircle
             size={18}
@@ -92,6 +99,8 @@ function PageLoader() {
 }
 
 export default function App() {
+  const { status, role } = useAuth();
+
   return (
     <ThemeProvider>
       <Suspense fallback={<PageLoader />}>
@@ -133,8 +142,6 @@ export default function App() {
               </ProtectedRoute>
             }
           />
-
-       
 
           <Route
             path="/author/conferences"
@@ -457,6 +464,11 @@ export default function App() {
 
           <Route path="*" element={<NotFound />} />
         </Routes>
+
+        <ChatBot
+          key={status === "authenticated" ? "signed-in" : "visitor"}
+          role={status === "authenticated" ? role : null}
+        />
       </Suspense>
     </ThemeProvider>
   );
