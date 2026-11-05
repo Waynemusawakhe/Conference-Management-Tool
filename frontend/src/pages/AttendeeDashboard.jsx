@@ -14,7 +14,6 @@ import {
   Loader2,
   MapPin,
   Search,
-  Sparkles,
   TicketCheck,
   Users,
   X,
@@ -122,14 +121,72 @@ function isPastConference(conference) {
   return date.getTime() < new Date().setHours(0, 0, 0, 0);
 }
 
+function RegistrationSuccessModal({ open, conferenceName, onView, onClose }) {
+  if (!open) return null;
+  return (
+    <div
+      className="fixed inset-0 z-[120] grid place-items-center bg-[#030814]/75 p-4 backdrop-blur-md"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-[440px] overflow-hidden rounded-[24px] bg-white shadow-[0_40px_120px_rgba(3,8,20,.5)]"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex flex-col items-center px-6 pb-6 pt-8 text-center">
+          <div className="relative mb-5 grid h-20 w-20 place-items-center">
+            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-[#effaf4] to-[#e0f5ea]" />
+            <div className="absolute inset-0 rounded-full border-2 border-[#bfe5d1] cmt-reg-ring-ad" />
+            <svg viewBox="0 0 52 52" className="relative h-14 w-14" aria-hidden="true">
+              <circle cx="26" cy="26" r="23" fill="none" stroke="#18794e" strokeWidth="2" strokeOpacity=".15" />
+              <path d="M15 27 L23 35 L38 19" fill="none" stroke="#18794e" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" className="cmt-reg-check-ad" />
+            </svg>
+          </div>
+          <h2 className="text-[18px] font-extrabold text-[#1c2a4a]">Registration Successful</h2>
+          {conferenceName && (
+            <p className="mt-2 line-clamp-2 text-[12px] font-bold text-[#35415f]">{conferenceName}</p>
+          )}
+          <p className="mt-3 text-[11px] leading-5 text-[#66728b]">
+            You are now registered for this conference. We look forward to seeing you there.
+          </p>
+        </div>
+        <div className="grid grid-cols-2 gap-3 border-t border-[#edf0f5] bg-[#fafbfe] p-4">
+          <button
+            onClick={onView}
+            className="inline-flex min-h-11 items-center justify-center rounded-xl border border-[#dfe4ed] bg-white px-4 text-[11px] font-extrabold text-[#5c6880] transition hover:bg-[#07132f] hover:text-white"
+          >
+            View my conferences
+          </button>
+          <button
+            onClick={onClose}
+            className="inline-flex min-h-11 items-center justify-center rounded-xl bg-gradient-to-br from-[#6655f6] to-[#7869ff] px-4 text-[11px] font-extrabold text-white shadow-[0_8px_20px_rgba(103,87,245,.28)] transition hover:from-[#4a3ec9] hover:to-[#5b4be0]"
+          >
+            Done
+          </button>
+        </div>
+      </div>
+      <style>{`
+        .cmt-reg-check-ad { stroke-dasharray: 40; stroke-dashoffset: 40; animation: cmtRegDrawAd .55s ease-out forwards; }
+        @keyframes cmtRegDrawAd { from { stroke-dashoffset: 40; } to { stroke-dashoffset: 0; } }
+        .cmt-reg-ring-ad { animation: cmtRegRingAd 1s ease-out .15s both; }
+        @keyframes cmtRegRingAd { 0% { transform: scale(.85); opacity: 0; } 40% { opacity: 1; } 100% { transform: scale(1.25); opacity: 0; } }
+        @media (prefers-reduced-motion: reduce) {
+          .cmt-reg-check-ad, .cmt-reg-ring-ad { animation: none; }
+          .cmt-reg-check-ad { stroke-dashoffset: 0; }
+          .cmt-reg-ring-ad { opacity: 0; }
+        }
+      `}</style>
+    </div>
+  );
+}
+
 function ConfirmModal({ open, title, message, busy, onConfirm, onCancel }) {
   if (!open) return null;
   return (
     <div
-      className="fixed inset-0 z-[110] grid place-items-center bg-[#07132f]/55 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-[110] grid place-items-center bg-[#030814]/75 p-4 backdrop-blur-md"
       onMouseDown={(e) => e.target === e.currentTarget && !busy && onCancel()}
     >
-      <div className="w-full max-w-[440px] overflow-hidden rounded-[22px] bg-white shadow-[0_30px_90px_rgba(7,19,47,.3)]">
+      <div className="w-full max-w-[440px] overflow-hidden rounded-[22px] bg-white shadow-[0_40px_120px_rgba(3,8,20,.5)]">
         <div className="flex items-start gap-4 p-6">
           <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-red-50 text-red-600">
             <AlertTriangle size={20} />
@@ -149,7 +206,7 @@ function ConfirmModal({ open, title, message, busy, onConfirm, onCancel }) {
             onClick={onCancel}
             disabled={busy}
             aria-label="Close"
-            className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-[#9aa3b2] transition hover:bg-[#f1f2f6] hover:text-[#5c6880] disabled:opacity-50"
+            className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-[#9aa3b2] transition hover:bg-[#07132f] hover:text-white disabled:opacity-50"
           >
             <X size={15} />
           </button>
@@ -160,7 +217,7 @@ function ConfirmModal({ open, title, message, busy, onConfirm, onCancel }) {
             type="button"
             onClick={onCancel}
             disabled={busy}
-            className="rounded-xl border border-[#dfe4ed] bg-white px-4 py-2.5 text-[11px] font-extrabold text-[#59657d] transition hover:bg-[#f5f6fa] disabled:opacity-50"
+            className="rounded-xl border border-[#dfe4ed] bg-white px-4 py-2.5 text-[11px] font-extrabold text-[#59657d] transition hover:bg-[#07132f] hover:text-white disabled:opacity-50"
           >
             No, keep it
           </button>
@@ -168,7 +225,7 @@ function ConfirmModal({ open, title, message, busy, onConfirm, onCancel }) {
             type="button"
             onClick={onConfirm}
             disabled={busy}
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-[#e11d48] to-[#be123c] px-4 py-2.5 text-[11px] font-extrabold text-white shadow-[0_12px_28px_rgba(225,29,72,.28)] transition hover:-translate-y-px disabled:cursor-wait disabled:opacity-60"
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-[#e11d48] to-[#be123c] px-4 py-2.5 text-[11px] font-extrabold text-white shadow-[0_12px_28px_rgba(225,29,72,.28)] transition hover:from-[#9f1239] hover:to-[#881337] disabled:cursor-wait disabled:opacity-60"
           >
             {busy ? (
               <>
@@ -221,7 +278,7 @@ function ConferenceDetailModal({
       });
       const created = unwrapOne(res);
       setLocalRegistration(created);
-      onRegistered?.(created);
+      onRegistered?.(created, conference);
     } catch (err) {
       setError(err?.message || "Unable to register. Please try again.");
     } finally {
@@ -231,10 +288,10 @@ function ConferenceDetailModal({
 
   return (
     <div
-      className="fixed inset-0 z-[100] grid place-items-center bg-[#07132f]/55 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-[100] grid place-items-center bg-[#030814]/75 p-4 backdrop-blur-md"
       onMouseDown={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className="max-h-[92vh] w-full max-w-[720px] overflow-y-auto rounded-[22px] bg-white shadow-[0_30px_90px_rgba(7,19,47,.3)]">
+      <div className="max-h-[92vh] w-full max-w-[720px] overflow-y-auto rounded-[22px] bg-white shadow-[0_40px_120px_rgba(3,8,20,.5)]">
         <div className="relative overflow-hidden bg-[radial-gradient(circle_at_78%_18%,rgba(121,104,255,.22),transparent_25%),linear-gradient(135deg,#07132f_0%,#0a1740_52%,#15165a_100%)] p-6 text-white sm:p-7">
           <div className="relative">
             <div className="flex items-start justify-between gap-3">
@@ -308,7 +365,7 @@ function ConferenceDetailModal({
                   type="button"
                   onClick={handleRegister}
                   disabled={registering}
-                  className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-br from-[#6655f6] to-[#7869ff] px-4 py-2.5 text-[11px] font-extrabold text-white shadow-[0_12px_28px_rgba(103,87,245,.28)] transition hover:-translate-y-px disabled:cursor-wait disabled:opacity-60"
+                  className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-br from-[#6655f6] to-[#7869ff] px-4 py-2.5 text-[11px] font-extrabold text-white shadow-[0_12px_28px_rgba(103,87,245,.28)] transition hover:from-[#4a3ec9] hover:to-[#5b4be0] disabled:cursor-wait disabled:opacity-60"
                 >
                   {registering ? <Loader2 size={14} className="animate-spin" /> : <TicketCheck size={14} />}
                   {registering ? "Registering…" : "Register to Attend"}
@@ -389,7 +446,7 @@ function ConferenceDetailModal({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-xl border border-[#dfe4ed] bg-white px-4 py-2.5 text-[11px] font-extrabold text-[#59657d] transition hover:bg-[#f5f6fa]"
+            className="rounded-xl border border-[#dfe4ed] bg-white px-4 py-2.5 text-[11px] font-extrabold text-[#59657d] transition hover:bg-[#07132f] hover:text-white"
           >
             Close
           </button>
@@ -415,6 +472,7 @@ export default function AttendeeDashboard() {
   const [feedback, setFeedback] = useState("");
   const [viewConference, setViewConference] = useState(null);
   const [cancelTarget, setCancelTarget] = useState(null);
+  const [registrationSuccess, setRegistrationSuccess] = useState(null);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -560,7 +618,7 @@ export default function AttendeeDashboard() {
             <div className="relative flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-end">
               <div>
                 <span className="inline-flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-[.12em] text-[#b9b3ff]">
-                  <Sparkles size={14} /> Attendee dashboard
+                  <TicketCheck size={14} /> Attendee dashboard
                 </span>
                 <h1 className="mb-2 mt-3 text-[clamp(28px,4vw,44px)] font-bold leading-tight tracking-[-.045em]">
                   Welcome, {displayName.split(" ")[0]}.
@@ -572,7 +630,7 @@ export default function AttendeeDashboard() {
               <button
                 type="button"
                 onClick={() => navigate("/conferences")}
-                className="inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-[#6655f6] to-[#7869ff] px-4 py-3 text-[12px] font-extrabold text-white shadow-[0_12px_28px_rgba(103,87,245,.28)] transition hover:-translate-y-px sm:w-auto"
+                className="inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-[#6655f6] to-[#7869ff] px-4 py-3 text-[12px] font-extrabold text-white shadow-[0_12px_28px_rgba(103,87,245,.28)] transition hover:from-[#4a3ec9] hover:to-[#5b4be0] sm:w-auto"
               >
                 <Compass size={16} /> Browse conferences
               </button>
@@ -590,7 +648,7 @@ export default function AttendeeDashboard() {
             <div role="alert" className="mt-5 flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-xs font-semibold text-red-700">
               <AlertCircle size={17} className="mt-0.5 shrink-0" />
               <div className="flex-1">{error}</div>
-              <button type="button" onClick={loadData} className="font-extrabold underline">Retry</button>
+              <button type="button" onClick={loadData} className="font-extrabold underline hover:text-[#07132f]">Retry</button>
             </div>
           )}
 
@@ -624,7 +682,7 @@ export default function AttendeeDashboard() {
                   <button
                     type="button"
                     onClick={() => navigate("/conferences")}
-                    className="mt-4 rounded-xl bg-[#efedff] px-4 py-2.5 text-[10px] font-extrabold text-[#5548d7]"
+                    className="mt-4 rounded-xl bg-[#efedff] px-4 py-2.5 text-[10px] font-extrabold text-[#5548d7] transition hover:bg-[#07132f] hover:text-white"
                   >
                     Browse conferences
                   </button>
@@ -638,7 +696,7 @@ export default function AttendeeDashboard() {
                         key={registration.id}
                         type="button"
                         onClick={() => conference && setViewConference(conference)}
-                        className="flex w-full items-center gap-3 rounded-[13px] border border-[#edf0f5] bg-[#fafbfe] p-3 text-left transition hover:border-[#dcd9ff] hover:bg-[#f8f7ff]"
+                        className="flex w-full items-center gap-3 rounded-[13px] border border-[#edf0f5] bg-[#fafbfe] p-3 text-left transition hover:border-[#07132f] hover:bg-white"
                       >
                         <div className="grid h-11 w-14 shrink-0 place-items-center rounded-[10px] bg-[#efedff] px-1 text-center">
                           <strong className="text-[9px] font-extrabold text-[#5649dc]">{formatDate(conferenceStartDate(conference), "TBA")}</strong>
@@ -655,7 +713,7 @@ export default function AttendeeDashboard() {
               )}
             </article>
 
-            <article className="rounded-[20px] bg-gradient-to-br from-[#111e4b] to-[#342b87] p-6 text-white shadow-[0_18px_45px_rgba(20,28,80,.15)]">
+            <article className="rounded-[20px] bg-gradient-to-br from-[#07132f] to-[#342b87] p-6 text-white shadow-[0_18px_45px_rgba(20,28,80,.15)]">
               <span className="grid h-10 w-10 place-items-center rounded-xl bg-white/10"><Compass size={18} /></span>
               <h2 className="mb-2 mt-5 text-[20px] font-bold tracking-[-.03em]">Find your next conference</h2>
               <p className="m-0 text-[10px] leading-6 text-white/60">
@@ -664,7 +722,7 @@ export default function AttendeeDashboard() {
               <button
                 type="button"
                 onClick={() => navigate("/conferences")}
-                className="mt-5 inline-flex items-center gap-2 rounded-[10px] border border-white/15 bg-white/[.08] px-3.5 py-2.5 text-[10px] font-extrabold text-white hover:bg-white/[.14]"
+                className="mt-5 inline-flex items-center gap-2 rounded-[10px] border border-white/15 bg-white/[.08] px-3.5 py-2.5 text-[10px] font-extrabold text-white transition hover:bg-[#030814] hover:border-white/30"
               >
                 Browse conferences <ChevronRight size={14} />
               </button>
@@ -684,7 +742,7 @@ export default function AttendeeDashboard() {
                     value={query}
                     onChange={(event) => setQuery(event.target.value)}
                     placeholder="Search registrations..."
-                    className="h-10 w-full rounded-[10px] border border-[#e2e6ee] bg-[#fafbfe] pl-9 pr-3 text-[11px] outline-none transition focus:border-[#8175ef] focus:ring-2 focus:ring-[#8175ef]/10"
+                    className="h-10 w-full rounded-[10px] border border-[#e2e6ee] bg-[#fafbfe] pl-9 pr-3 text-[11px] outline-none transition focus:border-[#07132f] focus:ring-2 focus:ring-[#07132f]/10"
                   />
                 </div>
               </div>
@@ -697,8 +755,8 @@ export default function AttendeeDashboard() {
                     onClick={() => setFilter(f.key)}
                     className={`rounded-full px-4 py-2 text-[10px] font-extrabold transition ${
                       filter === f.key
-                        ? "bg-[#6655f6] text-white shadow-[0_8px_20px_rgba(103,87,245,.25)]"
-                        : "border border-[#e2e6ee] bg-white text-[#59657d] hover:bg-[#f5f6fa]"
+                        ? "bg-[#07132f] text-white shadow-[0_8px_20px_rgba(7,19,47,.25)]"
+                        : "border border-[#e2e6ee] bg-white text-[#59657d] hover:bg-[#07132f] hover:text-white"
                     }`}
                   >
                     {f.label}
@@ -717,7 +775,7 @@ export default function AttendeeDashboard() {
                 <button
                   type="button"
                   onClick={() => navigate("/conferences")}
-                  className="mt-4 rounded-xl bg-[#efedff] px-4 py-2.5 text-[10px] font-extrabold text-[#5548d7]"
+                  className="mt-4 rounded-xl bg-[#efedff] px-4 py-2.5 text-[10px] font-extrabold text-[#5548d7] transition hover:bg-[#07132f] hover:text-white"
                 >
                   Browse conferences
                 </button>
@@ -740,7 +798,7 @@ export default function AttendeeDashboard() {
                         const status = registration.normalizedStatus;
                         const canCancel = !["cancelled", "canceled", "rejected", "completed"].includes(status);
                         return (
-                          <tr key={registration.id} className="border-b border-[#f0f2f6] last:border-0 hover:bg-[#fbfbfe]">
+                          <tr key={registration.id} className="border-b border-[#f0f2f6] last:border-0 hover:bg-[#f7f8fc]">
                             <td className="px-6 py-4">
                               <div className="flex items-center gap-3">
                                 <span className="grid h-9 w-9 place-items-center rounded-[10px] bg-[#f1efff] text-[#5b4fe3]">
@@ -771,7 +829,7 @@ export default function AttendeeDashboard() {
                                   type="button"
                                   onClick={() => conference && setViewConference(conference)}
                                   disabled={!conference}
-                                  className="inline-flex items-center gap-1.5 rounded-lg bg-[#efedff] px-3 py-1.5 text-[10px] font-bold text-[#5548d7] hover:bg-[#e4e1ff] disabled:cursor-not-allowed disabled:opacity-50"
+                                  className="inline-flex items-center gap-1.5 rounded-lg bg-[#efedff] px-3 py-1.5 text-[10px] font-bold text-[#5548d7] transition hover:bg-[#07132f] hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
                                 >
                                   <Eye size={12} /> View
                                 </button>
@@ -780,7 +838,7 @@ export default function AttendeeDashboard() {
                                     type="button"
                                     disabled={busyRegistrationId === registration.id}
                                     onClick={() => setCancelTarget(registration)}
-                                    className="rounded-lg bg-red-50 px-3 py-1.5 text-[10px] font-bold text-red-600 hover:bg-red-100 disabled:cursor-wait disabled:opacity-50"
+                                    className="rounded-lg bg-red-50 px-3 py-1.5 text-[10px] font-bold text-red-600 transition hover:bg-[#7f1d1d] hover:text-white disabled:cursor-wait disabled:opacity-50"
                                   >
                                     {busyRegistrationId === registration.id ? "Cancelling..." : "Cancel"}
                                   </button>
@@ -820,7 +878,7 @@ export default function AttendeeDashboard() {
                             type="button"
                             onClick={() => conference && setViewConference(conference)}
                             disabled={!conference}
-                            className="inline-flex items-center gap-1.5 rounded-lg bg-[#efedff] px-3 py-1.5 text-[10px] font-bold text-[#5548d7] disabled:opacity-50"
+                            className="inline-flex items-center gap-1.5 rounded-lg bg-[#efedff] px-3 py-1.5 text-[10px] font-bold text-[#5548d7] transition hover:bg-[#07132f] hover:text-white disabled:opacity-50"
                           >
                             <Eye size={12} /> View
                           </button>
@@ -829,7 +887,7 @@ export default function AttendeeDashboard() {
                               type="button"
                               disabled={busyRegistrationId === registration.id}
                               onClick={() => setCancelTarget(registration)}
-                              className="rounded-lg bg-red-50 px-3 py-1.5 text-[10px] font-bold text-red-600 disabled:opacity-50"
+                              className="rounded-lg bg-red-50 px-3 py-1.5 text-[10px] font-bold text-red-600 transition hover:bg-[#7f1d1d] hover:text-white disabled:opacity-50"
                             >
                               {busyRegistrationId === registration.id ? "Cancelling..." : "Cancel"}
                             </button>
@@ -874,6 +932,21 @@ export default function AttendeeDashboard() {
             : null
         }
         onClose={() => setViewConference(null)}
+        onRegistered={(created, conf) => {
+          setViewConference(null);
+          setRegistrationSuccess({ conferenceName: conferenceName(conf) });
+          loadData();
+        }}
+      />
+
+      <RegistrationSuccessModal
+        open={!!registrationSuccess}
+        conferenceName={registrationSuccess?.conferenceName}
+        onView={() => {
+          setRegistrationSuccess(null);
+          navigate("/my-conferences");
+        }}
+        onClose={() => setRegistrationSuccess(null)}
       />
     </div>
   );

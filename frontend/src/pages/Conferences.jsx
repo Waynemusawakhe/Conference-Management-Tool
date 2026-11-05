@@ -50,12 +50,38 @@ function unwrapList(response) {
   return [];
 }
 
+function parseConferenceDate(value) {
+  if (!value) return null;
+  const match = String(value).match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (match) {
+    const year = Number(match[1]);
+    const month = Number(match[2]) - 1;
+    const day = Number(match[3]);
+    const date = new Date(year, month, day);
+    if (
+      date.getFullYear() !== year ||
+      date.getMonth() !== month ||
+      date.getDate() !== day
+    ) return null;
+    return date;
+  }
+
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime())
+    ? null
+    : new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate());
+}
+
 function getIsLive(conference) {
-  const now = new Date();
-  const start = new Date(conference.rawStartDate);
-  const end = new Date(conference.rawEndDate || conference.rawStartDate);
-  end.setHours(23, 59, 59, 999);
-  return now >= start && now <= end;
+  const start = parseConferenceDate(conference.start_date ?? conference.rawStartDate);
+  const end = parseConferenceDate(
+    conference.end_date ?? conference.rawEndDate ?? conference.start_date ?? conference.rawStartDate,
+  );
+  if (!start || !end) return false;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return start <= today && today <= end;
 }
 
 function normaliseConference(conference) {
@@ -66,8 +92,7 @@ function normaliseConference(conference) {
     name: conference.name || "Untitled Conference",
     shortTitle: conference.name || conference.code || "Untitled Conference",
     description: conference.description || "Conference information and submission details.",
-    category: conference.category || "Computer Science",
-    topics: Array.isArray(conference.topics) ? conference.topics : [],
+    category: conference.category || "Uncategorised",
     format: conference.format || "",
     status: conference.submission_status || "",
     submissionDeadline: formatDate(conference.submission_deadline),
@@ -82,6 +107,11 @@ function normaliseConference(conference) {
     websiteLink: conference.website_link || "",
     accent: getAccent(conference.category),
     isLive: getIsLive(conference),
+    topics: Array.isArray(conference.topics) 
+      ? conference.topics 
+      : typeof conference.topics === "string"
+        ? conference.topics.split(",").map(t => t.trim())
+        : [],
   };
 }
 
@@ -113,23 +143,23 @@ function getRegistrationConferenceId(registration) {
 }
 
 function calculateTimeLeft(targetDate) {
-  if (!targetDate) return { days: 0, hours: 0, minutes: 0, seconds: 0 };
-  
-  const target = new Date(targetDate).getTime();
-  if (isNaN(target)) return { days: 0, hours: 0, minutes: 0, seconds: 0 };
+  const target = parseConferenceDate(targetDate);
 
-  const difference = target - Date.now();
-  let timeLeft = { days: 0, hours: 0, minutes: 0, seconds: 0 };
-
-  if (difference > 0) {
-    timeLeft = {
-      days: Math.floor(difference / (1000 * 60 * 60 * 24)),
-      hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
-      minutes: Math.floor((difference / 1000 / 60) % 60),
-      seconds: Math.floor((difference / 1000) % 60),
-    };
+  if (!target) {
+    return { days: 0, hours: 0, minutes: 0, seconds: 0 };
   }
-  return timeLeft;
+
+  const difference = Math.max(
+    0,
+    target.getTime() - Date.now()
+  );
+
+  return {
+    days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+    hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+    minutes: Math.floor((difference / (1000 * 60)) % 60),
+    seconds: Math.floor((difference / 1000) % 60),
+  };
 }
 
 function Typewriter({ text, speed = 150 }) {
@@ -250,25 +280,95 @@ function HugeCountdownHero({ conference }) {
   );
 }
 
+function RegistrationSuccessModal({ open, conferenceName, onView, onClose }) {
+  if (!open) return null;
+  return (
+    <div
+      className="fixed inset-0 z-[120] grid place-items-center bg-[#030814]/75 p-4 backdrop-blur-md"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-[440px] overflow-hidden rounded-[24px] bg-white shadow-[0_40px_120px_rgba(3,8,20,.5)]"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex flex-col items-center px-6 pb-6 pt-8 text-center">
+          <div className="relative mb-5 grid h-20 w-20 place-items-center">
+            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-[#effaf4] to-[#e0f5ea]" />
+            <div className="absolute inset-0 rounded-full border-2 border-[#bfe5d1] cmt-reg-ring-cf" />
+            <svg viewBox="0 0 52 52" className="relative h-14 w-14" aria-hidden="true">
+              <circle cx="26" cy="26" r="23" fill="none" stroke="#18794e" strokeWidth="2" strokeOpacity=".15" />
+              <path d="M15 27 L23 35 L38 19" fill="none" stroke="#18794e" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" className="cmt-reg-check-cf" />
+            </svg>
+          </div>
+          <h2 className="text-[18px] font-extrabold text-[#1c2a4a]">Registration Successful</h2>
+          {conferenceName && (
+            <p className="mt-2 line-clamp-2 text-[12px] font-bold text-[#35415f]">{conferenceName}</p>
+          )}
+          <p className="mt-3 text-[11px] leading-5 text-[#66728b]">
+            You are now registered for this conference. We look forward to seeing you there.
+          </p>
+        </div>
+        <div className="grid grid-cols-2 gap-3 border-t border-[#edf0f5] bg-[#fafbfe] p-4">
+          <button
+            onClick={onClose}
+            className="inline-flex min-h-11 items-center justify-center rounded-xl border border-[#dfe4ed] bg-white px-4 text-[11px] font-extrabold text-[#5c6880] transition hover:bg-[#07132f] hover:text-white"
+          >
+            Keep browsing
+          </button>
+          <button
+            onClick={onView}
+            className="inline-flex min-h-11 items-center justify-center rounded-xl bg-gradient-to-br from-[#6655f6] to-[#7869ff] px-4 text-[11px] font-extrabold text-white shadow-[0_8px_20px_rgba(103,87,245,.28)] transition hover:from-[#4a3ec9] hover:to-[#5b4be0]"
+          >
+            View my conferences
+          </button>
+        </div>
+      </div>
+      <style>{`
+        .cmt-reg-check-cf { stroke-dasharray: 40; stroke-dashoffset: 40; animation: cmtRegDrawCf .55s ease-out forwards; }
+        @keyframes cmtRegDrawCf { from { stroke-dashoffset: 40; } to { stroke-dashoffset: 0; } }
+        .cmt-reg-ring-cf { animation: cmtRegRingCf 1s ease-out .15s both; }
+        @keyframes cmtRegRingCf { 0% { transform: scale(.85); opacity: 0; } 40% { opacity: 1; } 100% { transform: scale(1.25); opacity: 0; } }
+        @media (prefers-reduced-motion: reduce) {
+          .cmt-reg-check-cf, .cmt-reg-ring-cf { animation: none; }
+          .cmt-reg-check-cf { stroke-dashoffset: 0; }
+          .cmt-reg-ring-cf { opacity: 0; }
+        }
+      `}</style>
+    </div>
+  );
+}
+
 export default function Conferences({ embedded = false }) {
   const navigate = useNavigate();
   const requestVersion = useRef(0);
   const { user, status: authStatus } = useAuth();
   const isAttendee = authStatus === "authenticated" && user?.role === "attendee";
 
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [query, setQuery] = useState(() => searchParams.get("search") || "");
 
-  const [filters, setFilters] = useState({
+  const [filters, setFilters] = useState(() => ({
     category: searchParams.get("category") || "",
     status: "",
     format: "",
-  });
+    country: searchParams.get("country") || "",
+  }));
+
+  useEffect(() => {
+    setQuery(searchParams.get("search") || "");
+    setFilters((current) => ({
+      ...current,
+      category: searchParams.get("category") || "",
+      country: searchParams.get("country") || "",
+    }));
+  }, [searchParams]);
 
   const [sortBy, setSortBy] = useState("deadline");
   const [view, setView] = useState("grid");
 
   const [conferences, setConferences] = useState([]);
+  const [featuredUpcoming, setFeaturedUpcoming] = useState(null);
+  const [featuredLoading, setFeaturedLoading] = useState(!embedded);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -280,8 +380,32 @@ export default function Conferences({ embedded = false }) {
   const [registeringConferenceId, setRegisteringConferenceId] = useState(null);
   const [registrationMessage, setRegistrationMessage] = useState("");
   const [registrationError, setRegistrationError] = useState("");
+  const [registrationSuccess, setRegistrationSuccess] = useState(null);
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const [selectedForCompare, setSelectedForCompare] = useState([]);
+  const [showCompareModal, setShowCompareModal] = useState(false);
+  const [compareError, setCompareError] = useState("");
+  const compareButtonRef = useRef(null);
+
+  const toggleCompare = (conference) => {
+    setCompareError("");
+    const exists = selectedForCompare.find((c) => c.id === conference.id);
+    
+    if (exists) {
+      setSelectedForCompare((prev) => prev.filter((c) => c.id !== conference.id));
+      return;
+    }
+    
+    if (selectedForCompare.length >= 3) {
+      setCompareError("You can only compare up to 3 conferences at a time.");
+      setTimeout(() => setCompareError(""), 4000);
+      return;
+    }
+    
+    setSelectedForCompare((prev) => [...prev, conference]);
+  };
 
   const loadConferences = useCallback(
     async ({ page = 1, append = false } = {}) => {
@@ -294,10 +418,11 @@ export default function Conferences({ embedded = false }) {
         const response = await conferencesApi.getAll({
           page,
           per_page: 50,
-          search: query.trim(),
-          category: filters.category,
-          submission_status: filters.status,
-          format: filters.format,
+          search: query.trim() || undefined,  
+          category: filters.category || undefined,
+          submission_status: filters.status || undefined,
+          format: filters.format || undefined,
+          country: filters.country.trim() || undefined,
           sort: sortBy,
         });
 
@@ -306,8 +431,9 @@ export default function Conferences({ embedded = false }) {
 
         setConferences((current) => (append ? [...current, ...data] : data));
         setCurrentPage(page);
-        setHasMore(page < Number(response?.meta?.last_page ?? page));
-        setTotalConferences(Number(response?.meta?.total ?? data.length));
+        const meta = response?.meta || response?.data?.meta || response?.data?.data?.meta;
+        setHasMore(page < Number(meta?.last_page ?? page));
+        setTotalConferences(Number(meta?.total ?? data.length));
       } catch (err) {
         if (version !== requestVersion.current) return;
         setError(
@@ -337,6 +463,58 @@ export default function Conferences({ embedded = false }) {
       requestVersion.current += 1;
     };
   }, [loadConferences]);
+
+  useEffect(() => {
+    if (embedded) {
+      setFeaturedLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setFeaturedLoading(true);
+
+    (async () => {
+      try {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        let page = 1;
+        let lastPage = 1;
+        let upcoming = null;
+        do {
+          if (cancelled) return;
+          const response = await conferencesApi.getAll({
+            page,
+            per_page: 100,
+            sort: "date",
+          });
+          const entries = unwrapList(response);
+          upcoming = entries.find((conference) => {
+            const start = parseConferenceDate(conference.start_date);
+            return start && start >= today;
+          });
+          if (upcoming) break;
+
+          const meta = response?.meta ?? response?.data?.meta ?? {};
+          lastPage = Number(meta.last_page ?? page);
+          page += 1;
+        } while (page <= lastPage);
+
+        if (!cancelled) {
+          setFeaturedUpcoming(upcoming ? normaliseConference(upcoming) : null);
+        }
+      } catch (err) {
+        console.warn("Unable to load the next upcoming conference:", err);
+        if (!cancelled) setFeaturedUpcoming(null);
+      } finally {
+        if (!cancelled) setFeaturedLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [embedded]);
 
   const loadMyRegistrations = useCallback(async () => {
     if (authStatus !== "authenticated" || !user?.id) {
@@ -369,6 +547,24 @@ export default function Conferences({ embedded = false }) {
     loadMyRegistrations();
   }, [loadMyRegistrations]);
 
+  useEffect(() => {
+    if (showCompareModal) {
+      document.body.style.overflow = "hidden";
+      const handleEscape = (e) => {
+        if (e.key === "Escape") setShowCompareModal(false);
+      };
+      document.addEventListener("keydown", handleEscape);
+      
+      return () => {
+        document.body.style.overflow = "unset";
+        document.removeEventListener("keydown", handleEscape);
+        if (compareButtonRef.current) {
+          compareButtonRef.current.focus();
+        }
+      };
+    }
+  }, [showCompareModal]);
+
   const handleRegister = async (conference) => {
     setRegistrationMessage("");
     setRegistrationError("");
@@ -400,6 +596,9 @@ export default function Conferences({ embedded = false }) {
         return next;
       });
       setRegistrationMessage(`You are now registered for ${conference.name || "this conference"}.`);
+      setRegistrationSuccess({
+        conferenceName: conference.name || "this conference",
+      });
     } catch (err) {
       const validationMessage = Object.values(err?.errors || {}).flat().filter(Boolean).join(" ");
       setRegistrationError(validationMessage || err?.message || "Unable to register for this conference.");
@@ -414,26 +613,12 @@ export default function Conferences({ embedded = false }) {
     today.setHours(0, 0, 0, 0);
 
     result = result.filter((c) => {
-      if (!c.rawStartDate) return true;
-      const endDate = c.rawEndDate ? new Date(c.rawEndDate) : new Date(c.rawStartDate);
-      return endDate.getTime() >= today.getTime();
+      const endDate = parseConferenceDate(c.rawEndDate || c.rawStartDate);
+      return !endDate || endDate >= today;
     });
-
 
     return result;
   }, [conferences]);
-
-  const upcomingConference = useMemo(() => {
-    if (!displayConferences.length) return null;
-    const now = new Date();
-    now.setHours(0, 0, 0, 0);
-
-    const upcoming = displayConferences
-      .filter((c) => c.rawStartDate && new Date(c.rawStartDate).getTime() >= now.getTime())
-      .sort((a, b) => new Date(a.rawStartDate).getTime() - new Date(b.rawStartDate).getTime());
-
-    return upcoming.length > 0 ? upcoming[0] : null;
-  }, [displayConferences]);
 
   const updateFilter = (key, value) => {
     setFilters((previous) => ({ ...previous, [key]: value }));
@@ -441,10 +626,16 @@ export default function Conferences({ embedded = false }) {
 
   const clearFilters = () => {
     setQuery("");
-    setFilters({ category: "", status: "", format: "" });
+    setFilters({ category: "", status: "", format: "", country: "" });
+    setSearchParams({});
   };
 
-  const hasActiveFilters = Boolean(query.trim()) || Boolean(filters.category) || Boolean(filters.status) || Boolean(filters.format);
+  const hasActiveFilters =
+    Boolean(query.trim()) ||
+    Boolean(filters.category) ||
+    Boolean(filters.status) ||
+    Boolean(filters.format) ||
+    Boolean(filters.country.trim());
   const showAttendeeChrome = isAttendee && !embedded;
 
   return (
@@ -466,8 +657,8 @@ export default function Conferences({ embedded = false }) {
         <main className={showAttendeeChrome ? "min-w-0 flex-1" : ""}>
           
           {!embedded && (
-            upcomingConference && !loading ? (
-              <HugeCountdownHero conference={upcomingConference} />
+            featuredUpcoming && !featuredLoading ? (
+              <HugeCountdownHero conference={featuredUpcoming} />
             ) : (
               <section className="relative overflow-hidden bg-[radial-gradient(circle_at_75%_32%,rgba(98,83,245,.2),transparent_27%),linear-gradient(135deg,#07132f_0%,#0a1740_52%,#15165a_100%)] px-5 py-24 text-white">
                 <div className="relative z-[2] mx-auto flex w-[min(1200px,100%)] flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
@@ -506,7 +697,6 @@ export default function Conferences({ embedded = false }) {
           <section className={embedded ? "mt-6 rounded-[20px] border border-[#e4e8f0] bg-white p-5 shadow-[0_10px_30px_rgba(15,28,65,.035)] sm:p-6" : "bg-white px-5 py-[88px]"} id="conferences">
             <div className={embedded ? "" : "mx-auto w-[min(1200px,100%)]"}>
               
-              {/* UNIFIED FILTER TOOLBAR */}
               <div className="mb-8 flex flex-wrap items-center gap-2 rounded-[16px] border border-[#e4e8f0] bg-white p-2 shadow-sm xl:flex-nowrap">
                 
                 <div className="relative flex min-w-[200px] flex-1 items-center">
@@ -519,6 +709,16 @@ export default function Conferences({ embedded = false }) {
                     placeholder="Search conferences..."
                   />
                 </div>
+
+                <div className="hidden h-6 w-px bg-[#e4e8f0] xl:block" />
+                
+                <input
+                  type="text"
+                  placeholder="Country..."
+                  className="h-10 w-24 rounded-lg border border-[#e4e8f0] bg-transparent px-3 text-xs font-semibold text-[#43506a] outline-none hover:bg-[#f7f9fc] focus:bg-[#f7f9fc]"
+                  value={filters.country}
+                  onChange={(e) => updateFilter("country", e.target.value)}
+                />
 
                 <div className="hidden h-6 w-px bg-[#e4e8f0] xl:block" />
 
@@ -555,7 +755,7 @@ export default function Conferences({ embedded = false }) {
                 {hasActiveFilters && (
                   <button
                     onClick={clearFilters}
-                    className="ml-1 rounded-lg px-3 py-2 text-xs font-bold text-[#ef4444] hover:bg-red-50"
+                    className="ml-1 rounded-lg px-3 py-2 text-xs font-bold text-[#ef4444] transition hover:bg-[#7f1d1d] hover:text-white"
                   >
                     Clear
                   </button>
@@ -577,7 +777,7 @@ export default function Conferences({ embedded = false }) {
                 <div className="flex overflow-hidden rounded-lg border border-[#dfe4ed] bg-white">
                   <button
                     type="button"
-                    className={`grid h-10 w-10 place-items-center transition ${view === "grid" ? "bg-[#efedff] text-[#5c50ec]" : "bg-transparent text-[#68748b] hover:bg-[#f7f9fc]"}`}
+                    className={`grid h-10 w-10 place-items-center transition ${view === "grid" ? "bg-[#07132f] text-white" : "bg-transparent text-[#68748b] hover:bg-[#07132f] hover:text-white"}`}
                     aria-label="Grid view"
                     aria-pressed={view === "grid"}
                     onClick={() => setView("grid")}
@@ -586,7 +786,7 @@ export default function Conferences({ embedded = false }) {
                   </button>
                   <button
                     type="button"
-                    className={`grid h-10 w-10 place-items-center transition ${view === "list" ? "bg-[#efedff] text-[#5c50ec]" : "bg-transparent text-[#68748b] hover:bg-[#f7f9fc]"}`}
+                    className={`grid h-10 w-10 place-items-center transition ${view === "list" ? "bg-[#07132f] text-white" : "bg-transparent text-[#68748b] hover:bg-[#07132f] hover:text-white"}`}
                     aria-label="List view"
                     aria-pressed={view === "list"}
                     onClick={() => setView("list")}
@@ -596,9 +796,9 @@ export default function Conferences({ embedded = false }) {
                 </div>
               </div>
 
-              {!upcomingConference && !loading && conferences.length > 0 && (
+              {!featuredUpcoming && !featuredLoading && !loading && !hasActiveFilters && conferences.length > 0 && displayConferences.length === 0 && (
                 <div className="mb-6 flex items-center gap-2 rounded-xl bg-[#f0f2f6] px-4 py-3 text-[11px] font-semibold text-[#66728b]">
-                  <Clock size={14} /> No upcoming conferences found. All listed events are in the past.
+                  <Clock size={14} /> No upcoming conferences found in the current conference data.
                 </div>
               )}
 
@@ -607,7 +807,7 @@ export default function Conferences({ embedded = false }) {
                   <span className="flex items-center gap-2">
                     <CheckCircle2 size={16} /> {registrationMessage}
                   </span>
-                  <button type="button" onClick={() => navigate("/my-conferences")} className="rounded-lg bg-white px-3 py-2 text-[10px] font-extrabold text-[#18794e] shadow-sm">
+                  <button type="button" onClick={() => navigate("/my-conferences")} className="rounded-lg bg-white px-3 py-2 text-[10px] font-extrabold text-[#18794e] shadow-sm transition hover:bg-[#07132f] hover:text-white">
                     View My Conferences
                   </button>
                 </div>
@@ -645,7 +845,7 @@ export default function Conferences({ embedded = false }) {
                 <div className="rounded-[18px] border border-red-200 bg-red-50 p-8 text-center">
                   <h3 className="text-sm font-bold text-red-700">Unable to load conferences</h3>
                   <p className="mt-2 text-xs leading-6 text-red-600">{error}</p>
-                  <button type="button" onClick={() => loadConferences()} className="mt-5 rounded-[11px] border-0 bg-gradient-to-br from-[#6655f6] to-[#7869ff] px-[18px] py-[11px] text-[13px] font-bold text-white">
+                  <button type="button" onClick={() => loadConferences()} className="mt-5 rounded-[11px] border-0 bg-gradient-to-br from-[#6655f6] to-[#7869ff] px-[18px] py-[11px] text-[13px] font-bold text-white transition hover:from-[#4a3ec9] hover:to-[#5b4be0]">
                     Try again
                   </button>
                 </div>
@@ -660,15 +860,28 @@ export default function Conferences({ embedded = false }) {
                     return (
                       <div key={conference.id} className="min-w-0">
                         <ConferenceCard conference={conference} layout={view} />
-                        <div className="mt-3 flex justify-end">
+                        <div className="mt-3 flex justify-end gap-2">
+                          
+                          <button
+                            type="button"
+                            onClick={() => toggleCompare(conference)}
+                            className={`inline-flex min-h-10 items-center justify-center rounded-[10px] px-4 text-[11px] font-extrabold transition ${
+                              selectedForCompare.find((c) => c.id === conference.id)
+                                ? "bg-[#07132f] text-white"
+                                : "border border-[#dfe4ed] bg-white text-[#59657d] hover:bg-[#07132f] hover:text-white"
+                            }`}
+                          >
+                            {selectedForCompare.find((c) => c.id === conference.id) ? "Selected ✓" : "Compare"}
+                          </button>
+
                           <button
                             type="button"
                             disabled={isRegistering}
                             onClick={() => handleRegister(conference)}
                             className={`inline-flex min-h-10 items-center justify-center gap-2 rounded-[10px] px-4 text-[11px] font-extrabold transition disabled:cursor-not-allowed disabled:opacity-60 ${
                               isRegistered
-                                ? "border border-[#bfe5d1] bg-[#effaf4] text-[#18794e] hover:bg-[#e6f7ee]"
-                                : "border border-transparent bg-gradient-to-br from-[#6655f6] to-[#7869ff] text-white shadow-[0_8px_20px_rgba(103,87,245,.18)] hover:-translate-y-px"
+                                ? "border border-[#bfe5d1] bg-[#effaf4] text-[#18794e] hover:bg-[#18794e] hover:text-white"
+                                : "border border-transparent bg-gradient-to-br from-[#6655f6] to-[#7869ff] text-white shadow-[0_8px_20px_rgba(103,87,245,.18)] hover:from-[#4a3ec9] hover:to-[#5b4be0]"
                             }`}
                           >
                             {isRegistering ? (
@@ -691,7 +904,7 @@ export default function Conferences({ embedded = false }) {
                   <Search size={28} className="mx-auto text-[#68748b]" />
                   <h3 className="mt-3 text-base font-bold text-[#0d1b3d]">No conferences found</h3>
                   <p className="mt-2 text-xs text-[#788398]">Try another search or clear your filters.</p>
-                  <button type="button" className="mt-5 rounded-[11px] border-0 bg-gradient-to-br from-[#6655f6] to-[#7869ff] px-[18px] py-[11px] text-[13px] font-bold text-white" onClick={clearFilters}>
+                  <button type="button" className="mt-5 rounded-[11px] border-0 bg-gradient-to-br from-[#6655f6] to-[#7869ff] px-[18px] py-[11px] text-[13px] font-bold text-white transition hover:from-[#4a3ec9] hover:to-[#5b4be0]" onClick={clearFilters}>
                     Clear filters
                   </button>
                 </div>
@@ -715,7 +928,7 @@ export default function Conferences({ embedded = false }) {
                     type="button"
                     disabled={loadingMore}
                     onClick={() => loadConferences({ page: currentPage + 1, append: true })}
-                    className="inline-flex min-h-10 items-center justify-center gap-2 rounded-[10px] border border-[#dfe4ed] bg-white px-5 text-[11px] font-extrabold text-[#5649dc] transition hover:bg-[#f7f6ff] disabled:cursor-not-allowed disabled:opacity-60"
+                    className="inline-flex min-h-10 items-center justify-center gap-2 rounded-[10px] border border-[#dfe4ed] bg-white px-5 text-[11px] font-extrabold text-[#5649dc] transition hover:bg-[#07132f] hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {loadingMore ? "Loading..." : "Load more conferences"}
                   </button>
@@ -743,6 +956,111 @@ export default function Conferences({ embedded = false }) {
           </div>
         </footer>
       )}
+
+      {compareError && (
+        <div className="fixed bottom-24 left-1/2 z-[90] -translate-x-1/2 rounded-xl bg-red-600 px-6 py-3 text-[12px] font-bold text-white shadow-lg">
+          {compareError}
+        </div>
+      )}
+
+      {selectedForCompare.length >= 2 && (
+        <div className="fixed bottom-6 left-1/2 z-[90] flex -translate-x-1/2 items-center gap-4 rounded-full bg-[#07132f] px-6 py-3 text-white shadow-[0_20px_50px_rgba(0,0,0,0.3)]">
+          <span className="text-[12px] font-bold">{selectedForCompare.length} conferences selected</span>
+          <button 
+            ref={compareButtonRef}
+            onClick={() => setShowCompareModal(true)} 
+            className="rounded-full bg-[#6655f6] px-5 py-2 text-[11px] font-extrabold text-white shadow-md transition hover:bg-[#4a3ec9]"
+           >
+            Compare Now
+          </button>
+          <button onClick={() => setSelectedForCompare([])} className="text-[11px] font-bold text-white/60 hover:text-white">
+            Clear
+          </button>
+        </div>
+      )}
+
+      {showCompareModal && selectedForCompare.length > 0 && (
+        <div
+          className="fixed inset-0 z-[100] grid place-items-center bg-[#030814]/75 p-4 backdrop-blur-md"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Conference Comparison"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) {
+              setShowCompareModal(false);
+            }
+          }}
+        >
+          <div className="flex max-h-[90vh] w-full max-w-[900px] flex-col overflow-hidden rounded-[22px] bg-white shadow-[0_40px_120px_rgba(3,8,20,.5)]">
+            <div className="flex items-center justify-between border-b border-[#edf0f5] p-6">
+              <h2 className="text-xl font-bold text-[#0d1b3d]">Conference Comparison</h2>
+              <button onClick={() => setShowCompareModal(false)} className="text-sm font-bold text-[#66728b] transition hover:text-[#7f1d1d]">
+                Close ✕
+              </button>
+            </div>
+            <div className="overflow-auto p-6">
+              <div className="min-w-[600px]">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr>
+                    <th className="p-3 border-b bg-[#fafbfe] text-[11px] font-extrabold uppercase text-[#8993a6] w-1/4">Feature</th>
+                    {selectedForCompare.map((c) => (
+                      <th key={c.id} className="p-3 border-b bg-[#fafbfe] text-[13px] font-bold text-[#0d1b3d]">{c.name}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="text-[12px] text-[#43506a]">
+                  <tr>
+                    <td className="p-3 border-b font-bold">Dates</td>
+                    {selectedForCompare.map((c) => (
+                      <td key={c.id} className="p-3 border-b">{c.startDate} - {c.endDate}</td>
+                    ))}
+                  </tr>
+                  <tr>
+                    <td className="p-3 border-b font-bold">Location</td>
+                    {selectedForCompare.map((c) => (
+                      <td key={c.id} className="p-3 border-b">{c.city}, {c.country}</td>
+                    ))}
+                  </tr>
+                  <tr>
+                    <td className="p-3 border-b font-bold">Format</td>
+                    {selectedForCompare.map((c) => (
+                      <td key={c.id} className="p-3 border-b capitalize">{c.format?.replace("_", " ")}</td>
+                    ))}
+                  </tr>
+                  <tr>
+                    <td className="p-3 border-b font-bold">Deadline</td>
+                    {selectedForCompare.map((c) => (
+                      <td key={c.id} className="p-3 border-b text-red-600 font-semibold">{c.submissionDeadline}</td>
+                    ))}
+                  </tr>
+                  <tr>
+                    <td className="p-3 border-b font-bold">Topics</td>
+                    {selectedForCompare.map((c) => (
+                      <td key={c.id} className="p-3 border-b">
+                        {c.topics && c.topics.length > 0 
+                          ? c.topics.join(", ") 
+                          : <span className="text-gray-400 italic">No topics listed</span>}
+                      </td>
+                    ))}
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <RegistrationSuccessModal
+        open={!!registrationSuccess}
+        conferenceName={registrationSuccess?.conferenceName}
+        onView={() => {
+          setRegistrationSuccess(null);
+          navigate("/my-conferences");
+        }}
+        onClose={() => setRegistrationSuccess(null)}
+      />
     </div>
   );
 }

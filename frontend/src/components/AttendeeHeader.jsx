@@ -1,4 +1,4 @@
-import { Menu, Sparkles, X } from "lucide-react";
+import { Menu, Moon, Sun, X } from "lucide-react";
 import Logo from "./Logo";
 import AttendeeIdentity from "./AttendeeIdentity";
 import NotificationBell from "./NotificationBell";
@@ -9,7 +9,7 @@ export default function AttendeeHeader({
   onMenuToggle,
   menuOpen = false,
 }) {
-  const { toggleTheme } = useTheme();
+  const { dark, toggleTheme } = useTheme();
 
   return (
     <header className="sticky top-0 z-50 border-b border-white/10 bg-[#07132f]/95 text-white shadow-[0_8px_30px_rgba(7,19,47,.12)] backdrop-blur-xl">
@@ -45,11 +45,14 @@ export default function AttendeeHeader({
 
           <button
             type="button"
-            className="hidden h-10 w-10 place-items-center rounded-[11px] border border-white/15 bg-white/[.05] text-white/80 hover:bg-white/10 sm:grid"
+            className="hidden h-10 w-10 place-items-center rounded-[11px] border border-white/15 bg-white/[.05] text-white/80 transition hover:bg-white hover:text-[#07132f] sm:grid"
             onClick={toggleTheme}
-            aria-label="Toggle theme"
+            aria-label={
+              dark ? "Switch to light mode" : "Switch to dark mode"
+            }
+            title={dark ? "Switch to light mode" : "Switch to dark mode"}
           >
-            <Sparkles size={16} />
+            {dark ? <Sun size={16} /> : <Moon size={16} />}
           </button>
 
           <AttendeeIdentity name={name} className="ml-1 hidden sm:flex" />

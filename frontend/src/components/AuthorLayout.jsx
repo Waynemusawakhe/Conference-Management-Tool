@@ -9,9 +9,10 @@ import {
   LogOut,
   Menu,
   MessageSquareQuote,
+  Moon,
   Search,
   Settings as SettingsIcon,
-  Sparkles,
+  Sun,
   UserRound,
   X,
 } from "lucide-react";
@@ -75,10 +76,10 @@ export default function AuthorLayout({ children }) {
   };
 
   const navItemClass = (to) =>
-    `flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] ${
+    `flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] transition-colors ${
       isActive(to)
-        ? "bg-[#efedff] font-extrabold text-[#5649dc]"
-        : "font-semibold text-[#66728b] hover:bg-[#f5f6fa]"
+        ? "bg-[#07132f] font-extrabold text-white shadow-[0_4px_12px_rgba(7,19,47,.25)]"
+        : "font-semibold text-[#66728b] hover:bg-[#07132f] hover:text-white"
     }`;
 
   return (
@@ -111,11 +112,14 @@ export default function AuthorLayout({ children }) {
           <div className="ml-auto flex items-center gap-2">
             <NotificationBell dark />
             <button
-              className="hidden h-10 w-10 place-items-center rounded-[11px] border border-white/15 bg-white/[.05] text-white/80 sm:grid"
+              className="hidden h-10 w-10 place-items-center rounded-[11px] border border-white/15 bg-white/[.05] text-white/80 transition hover:bg-white hover:text-[#07132f] sm:grid"
               onClick={toggleTheme}
-              aria-label="Toggle theme"
+              aria-label={
+                dark ? "Switch to light mode" : "Switch to dark mode"
+              }
+              title={dark ? "Switch to light mode" : "Switch to dark mode"}
             >
-              <Sparkles size={16} />
+              {dark ? <Sun size={16} /> : <Moon size={16} />}
             </button>
             <div className="ml-1 hidden items-center gap-2.5 border-l border-white/10 pl-3 sm:flex">
               <div className="grid h-9 w-9 place-items-center rounded-full bg-[#e8e6ff] text-[10px] font-extrabold text-[#4f46c7]">
@@ -135,7 +139,7 @@ export default function AuthorLayout({ children }) {
       <div className="mx-auto flex w-[min(1400px,calc(100%-32px))] gap-6 py-6 lg:gap-7">
         {sidebarOpen && (
           <div
-            className="fixed inset-0 z-40 bg-[#07132f]/60 backdrop-blur-sm lg:hidden"
+            className="fixed inset-0 z-40 bg-[#030814]/70 backdrop-blur-sm lg:hidden"
             onClick={() => setSidebarOpen(false)}
           />
         )}
@@ -145,7 +149,7 @@ export default function AuthorLayout({ children }) {
             sidebarOpen ? "fixed inset-x-4 top-[88px] z-40 block" : "hidden"
           } w-[235px] shrink-0 rounded-2xl border border-[#e4e8f0] bg-white p-3 shadow-[0_18px_45px_rgba(15,28,65,.10)] lg:sticky lg:top-[100px] lg:block lg:h-[calc(100vh-124px)] lg:overflow-y-auto lg:shadow-none`}
         >
-          <div className="mb-3 rounded-xl bg-gradient-to-br from-[#111e4b] to-[#342b87] p-4 text-white">
+          <div className="mb-3 rounded-xl bg-gradient-to-br from-[#07132f] to-[#342b87] p-4 text-white">
             <span className="mb-2 grid h-9 w-9 place-items-center rounded-lg bg-white/10">
               <BookOpen size={17} />
             </span>
@@ -214,7 +218,7 @@ export default function AuthorLayout({ children }) {
             onClick={handleSignOut}
             disabled={signingOut}
             aria-busy={signingOut}
-            className="mt-1 flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] font-semibold text-[#9a6470] transition-colors hover:bg-[#fff4f5] disabled:cursor-wait disabled:opacity-70"
+            className="mt-1 flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] font-semibold text-[#9a6470] transition-colors hover:bg-[#7f1d1d] hover:text-white disabled:cursor-wait disabled:opacity-70"
           >
             {signingOut ? (
               <LoaderCircle size={16} className="animate-spin" />

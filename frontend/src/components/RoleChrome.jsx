@@ -9,11 +9,12 @@ import {
   LogOut,
   Menu,
   MessageSquareQuote,
+  Moon,
   Search,
   Settings as SettingsIcon,
-  Sparkles,
+  Sun,
   Ticket,
-  UserRound,   
+  UserRound,
   X,
 } from "lucide-react";
 import Logo from "./Logo";
@@ -71,7 +72,13 @@ function AuthorWorkspaceShell({ children }) {
   const isActive = (to) => {
     const [path] = to.split("#");
     if (to.startsWith("/author-dashboard#")) {
-      return location.pathname === "/author-dashboard";
+      return (
+        location.pathname === "/author-dashboard" &&
+        location.hash === "#" + to.split("#")[1]
+      );
+    }
+    if (to === "/author-dashboard" && location.pathname === "/author-dashboard") {
+      return !location.hash;
     }
     return location.pathname === path;
   };
@@ -106,11 +113,14 @@ function AuthorWorkspaceShell({ children }) {
           <div className="ml-auto flex items-center gap-2">
             <NotificationBell dark />
             <button
-              className="hidden h-10 w-10 place-items-center rounded-[11px] border border-white/15 bg-white/[.05] text-white/80 sm:grid"
+              className="hidden h-10 w-10 place-items-center rounded-[11px] border border-white/15 bg-white/[.05] text-white/80 transition hover:bg-white hover:text-[#07132f] sm:grid"
               onClick={toggleTheme}
-              aria-label="Toggle theme"
+              aria-label={
+                dark ? "Switch to light mode" : "Switch to dark mode"
+              }
+              title={dark ? "Switch to light mode" : "Switch to dark mode"}
             >
-              <Sparkles size={16} />
+              {dark ? <Sun size={16} /> : <Moon size={16} />}
             </button>
             <div className="ml-1 hidden items-center gap-2.5 border-l border-white/10 pl-3 sm:flex">
               <div className="grid h-9 w-9 place-items-center rounded-full bg-[#e8e6ff] text-[10px] font-extrabold text-[#4f46c7]">
@@ -128,12 +138,19 @@ function AuthorWorkspaceShell({ children }) {
       </header>
 
       <div className="mx-auto flex w-[min(1400px,calc(100%-32px))] gap-6 py-6 lg:gap-7">
+        {sidebarOpen && (
+          <div
+            className="fixed inset-0 z-40 bg-[#030814]/70 backdrop-blur-sm lg:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+
         <aside
           className={`${
             sidebarOpen ? "fixed inset-x-4 top-[88px] z-40 block" : "hidden"
           } w-[235px] shrink-0 rounded-2xl border border-[#e4e8f0] bg-white p-3 shadow-[0_18px_45px_rgba(15,28,65,.10)] lg:sticky lg:top-[100px] lg:block lg:h-[calc(100vh-124px)] lg:overflow-y-auto lg:shadow-none`}
         >
-          <div className="mb-3 rounded-xl bg-gradient-to-br from-[#111e4b] to-[#342b87] p-4 text-white">
+          <div className="mb-3 rounded-xl bg-gradient-to-br from-[#07132f] to-[#342b87] p-4 text-white">
             <span className="mb-2 grid h-9 w-9 place-items-center rounded-lg bg-white/10">
               <BookOpen size={17} />
             </span>
@@ -152,10 +169,10 @@ function AuthorWorkspaceShell({ children }) {
                   key={item.to + item.label}
                   to={item.to}
                   onClick={() => setSidebarOpen(false)}
-                  className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] ${
+                  className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] transition-colors ${
                     active
-                      ? "bg-[#efedff] font-extrabold text-[#5649dc]"
-                      : "font-semibold text-[#66728b] hover:bg-[#f5f6fa]"
+                      ? "bg-[#07132f] font-extrabold text-white shadow-[0_4px_12px_rgba(7,19,47,.25)]"
+                      : "font-semibold text-[#66728b] hover:bg-[#07132f] hover:text-white"
                   }`}
                 >
                   <Icon size={16} />
@@ -168,12 +185,12 @@ function AuthorWorkspaceShell({ children }) {
           <div className="my-4 border-t border-[#edf0f5]" />
 
           <Link
-            to="/testimonials"
+            to="/user-testimonials"
             onClick={() => setSidebarOpen(false)}
-            className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] ${
-              location.pathname === "/testimonials"
-                ? "bg-[#efedff] font-extrabold text-[#5649dc]"
-                : "font-semibold text-[#66728b] hover:bg-[#f5f6fa]"
+            className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] transition-colors ${
+              location.pathname === "/user-testimonials"
+                ? "bg-[#07132f] font-extrabold text-white shadow-[0_4px_12px_rgba(7,19,47,.25)]"
+                : "font-semibold text-[#66728b] hover:bg-[#07132f] hover:text-white"
             }`}
           >
             <MessageSquareQuote size={16} />
@@ -185,10 +202,10 @@ function AuthorWorkspaceShell({ children }) {
           <Link
             to="/profile"
             onClick={() => setSidebarOpen(false)}
-            className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] ${
+            className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] transition-colors ${
               location.pathname === "/profile"
-                ? "bg-[#efedff] font-extrabold text-[#5649dc]"
-                : "font-semibold text-[#66728b] hover:bg-[#f5f6fa]"
+                ? "bg-[#07132f] font-extrabold text-white shadow-[0_4px_12px_rgba(7,19,47,.25)]"
+                : "font-semibold text-[#66728b] hover:bg-[#07132f] hover:text-white"
             }`}
           >
             <UserRound size={16} />
@@ -198,10 +215,10 @@ function AuthorWorkspaceShell({ children }) {
           <Link
             to="/settings"
             onClick={() => setSidebarOpen(false)}
-            className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] ${
+            className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] transition-colors ${
               location.pathname === "/settings"
-                ? "bg-[#efedff] font-extrabold text-[#5649dc]"
-                : "font-semibold text-[#66728b] hover:bg-[#f5f6fa]"
+                ? "bg-[#07132f] font-extrabold text-white shadow-[0_4px_12px_rgba(7,19,47,.25)]"
+                : "font-semibold text-[#66728b] hover:bg-[#07132f] hover:text-white"
             }`}
           >
             <SettingsIcon size={16} />
@@ -212,7 +229,7 @@ function AuthorWorkspaceShell({ children }) {
             onClick={handleSignOut}
             disabled={signingOut}
             aria-busy={signingOut}
-            className="mt-1 flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] font-semibold text-[#9a6470] transition-colors hover:bg-[#fff4f5] disabled:cursor-wait disabled:opacity-70"
+            className="mt-1 flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] font-semibold text-[#9a6470] transition-colors hover:bg-[#7f1d1d] hover:text-white disabled:cursor-wait disabled:opacity-70"
           >
             {signingOut ? (
               <LoaderCircle size={16} className="animate-spin" />
@@ -293,7 +310,7 @@ function GenericShell({ children }) {
 
       <div className="mx-auto flex w-[min(1400px,calc(100%-32px))] gap-6 py-6">
         <aside className="hidden w-[235px] shrink-0 rounded-2xl border border-[#e4e8f0] bg-white p-3 lg:sticky lg:top-[100px] lg:block lg:h-[calc(100vh-124px)] lg:overflow-y-auto">
-          <div className="mb-3 rounded-xl bg-gradient-to-br from-[#111e4b] to-[#342b87] p-4 text-white">
+          <div className="mb-3 rounded-xl bg-gradient-to-br from-[#07132f] to-[#342b87] p-4 text-white">
             <span className="mb-2 grid h-9 w-9 place-items-center rounded-lg bg-white/10">
               <BookOpen size={17} />
             </span>
@@ -311,10 +328,10 @@ function GenericShell({ children }) {
                 <Link
                   key={item.to + item.label}
                   to={item.to}
-                  className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] ${
+                  className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] transition-colors ${
                     active
-                      ? "bg-[#efedff] font-extrabold text-[#5649dc]"
-                      : "font-semibold text-[#66728b] hover:bg-[#f5f6fa]"
+                      ? "bg-[#07132f] font-extrabold text-white shadow-[0_4px_12px_rgba(7,19,47,.25)]"
+                      : "font-semibold text-[#66728b] hover:bg-[#07132f] hover:text-white"
                   }`}
                 >
                   <Icon size={16} />
@@ -327,11 +344,11 @@ function GenericShell({ children }) {
           <div className="my-4 border-t border-[#edf0f5]" />
 
           <Link
-            to="/testimonials"
-            className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] ${
-              location.pathname === "/testimonials"
-                ? "bg-[#efedff] font-extrabold text-[#5649dc]"
-                : "font-semibold text-[#66728b] hover:bg-[#f5f6fa]"
+            to="/user-testimonials"
+            className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] transition-colors ${
+              location.pathname === "/user-testimonials"
+                ? "bg-[#07132f] font-extrabold text-white shadow-[0_4px_12px_rgba(7,19,47,.25)]"
+                : "font-semibold text-[#66728b] hover:bg-[#07132f] hover:text-white"
             }`}
           >
             <MessageSquareQuote size={16} />
@@ -342,10 +359,10 @@ function GenericShell({ children }) {
 
           <Link
             to="/profile"
-            className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] ${
+            className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] transition-colors ${
               location.pathname === "/profile"
-                ? "bg-[#efedff] font-extrabold text-[#5649dc]"
-                : "font-semibold text-[#66728b] hover:bg-[#f5f6fa]"
+                ? "bg-[#07132f] font-extrabold text-white shadow-[0_4px_12px_rgba(7,19,47,.25)]"
+                : "font-semibold text-[#66728b] hover:bg-[#07132f] hover:text-white"
             }`}
           >
             <UserRound size={16} />
@@ -354,10 +371,10 @@ function GenericShell({ children }) {
 
           <Link
             to="/settings"
-            className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] ${
+            className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] transition-colors ${
               location.pathname === "/settings"
-                ? "bg-[#efedff] font-extrabold text-[#5649dc]"
-                : "font-semibold text-[#66728b] hover:bg-[#f5f6fa]"
+                ? "bg-[#07132f] font-extrabold text-white shadow-[0_4px_12px_rgba(7,19,47,.25)]"
+                : "font-semibold text-[#66728b] hover:bg-[#07132f] hover:text-white"
             }`}
           >
             <SettingsIcon size={16} />
@@ -368,7 +385,7 @@ function GenericShell({ children }) {
             onClick={handleSignOut}
             disabled={signingOut}
             aria-busy={signingOut}
-            className="mt-1 flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] font-semibold text-[#9a6470] transition hover:bg-[#fff4f5] disabled:cursor-wait disabled:opacity-70"
+            className="mt-1 flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] font-semibold text-[#9a6470] transition-colors hover:bg-[#7f1d1d] hover:text-white disabled:cursor-wait disabled:opacity-70"
           >
             {signingOut ? (
               <LoaderCircle size={16} className="animate-spin" />

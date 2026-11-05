@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 
 import Navbar from "../components/Navbar";
+import PublicFooter from "../components/PublicFooter";
 import { useAuth } from "../context/AuthContext";
 import { useApiResource } from "../hooks/useApiResource";
 import { toArray } from "../api/normalize";
@@ -766,6 +767,8 @@ export default function Testimonials() {
           </button>
         </section>
       </main>
+
+      <PublicFooter />
 
       <AddTestimonialDialog
         open={dialogOpen}

@@ -1,16 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  ArrowLeft,
   CalendarDays,
   CheckCircle2,
-  FileText,
   LayoutGrid,
   List,
   LoaderCircle,
   Search,
+  Send,
   SlidersHorizontal,
   Sparkles,
-  Upload,
   X,
 } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -19,6 +17,9 @@ import ConferenceCard from "../components/ConferenceCard";
 import SectionHeading from "../components/SectionHeading";
 import { conferencesApi } from "../api/conferencesApi";
 import { submissionsApi } from "../api/submissionsApi";
+
+import DocumentInspector from "../components/DocumentInspector";
+import { inspectDocument } from "../utils/documentInspector";
 
 const CATEGORIES = [
   "AI & Machine Learning",
@@ -30,7 +31,8 @@ const CATEGORIES = [
 
 const STATUSES = [
   { value: "open", label: "Open for submissions" },
-  { value: "closed", label: "Closed" },
+  { value: "closed", label: "Closed submissions" },
+  { value: "all", label: "All conferences" },
 ];
 
 const FORMATS = [
@@ -93,84 +95,6 @@ function normaliseConference(conference) {
   };
 }
 
-function FilterPanel({ activeFilterCount, clearFilters, filters, updateFilter }) {
-  return (
-    <aside className="rounded-2xl border border-[#e4e8f0] bg-white p-5 shadow-sm">
-      <div className="mb-5 flex items-center justify-between border-b border-[#e8ebf2] pb-4">
-        <strong>Filters</strong>
-        {activeFilterCount > 0 && (
-          <button
-            type="button"
-            className="border-0 bg-transparent text-[11px] font-bold text-[#5c50ec]"
-            onClick={clearFilters}
-          >
-            Clear all
-          </button>
-        )}
-      </div>
-
-      <label className="mb-4 grid gap-1.5 text-[10px] font-bold text-[#68748b]">
-        <span>Research area</span>
-        <select
-          className="min-h-10 w-full rounded-[9px] border border-[#dfe4ed] bg-white px-2.5 text-[11px] text-[#0d1b3d] outline-none focus:border-[#7568f7] focus:ring-4 focus:ring-[#7568f7]/10"
-          value={filters.category}
-          onChange={(e) => updateFilter("category", e.target.value)}
-        >
-          <option value="">All areas</option>
-          {CATEGORIES.map((category) => (
-            <option key={category} value={category}>
-              {category}
-            </option>
-          ))}
-        </select>
-      </label>
-
-      <label className="mb-4 grid gap-1.5 text-[10px] font-bold text-[#68748b]">
-        <span>Country</span>
-        <input
-          value={filters.country}
-          onChange={(e) => updateFilter("country", e.target.value)}
-          placeholder="All countries"
-          aria-label="Country"
-          className="min-h-10 w-full rounded-[9px] border border-[#dfe4ed] px-2.5 text-[11px]"
-        />
-      </label>
-
-      <label className="mb-4 grid gap-1.5 text-[10px] font-bold text-[#68748b]">
-        <span>Status</span>
-        <select
-          className="min-h-10 w-full rounded-[9px] border border-[#dfe4ed] bg-white px-2.5 text-[11px] text-[#0d1b3d] outline-none focus:border-[#7568f7] focus:ring-4 focus:ring-[#7568f7]/10"
-          value={filters.status}
-          onChange={(e) => updateFilter("status", e.target.value)}
-        >
-          <option value="">All statuses</option>
-          {STATUSES.map((status) => (
-            <option key={status.value} value={status.value}>
-              {status.label}
-            </option>
-          ))}
-        </select>
-      </label>
-
-      <label className="grid gap-1.5 text-[10px] font-bold text-[#68748b]">
-        <span>Format</span>
-        <select
-          className="min-h-10 w-full rounded-[9px] border border-[#dfe4ed] bg-white px-2.5 text-[11px] text-[#0d1b3d] outline-none focus:border-[#7568f7] focus:ring-4 focus:ring-[#7568f7]/10"
-          value={filters.format}
-          onChange={(e) => updateFilter("format", e.target.value)}
-        >
-          <option value="">All formats</option>
-          {FORMATS.map((format) => (
-            <option key={format.value} value={format.value}>
-              {format.label}
-            </option>
-          ))}
-        </select>
-      </label>
-    </aside>
-  );
-}
-
 function SubmitProposalModal({ open, conference, onClose, onSubmitted }) {
   const [title, setTitle] = useState("");
   const [track, setTrack] = useState("");
@@ -192,6 +116,7 @@ function SubmitProposalModal({ open, conference, onClose, onSubmitted }) {
 
   const submit = async (event) => {
     event.preventDefault();
+    if (saving) return;
     setError("");
 
     if (!title.trim() || !abstract.trim()) {
@@ -200,21 +125,9 @@ function SubmitProposalModal({ open, conference, onClose, onSubmitted }) {
     }
 
     if (file) {
-      const allowedTypes = [
-        "application/pdf",
-        "application/msword",
-        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-      ];
-      const extension = file.name.toLowerCase().split(".").pop();
-      if (
-        !allowedTypes.includes(file.type) &&
-        !["pdf", "doc", "docx"].includes(extension)
-      ) {
-        setError("Only PDF, DOC or DOCX files are allowed.");
-        return;
-      }
-      if (file.size > 10 * 1024 * 1024) {
-        setError("The file must be 10MB or smaller.");
+      const inspected = inspectDocument(file);
+      if (inspected && !inspected.valid) {
+        setError(inspected.problems[0]);
         return;
       }
     }
@@ -229,7 +142,10 @@ function SubmitProposalModal({ open, conference, onClose, onSubmitted }) {
     setSaving(true);
     try {
       await submissionsApi.create(body);
-      onSubmitted?.();
+      onSubmitted?.({
+        title: title.trim(),
+        conferenceName: conference.name,
+      });
       onClose();
     } catch (err) {
       const first = Object.values(err?.errors || {})[0];
@@ -245,12 +161,12 @@ function SubmitProposalModal({ open, conference, onClose, onSubmitted }) {
 
   return (
     <div
-      className="fixed inset-0 z-[100] grid place-items-center bg-[#07132f]/55 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-[100] grid place-items-center bg-[#030814]/70 p-4 backdrop-blur-md"
       onMouseDown={(e) =>
         e.target === e.currentTarget && !saving && onClose()
       }
     >
-      <div className="max-h-[92vh] w-full max-w-[720px] overflow-y-auto rounded-[22px] bg-white shadow-[0_30px_90px_rgba(7,19,47,.3)]">
+      <div className="max-h-[92vh] w-full max-w-[720px] overflow-y-auto rounded-[22px] bg-white shadow-[0_40px_120px_rgba(3,8,20,.5)]">
         <div className="flex items-start justify-between gap-4 border-b border-[#edf0f5] p-6">
           <div>
             <span className="text-[10px] font-extrabold uppercase tracking-[.12em] text-[#6655f6]">
@@ -269,56 +185,76 @@ function SubmitProposalModal({ open, conference, onClose, onSubmitted }) {
             type="button"
             onClick={onClose}
             disabled={saving}
-            className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[#f3f5f9] text-[#657089] hover:bg-[#e9ecf3] disabled:opacity-50"
+            className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[#f3f5f9] text-[#657089] transition hover:bg-[#07132f] hover:text-white disabled:opacity-50"
             aria-label="Close"
           >
             <X size={17} />
           </button>
         </div>
 
-        <form onSubmit={submit} className="grid gap-4 p-6">
-          <label className="grid gap-1.5 text-[11px] font-bold text-[#43506a]">
-            Title
-            <input
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              maxLength={255}
-              required
-              className="h-11 rounded-xl border border-[#dfe4ed] px-3 text-sm font-normal outline-none focus:border-[#7568f7]"
-              placeholder="Research proposal title"
-            />
-          </label>
+        <form onSubmit={submit} className="grid gap-5 p-6">
+          <div>
+            <div className="mb-3 flex items-center gap-2">
+              <Sparkles size={14} className="text-[#6655f6]" />
+              <h3 className="m-0 text-[11px] font-extrabold uppercase tracking-[.08em] text-[#43506a]">
+                Proposal details
+              </h3>
+            </div>
+            <div className="grid gap-4">
+              <label className="grid gap-1.5 text-[11px] font-bold text-[#43506a]">
+                Title
+                <input
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  maxLength={255}
+                  required
+                  className="h-11 rounded-xl border border-[#dfe4ed] px-3 text-sm font-normal outline-none focus:border-[#07132f] focus:ring-4 focus:ring-[#07132f]/10"
+                  placeholder="Research proposal title"
+                />
+              </label>
+              <label className="grid gap-1.5 text-[11px] font-bold text-[#43506a]">
+                Track
+                <input
+                  value={track}
+                  onChange={(e) => setTrack(e.target.value)}
+                  maxLength={255}
+                  className="h-11 rounded-xl border border-[#dfe4ed] px-3 text-sm font-normal outline-none focus:border-[#07132f] focus:ring-4 focus:ring-[#07132f]/10"
+                  placeholder="e.g. Artificial Intelligence"
+                />
+              </label>
+            </div>
+          </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <label className="grid gap-1.5 text-[11px] font-bold text-[#43506a]">
-              Track
-              <input
-                value={track}
-                onChange={(e) => setTrack(e.target.value)}
-                maxLength={255}
-                className="h-11 rounded-xl border border-[#dfe4ed] px-3 text-sm font-normal outline-none focus:border-[#7568f7]"
-                placeholder="e.g. Artificial Intelligence"
-              />
-            </label>
-
+          <div>
+            <div className="mb-3 flex items-center gap-2">
+              <Send size={14} className="text-[#6655f6]" />
+              <h3 className="m-0 text-[11px] font-extrabold uppercase tracking-[.08em] text-[#43506a]">
+                Document
+              </h3>
+            </div>
             <label className="grid gap-1.5 text-[11px] font-bold text-[#43506a]">
               Proposal file
               <input
                 type="file"
                 accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                id="proposal-file-conferences"
                 onChange={(e) => setFile(e.target.files?.[0] || null)}
                 className="block h-11 w-full rounded-xl border border-[#dfe4ed] bg-white px-2 py-2 text-[11px]"
               />
               <span className="font-normal text-[9px] text-[#8a95a8]">
                 Optional · PDF, DOC or DOCX · maximum 10MB
               </span>
-              {file && (
-                <span className="mt-1 flex items-center gap-1.5 rounded-md bg-[#effaf4] px-2 py-1 text-[10px] font-medium text-[#18794e]">
-                  <Upload size={11} />
-                  {file.name} ({(file.size / 1024).toFixed(1)} KB)
-                </span>
-              )}
             </label>
+            <DocumentInspector
+              file={file}
+              onRemove={() => {
+                setFile(null);
+                const i = document.getElementById(
+                  "proposal-file-conferences",
+                );
+                if (i) i.value = "";
+              }}
+            />
           </div>
 
           <label className="grid gap-1.5 text-[11px] font-bold text-[#43506a]">
@@ -329,7 +265,7 @@ function SubmitProposalModal({ open, conference, onClose, onSubmitted }) {
               maxLength={5000}
               rows={8}
               required
-              className="resize-y rounded-xl border border-[#dfe4ed] p-3 text-sm font-normal leading-6 outline-none focus:border-[#7568f7]"
+              className="resize-y rounded-xl border border-[#dfe4ed] p-3 text-sm font-normal leading-6 outline-none focus:border-[#07132f] focus:ring-4 focus:ring-[#07132f]/10"
               placeholder="Write the research abstract…"
             />
             <span className="text-right text-[9px] font-normal text-[#8a95a8]">
@@ -351,20 +287,120 @@ function SubmitProposalModal({ open, conference, onClose, onSubmitted }) {
               type="button"
               onClick={onClose}
               disabled={saving}
-              className="rounded-xl border border-[#dfe4ed] px-4 py-2.5 text-xs font-bold text-[#66728b] disabled:opacity-50"
+              className="rounded-xl border border-[#dfe4ed] px-4 py-2.5 text-xs font-bold text-[#66728b] transition hover:bg-[#07132f] hover:text-white disabled:opacity-50"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={saving}
-              className="rounded-xl bg-gradient-to-br from-[#6655f6] to-[#7869ff] px-5 py-2.5 text-xs font-extrabold text-white disabled:opacity-60"
+              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-br from-[#6655f6] to-[#7869ff] px-5 py-2.5 text-xs font-extrabold text-white transition hover:from-[#4a3ec9] hover:to-[#5b4be0] disabled:opacity-60"
             >
-              {saving ? "Submitting…" : "Submit proposal"}
+              {saving ? (
+                <>
+                  <LoaderCircle size={14} className="animate-spin" />
+                  Submitting…
+                </>
+              ) : (
+                <>
+                  <Send size={14} /> Submit proposal
+                </>
+              )}
             </button>
           </div>
         </form>
       </div>
+    </div>
+  );
+}
+
+function SubmissionSuccessModal({ open, title, conferenceName, onView, onClose }) {
+  if (!open) return null;
+  return (
+    <div
+      className="fixed inset-0 z-[110] grid place-items-center bg-[#030814]/75 p-4 backdrop-blur-md"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-[440px] overflow-hidden rounded-[24px] bg-white shadow-[0_40px_120px_rgba(3,8,20,.5)]"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex flex-col items-center px-6 pb-6 pt-8 text-center">
+          <div className="relative mb-5 grid h-20 w-20 place-items-center">
+            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-[#effaf4] to-[#e0f5ea]" />
+            <svg
+              viewBox="0 0 52 52"
+              className="relative h-14 w-14"
+              aria-hidden="true"
+            >
+              <circle
+                cx="26"
+                cy="26"
+                r="23"
+                fill="none"
+                stroke="#18794e"
+                strokeWidth="2"
+                strokeOpacity=".15"
+              />
+              <path
+                d="M15 27 L23 35 L38 19"
+                fill="none"
+                stroke="#18794e"
+                strokeWidth="3.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="cmt-check-path-conf"
+              />
+            </svg>
+          </div>
+          <h2 className="text-[18px] font-extrabold text-[#1c2a4a]">
+            Proposal Submitted Successfully
+          </h2>
+          {title && (
+            <p className="mt-2 line-clamp-2 text-[12px] font-bold text-[#35415f]">
+              {title}
+            </p>
+          )}
+          {conferenceName && (
+            <p className="mt-1 text-[10px] text-[#8993a6]">{conferenceName}</p>
+          )}
+          <p className="mt-3 text-[11px] leading-5 text-[#66728b]">
+            Your submission is now in review. Track its status from your
+            dashboard.
+          </p>
+        </div>
+        <div className="grid grid-cols-2 gap-3 border-t border-[#edf0f5] bg-[#fafbfe] p-4">
+          <button
+            onClick={onView}
+            className="inline-flex min-h-11 items-center justify-center rounded-xl border border-[#dfe4ed] bg-white px-4 text-[11px] font-extrabold text-[#5c6880] transition hover:bg-[#07132f] hover:text-white"
+          >
+            View proposals
+          </button>
+          <button
+            onClick={onClose}
+            className="inline-flex min-h-11 items-center justify-center rounded-xl bg-gradient-to-br from-[#6655f6] to-[#7869ff] px-4 text-[11px] font-extrabold text-white shadow-[0_8px_20px_rgba(103,87,245,.28)] transition hover:from-[#4a3ec9] hover:to-[#5b4be0]"
+          >
+            Done
+          </button>
+        </div>
+      </div>
+      <style>{`
+        .cmt-check-path-conf {
+          stroke-dasharray: 40;
+          stroke-dashoffset: 40;
+          animation: cmtDrawCheckConf .55s ease-out forwards;
+        }
+        @keyframes cmtDrawCheckConf {
+          from { stroke-dashoffset: 40; }
+          to { stroke-dashoffset: 0; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .cmt-check-path-conf {
+            animation: none;
+            stroke-dashoffset: 0;
+          }
+        }
+      `}</style>
     </div>
   );
 }
@@ -378,7 +414,7 @@ export default function AuthorConferences() {
   const [filters, setFilters] = useState({
     category: searchParams.get("category") || "",
     country: searchParams.get("country") || "",
-    status: "",
+    status: "open",
     format: "",
   });
 
@@ -391,10 +427,9 @@ export default function AuthorConferences() {
   const [hasMore, setHasMore] = useState(false);
   const [totalConferences, setTotalConferences] = useState(0);
   const [error, setError] = useState("");
-  const [showMobileFilters, setShowMobileFilters] = useState(false);
 
   const [submitTarget, setSubmitTarget] = useState(null);
-  const [successMessage, setSuccessMessage] = useState("");
+  const [successData, setSuccessData] = useState(null);
 
   const loadConferences = useCallback(
     async ({ page = 1, append = false } = {}) => {
@@ -410,7 +445,8 @@ export default function AuthorConferences() {
           search: query.trim(),
           category: filters.category,
           country: filters.country,
-          submission_status: filters.status,
+          submission_status:
+            filters.status === "all" ? "" : filters.status,
           format: filters.format,
           sort: sortBy,
         });
@@ -463,10 +499,14 @@ export default function AuthorConferences() {
 
   const clearFilters = () => {
     setQuery("");
-    setFilters({ category: "", country: "", status: "", format: "" });
+    setFilters({ category: "", country: "", status: "open", format: "" });
   };
 
-  const activeFilterCount = Object.values(filters).filter(Boolean).length;
+  const activeFilterCount =
+    (filters.category ? 1 : 0) +
+    (filters.country ? 1 : 0) +
+    (filters.status && filters.status !== "open" ? 1 : 0) +
+    (filters.format ? 1 : 0);
 
   const handleSubmit = (conference) => {
     if (!conference?.id) return;
@@ -474,13 +514,8 @@ export default function AuthorConferences() {
     setSubmitTarget(conference);
   };
 
-  const handleSubmitted = () => {
-    setSuccessMessage("Your proposal has been submitted successfully.");
-    // Auto-redirect to the proposals list so the author can see their submission
-    window.setTimeout(() => {
-      setSuccessMessage("");
-      navigate("/author-dashboard#my-proposals");
-    }, 1500);
+  const handleSubmitted = (data) => {
+    setSuccessData(data);
   };
 
   return (
@@ -489,17 +524,6 @@ export default function AuthorConferences() {
         <div className="absolute inset-0 opacity-[.16] [background-image:radial-gradient(rgba(255,255,255,.15)_0.7px,transparent_0.7px)] [background-size:22px_22px]" />
         <div className="relative z-[2]">
           <div className="flex flex-wrap items-center gap-3">
-            <button
-              type="button"
-              onClick={() => navigate("/author-dashboard")}
-              className="group inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/[.06] px-3.5 py-2 text-[11px] font-extrabold text-white backdrop-blur-md transition hover:-translate-y-px hover:border-[#b9b3ff]/50 hover:bg-white/[.12]"
-            >
-              <ArrowLeft
-                size={13}
-                className="transition group-hover:-translate-x-0.5"
-              />
-              Back to dashboard
-            </button>
             <span className="inline-flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-[.12em] text-[#b9b3ff]">
               <Sparkles size={14} />
               Browse conferences
@@ -515,32 +539,13 @@ export default function AuthorConferences() {
         </div>
       </section>
 
-      {successMessage && (
-        <div
-          role="status"
-          className="mt-5 flex items-center justify-between gap-3 rounded-2xl border border-[#bfe5d1] bg-[#effaf4] p-4 text-xs font-semibold text-[#18794e]"
-        >
-          <span className="flex items-center gap-2">
-            <CheckCircle2 size={16} />
-            {successMessage} Redirecting to your proposals…
-          </span>
-          <button
-            type="button"
-            onClick={() => setSuccessMessage("")}
-            aria-label="Dismiss"
-          >
-            <X size={15} />
-          </button>
-        </div>
-      )}
-
       <section className="mt-6 rounded-[20px] border border-[#e4e8f0] bg-white p-5 shadow-[0_10px_30px_rgba(15,28,65,.035)] sm:p-6">
-        <div className="mb-8 flex items-center justify-between gap-5 max-[700px]:block">
+        <div className="mb-8 flex flex-wrap items-center gap-2">
           <form
-            className="flex min-h-[58px] w-full max-w-[620px] items-center rounded-[14px] border border-[#e4e8f0] bg-white p-1.5 shadow-sm"
+            className="flex min-h-[46px] min-w-[280px] flex-1 items-center rounded-[12px] border border-[#e4e8f0] bg-white p-1 shadow-sm"
             onSubmit={(e) => e.preventDefault()}
           >
-            <Search className="mx-3 shrink-0 text-[#71809a]" size={20} />
+            <Search className="mx-3 shrink-0 text-[#71809a]" size={18} />
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
@@ -549,243 +554,271 @@ export default function AuthorConferences() {
               aria-label="Search conferences"
             />
             <button
-              className="min-h-11 rounded-[10px] border-0 bg-gradient-to-br from-[#6655f6] to-[#7869ff] px-4 text-xs font-bold text-white"
+              className="min-h-9 rounded-[9px] border-0 bg-gradient-to-br from-[#6655f6] to-[#7869ff] px-3.5 text-xs font-bold text-white transition hover:from-[#4a3ec9] hover:to-[#5b4be0]"
               type="submit"
             >
               Search
             </button>
           </form>
 
-          <div className="flex items-center gap-3 max-[700px]:mt-4">
+          <label className="flex items-center gap-1.5">
+            <SlidersHorizontal size={14} className="text-[#68748b]" />
+            <select
+              className="h-10 rounded-[9px] border border-[#dfe4ed] bg-white px-2.5 text-[11px] font-semibold text-[#43506a] outline-none focus:border-[#07132f]"
+              value={filters.status}
+              onChange={(e) => updateFilter("status", e.target.value)}
+              aria-label="Submission status"
+            >
+              {STATUSES.map((status) => (
+                <option key={status.value} value={status.value}>
+                  {status.label}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <select
+            className="h-10 rounded-[9px] border border-[#dfe4ed] bg-white px-2.5 text-[11px] text-[#0d1b3d] outline-none focus:border-[#07132f]"
+            value={filters.category}
+            onChange={(e) => updateFilter("category", e.target.value)}
+            aria-label="Research area"
+          >
+            <option value="">All areas</option>
+            {CATEGORIES.map((category) => (
+              <option key={category} value={category}>
+                {category}
+              </option>
+            ))}
+          </select>
+
+          <input
+            value={filters.country}
+            onChange={(e) => updateFilter("country", e.target.value)}
+            placeholder="All countries"
+            aria-label="Country"
+            className="h-10 w-[130px] rounded-[9px] border border-[#dfe4ed] px-2.5 text-[11px] outline-none focus:border-[#07132f]"
+          />
+
+          <select
+            className="h-10 rounded-[9px] border border-[#dfe4ed] bg-white px-2.5 text-[11px] text-[#0d1b3d] outline-none focus:border-[#07132f]"
+            value={filters.format}
+            onChange={(e) => updateFilter("format", e.target.value)}
+            aria-label="Format"
+          >
+            <option value="">All formats</option>
+            {FORMATS.map((format) => (
+              <option key={format.value} value={format.value}>
+                {format.label}
+              </option>
+            ))}
+          </select>
+
+          <select
+            className="h-10 rounded-[9px] border border-[#dfe4ed] bg-white px-2.5 text-[11px] text-[#0d1b3d] outline-none focus:border-[#07132f]"
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            aria-label="Sort by"
+          >
+            <option value="deadline">Deadline</option>
+            <option value="date">Conference date</option>
+            <option value="name">Name</option>
+          </select>
+
+          <div
+            className="flex overflow-hidden rounded-[9px] border border-[#dfe4ed]"
+            role="group"
+            aria-label="View mode"
+          >
             <button
               type="button"
-              className="inline-flex items-center gap-1.5 rounded-[10px] border border-[#dfe4ed] bg-white px-3 py-2.5 text-xs font-bold text-[#43506a] lg:hidden"
-              onClick={() => setShowMobileFilters((value) => !value)}
+              className={`grid h-10 w-10 place-items-center border-0 transition ${
+                view === "grid"
+                  ? "bg-[#07132f] text-white"
+                  : "bg-white text-[#68748b] hover:bg-[#07132f] hover:text-white"
+              }`}
+              onClick={() => setView("grid")}
+              aria-label="Grid view"
             >
-              <SlidersHorizontal size={16} />
-              Filters
-              {activeFilterCount > 0 ? ` (${activeFilterCount})` : ""}
+              <LayoutGrid size={18} />
             </button>
-
-            <label className="flex items-center gap-2 text-xs font-bold text-[#68748b]">
-              <span className="hidden sm:inline">Sort</span>
-              <select
-                className="min-h-10 rounded-[9px] border border-[#dfe4ed] bg-white px-2.5 text-[11px] text-[#0d1b3d] outline-none focus:border-[#7568f7]"
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-              >
-                <option value="deadline">Submission deadline</option>
-                <option value="date">Conference date</option>
-                <option value="name">Name</option>
-              </select>
-            </label>
-
-            <div
-              className="flex overflow-hidden rounded-[9px] border border-[#dfe4ed]"
-              role="group"
-              aria-label="View mode"
+            <button
+              type="button"
+              className={`grid h-10 w-10 place-items-center border-0 transition ${
+                view === "list"
+                  ? "bg-[#07132f] text-white"
+                  : "bg-white text-[#68748b] hover:bg-[#07132f] hover:text-white"
+              }`}
+              onClick={() => setView("list")}
+              aria-label="List view"
             >
-              <button
-                type="button"
-                className={`grid h-10 w-10 place-items-center border-0 ${
-                  view === "grid"
-                    ? "bg-[#efedff] text-[#5c50ec]"
-                    : "bg-white text-[#68748b]"
-                }`}
-                onClick={() => setView("grid")}
-                aria-label="Grid view"
-              >
-                <LayoutGrid size={18} />
-              </button>
-              <button
-                type="button"
-                className={`grid h-10 w-10 place-items-center border-0 ${
-                  view === "list"
-                    ? "bg-[#efedff] text-[#5c50ec]"
-                    : "bg-white text-[#68748b]"
-                }`}
-                onClick={() => setView("list")}
-                aria-label="List view"
-              >
-                <List size={18} />
-              </button>
-            </div>
+              <List size={18} />
+            </button>
           </div>
+
+          {activeFilterCount > 0 && (
+            <button
+              type="button"
+              className="h-10 rounded-[9px] border border-[#dfe4ed] bg-white px-3 text-[11px] font-bold text-[#5649dc] transition hover:bg-[#07132f] hover:text-white"
+              onClick={clearFilters}
+            >
+              Clear ({activeFilterCount})
+            </button>
+          )}
         </div>
 
-        {showMobileFilters && (
-          <div className="mb-6 lg:hidden">
-            <FilterPanel
-              activeFilterCount={activeFilterCount}
-              clearFilters={clearFilters}
-              filters={filters}
-              updateFilter={updateFilter}
-            />
-          </div>
-        )}
+        <div>
+          <SectionHeading
+            eyebrow="Conference catalogue"
+            title={
+              query || activeFilterCount
+                ? `${displayConferences.length} result${
+                    displayConferences.length === 1 ? "" : "s"
+                  }`
+                : "All conferences"
+            }
+            description={
+              query || activeFilterCount
+                ? "Refine your search or clear the filters to see all conferences."
+                : "Live conference data from the Conference Management Tool."
+            }
+          />
 
-        <div className="grid grid-cols-[220px_1fr] gap-8 max-[900px]:grid-cols-1">
-          <div className="hidden lg:block">
-            <FilterPanel
-              activeFilterCount={activeFilterCount}
-              clearFilters={clearFilters}
-              filters={filters}
-              updateFilter={updateFilter}
-            />
-          </div>
+          {loading && (
+            <div className="rounded-[18px] border border-[#e4e8f0] bg-[#fafbfe] p-10 text-center">
+              <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-4 border-[#e5e3ff] border-t-[#6655f6]" />
+              <h3 className="text-sm font-bold text-[#0d1b3d]">
+                Loading conferences...
+              </h3>
+              <p className="mt-1 text-xs text-[#788398]">
+                Fetching the latest conferences.
+              </p>
+            </div>
+          )}
 
-          <div className="min-w-0">
-            <SectionHeading
-              eyebrow="Conference catalogue"
-              title={
-                query || activeFilterCount
-                  ? `${displayConferences.length} result${
-                      displayConferences.length === 1 ? "" : "s"
-                    }`
-                  : "All conferences"
-              }
-              description={
-                query || activeFilterCount
-                  ? "Refine your search or clear the filters to see all conferences."
-                  : "Live conference data from the Conference Management Tool."
-              }
-            />
-
-            {loading && (
-              <div className="rounded-[18px] border border-[#e4e8f0] bg-[#fafbfe] p-10 text-center">
-                <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-4 border-[#e5e3ff] border-t-[#6655f6]" />
-                <h3 className="text-sm font-bold text-[#0d1b3d]">
-                  Loading conferences...
-                </h3>
-                <p className="mt-1 text-xs text-[#788398]">
-                  Fetching the latest conferences.
-                </p>
-              </div>
-            )}
-
-            {!loading && error && (
-              <div className="rounded-[18px] border border-red-200 bg-red-50 p-8 text-center">
-                <h3 className="text-sm font-bold text-red-700">
-                  Unable to load conferences
-                </h3>
-                <p className="mt-2 text-xs leading-6 text-red-600">{error}</p>
-                <button
-                  type="button"
-                  onClick={() => loadConferences()}
-                  className="mt-5 rounded-[11px] border-0 bg-gradient-to-br from-[#6655f6] to-[#7869ff] px-[18px] py-[11px] text-[13px] font-bold text-white"
-                >
-                  Try again
-                </button>
-              </div>
-            )}
-
-            {!loading && displayConferences.length > 0 && (
-              <div
-                className={
-                  view === "grid"
-                    ? "grid grid-cols-2 gap-6 max-[560px]:grid-cols-1"
-                    : "grid gap-5"
-                }
+          {!loading && error && (
+            <div className="rounded-[18px] border border-red-200 bg-red-50 p-8 text-center">
+              <h3 className="text-sm font-bold text-red-700">
+                Unable to load conferences
+              </h3>
+              <p className="mt-2 text-xs leading-6 text-red-600">{error}</p>
+              <button
+                type="button"
+                onClick={() => loadConferences()}
+                className="mt-5 rounded-[11px] border-0 bg-gradient-to-br from-[#6655f6] to-[#7869ff] px-[18px] py-[11px] text-[13px] font-bold text-white transition hover:from-[#4a3ec9] hover:to-[#5b4be0]"
               >
-                {displayConferences.map((conference) => {
-                  const closed = conference.status === "closed";
-                  return (
-                    <div key={conference.id} className="min-w-0">
-                      <ConferenceCard
-                        conference={conference}
-                        layout={view}
-                      />
-                      <div className="mt-3 flex justify-end">
-                        <button
-                          type="button"
-                          disabled={closed}
-                          onClick={() => handleSubmit(conference)}
-                          className={`inline-flex min-h-10 items-center justify-center gap-2 rounded-[10px] px-4 text-[11px] font-extrabold transition disabled:cursor-not-allowed disabled:opacity-60 ${
-                            closed
-                              ? "border border-[#dfe4ed] bg-[#f4f6f9] text-[#68748b]"
-                              : "border border-transparent bg-gradient-to-br from-[#6655f6] to-[#7869ff] text-white shadow-[0_8px_20px_rgba(103,87,245,.18)] hover:-translate-y-px"
-                          }`}
-                        >
-                          {closed ? (
-                            <>
-                              <CheckCircle2 size={15} />
-                              Submissions closed
-                            </>
-                          ) : (
-                            <>
-                              <FileText size={15} />
-                              Submit a proposal
-                            </>
-                          )}
-                        </button>
-                      </div>
+                Try again
+              </button>
+            </div>
+          )}
+
+          {!loading && displayConferences.length > 0 && (
+            <div
+              className={
+                view === "grid"
+                  ? "grid grid-cols-2 gap-6 max-[560px]:grid-cols-1"
+                  : "grid gap-5"
+              }
+            >
+              {displayConferences.map((conference) => {
+                const deadlinePassed =
+                  Boolean(conference.submission_deadline) &&
+                  String(conference.submission_deadline).slice(0, 10) <
+                    new Date().toLocaleDateString("en-CA");
+                const closed =
+                  conference.status === "closed" || deadlinePassed;
+                return (
+                  <div key={conference.id} className="min-w-0">
+                    <ConferenceCard conference={conference} layout={view} />
+                    <div className="mt-3 flex justify-end">
+                      <button
+                        type="button"
+                        disabled={closed}
+                        onClick={() => handleSubmit(conference)}
+                        className={`inline-flex min-h-10 items-center justify-center gap-2 rounded-[10px] px-4 text-[11px] font-extrabold transition disabled:cursor-not-allowed disabled:opacity-60 ${
+                          closed
+                            ? "border border-[#dfe4ed] bg-[#f4f6f9] text-[#68748b]"
+                            : "border border-transparent bg-gradient-to-br from-[#6655f6] to-[#7869ff] text-white shadow-[0_8px_20px_rgba(103,87,245,.18)] hover:from-[#4a3ec9] hover:to-[#5b4be0] hover:-translate-y-px"
+                        }`}
+                      >
+                        {closed ? (
+                          <>
+                            <CheckCircle2 size={15} />
+                            Submissions closed
+                          </>
+                        ) : (
+                          <>
+                            <Send size={15} />
+                            Submit a proposal
+                          </>
+                        )}
+                      </button>
                     </div>
-                  );
-                })}
-              </div>
-            )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
 
-            {!loading && !error && displayConferences.length === 0 && (
-              <div className="rounded-[18px] border border-dashed border-[#ccd3df] bg-[#fafbfe] p-[35px] text-center">
-                <Search size={28} className="mx-auto text-[#68748b]" />
-                <h3 className="mt-3 text-base font-bold text-[#0d1b3d]">
-                  No conferences found
-                </h3>
-                <p className="mt-2 text-xs text-[#788398]">
-                  Try another search or clear your filters.
-                </p>
-                <button
-                  type="button"
-                  className="mt-5 rounded-[11px] border-0 bg-gradient-to-br from-[#6655f6] to-[#7869ff] px-[18px] py-[11px] text-[13px] font-bold text-white"
-                  onClick={clearFilters}
-                >
-                  Clear filters
-                </button>
-              </div>
-            )}
+          {!loading && !error && displayConferences.length === 0 && (
+            <div className="rounded-[18px] border border-dashed border-[#ccd3df] bg-[#fafbfe] p-[35px] text-center">
+              <Search size={28} className="mx-auto text-[#68748b]" />
+              <h3 className="mt-3 text-base font-bold text-[#0d1b3d]">
+                No conferences found
+              </h3>
+              <p className="mt-2 text-xs text-[#788398]">
+                Try another search or clear your filters.
+              </p>
+              <button
+                type="button"
+                className="mt-5 rounded-[11px] border-0 bg-gradient-to-br from-[#6655f6] to-[#7869ff] px-[18px] py-[11px] text-[13px] font-bold text-white transition hover:from-[#4a3ec9] hover:to-[#5b4be0]"
+                onClick={clearFilters}
+              >
+                Clear filters
+              </button>
+            </div>
+          )}
 
-            {!loading && !error && displayConferences.length > 0 && (
-              <div className="mt-6 flex flex-wrap justify-between gap-3 border-t border-[#e8ebf2] pt-4 text-[10px] text-[#788398]">
-                <span className="flex items-center gap-1.5">
-                  <CalendarDays size={16} />
-                  Sorted by{" "}
-                  {sortBy === "deadline"
-                    ? "submission deadline"
-                    : sortBy === "date"
-                    ? "conference date"
-                    : "name"}
-                </span>
-                <span>
-                  {conferences.length} of {totalConferences} conferences loaded
-                </span>
-              </div>
-            )}
+          {!loading && !error && displayConferences.length > 0 && (
+            <div className="mt-6 flex flex-wrap justify-between gap-3 border-t border-[#e8ebf2] pt-4 text-[10px] text-[#788398]">
+              <span className="flex items-center gap-1.5">
+                <CalendarDays size={16} />
+                Sorted by{" "}
+                {sortBy === "deadline"
+                  ? "submission deadline"
+                  : sortBy === "date"
+                  ? "conference date"
+                  : "name"}
+              </span>
+              <span>
+                {conferences.length} of {totalConferences} conferences loaded
+              </span>
+            </div>
+          )}
 
-            {!loading && hasMore && (
-              <div className="mt-6 flex justify-center">
-                <button
-                  type="button"
-                  disabled={loadingMore}
-                  onClick={() =>
-                    loadConferences({
-                      page: currentPage + 1,
-                      append: true,
-                    })
-                  }
-                  className="inline-flex min-h-10 items-center justify-center gap-2 rounded-[10px] border border-[#dfe4ed] bg-white px-5 text-[11px] font-extrabold text-[#5649dc] transition hover:bg-[#f7f6ff] disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {loadingMore ? (
-                    <>
-                      <LoaderCircle size={14} className="animate-spin" />
-                      Loading...
-                    </>
-                  ) : (
-                    "Load more conferences"
-                  )}
-                </button>
-              </div>
-            )}
-          </div>
+          {!loading && hasMore && (
+            <div className="mt-6 flex justify-center">
+              <button
+                type="button"
+                disabled={loadingMore}
+                onClick={() =>
+                  loadConferences({
+                    page: currentPage + 1,
+                    append: true,
+                  })
+                }
+                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-[10px] border border-[#dfe4ed] bg-white px-5 text-[11px] font-extrabold text-[#5649dc] transition hover:bg-[#07132f] hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {loadingMore ? (
+                  <>
+                    <LoaderCircle size={14} className="animate-spin" />
+                    Loading...
+                  </>
+                ) : (
+                  "Load more conferences"
+                )}
+              </button>
+            </div>
+          )}
         </div>
       </section>
 
@@ -794,6 +827,17 @@ export default function AuthorConferences() {
         conference={submitTarget}
         onClose={() => setSubmitTarget(null)}
         onSubmitted={handleSubmitted}
+      />
+
+      <SubmissionSuccessModal
+        open={Boolean(successData)}
+        title={successData?.title}
+        conferenceName={successData?.conferenceName}
+        onView={() => {
+          setSuccessData(null);
+          navigate("/author-dashboard#my-proposals");
+        }}
+        onClose={() => setSuccessData(null)}
       />
     </AuthorLayout>
   );
