@@ -204,6 +204,28 @@ class SessionApiTest extends TestCase
             ->assertJsonValidationErrors(['submission_id']);
     }
 
+    public function test_only_accepted_submissions_can_be_added_to_the_programme(): void
+    {
+        $organiser = User::factory()->create(['role' => 'organiser']);
+
+        $conference = Conference::factory()
+            ->for($organiser, 'organiser')
+            ->create();
+
+        $submission = Submission::factory()
+            ->for($conference)
+            ->create(['status' => 'under_review']);
+
+        $this->actingAs($organiser, 'sanctum')
+            ->postJson('/api/v1/sessions', [
+                'conference_id' => $conference->id,
+                'submission_id' => $submission->id,
+                'scheduled_time' => now()->addMonth()->toIso8601String(),
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['submission_id']);
+    }
+
     public function test_owner_can_update_session(): void
     {
         $organiser = User::factory()->create(['role' => 'organiser']);

@@ -1,4 +1,5 @@
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Calendar, CheckCircle2, ChevronRight, Clock, Mail, Search, ShieldCheck, Users, UserCheck, Shield, User, X } from "lucide-react";
 
 import AdminLayout from "../components/AdminLayout";
@@ -147,6 +148,7 @@ function LoadingRows({ rows = 6 }) {
 }
 
 export default function UsersPage() {
+  const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
   const [selectedUserId, setSelectedUserId] = useState(null);
@@ -384,7 +386,7 @@ export default function UsersPage() {
         </div>
         {activeView === "detail" && (
           <div ref={viewContentRef} className={`cmt-users-view-content cmt-users-view-${viewPhase}`}>
-            <UserDetailContent user={selectedUser} loading={detailRes.loading} error={detailRes.error} onBack={closeUser} onRetry={detailRes.reload} />
+            <UserDetailContent user={selectedUser} loading={detailRes.loading} error={detailRes.error} onBack={closeUser} onRetry={detailRes.reload} onManage={() => navigate(`/admin/users/${selectedUserId}`)} />
           </div>
         )}
         </div>
@@ -393,7 +395,7 @@ export default function UsersPage() {
   );
 }
 
-function UserDetailContent({ user, loading, error, onBack, onRetry }) {
+function UserDetailContent({ user, loading, error, onBack, onRetry, onManage }) {
   const name = user ? userName(user) : "User details";
   const role = user ? userRole(user) : "";
   const details = [
@@ -452,6 +454,9 @@ function UserDetailContent({ user, loading, error, onBack, onRetry }) {
               <div className="flex items-center gap-2"><Calendar size={13} />Joined {formatDate(user.created_at ?? user.joined_at)}</div>
               <div className="flex items-center gap-2">{user.email_verified_at ? <CheckCircle2 size={13} /> : <Clock size={13} />}{user.email_verified_at ? "Email verified" : "Email not verified"}</div>
             </div>
+            <button type="button" onClick={onManage} className="mt-5 w-full rounded-xl bg-[#6655f6] px-3 py-2.5 text-[11px] font-extrabold text-white shadow-[0_8px_18px_rgba(102,85,246,.22)] transition hover:bg-[#5746ea]">
+              Manage account
+            </button>
           </aside>
         </div>
       ) : null}

@@ -491,7 +491,7 @@ export default function ScoreSubmission() {
         title: "Review Submitted",
         subject: title,
         message:
-          "Your review has been submitted. You can still update it until you lock it as final.",
+"You can still update this review until you lock it as final.",  
       });
     } catch (error) {
       console.error("[ScoreSubmission] review submit failed:", error);

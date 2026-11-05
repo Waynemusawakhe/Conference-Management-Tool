@@ -86,6 +86,15 @@ class UpdateSessionRequest extends BaseApiRequest
                     'submission_id',
                     'The submission must belong to the selected conference.'
                 );
+
+                return;
+            }
+
+            if ($submission && $submission->status !== 'accepted') {
+                $validator->errors()->add(
+                    'submission_id',
+                    'Only accepted submissions can be added to the programme.'
+                );
             }
         });
     }

@@ -4,10 +4,14 @@ namespace App\Modules\Account\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Modules\Account\Actions\AssignRoleAction;
+use App\Modules\Account\Actions\ChangePasswordAction;
 use App\Modules\Account\Actions\GetReviewersAction;
 use App\Modules\Account\Actions\GetUserAction;
 use App\Modules\Account\Actions\GetUsersAction;
+use App\Modules\Account\Requests\AdminResetPasswordRequest;
 use App\Modules\Account\Requests\AssignRoleRequest;
+use App\Modules\Account\Requests\UpdateManagedUserRequest;
+use App\Modules\Audit\Actions\RecordAuditLogAction;
 use Illuminate\Http\JsonResponse;
 use OpenApi\Attributes as OA;
 
@@ -108,10 +112,12 @@ class UserController extends Controller
         int $id,
         AssignRoleRequest $request,
         AssignRoleAction $action,
-        GetUserAction $getUserAction
+        GetUserAction $getUserAction,
+        RecordAuditLogAction $audit
     ): JsonResponse {
         // Fetch the user first using the team's existing action
         $user = $getUserAction->execute($id);
+        $previousRole = $user->role;
 
         // Apply the new role
         $updatedUser = $action->execute(
@@ -120,10 +126,81 @@ class UserController extends Controller
             $request->user()
         );
 
+        $audit->execute(
+            $request->user(),
+            $updatedUser,
+            'user.role_updated',
+            ['role' => $previousRole],
+            ['role' => $updatedUser->role]
+        );
+
         return response()->json([
             'success' => true,
             'message' => 'Role assigned successfully.',
             'data' => $updatedUser,
+        ]);
+    }
+
+    public function update(
+        int $id,
+        UpdateManagedUserRequest $request,
+        GetUserAction $getUserAction,
+        RecordAuditLogAction $audit
+    ): JsonResponse {
+        $user = $getUserAction->execute($id);
+        $oldValues = $user->only(['name', 'email']);
+        $data = $request->validated();
+
+        $user->fill($data);
+        $user->save();
+
+        $updatedUser = $user->refresh();
+
+        $audit->execute(
+            $request->user(),
+            $updatedUser,
+            'user.profile_updated',
+            $oldValues,
+            $updatedUser->only(['name', 'email'])
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'User details updated successfully.',
+            'data' => $updatedUser,
+        ]);
+    }
+
+    public function resetPassword(
+        int $id,
+        AdminResetPasswordRequest $request,
+        GetUserAction $getUserAction,
+        RecordAuditLogAction $audit
+    ): JsonResponse {
+        $user = $getUserAction->execute($id);
+
+        if ($request->user()->is($user)) {
+            return response()->json([
+                'message' => 'Use your account settings to change your own password.',
+            ], 422);
+        }
+
+        app(ChangePasswordAction::class)->executeByAdmin(
+            $user,
+            $request->validated()['password']
+        );
+
+        $audit->execute(
+            $request->user(),
+            $user,
+            'user.password_reset',
+            null,
+            ['tokens_revoked' => true]
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Password reset successfully. Existing sessions were revoked.',
         ]);
     }
 }

@@ -1,7 +1,6 @@
 import { lazy, Suspense } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
-import { LoaderCircle } from "lucide-react";
-import Logo from "./components/Logo";
+import { useAuth } from "./context/AuthContext";
 
 const UserConferencePage = lazy(() => import("./pages/UserConferencePage"));
 const Home = lazy(() => import("./pages/Home"));
@@ -21,17 +20,21 @@ const OrganiserDashboard = lazy(() => import("./pages/OrganiserDashboard"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 
 const AccountSettings = lazy(() => import("./pages/AccountSettings"));
+const MfaSettings = lazy(() => import("./pages/MfaSettings"));
 const Profile = lazy(() => import("./pages/Profile"));
 const Settings = lazy(() => import("./pages/Settings"));
 const SubmitProposal = lazy(() => import("./pages/SubmitProposal"));
 
-const CreateEditConference = lazy(() => import("./pages/create_edit_conference"));
+const CreateEditConference = lazy(
+  () => import("./pages/create_edit_conference"),
+);
 const EditSubmissionPage = lazy(() => import("./pages/EditSubmissionPage"));
 const AssignReviewersPage = lazy(() => import("./pages/AssignReviewersPage"));
 const ScoreSubmission = lazy(() => import("./pages/ScoreSubmission"));
 const AttendeeDashboard = lazy(() => import("./pages/AttendeeDashboard"));
 const MyConferences = lazy(() => import("./pages/MyConferences"));
 const UsersPage = lazy(() => import("./pages/UsersPage"));
+const ChatBot = lazy(() => import("./components/Chatbot"));
 
 /* ---------- Shared authenticated ---------- */
 const UserTestimonials = lazy(() => import("./pages/UserTestimonials"));
@@ -43,58 +46,54 @@ const AuthorFeedback = lazy(() => import("./pages/AuthorFeedback"));
 /* ---------- Organiser sub-pages ---------- */
 const OrganiserConferences = lazy(() => import("./pages/OrganiserConferences"));
 const OrganiserReviews = lazy(() => import("./pages/OrganiserReviews"));
-const OrganiserRegistrations = lazy(() => import("./pages/OrganiserRegistrations"));
+const OrganiserRegistrations = lazy(
+  () => import("./pages/OrganiserRegistrations"),
+);
 
 /* ---------- Admin pages ---------- */
 const AdminReportsPage = lazy(() => import("./pages/AdminReportsPage"));
 const AdminUserDetailPage = lazy(() => import("./pages/AdminUserDetailPage"));
-const AdminContactMessagesPage = lazy(() => import("./pages/AdminContactMessagesPage"));
-const AdminContactMessageDetailPage = lazy(() => import("./pages/AdminContactMessageDetailPage"));
+const AdminAuditLogsPage = lazy(() => import("./pages/AdminAuditLogsPage"));
+const AdminContactMessagesPage = lazy(
+  () => import("./pages/AdminContactMessagesPage"),
+);
+const AdminContactMessageDetailPage = lazy(
+  () => import("./pages/AdminContactMessageDetailPage"),
+);
 const AdminFaqsPage = lazy(() => import("./pages/AdminFaqsPage"));
 const AdminFaqEditPage = lazy(() => import("./pages/AdminFaqEditPage"));
 const AdminConferencesPage = lazy(() => import("./pages/AdminConferencesPage"));
-const AdminEditConferencePage = lazy(() => import("./pages/AdminEditConferencePage"));
+const AdminEditConferencePage = lazy(
+  () => import("./pages/AdminEditConferencePage"),
+);
 const AdminReviewsPage = lazy(() => import("./pages/AdminReviewsPage"));
-const AdminRegistrationsPage = lazy(() => import("./pages/AdminRegistrationsPage"));
-const AdminTestimonialsPage = lazy(() => import("./pages/AdminTestimonialsPage"));
+const AdminRegistrationsPage = lazy(
+  () => import("./pages/AdminRegistrationsPage"),
+);
+const AdminTestimonialsPage = lazy(
+  () => import("./pages/AdminTestimonialsPage"),
+);
 const AdminSubmissionsPage = lazy(() => import("./pages/AdminSubmissionsPage"));
 
 import { ThemeProvider } from "./context/ThemeContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 const AuthorDashboard = lazy(() => import("./pages/AuthorDashboard"));
-const NotFound = lazy(() => import("./pages/NotFound"));
 
 const ALL_ROLES = ["author", "reviewer", "organiser", "attendee", "admin"];
 
-function PageLoader() {
-  return (
-    <div
-      className="grid min-h-screen place-items-center bg-[#f7f9fc] px-5 text-[#66728b]"
-      role="status"
-      aria-live="polite"
-    >
-      <div className="flex flex-col items-center gap-5">
-        <div className="rounded-2xl bg-[#07132f] px-5 py-3 shadow-[0_14px_36px_rgba(7,19,47,.16)]">
-          <Logo />
-        </div>
-        <div className="flex items-center gap-2 text-sm font-semibold">
-          <LoaderCircle
-            size={18}
-            className="motion-safe:animate-spin text-[#6655f6]"
-            aria-hidden="true"
-          />
-          Loading your next step…
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export default function App() {
+  const { status, role, user } = useAuth();
+
   return (
     <ThemeProvider>
-      <Suspense fallback={<PageLoader />}>
+      <Suspense
+        fallback={
+          <div className="grid min-h-screen place-items-center text-sm text-[#66728b]">
+            Loading workspace...
+          </div>
+        }
+      >
         <Routes>
           {/* ==================== PUBLIC ROUTES ==================== */}
 
@@ -133,8 +132,6 @@ export default function App() {
               </ProtectedRoute>
             }
           />
-
-       
 
           <Route
             path="/author/conferences"
@@ -203,12 +200,16 @@ export default function App() {
 
           <Route
             path="/reviewer/pending"
-            element={<Navigate to="/reviewer-dashboard?filter=pending" replace />}
+            element={
+              <Navigate to="/reviewer-dashboard?filter=pending" replace />
+            }
           />
 
           <Route
             path="/reviewer/history"
-            element={<Navigate to="/reviewer-dashboard?filter=locked" replace />}
+            element={
+              <Navigate to="/reviewer-dashboard?filter=locked" replace />
+            }
           />
 
           {/* ==================== ATTENDEE ==================== */}
@@ -312,6 +313,15 @@ export default function App() {
             element={
               <ProtectedRoute roles={["admin"]}>
                 <AdminReportsPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/admin/audit-logs"
+            element={
+              <ProtectedRoute roles={["admin"]}>
+                <AdminAuditLogsPage />
               </ProtectedRoute>
             }
           />
@@ -462,10 +472,25 @@ export default function App() {
             }
           />
 
+          <Route
+            path="/account-settings/mfa"
+            element={
+              <ProtectedRoute roles={ALL_ROLES}>
+                <MfaSettings />
+              </ProtectedRoute>
+            }
+          />
+
           {/* ==================== FALLBACK ==================== */}
 
-          <Route path="*" element={<NotFound />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+
+        <ChatBot
+          key={status === "authenticated" ? `user-${user?.id}` : "visitor"}
+          role={status === "authenticated" ? role : null}
+          userId={status === "authenticated" ? user?.id : null}
+        />
       </Suspense>
     </ThemeProvider>
   );

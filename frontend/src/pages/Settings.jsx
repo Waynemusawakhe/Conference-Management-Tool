@@ -11,6 +11,7 @@ import {
   Mail,
   Moon,
   Palette,
+  QrCode,
   ShieldCheck,
   Sun,
   Trash2,
@@ -209,7 +210,7 @@ export default function Settings() {
       )}
 
       {/* ============ Quick toggles ============ */}
-      <section className="grid gap-4 sm:grid-cols-3">
+      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <button
           type="button"
           onClick={() => saveNotifications(!notifications)}
@@ -251,6 +252,22 @@ export default function Settings() {
           </strong>
           <span className="mt-1 block text-[10px] font-semibold text-[#66728b] dark:text-[#94a3b8]">
             {dark ? "Dark mode" : "Light mode"}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => navigate("/account-settings/mfa")}
+          className="group relative overflow-hidden rounded-[20px] border border-[#dcd8ff] bg-white p-5 text-left shadow-[0_10px_30px_-15px_rgba(15,28,65,.1)] transition hover:-translate-y-px hover:border-[#aea6ff] hover:shadow-[0_20px_40px_-18px_rgba(91,79,227,.2)] dark:border-[#3c356f] dark:bg-[#0f172a] dark:hover:border-[#7569d8]"
+        >
+          <div className="grid h-11 w-11 place-items-center rounded-xl bg-[#efedff] text-[#5b4fe3] dark:bg-[#2a2354] dark:text-[#a9a2ff]">
+            <QrCode size={19} />
+          </div>
+          <strong className="mt-4 block text-[13px] font-bold text-[#1c2a4a] dark:text-white">
+            Multi-factor authentication
+          </strong>
+          <span className="mt-1 block text-[10px] font-semibold text-[#6655f6] dark:text-[#a9a2ff]">
+            {user?.mfa_enabled ? "Enabled — manage MFA" : "Set up authenticator"}
           </span>
         </button>
 

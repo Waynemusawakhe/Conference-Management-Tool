@@ -14,6 +14,10 @@ export const authApi = {
       body
     ),
 
+  setupMfa: () => http.post("/auth/mfa/setup", {}),
+  confirmMfa: (code) => http.post("/auth/mfa/confirm", { code }),
+  disableMfa: (body) => http.delete("/auth/mfa", { body }),
+
   logout: (token = null) =>
     http.post(
       "/auth/logout",

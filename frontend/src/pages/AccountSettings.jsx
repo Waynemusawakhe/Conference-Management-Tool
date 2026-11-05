@@ -508,6 +508,14 @@ export default function AccountSettings() {
                     Secure session
                   </span>
                 </div>
+
+                <button
+                  type="button"
+                  onClick={() => navigate("/account-settings/mfa")}
+                  className="rounded-full border border-white/15 px-3 py-2 text-[10px] font-bold text-white/75 transition hover:bg-white/10"
+                >
+                  {user?.mfa_enabled ? "Manage MFA" : "Enable MFA"}
+                </button>
               </div>
             </section>
           </div>

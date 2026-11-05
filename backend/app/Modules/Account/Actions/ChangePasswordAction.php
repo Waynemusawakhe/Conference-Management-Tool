@@ -8,6 +8,15 @@ use Illuminate\Validation\ValidationException;
 
 class ChangePasswordAction
 {
+    public function executeByAdmin(User $user, string $password): void
+    {
+        $user->forceFill([
+            'password' => Hash::make($password),
+        ])->save();
+
+        $user->tokens()->delete();
+    }
+
     public function execute(User $user, array $data): void
     {
         if (! Hash::check(
