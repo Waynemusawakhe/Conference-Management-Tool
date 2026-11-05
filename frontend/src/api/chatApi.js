@@ -251,7 +251,7 @@ async function realReply({ message, history, conversationId, role, pageContext }
   // Update this token lookup if your project uses a different auth provider.
   const token = localStorage.getItem("token");
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 20000);
+  const timeout = setTimeout(() => controller.abort(), 65000);
   try {
     const response = await fetch(`${BASE}/chat`, {
       method: "POST",
