@@ -18,7 +18,8 @@ function Login() {
   const location = useLocation();
   const { login } = useAuth();
 
-  const [formData, setFormData] = useState({ email: "", password: "" });
+  const [formData, setFormData] = useState({ email: "", password: "", mfa_code: "" });
+  const [mfaRequired, setMfaRequired] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -39,6 +40,12 @@ function Login() {
 
     try {
       const response = await login(formData);
+
+      if (response?.mfa_required) {
+        setMfaRequired(true);
+        setError("");
+        return;
+      }
 
       const user = response?.user || response?.data?.user || response;
       const role = user?.role || user?.user_type || user?.account_type;
@@ -149,6 +156,25 @@ function Login() {
                   />
                 </label>
               </div>
+
+              {mfaRequired && (
+                <div className="grid gap-2">
+                  <label className="text-xs font-bold text-[#43506a]" htmlFor="mfa_code">
+                    <span className="mb-2 flex items-center gap-2"><ShieldCheck size={14} className="text-[#5c50ec]" /> Authenticator or recovery code</span>
+                    <input
+                      id="mfa_code"
+                      name="mfa_code"
+                      value={formData.mfa_code}
+                      onChange={handleChange}
+                      autoComplete="one-time-code"
+                      inputMode="numeric"
+                      placeholder="123456 or recovery code"
+                      className="min-h-11 w-full rounded-[10px] border border-[#dfe4ed] px-3 text-sm font-normal text-[#0d1b3d] outline-none transition focus:border-[#7568f7] focus:ring-4 focus:ring-[#7568f7]/10"
+                    />
+                  </label>
+                  <p className="m-0 text-[11px] leading-5 text-[#788398]">Enter the current six-digit code from your authenticator app, or one of your recovery codes.</p>
+                </div>
+              )}
 
               <div className="grid gap-2">
                 <label

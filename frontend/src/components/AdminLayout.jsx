@@ -25,6 +25,7 @@ import {
   Menu,
   MessageSquareQuote,
   Moon,
+  Settings,
   Sun,
   Ticket,
   Users,
@@ -90,6 +91,16 @@ const NAV_ITEMS = [
     to: "/admin/faqs",
     label: "FAQs",
     icon: HelpCircle,
+  },
+  {
+    to: "/admin/audit-logs",
+    label: "Audit trail",
+    icon: CheckCheck,
+  },
+  {
+    to: "/settings",
+    label: "My settings",
+    icon: Settings,
   },
 ];
 
