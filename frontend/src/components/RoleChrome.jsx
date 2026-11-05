@@ -43,6 +43,7 @@ const AUTHOR_NAV = [
   { label: "My proposals", to: "/author-dashboard#my-proposals", icon: FileText },
   { label: "Deadlines", to: "/author-dashboard#deadlines", icon: CalendarDays },
   { label: "Browse conferences", to: "/author/conferences", icon: Search },
+  { label: "Feedback", to: "/author/feedback", icon: MessageSquareQuote },
 ];
 
 function AuthorWorkspaceShell({ children }) {

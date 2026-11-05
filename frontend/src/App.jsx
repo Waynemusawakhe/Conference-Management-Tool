@@ -37,8 +37,8 @@ const UsersPage = lazy(() => import("./pages/UsersPage"));
 const UserTestimonials = lazy(() => import("./pages/UserTestimonials"));
 
 /* ---------- Author sub-pages ---------- */
- 
 const AuthorConferences = lazy(() => import("./pages/AuthorConferences"));
+const AuthorFeedback = lazy(() => import("./pages/AuthorFeedback"));
 
 /* ---------- Organiser sub-pages ---------- */
 const OrganiserConferences = lazy(() => import("./pages/OrganiserConferences"));
@@ -141,6 +141,15 @@ export default function App() {
             element={
               <ProtectedRoute roles={["author"]}>
                 <AuthorConferences />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/author/feedback"
+            element={
+              <ProtectedRoute roles={["author"]}>
+                <AuthorFeedback />
               </ProtectedRoute>
             }
           />
