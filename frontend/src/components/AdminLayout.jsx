@@ -1,15 +1,6 @@
-import {
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
-import {
-  Link,
-  useLocation,
-  useNavigate,
-} from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 
 import {
   BarChart3,
@@ -78,6 +69,11 @@ const NAV_ITEMS = [
     icon: Users,
   },
   {
+  to: "/admin/notifications",
+  label: "Notifications",
+  icon: Bell,
+  },
+  {
     to: "/admin/testimonials",
     label: "Testimonials",
     icon: MessageSquareQuote,
@@ -104,21 +100,13 @@ const NAV_ITEMS = [
   },
 ];
 
-const DISMISSED_KEY =
-  "cmt_admin_dismissed_notifications";
+const DISMISSED_KEY = "cmt_admin_dismissed_notifications";
 
 function loadDismissed() {
   try {
-    const raw =
-      localStorage.getItem(
-        DISMISSED_KEY
-      );
+    const raw = localStorage.getItem(DISMISSED_KEY);
 
-    return raw
-      ? new Set(
-          JSON.parse(raw)
-        )
-      : new Set();
+    return raw ? new Set(JSON.parse(raw)) : new Set();
   } catch {
     return new Set();
   }
@@ -126,12 +114,7 @@ function loadDismissed() {
 
 function saveDismissed(set) {
   try {
-    localStorage.setItem(
-      DISMISSED_KEY,
-      JSON.stringify([
-        ...set,
-      ])
-    );
+    localStorage.setItem(DISMISSED_KEY, JSON.stringify([...set]));
   } catch {
     // Ignore unavailable storage.
   }
@@ -142,60 +125,39 @@ function relativeTime(value) {
     return "";
   }
 
-  const d =
-    new Date(value);
+  const d = new Date(value);
 
-  if (
-    Number.isNaN(
-      d.getTime()
-    )
-  ) {
+  if (Number.isNaN(d.getTime())) {
     return "";
   }
 
-  const diff =
-    Date.now() -
-    d.getTime();
+  const diff = Date.now() - d.getTime();
 
-  const seconds =
-    Math.floor(
-      diff / 1000
-    );
+  const seconds = Math.floor(diff / 1000);
 
   if (seconds < 60) {
     return "just now";
   }
 
-  const minutes =
-    Math.floor(
-      seconds / 60
-    );
+  const minutes = Math.floor(seconds / 60);
 
   if (minutes < 60) {
     return `${minutes}m ago`;
   }
 
-  const hours =
-    Math.floor(
-      minutes / 60
-    );
+  const hours = Math.floor(minutes / 60);
 
   if (hours < 24) {
     return `${hours}h ago`;
   }
 
-  const days =
-    Math.floor(
-      hours / 24
-    );
+  const days = Math.floor(hours / 24);
 
   if (days < 7) {
     return `${days}d ago`;
   }
 
-  return d
-    .toISOString()
-    .slice(0, 10);
+  return d.toISOString().slice(0, 10);
 }
 
 function getInitials(name) {
@@ -203,26 +165,15 @@ function getInitials(name) {
     return "•";
   }
 
-  const parts =
-    String(name)
-      .trim()
-      .split(/\s+/)
-      .filter(Boolean);
+  const parts = String(name).trim().split(/\s+/).filter(Boolean);
 
-  if (
-    parts.length === 0
-  ) {
+  if (parts.length === 0) {
     return "•";
   }
 
   return parts
     .slice(0, 2)
-    .map(
-      (part) =>
-        part[0]
-          ?.toUpperCase() ??
-        ""
-    )
+    .map((part) => part[0]?.toUpperCase() ?? "")
     .join("");
 }
 
@@ -233,24 +184,15 @@ function prettifyRole(role) {
 
   return String(role)
     .replace(/_/g, " ")
-    .replace(
-      /\b\w/g,
-      (character) =>
-        character.toUpperCase()
-    );
+    .replace(/\b\w/g, (character) => character.toUpperCase());
 }
 
-const statusKey = (
-  raw
-) =>
+const statusKey = (raw) =>
   raw
     ? String(raw)
         .trim()
         .toLowerCase()
-        .replace(
-          /[\s-]+/g,
-          "_"
-        )
+        .replace(/[\s-]+/g, "_")
     : "";
 
 export default function AdminLayout({
@@ -260,453 +202,230 @@ export default function AdminLayout({
   action,
   entranceAnimation = false,
 }) {
-  const navigate =
-    useNavigate();
+  const navigate = useNavigate();
 
-  const { pathname } =
-    useLocation();
+  const { pathname } = useLocation();
 
-  const playEntrance =
-    entranceAnimation && pathname === "/admin-dashboard";
+  const playEntrance = entranceAnimation && pathname === "/admin-dashboard";
 
-  const [
-    sidebarOpen,
-    setSidebarOpen,
-  ] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const [
-    showNotifications,
-    setShowNotifications,
-  ] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
 
-  const [
-    dismissed,
-    setDismissed,
-  ] = useState(
+  const [dismissed, setDismissed] = useState(() => loadDismissed());
+
+  const { user, status, logout } = useAuth();
+
+  const { dark, toggleTheme } = useTheme();
+
+  const notificationsRef = useRef(null);
+
+  const messagesRes = useApiResource(() => contactMessagesApi.getAll(), []);
+
+  const submissionsRes = useApiResource(
     () =>
-      loadDismissed()
+      submissionsApi.getAll({
+        status: "pending",
+        per_page: 25,
+      }),
+    [],
   );
 
-  const {
-    user,
-    status,
-    logout,
-  } = useAuth();
+  const messages = useMemo(() => toArray(messagesRes.data), [messagesRes.data]);
 
-  const {
-    dark,
-    toggleTheme,
-  } = useTheme();
+  const submissions = useMemo(
+    () => toArray(submissionsRes.data),
+    [submissionsRes.data],
+  );
 
-  const notificationsRef =
-    useRef(null);
+  const notifications = useMemo(() => {
+    const list = [];
 
-  const messagesRes =
-    useApiResource(
-      () =>
-        contactMessagesApi
-          .getAll(),
-      []
-    );
+    messages
+      .filter((message) => statusKey(message.status ?? "new") === "new")
+      .forEach((message) => {
+        list.push({
+          id: `message-${message.id}`,
 
-  const submissionsRes =
-    useApiResource(
-      () =>
-        submissionsApi.getAll({
-          status: "pending",
-          per_page: 25,
-        }),
-      []
-    );
+          type: "message",
 
-  const messages =
-    useMemo(
-      () =>
-        toArray(
-          messagesRes.data
-        ),
-      [messagesRes.data]
-    );
+          title: `New message from ${message.name ?? "—"}`,
 
-  const submissions =
-    useMemo(
-      () =>
-        toArray(
-          submissionsRes.data
-        ),
-      [
-        submissionsRes.data,
-      ]
-    );
+          description:
+            message.subject ??
+            message.email ??
+            (message.message ?? "").slice(0, 80),
 
-  const notifications =
-    useMemo(() => {
-      const list = [];
+          time: message.created_at,
 
-      messages
-        .filter(
-          (message) =>
-            statusKey(
-              message.status ??
-                "new"
-            ) === "new"
-        )
-        .forEach(
-          (message) => {
-            list.push({
-              id:
-                `message-${message.id}`,
+          to: `/admin/contact-messages/${message.id}`,
 
-              type:
-                "message",
+          icon: Mail,
 
-              title:
-                `New message from ${
-                  message.name ??
-                  "—"
-                }`,
+          tint: "bg-[#efedff] text-[#4f46c7]",
+        });
+      });
 
-              description:
-                message.subject ??
-                message.email ??
-                (
-                  message.message ??
-                  ""
-                ).slice(
-                  0,
-                  80
-                ),
+    submissions
+      .filter((submission) => {
+        const key = statusKey(submission.status);
 
-              time:
-                message.created_at,
+        return key === "pending" || key === "";
+      })
+      .forEach((submission) => {
+        list.push({
+          id: `submission-${submission.id}`,
 
-              to:
-                `/admin/contact-messages/${message.id}`,
+          type: "submission",
 
-              icon: Mail,
+          title: `New submission: ${
+            submission.title ?? submission.name ?? `#${submission.id}`
+          }`,
 
-              tint:
-                "bg-[#efedff] text-[#4f46c7]",
-            });
-          }
-        );
+          description:
+            submission.author?.name ??
+            submission.author_name ??
+            submission.conference?.name ??
+            submission.conference_name ??
+            "Awaiting review",
 
-      submissions
-        .filter(
-          (submission) => {
-            const key =
-              statusKey(
-                submission.status
-              );
+          time: submission.created_at ?? submission.submitted_at,
 
-            return (
-              key ===
-                "pending" ||
-              key === ""
-            );
-          }
-        )
-        .forEach(
-          (submission) => {
-            list.push({
-              id:
-                `submission-${submission.id}`,
+          to: "/admin/submissions",
 
-              type:
-                "submission",
+          icon: FileText,
 
-              title:
-                `New submission: ${
-                  submission.title ??
-                  submission.name ??
-                  `#${submission.id}`
-                }`,
+          tint: "bg-[#eef5fd] text-[#1d5fa8]",
+        });
+      });
 
-              description:
-                submission
-                  .author
-                  ?.name ??
-                submission
-                  .author_name ??
-                submission
-                  .conference
-                  ?.name ??
-                submission
-                  .conference_name ??
-                "Awaiting review",
+    return list.sort((a, b) => {
+      const timeA = a.time ? new Date(a.time).getTime() : 0;
 
-              time:
-                submission
-                  .created_at ??
-                submission
-                  .submitted_at,
+      const timeB = b.time ? new Date(b.time).getTime() : 0;
 
-              to:
-                "/admin/submissions",
+      return timeB - timeA;
+    });
+  }, [messages, submissions]);
 
-              icon:
-                FileText,
+  const visibleNotifications = useMemo(
+    () =>
+      notifications.filter((notification) => !dismissed.has(notification.id)),
+    [notifications, dismissed],
+  );
 
-              tint:
-                "bg-[#eef5fd] text-[#1d5fa8]",
-            });
-          }
-        );
+  const notificationCount = visibleNotifications.length;
 
-      return list.sort(
-        (a, b) => {
-          const timeA =
-            a.time
-              ? new Date(
-                  a.time
-                ).getTime()
-              : 0;
+  const messageNotificationCount = visibleNotifications.filter(
+    (notification) => notification.type === "message",
+  ).length;
 
-          const timeB =
-            b.time
-              ? new Date(
-                  b.time
-                ).getTime()
-              : 0;
+  const submissionNotificationCount = visibleNotifications.filter(
+    (notification) => notification.type === "submission",
+  ).length;
 
-          return (
-            timeB -
-            timeA
-          );
-        }
-      );
-    }, [
-      messages,
-      submissions,
-    ]);
+  const dismissOne = (id) => {
+    setDismissed((previous) => {
+      const next = new Set(previous);
 
-  const visibleNotifications =
-    useMemo(
-      () =>
-        notifications.filter(
-          (
-            notification
-          ) =>
-            !dismissed.has(
-              notification.id
-            )
-        ),
-      [
-        notifications,
-        dismissed,
-      ]
-    );
+      next.add(id);
 
-  const notificationCount =
-    visibleNotifications.length;
+      saveDismissed(next);
 
-  const messageNotificationCount =
-    visibleNotifications.filter(
-      (
-        notification
-      ) =>
-        notification.type ===
-        "message"
-    ).length;
-
-  const submissionNotificationCount =
-    visibleNotifications.filter(
-      (
-        notification
-      ) =>
-        notification.type ===
-        "submission"
-    ).length;
-
-  const dismissOne = (
-    id
-  ) => {
-    setDismissed(
-      (previous) => {
-        const next =
-          new Set(
-            previous
-          );
-
-        next.add(id);
-
-        saveDismissed(
-          next
-        );
-
-        return next;
-      }
-    );
+      return next;
+    });
   };
 
-  const dismissAll =
-    () => {
-      setDismissed(
-        (previous) => {
-          const next =
-            new Set(
-              previous
-            );
+  const dismissAll = () => {
+    setDismissed((previous) => {
+      const next = new Set(previous);
 
-          visibleNotifications.forEach(
-            (
-              notification
-            ) =>
-              next.add(
-                notification.id
-              )
-          );
+      visibleNotifications.forEach((notification) => next.add(notification.id));
 
-          saveDismissed(
-            next
-          );
+      saveDismissed(next);
 
-          return next;
-        }
-      );
-    };
+      return next;
+    });
+  };
 
   useEffect(() => {
-    if (
-      !showNotifications
-    ) {
+    if (!showNotifications) {
       return;
     }
 
-    const onClick = (
-      event
-    ) => {
+    const onClick = (event) => {
       if (
         notificationsRef.current &&
-        !notificationsRef.current.contains(
-          event.target
-        )
+        !notificationsRef.current.contains(event.target)
       ) {
-        setShowNotifications(
-          false
-        );
+        setShowNotifications(false);
       }
     };
 
-    const onKey = (
-      event
-    ) => {
-      if (
-        event.key ===
-        "Escape"
-      ) {
-        setShowNotifications(
-          false
-        );
+    const onKey = (event) => {
+      if (event.key === "Escape") {
+        setShowNotifications(false);
       }
     };
 
-    document.addEventListener(
-      "mousedown",
-      onClick
-    );
+    document.addEventListener("mousedown", onClick);
 
-    document.addEventListener(
-      "keydown",
-      onKey
-    );
+    document.addEventListener("keydown", onKey);
 
     return () => {
-      document.removeEventListener(
-        "mousedown",
-        onClick
-      );
+      document.removeEventListener("mousedown", onClick);
 
-      document.removeEventListener(
-        "keydown",
-        onKey
-      );
+      document.removeEventListener("keydown", onKey);
     };
-  }, [
-    showNotifications,
-  ]);
+  }, [showNotifications]);
 
   useEffect(() => {
-    setShowNotifications(
-      false
-    );
+    setShowNotifications(false);
 
-    setSidebarOpen(
-      false
-    );
+    setSidebarOpen(false);
   }, [pathname]);
 
-  const isActive = (
-    item
-  ) => {
+  const isActive = (item) => {
     if (item.exact) {
-      return (
-        pathname ===
-        item.to
-      );
+      return pathname === item.to;
     }
 
-    return (
-      pathname ===
-        item.to ||
-      pathname.startsWith(
-        `${item.to}/`
-      )
-    );
+    return pathname === item.to || pathname.startsWith(`${item.to}/`);
   };
 
-  const isInitializing =
-    status ===
-    "initializing";
+  const isInitializing = status === "initializing";
 
   const displayName =
-    user?.name ??
-    user?.full_name ??
-    user?.fullName ??
-    "Account";
+    user?.name ?? user?.full_name ?? user?.fullName ?? "Account";
 
-  const initials =
-    getInitials(
-      displayName
-    );
+  const initials = getInitials(displayName);
 
-  const roleLabel =
-    prettifyRole(
-      user?.role
-    );
+  const roleLabel = prettifyRole(user?.role);
 
-  const handleSignOut =
-    () => {
-      setSidebarOpen(
-        false
-      );
+  const handleSignOut = () => {
+    setSidebarOpen(false);
 
-      setShowNotifications(
-        false
-      );
+    setShowNotifications(false);
 
-      logout();
+    logout();
 
-      navigate(
-        "/login",
-        {
-          replace: true,
-        }
-      );
-    };
+    navigate("/login", {
+      replace: true,
+    });
+  };
 
   return (
-    <div className={`min-h-screen bg-[#f7f9fc] text-[#0d1b3d] transition-colors dark:bg-[#0a0f1f] dark:text-white ${playEntrance ? "admin-intro" : ""}`}>
-      <header className={`sticky top-0 z-50 border-b border-white/10 bg-[#07132f]/95 text-white shadow-[0_8px_30px_rgba(7,19,47,.12)] backdrop-blur-xl ${playEntrance ? "admin-intro-topbar" : ""}`}>
+    <div
+      className={`min-h-screen bg-[#f7f9fc] text-[#0d1b3d] transition-colors dark:bg-[#0a0f1f] dark:text-white ${playEntrance ? "admin-intro" : ""}`}
+    >
+      <header
+        className={`sticky top-0 z-50 border-b border-white/10 bg-[#07132f]/95 text-white shadow-[0_8px_30px_rgba(7,19,47,.12)] backdrop-blur-xl ${playEntrance ? "admin-intro-topbar" : ""}`}
+      >
         <div className="admin-topbar-inner mx-auto flex min-h-[76px] w-[min(1400px,calc(100%-32px))] items-center gap-4 sm:gap-6">
           <button
             type="button"
             className="text-white/80 hover:text-white lg:hidden"
-            onClick={() =>
-              setSidebarOpen(
-                true
-              )
-            }
+            onClick={() => setSidebarOpen(true)}
             aria-label="Open navigation"
           >
             <Menu size={22} />
@@ -724,49 +443,26 @@ export default function AdminLayout({
             </p>
 
             <p className="m-0 mt-0.5 text-[12px] font-semibold text-white/65">
-              Conference
-              Management Tool
+              Conference Management Tool
             </p>
           </div>
 
           <div className="ml-auto flex items-center gap-2">
-            <div
-              className="relative"
-              ref={
-                notificationsRef
-              }
-            >
+            <div className="relative" ref={notificationsRef}>
               <button
                 type="button"
-                onClick={() =>
-                  setShowNotifications(
-                    (
-                      value
-                    ) =>
-                      !value
-                  )
-                }
+                onClick={() => setShowNotifications((value) => !value)}
                 className="relative grid h-10 w-10 place-items-center rounded-xl border border-white/10 bg-white/[.04] text-white/85 transition hover:bg-white/10"
                 aria-label={`Notifications${
-                  notificationCount
-                    ? ` (${notificationCount} unread)`
-                    : ""
+                  notificationCount ? ` (${notificationCount} unread)` : ""
                 }`}
-                aria-expanded={
-                  showNotifications
-                }
+                aria-expanded={showNotifications}
               >
-                <Bell
-                  size={17}
-                />
+                <Bell size={17} />
 
-                {notificationCount >
-                  0 && (
+                {notificationCount > 0 && (
                   <span className="absolute -right-1 -top-1 grid h-[18px] min-w-[18px] place-items-center rounded-full border-2 border-[#07132f] bg-gradient-to-br from-[#f43f5e] to-[#e11d48] px-1 text-[9px] font-extrabold text-white shadow-[0_4px_10px_rgba(244,63,94,.4)]">
-                    {notificationCount >
-                    99
-                      ? "99+"
-                      : notificationCount}
+                    {notificationCount > 99 ? "99+" : notificationCount}
                   </span>
                 )}
               </button>
@@ -776,224 +472,150 @@ export default function AdminLayout({
                   <div className="flex items-center justify-between gap-3 border-b border-[#edf0f5] px-4 py-3 dark:border-[#1e293b]">
                     <div className="flex items-center gap-2">
                       <span className="grid h-7 w-7 place-items-center rounded-lg bg-[#efedff] text-[#4f46c7] dark:bg-[#2a2354] dark:text-[#a9a2ff]">
-                        <Bell
-                          size={
-                            13
-                          }
-                        />
+                        <Bell size={13} />
                       </span>
 
                       <strong className="text-[12px] font-extrabold">
                         Notifications
                       </strong>
 
-                      {notificationCount >
-                        0 && (
+                      {notificationCount > 0 && (
                         <span className="rounded-full bg-[#efedff] px-2 py-0.5 text-[9px] font-extrabold text-[#5649dc] dark:bg-[#2a2354] dark:text-[#a9a2ff]">
-                          {
-                            notificationCount
-                          }
+                          {notificationCount}
                         </span>
                       )}
                     </div>
 
-                    {notificationCount >
-                      0 && (
+                    {notificationCount > 0 && (
                       <button
                         type="button"
-                        onClick={
-                          dismissAll
-                        }
+                        onClick={dismissAll}
                         className="inline-flex items-center gap-1 text-[10px] font-extrabold text-[#6655f6] hover:underline dark:text-[#a9a2ff]"
                       >
-                        <CheckCheck
-                          size={
-                            12
-                          }
-                        />
-                        Mark all
-                        read
+                        <CheckCheck size={12} />
+                        Mark all read
                       </button>
                     )}
                   </div>
 
                   <div className="max-h-[420px] overflow-y-auto">
-                    {messagesRes.loading &&
-                    submissionsRes.loading ? (
+                    {messagesRes.loading && submissionsRes.loading ? (
                       <div className="space-y-1 p-2">
-                        {[0, 1, 2].map(
-                          (
-                            index
-                          ) => (
-                            <div
-                              key={
-                                index
-                              }
-                              className="flex items-center gap-3 rounded-xl p-3"
-                            >
-                              <div className="h-9 w-9 animate-pulse rounded-lg bg-[#eef1f7] dark:bg-[#1e293b]" />
+                        {[0, 1, 2].map((index) => (
+                          <div
+                            key={index}
+                            className="flex items-center gap-3 rounded-xl p-3"
+                          >
+                            <div className="h-9 w-9 animate-pulse rounded-lg bg-[#eef1f7] dark:bg-[#1e293b]" />
 
-                              <div className="flex-1 space-y-1.5">
-                                <div className="h-2.5 w-40 animate-pulse rounded-full bg-[#eef1f7] dark:bg-[#1e293b]" />
+                            <div className="flex-1 space-y-1.5">
+                              <div className="h-2.5 w-40 animate-pulse rounded-full bg-[#eef1f7] dark:bg-[#1e293b]" />
 
-                                <div className="h-2 w-28 animate-pulse rounded-full bg-[#eef1f7] dark:bg-[#1e293b]" />
-                              </div>
+                              <div className="h-2 w-28 animate-pulse rounded-full bg-[#eef1f7] dark:bg-[#1e293b]" />
                             </div>
-                          )
-                        )}
+                          </div>
+                        ))}
                       </div>
-                    ) : visibleNotifications.length ===
-                      0 ? (
+                    ) : visibleNotifications.length === 0 ? (
                       <div className="flex flex-col items-center gap-2 px-6 py-10 text-center">
                         <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[#effaf4] text-[#18794e] dark:bg-[#052e1f] dark:text-[#34d399]">
-                          <CheckCheck
-                            size={
-                              20
-                            }
-                          />
+                          <CheckCheck size={20} />
                         </span>
 
                         <strong className="text-[12px] font-bold text-[#1c2a4a] dark:text-white">
-                          You're all
-                          caught up
+                          You're all caught up
                         </strong>
 
                         <span className="max-w-[240px] text-[10px] leading-5 text-[#8993a6] dark:text-[#94a3b8]">
-                          New
-                          messages and
-                          submissions
-                          will appear
-                          here.
+                          New messages and submissions will appear here.
                         </span>
                       </div>
                     ) : (
                       <ul className="divide-y divide-[#f2f4f9] dark:divide-[#1e293b]">
-                        {visibleNotifications.map(
-                          (
-                            notification
-                          ) => {
-                            const Icon =
-                              notification.icon;
+                        {visibleNotifications.map((notification) => {
+                          const Icon = notification.icon;
 
-                            return (
-                              <li
-                                key={
-                                  notification.id
-                                }
-                                className="group relative flex items-start gap-3 px-4 py-3 transition hover:bg-[#fafbff] dark:hover:bg-[#111c33]"
+                          return (
+                            <li
+                              key={notification.id}
+                              className="group relative flex items-start gap-3 px-4 py-3 transition hover:bg-[#fafbff] dark:hover:bg-[#111c33]"
+                            >
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  dismissOne(notification.id);
+
+                                  setShowNotifications(false);
+
+                                  navigate(notification.to);
+                                }}
+                                className="flex flex-1 items-start gap-3 text-left"
                               >
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    dismissOne(
-                                      notification.id
-                                    );
-
-                                    setShowNotifications(
-                                      false
-                                    );
-
-                                    navigate(
-                                      notification.to
-                                    );
-                                  }}
-                                  className="flex flex-1 items-start gap-3 text-left"
+                                <span
+                                  className={`mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-lg ${notification.tint}`}
                                 >
-                                  <span
-                                    className={`mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-lg ${notification.tint}`}
-                                  >
-                                    <Icon
-                                      size={
-                                        15
-                                      }
-                                    />
-                                  </span>
+                                  <Icon size={15} />
+                                </span>
 
-                                  <div className="min-w-0 flex-1 pr-6">
-                                    <strong className="block truncate text-[11px] font-bold text-[#1c2a4a] dark:text-white">
-                                      {
-                                        notification.title
-                                      }
-                                    </strong>
+                                <div className="min-w-0 flex-1 pr-6">
+                                  <strong className="block truncate text-[11px] font-bold text-[#1c2a4a] dark:text-white">
+                                    {notification.title}
+                                  </strong>
 
-                                    {notification.description && (
-                                      <span className="mt-0.5 block truncate text-[10px] text-[#8a95a8] dark:text-[#94a3b8]">
-                                        {
-                                          notification.description
-                                        }
-                                      </span>
-                                    )}
-
-                                    <span className="mt-1 block text-[9px] font-semibold uppercase tracking-[.05em] text-[#aeb6c6] dark:text-[#64748b]">
-                                      {relativeTime(
-                                        notification.time
-                                      )}
+                                  {notification.description && (
+                                    <span className="mt-0.5 block truncate text-[10px] text-[#8a95a8] dark:text-[#94a3b8]">
+                                      {notification.description}
                                     </span>
-                                  </div>
-                                </button>
+                                  )}
 
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    dismissOne(
-                                      notification.id
-                                    )
-                                  }
-                                  className="absolute right-3 top-3 grid h-6 w-6 place-items-center rounded-full text-[#c4c8d4] opacity-0 transition hover:bg-[#f1f2f6] hover:text-[#5c6880] group-hover:opacity-100 dark:hover:bg-[#1e293b]"
-                                  aria-label="Dismiss notification"
-                                >
-                                  <X
-                                    size={
-                                      12
-                                    }
-                                  />
-                                </button>
-                              </li>
-                            );
-                          }
-                        )}
+                                  <span className="mt-1 block text-[9px] font-semibold uppercase tracking-[.05em] text-[#aeb6c6] dark:text-[#64748b]">
+                                    {relativeTime(notification.time)}
+                                  </span>
+                                </div>
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => dismissOne(notification.id)}
+                                className="absolute right-3 top-3 grid h-6 w-6 place-items-center rounded-full text-[#c4c8d4] opacity-0 transition hover:bg-[#f1f2f6] hover:text-[#5c6880] group-hover:opacity-100 dark:hover:bg-[#1e293b]"
+                                aria-label="Dismiss notification"
+                              >
+                                <X size={12} />
+                              </button>
+                            </li>
+                          );
+                        })}
                       </ul>
                     )}
                   </div>
 
-                  {visibleNotifications.length >
-                    0 && (
+                  {visibleNotifications.length > 0 && (
                     <div className="flex items-center justify-between gap-3 border-t border-[#edf0f5] bg-[#fafbff] px-4 py-2.5 dark:border-[#1e293b] dark:bg-[#0b1224]">
                       <button
                         type="button"
                         onClick={() => {
-                          setShowNotifications(
-                            false
-                          );
+                          setShowNotifications(false);
 
-                          navigate(
-                            "/admin/submissions"
-                          );
+                          navigate("/admin/submissions");
                         }}
                         className="text-[10px] font-extrabold text-[#6655f6] hover:underline dark:text-[#a9a2ff]"
                       >
                         Submissions
-                        {submissionNotificationCount >
-                          0 &&
+                        {submissionNotificationCount > 0 &&
                           ` (${submissionNotificationCount})`}
                       </button>
 
                       <button
                         type="button"
                         onClick={() => {
-                          setShowNotifications(
-                            false
-                          );
+                          setShowNotifications(false);
 
-                          navigate(
-                            "/admin/contact-messages"
-                          );
+                          navigate("/admin/contact-messages");
                         }}
                         className="text-[10px] font-extrabold text-[#6655f6] hover:underline dark:text-[#a9a2ff]"
                       >
                         Messages
-                        {messageNotificationCount >
-                          0 &&
+                        {messageNotificationCount > 0 &&
                           ` (${messageNotificationCount})`}
                       </button>
                     </div>
@@ -1004,50 +626,26 @@ export default function AdminLayout({
 
             <button
               type="button"
-              onClick={
-                toggleTheme
-              }
+              onClick={toggleTheme}
               className="grid h-10 w-10 place-items-center rounded-xl border border-white/10 bg-white/[.04] text-white/85 transition hover:bg-white/10"
-              aria-label={
-                dark
-                  ? "Switch to light mode"
-                  : "Switch to dark mode"
-              }
-              title={
-                dark
-                  ? "Switch to light mode"
-                  : "Switch to dark mode"
-              }
+              aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
+              title={dark ? "Switch to light mode" : "Switch to dark mode"}
             >
-              {dark ? (
-                <Sun
-                  size={17}
-                />
-              ) : (
-                <Moon
-                  size={17}
-                />
-              )}
+              {dark ? <Sun size={17} /> : <Moon size={17} />}
             </button>
 
             <div className="hidden items-center gap-2.5 border-l border-white/10 pl-3 sm:flex">
               <div className="grid h-9 w-9 place-items-center rounded-full bg-[#e8e6ff] text-[10px] font-extrabold text-[#4f46c7]">
-                {isInitializing
-                  ? "…"
-                  : initials}
+                {isInitializing ? "…" : initials}
               </div>
 
               <div className="leading-tight">
                 <strong className="block text-[11px] text-white">
-                  {isInitializing
-                    ? "Loading…"
-                    : displayName}
+                  {isInitializing ? "Loading…" : displayName}
                 </strong>
 
                 <span className="block text-[9px] text-white/45">
-                  {isInitializing
-                    ? ""
-                    : roleLabel}
+                  {isInitializing ? "" : roleLabel}
                 </span>
               </div>
             </div>
@@ -1059,52 +657,33 @@ export default function AdminLayout({
         {sidebarOpen && (
           <div
             className="fixed inset-0 z-40 bg-[#07132f]/60 backdrop-blur-sm lg:hidden"
-            onClick={() =>
-              setSidebarOpen(
-                false
-              )
-            }
+            onClick={() => setSidebarOpen(false)}
           />
         )}
 
         <aside
           className={`admin-sidebar fixed inset-y-0 left-0 z-50 w-[260px] transform bg-white p-4 shadow-2xl transition-transform duration-300 dark:bg-[#0f172a] lg:sticky lg:top-[100px] lg:block lg:max-h-[calc(100vh-120px)] lg:w-[260px] lg:translate-x-0 lg:overflow-y-auto lg:rounded-2xl lg:border lg:border-[#e4e8f0] lg:bg-white lg:p-3 lg:shadow-none lg:dark:border-[#1e293b] lg:dark:bg-[#0f172a] ${
             playEntrance ? "admin-intro-sidebar" : ""
-          } ${
-            sidebarOpen
-              ? "translate-x-0"
-              : "-translate-x-full"
-          }`}
+          } ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}
         >
           <div className="mb-3 flex items-start justify-between gap-2 lg:block">
-            <div className={`w-full rounded-xl bg-gradient-to-br from-[#111e4b] to-[#342b87] p-4 text-white ${playEntrance ? "admin-intro-sidebar-card" : ""}`}>
+            <div
+              className={`w-full rounded-xl bg-gradient-to-br from-[#111e4b] to-[#342b87] p-4 text-white ${playEntrance ? "admin-intro-sidebar-card" : ""}`}
+            >
               <span className="mb-2 grid h-9 w-9 place-items-center rounded-lg bg-white/10">
-                <LayoutDashboard
-                  size={17}
-                />
+                <LayoutDashboard size={17} />
               </span>
 
-              <strong className="block text-[13px]">
-                Platform
-                control
-              </strong>
+              <strong className="block text-[13px]">Platform control</strong>
 
               <p className="mt-1 text-[10px] leading-5 text-white/60">
-                Oversight
-                across
-                conferences,
-                users and
-                content.
+                Oversight across conferences, users and content.
               </p>
             </div>
 
             <button
               type="button"
-              onClick={() =>
-                setSidebarOpen(
-                  false
-                )
-              }
+              onClick={() => setSidebarOpen(false)}
               className="ml-2 text-[#66728b] dark:text-[#94a3b8] lg:hidden"
               aria-label="Close navigation"
             >
@@ -1112,73 +691,51 @@ export default function AdminLayout({
             </button>
           </div>
 
-          <nav
-            className="space-y-1"
-            aria-label="Admin navigation"
-          >
-            {NAV_ITEMS.map(
-              (item, index) => {
-                const Icon =
-                  item.icon;
+          <nav className="space-y-1" aria-label="Admin navigation">
+            {NAV_ITEMS.map((item, index) => {
+              const Icon = item.icon;
 
-                const active =
-                  isActive(
-                    item
-                  );
+              const active = isActive(item);
 
-                const showBadge =
-                  item.to ===
-                    "/admin/contact-messages" &&
-                  messageNotificationCount >
-                    0;
+              const showBadge =
+                item.to === "/admin/contact-messages" &&
+                messageNotificationCount > 0;
 
-                return (
-                  <Link
-                    key={
-                      item.to
-                    }
-                    to={
-                      item.to
-                    }
-                    data-nav-label={item.label.toLowerCase().replaceAll(" ", "-")}
-                    style={playEntrance ? { "--intro-delay": `${100 + index * 50}ms` } : undefined}
-                    data-intro-item={playEntrance ? "true" : undefined}
-                    onClick={() =>
-                      setSidebarOpen(
-                        false
-                      )
-                    }
-                    className={`admin-nav-link flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] transition-colors ${
-                      active
-                        ? "admin-nav-link-active bg-[#efedff] font-extrabold text-[#5649dc] dark:bg-[#2a2354] dark:text-[#a9a2ff]"
-                        : "font-semibold text-[#66728b] hover:bg-[#f5f6fa] hover:text-[#1c2a4a] dark:text-[#94a3b8] dark:hover:bg-[#111c33] dark:hover:text-white"
-                    }`}
-                  >
-                    <Icon
-                      className={active ? "admin-nav-icon" : undefined}
-                      size={
-                        16
-                      }
-                    />
+              return (
+                <Link
+                  key={item.to}
+                  to={item.to}
+                  data-nav-label={item.label.toLowerCase().replaceAll(" ", "-")}
+                  style={
+                    playEntrance
+                      ? { "--intro-delay": `${100 + index * 50}ms` }
+                      : undefined
+                  }
+                  data-intro-item={playEntrance ? "true" : undefined}
+                  onClick={() => setSidebarOpen(false)}
+                  className={`admin-nav-link flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] transition-colors ${
+                    active
+                      ? "admin-nav-link-active bg-[#efedff] font-extrabold text-[#5649dc] dark:bg-[#2a2354] dark:text-[#a9a2ff]"
+                      : "font-semibold text-[#66728b] hover:bg-[#f5f6fa] hover:text-[#1c2a4a] dark:text-[#94a3b8] dark:hover:bg-[#111c33] dark:hover:text-white"
+                  }`}
+                >
+                  <Icon
+                    className={active ? "admin-nav-icon" : undefined}
+                    size={16}
+                  />
 
-                    <span className="flex-1 truncate">
-                      {
-                        item.label
-                      }
+                  <span className="flex-1 truncate">{item.label}</span>
+
+                  {showBadge && (
+                    <span className="grid h-[18px] min-w-[18px] place-items-center rounded-full bg-gradient-to-br from-[#f43f5e] to-[#e11d48] px-1 text-[9px] font-extrabold text-white">
+                      {messageNotificationCount > 99
+                        ? "99+"
+                        : messageNotificationCount}
                     </span>
-
-                    {showBadge && (
-                      <span className="grid h-[18px] min-w-[18px] place-items-center rounded-full bg-gradient-to-br from-[#f43f5e] to-[#e11d48] px-1 text-[9px] font-extrabold text-white">
-                        {messageNotificationCount >
-                        99
-                          ? "99+"
-                          : messageNotificationCount}
-                      </span>
-                    )}
-                  </Link>
-                );
-              }
-            )}
+                  )}
+                </Link>
+              );
+            })}
           </nav>
 
           <div className="my-4 border-t border-[#edf0f5] dark:border-[#1e293b]" />
@@ -1186,35 +743,26 @@ export default function AdminLayout({
           <button
             type="button"
             className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] font-semibold text-[#9a6470] transition-colors hover:bg-red-600 hover:text-white dark:text-[#f08a9a] dark:hover:bg-red-500"
-            onClick={
-              handleSignOut
-            }
+            onClick={handleSignOut}
           >
-            <LogOut
-              size={16}
-            />
+            <LogOut size={16} />
             Sign out
           </button>
         </aside>
 
         <main className="admin-page-content min-w-0 flex-1">
-          {(title ||
-            action) && (
+          {(title || action) && (
             <div className="mb-5 flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
               <div>
                 {subtitle && (
                   <span className="text-[10px] font-extrabold uppercase tracking-[.1em] text-[#6655f6] dark:text-[#a9a2ff]">
-                    {
-                      subtitle
-                    }
+                    {subtitle}
                   </span>
                 )}
 
                 {title && (
                   <h1 className="mb-0 mt-1 text-[24px] font-bold tracking-[-.03em] dark:text-white">
-                    {
-                      title
-                    }
+                    {title}
                   </h1>
                 )}
               </div>
