@@ -24,6 +24,7 @@ const OrganiserDashboard = lazy(() => import("./pages/OrganiserDashboard"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 
 const AccountSettings = lazy(() => import("./pages/AccountSettings"));
+const MfaSettings = lazy(() => import("./pages/MfaSettings"));
 const Profile = lazy(() => import("./pages/Profile"));
 const Settings = lazy(() => import("./pages/Settings"));
 const SubmitProposal = lazy(() => import("./pages/SubmitProposal"));
@@ -316,6 +317,15 @@ export default function App() {
           />
 
           <Route
+            path="/admin/audit-logs"
+            element={
+              <ProtectedRoute roles={["admin"]}>
+                <AdminAuditLogsPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
             path="/admin/conferences"
             element={
               <ProtectedRoute roles={["admin"]}>
@@ -457,6 +467,15 @@ export default function App() {
             element={
               <ProtectedRoute roles={ALL_ROLES}>
                 <AccountSettings />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/account-settings/mfa"
+            element={
+              <ProtectedRoute roles={ALL_ROLES}>
+                <MfaSettings />
               </ProtectedRoute>
             }
           />

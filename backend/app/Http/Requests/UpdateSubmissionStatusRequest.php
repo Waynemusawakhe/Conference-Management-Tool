@@ -19,12 +19,9 @@ class UpdateSubmissionStatusRequest extends FormRequest
                 'required',
                 'string',
                 Rule::in([
-                    'pending',
-                    'under_review',
                     'accepted',
                     'rejected',
                     'revision_requested',
-                    'withdrawn',
                 ]),
             ],
         ];

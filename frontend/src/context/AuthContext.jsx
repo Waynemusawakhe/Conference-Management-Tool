@@ -203,6 +203,10 @@ export function AuthProvider({
             response
           );
 
+        if (response?.data?.mfa_required || response?.mfa_required) {
+          return { mfa_required: true };
+        }
+
         if (!token) {
           throw {
             status:

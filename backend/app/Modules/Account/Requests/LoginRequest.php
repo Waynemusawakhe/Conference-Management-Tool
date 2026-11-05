@@ -16,6 +16,7 @@ class LoginRequest extends BaseApiRequest
         return [
             'email' => ['required', 'email'],
             'password' => ['required', 'string'],
+            'mfa_code' => ['nullable', 'string', 'max:32'],
         ];
     }
 
