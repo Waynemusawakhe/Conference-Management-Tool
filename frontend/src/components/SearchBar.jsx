@@ -1,5 +1,6 @@
 import { Search, SlidersHorizontal, X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { conferencesApi } from "../api/conferencesApi";
 
 const categories = [
   "AI & Machine Learning",
@@ -17,10 +18,78 @@ export default function SearchBar({
   onFiltersChange,
 }) {
   const [showFilters, setShowFilters] = useState(false);
+  const [suggestions, setSuggestions] = useState([]);
+  const [suggestionsOpen, setSuggestionsOpen] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(-1);
+  const [suggestionsLoading, setSuggestionsLoading] = useState(false);
+  const [suggestionsError, setSuggestionsError] = useState(false);
+  const requestId = useRef(0);
+
+  useEffect(() => {
+    const term = value?.trim() || "";
+    const id = ++requestId.current;
+    if (term.length < 2 || term.length > 100) {
+      setSuggestions([]);
+      setSuggestionsLoading(false);
+      setSuggestionsError(false);
+      return;
+    }
+    const controller = new AbortController();
+    const timer = window.setTimeout(async () => {
+      setSuggestionsLoading(true);
+      setSuggestionsError(false);
+      try {
+        const response = await conferencesApi.getSuggestions(term, controller.signal);
+        if (requestId.current === id) {
+          setSuggestions(Array.isArray(response?.data) ? response.data : []);
+          setActiveIndex(-1);
+        }
+      } catch (error) {
+        if (requestId.current === id && error?.kind !== "cancelled") {
+          setSuggestions([]);
+          setSuggestionsError(true);
+        }
+      } finally {
+        if (requestId.current === id) setSuggestionsLoading(false);
+      }
+    }, 300);
+    return () => {
+      window.clearTimeout(timer);
+      controller.abort();
+    };
+  }, [value]);
+
+  const chooseSuggestion = (suggestion) => {
+    onChange(suggestion.name);
+    setSuggestionsOpen(false);
+    setSuggestions([]);
+    setActiveIndex(-1);
+    onSearch?.(suggestion.name);
+  };
+
+  const handleKeyDown = (event) => {
+    if (event.key === "Escape") {
+      setSuggestionsOpen(false);
+      setActiveIndex(-1);
+      return;
+    }
+    if (!suggestionsOpen || suggestions.length === 0) return;
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      setActiveIndex((index) => (index + 1) % suggestions.length);
+    } else if (event.key === "ArrowUp") {
+      event.preventDefault();
+      setActiveIndex((index) => (index <= 0 ? suggestions.length - 1 : index - 1));
+    } else if (event.key === "Enter" && activeIndex >= 0) {
+      event.preventDefault();
+      chooseSuggestion(suggestions[activeIndex]);
+    }
+  };
 
   const submit = (event) => {
     event?.preventDefault();
-    onSearch?.();
+    onSearch?.(value);
+    setSuggestionsOpen(false);
     setShowFilters(false);
   };
 
@@ -41,7 +110,14 @@ export default function SearchBar({
         <input
           className="min-w-0 flex-1 border-0 bg-transparent text-[13px] text-[#0d1b3d] outline-none placeholder:text-[#8792a8]"
           value={value}
-          onChange={(event) => onChange(event.target.value)}
+          onChange={(event) => { onChange(event.target.value); setSuggestionsOpen(true); }}
+          onFocus={() => setSuggestionsOpen(true)}
+          onKeyDown={handleKeyDown}
+          role="combobox"
+          aria-autocomplete="list"
+          aria-expanded={suggestionsOpen && suggestions.length > 0}
+          aria-controls="conference-suggestions"
+          aria-activedescendant={activeIndex >= 0 && suggestionsOpen ? `conference-suggestion-${activeIndex}` : undefined}
           placeholder="Search conferences by title, topic or location..."
           aria-label="Search conferences"
         />
@@ -59,6 +135,29 @@ export default function SearchBar({
           Search
         </button>
       </form>
+
+      {suggestionsOpen && value?.trim().length >= 2 && (
+        <div id="conference-suggestions" role="listbox" aria-label="Conference suggestions" className="absolute left-0 top-[calc(100%+9px)] z-30 w-full overflow-hidden rounded-xl border border-[#e4e8f0] bg-white text-[#0d1b3d] shadow-xl">
+          {suggestionsLoading && <p className="px-4 py-3 text-xs text-[#68748b]" role="status">Finding conferences...</p>}
+          {!suggestionsLoading && suggestionsError && <p className="px-4 py-3 text-xs text-[#68748b]">Suggestions unavailable. You can still search.</p>}
+          {!suggestionsLoading && !suggestionsError && suggestions.length === 0 && <p className="px-4 py-3 text-xs text-[#68748b]">No matching conference titles.</p>}
+          {!suggestionsLoading && suggestions.map((suggestion, index) => (
+            <button
+              key={suggestion.id}
+              id={`conference-suggestion-${index}`}
+              role="option"
+              aria-selected={index === activeIndex}
+              type="button"
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={() => chooseSuggestion(suggestion)}
+              className={`block w-full px-4 py-3 text-left text-sm hover:bg-[#f2f0ff] ${index === activeIndex ? "bg-[#f2f0ff]" : ""}`}
+            >
+              <span className="block font-semibold">{suggestion.name}</span>
+              {(suggestion.city || suggestion.country) && <span className="text-xs text-[#68748b]">{[suggestion.city, suggestion.country].filter(Boolean).join(", ")}</span>}
+            </button>
+          ))}
+        </div>
+      )}
 
       {showFilters && (
           <div className="absolute right-0 top-[calc(100%+9px)] z-20 w-full max-w-[420px] rounded-[14px] border border-[#e4e8f0] bg-white p-[17px] text-[#0d1b3d] shadow-[0_18px_45px_rgba(15,28,65,.16)]" role="region" aria-label="Conference filters">

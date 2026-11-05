@@ -130,9 +130,9 @@ export default function Home() {
       });
   }, [allConferences, now]);
 
-  const searchConferences = () => {
+  const searchConferences = (searchTerm = query) => {
     const params = new URLSearchParams();
-    if (query.trim()) params.set("search", query.trim());
+    if (searchTerm.trim()) params.set("search", searchTerm.trim());
     if (filters.category) params.set("category", filters.category);
     if (filters.country) params.set("country", filters.country);
     navigate(`/conferences${params.toString() ? `?${params}` : ""}`);
