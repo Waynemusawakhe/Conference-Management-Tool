@@ -72,22 +72,19 @@ export default function AuthorFeedback() {
       const subsRes = await submissionsApi.getAll({ per_page: 100 });
       const submissions = unwrapList(subsRes).filter(
         (s) =>
-          String(s.author_id ?? s.author?.id) === String(user?.id) ||
-          !s.author_id,
+          String(s.author_id ?? s.author?.id) === String(user?.id),
       );
 
       const withReviews = await Promise.all(
-        submissions.map(async (s) => {
-          try {
-            const res = await reviewsApi.getAll({
+        submissions.map(async (s) => ({
+          ...s,
+          reviews: unwrapList(
+            await reviewsApi.getAll({
               submission_id: s.id,
               per_page: 50,
-            });
-            return { ...s, reviews: unwrapList(res) };
-          } catch {
-            return { ...s, reviews: [] };
-          }
-        }),
+            }),
+          ),
+        })),
       );
 
       setRows(withReviews);

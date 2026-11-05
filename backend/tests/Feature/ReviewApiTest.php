@@ -66,12 +66,72 @@ class ReviewApiTest extends TestCase
             ->assertUnauthorized();
     }
 
-    public function test_author_cannot_list_reviews(): void
+    public function test_author_can_only_list_submitted_reviews_for_their_own_submissions(): void
     {
         $author = User::factory()->create(['role' => 'author']);
+        [, $submission] = $this->ownedSubmission();
+        $submission->update(['author_id' => $author->id]);
+        $reviewer = User::factory()->create(['role' => 'reviewer']);
+        $ownReview = $this->createReview($submission, $reviewer, [
+            'score' => 4,
+            'comments' => 'Useful feedback.',
+            'recommendation' => 'accept',
+            'submitted_at' => now(),
+        ]);
+        $this->createReview(
+            $submission,
+            User::factory()->create(['role' => 'reviewer'])
+        );
+
+        [, $otherSubmission] = $this->ownedSubmission();
+        $this->createReview($otherSubmission, User::factory()->create(['role' => 'reviewer']), [
+            'score' => 2,
+            'comments' => 'Private feedback for another author.',
+            'recommendation' => 'reject',
+            'submitted_at' => now(),
+        ]);
 
         $this->actingAs($author, 'sanctum')
             ->getJson('/api/v1/reviews')
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.id', $ownReview->id)
+            ->assertJsonMissingPath('data.0.reviewer');
+    }
+
+    public function test_author_can_view_only_submitted_reviews_for_their_own_submission(): void
+    {
+        $author = User::factory()->create(['role' => 'author']);
+        [, $submission] = $this->ownedSubmission();
+        $submission->update(['author_id' => $author->id]);
+        $reviewer = User::factory()->create(['role' => 'reviewer']);
+
+        $submittedReview = $this->createReview($submission, $reviewer, [
+            'score' => 4,
+            'comments' => 'Submitted feedback.',
+            'recommendation' => 'accept',
+            'submitted_at' => now(),
+        ]);
+        $pendingReview = $this->createReview(
+            $submission,
+            User::factory()->create(['role' => 'reviewer'])
+        );
+
+        $this->actingAs($author, 'sanctum')
+            ->getJson("/api/v1/reviews/{$submittedReview->id}")
+            ->assertOk()
+            ->assertJsonPath('data.id', $submittedReview->id)
+            ->assertJsonMissingPath('data.reviewer');
+
+        $this->getJson("/api/v1/reviews/{$pendingReview->id}")
+            ->assertForbidden();
+
+        [, $otherSubmission] = $this->ownedSubmission();
+        $otherReview = $this->createReview($otherSubmission, $reviewer, [
+            'submitted_at' => now(),
+        ]);
+
+        $this->getJson("/api/v1/reviews/{$otherReview->id}")
             ->assertForbidden();
     }
 
