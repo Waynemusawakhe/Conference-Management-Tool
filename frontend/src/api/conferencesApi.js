@@ -1,6 +1,9 @@
 import { http } from "./client";
 
 export const conferencesApi = {
+  getSuggestions: (q, signal) =>
+    http.get("/conferences/suggestions", { params: { q }, signal }),
+
   getAll: (params = {}) =>
     http.get("/conferences", { params }),
 

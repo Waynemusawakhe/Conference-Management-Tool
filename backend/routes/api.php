@@ -8,6 +8,7 @@ use App\Modules\AdminNotifications\Controllers\AdminNotificationController;
 use App\Modules\Audit\Controllers\AuditLogController;
 use App\Modules\Chat\Controllers\ChatController;
 use App\Modules\Conferences\Controllers\ConferenceController;
+use App\Modules\Conferences\Controllers\ConferenceSuggestionController;
 use App\Modules\ContactMessages\Controllers\ContactMessageController;
 use App\Modules\Faq\Controllers\FaqController;
 use App\Modules\Registrations\Controllers\RegistrationController;
@@ -303,6 +304,7 @@ Route::prefix('v1/audit-logs')
 
 Route::prefix('v1/conferences')->group(function () {
     Route::get('/', [ConferenceController::class, 'index']);
+    Route::get('/suggestions', ConferenceSuggestionController::class)->middleware('throttle:60,1');
     Route::get('/{conference}', [ConferenceController::class, 'show']);
 
     Route::middleware('auth:sanctum')->group(function () {
