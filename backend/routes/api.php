@@ -4,6 +4,7 @@ use App\Http\Controllers\NotificationController;
 use App\Models\User;
 use App\Modules\Account\Controllers\AuthController;
 use App\Modules\Account\Controllers\UserController;
+use App\Modules\Audit\Controllers\AuditLogController;
 use App\Modules\Conferences\Controllers\ConferenceController;
 use App\Modules\ContactMessages\Controllers\ContactMessageController;
 use App\Modules\Faq\Controllers\FaqController;
@@ -270,8 +271,16 @@ Route::prefix('v1/users')
         Route::middleware('role:admin')->group(function () {
             Route::get('/', [UserController::class, 'index']);
             Route::get('/{id}', [UserController::class, 'show']);
+            Route::patch('/{id}', [UserController::class, 'update']);
+            Route::post('/{id}/reset-password', [UserController::class, 'resetPassword']);
             Route::patch('/{id}/role', [UserController::class, 'assignRole']);
         });
+    });
+
+Route::prefix('v1/audit-logs')
+    ->middleware(['auth:sanctum', 'role:admin'])
+    ->group(function () {
+        Route::get('/', [AuditLogController::class, 'index']);
     });
 
 /*

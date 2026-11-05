@@ -11,6 +11,7 @@ use App\Modules\Account\Actions\LoginAction;
 use App\Modules\Account\Actions\LogoutAction;
 use App\Modules\Account\Actions\ResetPasswordAction;
 use App\Modules\Account\Actions\UpdateProfileAction;
+use App\Modules\Audit\Actions\RecordAuditLogAction;
 use App\Modules\Account\Services\TotpService;
 use App\Modules\Account\Requests\ChangePasswordRequest;
 use App\Modules\Account\Requests\CreateUserRequest;
@@ -304,12 +305,25 @@ class AuthController extends Controller
     )]
     public function updateProfile(
         UpdateProfileRequest $request,
-        UpdateProfileAction $action
+        UpdateProfileAction $action,
+        RecordAuditLogAction $audit
     ): JsonResponse {
+        $currentUser = $request->user();
+        $oldValues = [
+            'name' => $currentUser->name,
+            'email' => $currentUser->email,
+        ];
         $user = $action->execute(
-            $request->user(),
+            $currentUser,
             $request->validated()
         );
+
+        if ($currentUser->role === 'admin') {
+            $audit->execute($currentUser, $currentUser, 'admin.settings_updated', $oldValues, [
+                'name' => $user->name,
+                'email' => $user->email,
+            ]);
+        }
 
         return response()->json([
             'success' => true,
@@ -370,12 +384,19 @@ class AuthController extends Controller
     )]
     public function changePassword(
         ChangePasswordRequest $request,
-        ChangePasswordAction $action
+        ChangePasswordAction $action,
+        RecordAuditLogAction $audit
     ): JsonResponse {
         $action->execute(
             $request->user(),
             $request->validated()
         );
+
+        if ($request->user()->role === 'admin') {
+            $audit->execute($request->user(), $request->user(), 'admin.password_changed', null, [
+                'tokens_revoked' => true,
+            ]);
+        }
 
         return response()->json([
             'success' => true,

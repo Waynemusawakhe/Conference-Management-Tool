@@ -13,4 +13,10 @@ export const usersApi = {
   updateRole: (id, role) =>
     http.patch(`/users/${encodeURIComponent(id)}/role`, { role }),
 
+  update: (id, body) =>
+    http.patch(`/users/${encodeURIComponent(id)}`, body),
+
+  resetPassword: (id, body) =>
+    http.post(`/users/${encodeURIComponent(id)}/reset-password`, body),
+
 };

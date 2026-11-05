@@ -47,6 +47,7 @@ const OrganiserRegistrations = lazy(() => import("./pages/OrganiserRegistrations
 /* ---------- Admin pages ---------- */
 const AdminReportsPage = lazy(() => import("./pages/AdminReportsPage"));
 const AdminUserDetailPage = lazy(() => import("./pages/AdminUserDetailPage"));
+const AdminAuditLogsPage = lazy(() => import("./pages/AdminAuditLogsPage"));
 const AdminContactMessagesPage = lazy(() => import("./pages/AdminContactMessagesPage"));
 const AdminContactMessageDetailPage = lazy(() => import("./pages/AdminContactMessageDetailPage"));
 const AdminFaqsPage = lazy(() => import("./pages/AdminFaqsPage"));
@@ -283,6 +284,15 @@ export default function App() {
             element={
               <ProtectedRoute roles={["admin"]}>
                 <AdminReportsPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/admin/audit-logs"
+            element={
+              <ProtectedRoute roles={["admin"]}>
+                <AdminAuditLogsPage />
               </ProtectedRoute>
             }
           />
