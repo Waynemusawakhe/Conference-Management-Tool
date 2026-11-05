@@ -1883,3 +1883,60 @@ html.dark .cmt-manage-hover:active { background-color: #1b3261; }
   .dark .cmt-mobile-card-table tbody tr.cmt-conference-row:is(:hover, :focus-within) .cmt-conference-row__meta { color: #cbd5e1 !important; }
   .dark .cmt-mobile-card-table tbody tr.cmt-conference-row:is(:hover, :focus-within) .cmt-conference-row__location { color: #e2e8f0 !important; }
 }
+/* Messages workspace dropdowns share a clear arrow, menu palette, and focus
+   treatment in light and dark themes. */
+.messages-page select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 2.75rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23788398' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right .85rem center;
+  background-size: 1rem;
+  cursor: pointer;
+}
+.messages-page select:hover { border-color: #b8b1ff; }
+.messages-page select:focus-visible {
+  border-color: #8175ef;
+  outline: 0;
+  box-shadow: 0 0 0 3px rgba(129, 117, 239, .16);
+}
+.messages-page select option {
+  background: #fff;
+  color: #0d1b3d;
+  padding: .65rem .8rem;
+}
+.dark .messages-page select {
+  color-scheme: dark;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23cbd5e1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+}
+.dark .messages-page select option {
+  background: #101a33;
+  color: #f8fafc;
+}
+.messages-dropdown-menu {
+  animation: messages-dropdown-in 140ms ease-out both;
+  transform-origin: top right;
+}
+.messages-dropdown-option[aria-selected="true"] {
+  background: linear-gradient(110deg, #6655f6, #7869ff);
+  color: #fff;
+}
+.messages-dropdown-option[aria-selected="true"]:hover,
+.messages-dropdown-option[aria-selected="true"]:focus-visible { color: #fff; }
+.dark .messages-dropdown-option[aria-selected="true"] {
+  background: linear-gradient(110deg, #5143d5, #6655f6);
+  color: #fff;
+}
+@keyframes messages-dropdown-in {
+  from { opacity: 0; transform: translateY(-4px) scale(.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.messages-page select[aria-label="Insert variable"] {
+  width: auto;
+  padding: .4rem 1.9rem .4rem .5rem;
+  background-position: right .4rem center;
+  background-size: .85rem;
+}
+.messages-page input[type="datetime-local"] { color-scheme: light; }
+.dark .messages-page input[type="datetime-local"] { color-scheme: dark; }

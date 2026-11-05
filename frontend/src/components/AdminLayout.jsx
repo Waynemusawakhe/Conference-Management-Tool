@@ -24,6 +24,7 @@ import {
   Mail,
   Menu,
   MessageSquareQuote,
+  MessageSquareText,
   Moon,
   Settings,
   Sun,
@@ -86,6 +87,11 @@ const NAV_ITEMS = [
     to: "/admin/contact-messages",
     label: "Contact Messages",
     icon: Mail,
+  },
+  {
+    to: "/admin/messages",
+    label: "Announcements",
+    icon: MessageSquareText,
   },
   {
     to: "/admin/faqs",

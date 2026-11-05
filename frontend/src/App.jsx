@@ -52,6 +52,7 @@ const OrganiserRegistrations = lazy(
 
 /* ---------- Admin pages ---------- */
 const AdminReportsPage = lazy(() => import("./pages/AdminReportsPage"));
+const AdminMessagesPage = lazy(() => import("./pages/AdminMessagesPage"));
 const AdminUserDetailPage = lazy(() => import("./pages/AdminUserDetailPage"));
 const AdminAuditLogsPage = lazy(() => import("./pages/AdminAuditLogsPage"));
 const AdminContactMessagesPage = lazy(
@@ -304,6 +305,15 @@ export default function App() {
             element={
               <ProtectedRoute roles={["admin"]}>
                 <AdminReportsPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/admin/messages"
+            element={
+              <ProtectedRoute roles={["admin"]}>
+                <AdminMessagesPage />
               </ProtectedRoute>
             }
           />
