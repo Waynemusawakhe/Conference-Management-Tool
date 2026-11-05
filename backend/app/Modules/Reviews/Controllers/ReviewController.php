@@ -192,6 +192,7 @@ class ReviewController extends Controller
         ]
     )]
     public function show(
+        Request $request,
         int $id,
         GetReviewAction $action
     ): JsonResponse {
@@ -201,6 +202,10 @@ class ReviewController extends Controller
             'view',
             $review
         );
+
+        if ($request->user()->role === 'author') {
+            $review->unsetRelation('reviewer');
+        }
 
         return response()->json([
             'success' => true,
