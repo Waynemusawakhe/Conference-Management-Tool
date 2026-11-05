@@ -7,6 +7,7 @@ use App\Modules\Account\Notifications\VerifyEmailNotification;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -14,7 +15,7 @@ use Laravel\Sanctum\HasApiTokens;
 class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<UserFactory> */
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable, SoftDeletes;
 
     /**
      * The attributes that are mass assignable.
@@ -26,6 +27,10 @@ class User extends Authenticatable implements MustVerifyEmail
         'email',
         'password',
         'role',
+        'account_status',
+        'account_status_reason',
+        'account_status_changed_at',
+        'account_status_changed_by',
     ];
 
     /**
@@ -53,6 +58,7 @@ class User extends Authenticatable implements MustVerifyEmail
             'mfa_secret' => 'encrypted',
             'mfa_recovery_codes' => 'encrypted:array',
             'mfa_confirmed_at' => 'datetime',
+            'account_status_changed_at' => 'datetime',
         ];
     }
 
@@ -61,6 +67,11 @@ class User extends Authenticatable implements MustVerifyEmail
     public function getMfaEnabledAttribute(): bool
     {
         return ! is_null($this->mfa_confirmed_at);
+    }
+
+    public function isAccountActive(): bool
+    {
+        return $this->account_status === 'active';
     }
 
     public function sendEmailVerificationNotification(): void
