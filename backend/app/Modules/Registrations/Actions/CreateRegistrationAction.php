@@ -19,7 +19,7 @@ class CreateRegistrationAction
                 ->lockForUpdate()
                 ->find($data['conference_id']);
 
-            if (!$conference) {
+            if (! $conference) {
                 throw ValidationException::withMessages([
                     'conference_id' => 'Conference not found.',
                 ]);

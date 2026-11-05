@@ -1,16 +1,10 @@
 import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { CalendarDays, FilePlus2, MapPin } from "lucide-react";
+import DocumentInspector from "../components/DocumentInspector";
+import { inspectDocument } from "../utils/documentInspector";
 import { submissionsApi } from "../api/submissionsApi";
 import { conferencesApi } from "../api/conferencesApi";
-
-const MAX_FILE_SIZE = 10 * 1024 * 1024;
-const ALLOWED_EXTENSIONS = ["pdf", "doc", "docx"];
-const ALLOWED_MIME_TYPES = [
-  "application/pdf",
-  "application/msword",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-];
 
 function unwrapList(response) {
   if (Array.isArray(response)) return response;
@@ -19,26 +13,13 @@ function unwrapList(response) {
   return [];
 }
 
-function validateFile(file) {
-  if (!file) return null;
-  const ext = String(file.name).toLowerCase().split(".").pop();
-  const typeOk =
-    ALLOWED_MIME_TYPES.includes(file.type) || ALLOWED_EXTENSIONS.includes(ext);
-  if (!typeOk) {
-    return "Only PDF, DOC, or DOCX files are allowed.";
-  }
-  if (file.size > MAX_FILE_SIZE) {
-    return "The file must be 10MB or smaller.";
-  }
-  return null;
-}
-
-function formatBytes(bytes) {
-  if (!bytes) return "";
-  const kb = bytes / 1024;
-  if (kb < 1024) return `${kb.toFixed(1)} KB`;
-  return `${(kb / 1024).toFixed(2)} MB`;
-}
+const isConferenceOpen = (c) =>
+  c?.submission_status !== "closed" &&
+  !(
+    c?.submission_deadline &&
+    String(c.submission_deadline).slice(0, 10) <
+      new Date().toLocaleDateString("en-CA")
+  );
 
 function SubmitProposal() {
   const { conferenceId } = useParams();
@@ -83,7 +64,7 @@ function SubmitProposal() {
         })
         .catch((err) => {
           if (!cancelled) {
-            setLoadError(err?.message || "Couldn't load conferences.");
+      setLoadError(err?.message || "Couldn't load conferences. Please try again.");
           }
         })
         .finally(() => {
@@ -102,10 +83,17 @@ function SubmitProposal() {
         const response = await conferencesApi.getById(conferenceId);
         const data = response?.data ?? response;
         const conf = data?.data ?? data ?? null;
-        if (!cancelled) setConference(conf);
+        if (!cancelled) {
+          if (conf && !isConferenceOpen(conf)) {
+            setConference(null);
+            setLoadError("Submissions are closed for this conference. The deadline has passed.");
+          } else {
+            setConference(conf);
+          }
+        }
       } catch (err) {
         if (!cancelled)
-          setLoadError(err?.message || "Couldn't load this conference.");
+      setLoadError(err?.kind === "not_found" ? "We couldn't find this conference. Please go back and choose another one." : err?.message || "Something went wrong while loading this conference. Please try again.");
       } finally {
         if (!cancelled) setLoadingConference(false);
       }
@@ -151,20 +139,8 @@ function SubmitProposal() {
   };
 
   /* ---- File picker ---- */
-  const handleFileChange = (e) => {
+    const handleFileChange = (e) => {
     const selected = e.target.files?.[0] ?? null;
-    if (!selected) {
-      setFile(null);
-      setError("");
-      return;
-    }
-    const validationError = validateFile(selected);
-    if (validationError) {
-      setError(validationError);
-      setFile(null);
-      e.target.value = "";
-      return;
-    }
     setError("");
     setFile(selected);
   };
@@ -189,13 +165,15 @@ function SubmitProposal() {
       setError("Title, track, and abstract are required.");
       return;
     }
-    if (file) {
-      const fileError = validateFile(file);
-      if (fileError) {
-        setError(fileError);
-        return;
-      }
-    }
+  if (file) {
+          const inspected = inspectDocument(file);
+          const fileError =
+            inspected && !inspected.valid ? inspected.problems[0] : null;
+            if (fileError) {
+              setError(fileError);
+              return;
+            }
+  }
 
     setSubmitting(true);
     try {
@@ -278,9 +256,9 @@ function SubmitProposal() {
           </div>
         )}
 
-        {availableConferences.length ? (
+        {availableConferences.filter(isConferenceOpen).length ? (
           <div className="divide-y divide-[#edf0f5] rounded-xl border border-[#edf0f5]">
-            {availableConferences.map((item) => (
+            {availableConferences.filter(isConferenceOpen).map((item) => (
               <article
                 key={item.id}
                 className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between"
@@ -347,7 +325,7 @@ function SubmitProposal() {
   if (loadError) {
     return renderPage(
       <div className="auth-card" style={{ textAlign: "center" }}>
-        <h1 className="auth-title">Couldn't load conference</h1>
+        <h1 className="auth-title">We couldn't open this page</h1>
         <p className="auth-error">{loadError}</p>
       </div>,
     );
@@ -440,51 +418,7 @@ function SubmitProposal() {
             PDF, DOC or DOCX, maximum 10MB
           </p>
 
-          {file && (
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "10px",
-                marginTop: "10px",
-                padding: "8px 12px",
-                border: "1px solid var(--border, #e4e8f0)",
-                borderRadius: "10px",
-                background: "#fafbff",
-                fontSize: "12px",
-              }}
-            >
-              <span
-                style={{
-                  flex: 1,
-                  minWidth: 0,
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                <strong>{file.name}</strong>
-                <span style={{ color: "var(--muted)" }}>
-                  {" "}
-                  · {formatBytes(file.size)}
-                </span>
-              </span>
-              <button
-                type="button"
-                onClick={handleRemoveFile}
-                style={{
-                  border: "none",
-                  background: "transparent",
-                  color: "#b13a3a",
-                  fontWeight: 700,
-                  fontSize: "11px",
-                  cursor: "pointer",
-                }}
-              >
-                Remove
-              </button>
-            </div>
-          )}
+          <DocumentInspector file={file} onRemove={handleRemoveFile} />
         </div>
 
         {error && <p className="auth-error">{error}</p>}
