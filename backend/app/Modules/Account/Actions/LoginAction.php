@@ -23,6 +23,12 @@ class LoginAction
             );
         }
 
+        if (! $user->isAccountActive()) {
+            throw ValidationException::withMessages([
+                'email' => 'This account is currently '.$user->account_status.'. Please contact an administrator.',
+            ]);
+        }
+
         if (! $user->hasVerifiedEmail()) {
             throw ValidationException::withMessages([
                 'email' => 'Please verify your email address before logging in.',

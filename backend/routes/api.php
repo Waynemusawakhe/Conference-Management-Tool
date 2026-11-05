@@ -276,6 +276,16 @@ Route::prefix('v1/users')
             Route::patch('/{id}', [UserController::class, 'update']);
             Route::post('/{id}/reset-password', [UserController::class, 'resetPassword']);
             Route::patch('/{id}/role', [UserController::class, 'assignRole']);
+            Route::patch(
+                '/{id}/account-status',
+                [UserController::class, 'updateAccountStatus']
+            );
+
+            Route::delete(
+                '/{id}',
+                [UserController::class, 'destroy']
+            );
+
         });
     });
 
