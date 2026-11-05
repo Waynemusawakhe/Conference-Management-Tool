@@ -1,5 +1,7 @@
 import { lazy, Suspense } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
+import { LoaderCircle } from "lucide-react";
+import Logo from "./components/Logo";
 
 const UserConferencePage = lazy(() => import("./pages/UserConferencePage"));
 const Home = lazy(() => import("./pages/Home"));
@@ -61,19 +63,38 @@ import { ThemeProvider } from "./context/ThemeContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 const AuthorDashboard = lazy(() => import("./pages/AuthorDashboard"));
+const NotFound = lazy(() => import("./pages/NotFound"));
 
 const ALL_ROLES = ["author", "reviewer", "organiser", "attendee", "admin"];
+
+function PageLoader() {
+  return (
+    <div
+      className="grid min-h-screen place-items-center bg-[#f7f9fc] px-5 text-[#66728b]"
+      role="status"
+      aria-live="polite"
+    >
+      <div className="flex flex-col items-center gap-5">
+        <div className="rounded-2xl bg-[#07132f] px-5 py-3 shadow-[0_14px_36px_rgba(7,19,47,.16)]">
+          <Logo />
+        </div>
+        <div className="flex items-center gap-2 text-sm font-semibold">
+          <LoaderCircle
+            size={18}
+            className="motion-safe:animate-spin text-[#6655f6]"
+            aria-hidden="true"
+          />
+          Loading your next step…
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function App() {
   return (
     <ThemeProvider>
-      <Suspense
-        fallback={
-          <div className="grid min-h-screen place-items-center text-sm text-[#66728b]">
-            Loading workspace...
-          </div>
-        }
-      >
+      <Suspense fallback={<PageLoader />}>
         <Routes>
           {/* ==================== PUBLIC ROUTES ==================== */}
 
@@ -434,7 +455,7 @@ export default function App() {
 
           {/* ==================== FALLBACK ==================== */}
 
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
     </ThemeProvider>

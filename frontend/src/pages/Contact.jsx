@@ -1,5 +1,6 @@
 import { useState } from "react";
 import Navbar from "../components/Navbar";
+import PublicFooter from "../components/PublicFooter";
 import { contactMessagesApi } from "../api/contactMessagesApi";
 
 export default function Contact() {
@@ -189,6 +190,7 @@ export default function Contact() {
           </div>
         </div>
       </section>
+      <PublicFooter />
     </div>
   );
 }
