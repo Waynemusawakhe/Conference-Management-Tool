@@ -16,7 +16,7 @@ export const usersApi = {
   update: (id, body) =>
     http.patch(`/users/${encodeURIComponent(id)}`, body),
 
-  resetPassword: (id, body) =>
-    http.post(`/users/${encodeURIComponent(id)}/reset-password`, body),
+  sendPasswordResetEmail: (id) =>
+    http.post(`/users/${encodeURIComponent(id)}/password-reset-email`),
 
 };

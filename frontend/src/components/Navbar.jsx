@@ -1,6 +1,6 @@
 import { Menu, Moon, Sun, X } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import Logo from "./Logo";
 import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
@@ -14,23 +14,40 @@ const navItems = [
   { label: "Contact", target: "/contact" },
 ];
 
+const dashboardPathByRole = {
+  admin: "/admin-dashboard",
+  organiser: "/organiser-dashboard",
+  author: "/author-dashboard",
+  reviewer: "/reviewer-dashboard",
+  attendee: "/attendee-dashboard",
+};
+
+const getDashboardPath = (role) => dashboardPathByRole[role] || "/home";
+
 export default function Navbar() {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { dark, toggleTheme } = useTheme();
-  const { status } = useAuth();
+  const { status, role, logout } = useAuth();
 
   useEffect(() => {
     setOpen(false);
   }, [location.pathname, location.search, location.hash]);
 
   useEffect(() => {
-    if (!open) return undefined;
+    if (!open) {
+      return undefined;
+    }
+
     const handleKeyDown = (event) => {
-      if (event.key === "Escape") setOpen(false);
+      if (event.key === "Escape") {
+        setOpen(false);
+      }
     };
+
     window.addEventListener("keydown", handleKeyDown);
+
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [open]);
 
@@ -38,26 +55,46 @@ export default function Navbar() {
     if (target === "/home") {
       return location.pathname === "/" || location.pathname === "/home";
     }
+
     if (target === "/conferences") {
-      return location.pathname === target || location.pathname.startsWith(`${target}/`);
+      return (
+        location.pathname === target ||
+        location.pathname.startsWith(`${target}/`)
+      );
     }
+
     return location.pathname === target;
   };
 
   const goTo = ({ target, section }) => {
     setOpen(false);
 
-    if (location.pathname === target || (target === "/home" && location.pathname === "/")) {
-      document.getElementById(section || "top")?.scrollIntoView({ behavior: "smooth" });
+    if (
+      location.pathname === target ||
+      (target === "/home" && location.pathname === "/")
+    ) {
+      document
+        .getElementById(section || "top")
+        ?.scrollIntoView({ behavior: "smooth" });
+
       return;
     }
 
     navigate(target);
+
     if (section) {
       window.setTimeout(() => {
-        document.getElementById(section)?.scrollIntoView({ behavior: "smooth" });
+        document
+          .getElementById(section)
+          ?.scrollIntoView({ behavior: "smooth" });
       }, 150);
     }
+  };
+
+  const handleLogout = () => {
+    logout();
+    setOpen(false);
+    navigate("/home");
   };
 
   return (
@@ -75,9 +112,13 @@ export default function Navbar() {
           <Logo />
         </a>
 
-        <nav className="hidden flex-1 items-center justify-center gap-6 lg:flex" aria-label="Main navigation">
+        <nav
+          className="hidden flex-1 items-center justify-center gap-6 lg:flex"
+          aria-label="Main navigation"
+        >
           {navItems.map((item) => {
             const active = isActive(item.target);
+
             return (
               <button
                 key={item.label}
@@ -106,7 +147,26 @@ export default function Navbar() {
           >
             {dark ? <Sun size={17} /> : <Moon size={17} />}
           </button>
-          {status === "unauthenticated" ? (
+
+          {status === "authenticated" ? (
+            <>
+              <button
+                type="button"
+                className="min-h-11 rounded-[11px] border border-white/20 bg-transparent px-[18px] text-[13px] font-bold text-white transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b9b3ff]"
+                onClick={() => navigate(getDashboardPath(role))}
+              >
+                Dashboard
+              </button>
+
+              <button
+                type="button"
+                className="min-h-11 rounded-[11px] bg-gradient-to-br from-[#6655f6] to-[#7869ff] px-[18px] text-[13px] font-bold text-white shadow-[0_10px_26px_rgba(103,87,245,.26)] transition hover:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b9b3ff]"
+                onClick={handleLogout}
+              >
+                Sign out
+              </button>
+            </>
+          ) : status === "unauthenticated" ? (
             <>
               <button
                 type="button"
@@ -115,6 +175,7 @@ export default function Navbar() {
               >
                 Login
               </button>
+
               <button
                 type="button"
                 className="min-h-11 rounded-[11px] bg-gradient-to-br from-[#6655f6] to-[#7869ff] px-[18px] text-[13px] font-bold text-white shadow-[0_10px_26px_rgba(103,87,245,.26)] transition hover:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b9b3ff]"
@@ -146,6 +207,7 @@ export default function Navbar() {
             onClick={() => setOpen(false)}
             aria-label="Close navigation"
           />
+
           <div className="absolute inset-x-0 top-full z-50 border-t border-white/10 bg-[#07132f] px-5 py-4 shadow-[0_18px_36px_rgba(7,19,47,.22)] lg:hidden">
             <nav
               id="mobile-navigation"
@@ -154,6 +216,7 @@ export default function Navbar() {
             >
               {navItems.map((item) => {
                 const active = isActive(item.target);
+
                 return (
                   <button
                     type="button"
@@ -170,6 +233,7 @@ export default function Navbar() {
                   </button>
                 );
               })}
+
               <div className="mt-2 flex gap-2.5 border-t border-white/10 pt-4">
                 <button
                   type="button"
@@ -179,7 +243,29 @@ export default function Navbar() {
                 >
                   {dark ? <Sun size={17} /> : <Moon size={17} />}
                 </button>
-                {status === "unauthenticated" ? (
+
+                {status === "authenticated" ? (
+                  <>
+                    <button
+                      type="button"
+                      className="min-h-11 flex-1 rounded-[11px] border border-white/20 bg-transparent px-[18px] text-[13px] font-bold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b9b3ff]"
+                      onClick={() => {
+                        setOpen(false);
+                        navigate(getDashboardPath(role));
+                      }}
+                    >
+                      Dashboard
+                    </button>
+
+                    <button
+                      type="button"
+                      className="min-h-11 flex-1 rounded-[11px] bg-gradient-to-br from-[#6655f6] to-[#7869ff] px-[18px] text-[13px] font-bold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b9b3ff]"
+                      onClick={handleLogout}
+                    >
+                      Sign out
+                    </button>
+                  </>
+                ) : status === "unauthenticated" ? (
                   <>
                     <button
                       type="button"
@@ -191,6 +277,7 @@ export default function Navbar() {
                     >
                       Login
                     </button>
+
                     <button
                       type="button"
                       className="min-h-11 flex-1 rounded-[11px] bg-gradient-to-br from-[#6655f6] to-[#7869ff] px-[18px] text-[13px] font-bold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b9b3ff]"
