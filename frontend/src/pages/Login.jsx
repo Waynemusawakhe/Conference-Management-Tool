@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import Logo from "../components/Logo";
 import Navbar from "../components/Navbar";
@@ -22,8 +22,6 @@ function Login() {
   const [mfaRequired, setMfaRequired] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const errorRef = useRef(null);
-  useEffect(() => { if (error) errorRef.current?.focus(); }, [error]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -206,7 +204,7 @@ function Login() {
               </div>
 
               {error && (
-                <p ref={errorRef} tabIndex={-1} role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">
+                <p className="rounded-lg bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">
                   {error}
                 </p>
               )}

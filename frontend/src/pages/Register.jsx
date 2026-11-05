@@ -1,4 +1,4 @@
-﻿import { useEffect, useRef, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   ArrowRight,
@@ -81,8 +81,6 @@ function Register() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
-  const errorRef = useRef(null);
-  useEffect(() => { if (error) errorRef.current?.focus(); }, [error]);
 
   useEffect(() => {
     if (!success) return undefined;
@@ -500,8 +498,6 @@ function Register() {
 
               {error && (
                 <p
-                  ref={errorRef}
-                  tabIndex={-1}
                   role="alert"
                   className="rounded-lg bg-red-50 px-3 py-2 text-xs font-semibold text-red-700"
                 >
