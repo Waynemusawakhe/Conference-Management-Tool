@@ -4,14 +4,14 @@ namespace App\Modules\Account\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Modules\Account\Actions\AssignRoleAction;
-use App\Modules\Account\Actions\ChangePasswordAction;
 use App\Modules\Account\Actions\GetReviewersAction;
 use App\Modules\Account\Actions\GetUserAction;
 use App\Modules\Account\Actions\GetUsersAction;
-use App\Modules\Account\Requests\AdminResetPasswordRequest;
 use App\Modules\Account\Requests\AssignRoleRequest;
 use App\Modules\Account\Requests\UpdateManagedUserRequest;
 use App\Modules\Audit\Actions\RecordAuditLogAction;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Password;
 use Illuminate\Http\JsonResponse;
 use OpenApi\Attributes as OA;
 
@@ -171,36 +171,41 @@ class UserController extends Controller
         ]);
     }
 
-    public function resetPassword(
-        int $id,
-        AdminResetPasswordRequest $request,
-        GetUserAction $getUserAction,
-        RecordAuditLogAction $audit
-    ): JsonResponse {
-        $user = $getUserAction->execute($id);
+public function resetPassword(
+    int $id,
+    Request $request,
+    GetUserAction $getUserAction,
+    RecordAuditLogAction $audit
+): JsonResponse {
+    $user = $getUserAction->execute($id);
 
-        if ($request->user()->is($user)) {
-            return response()->json([
-                'message' => 'Use your account settings to change your own password.',
-            ], 422);
-        }
-
-        app(ChangePasswordAction::class)->executeByAdmin(
-            $user,
-            $request->validated()['password']
-        );
-
-        $audit->execute(
-            $request->user(),
-            $user,
-            'user.password_reset',
-            null,
-            ['tokens_revoked' => true]
-        );
-
+    if ($request->user()->is($user)) {
         return response()->json([
-            'success' => true,
-            'message' => 'Password reset successfully. Existing sessions were revoked.',
-        ]);
+            'message' => 'Use your account settings to change your own password.',
+        ], 422);
     }
+
+    $status = Password::sendResetLink([
+        'email' => $user->email,
+    ]);
+
+    if ($status !== Password::RESET_LINK_SENT) {
+        return response()->json([
+            'message' => 'Unable to send a password reset email at this time.',
+        ], 422);
+    }
+
+    $audit->execute(
+        $request->user(),
+        $user,
+        'user.password_reset_requested',
+        null,
+        ['reset_link_sent' => true]
+    );
+
+    return response()->json([
+        'success' => true,
+        'message' => 'A password reset link has been emailed to the user.',
+    ]);
+}
 }
