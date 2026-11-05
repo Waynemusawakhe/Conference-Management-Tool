@@ -1,5 +1,6 @@
 import { lazy, Suspense } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
+import { useAuth } from "./context/AuthContext";
 
 const UserConferencePage = lazy(() => import("./pages/UserConferencePage"));
 const Home = lazy(() => import("./pages/Home"));
@@ -24,39 +25,54 @@ const Profile = lazy(() => import("./pages/Profile"));
 const Settings = lazy(() => import("./pages/Settings"));
 const SubmitProposal = lazy(() => import("./pages/SubmitProposal"));
 
-const CreateEditConference = lazy(() => import("./pages/create_edit_conference"));
+const CreateEditConference = lazy(
+  () => import("./pages/create_edit_conference"),
+);
 const EditSubmissionPage = lazy(() => import("./pages/EditSubmissionPage"));
 const AssignReviewersPage = lazy(() => import("./pages/AssignReviewersPage"));
 const ScoreSubmission = lazy(() => import("./pages/ScoreSubmission"));
 const AttendeeDashboard = lazy(() => import("./pages/AttendeeDashboard"));
 const MyConferences = lazy(() => import("./pages/MyConferences"));
 const UsersPage = lazy(() => import("./pages/UsersPage"));
+const ChatBot = lazy(() => import("./components/Chatbot"));
 
 /* ---------- Shared authenticated ---------- */
 const UserTestimonials = lazy(() => import("./pages/UserTestimonials"));
 
 /* ---------- Author sub-pages ---------- */
- 
+
 const AuthorConferences = lazy(() => import("./pages/AuthorConferences"));
 
 /* ---------- Organiser sub-pages ---------- */
 const OrganiserConferences = lazy(() => import("./pages/OrganiserConferences"));
 const OrganiserReviews = lazy(() => import("./pages/OrganiserReviews"));
-const OrganiserRegistrations = lazy(() => import("./pages/OrganiserRegistrations"));
+const OrganiserRegistrations = lazy(
+  () => import("./pages/OrganiserRegistrations"),
+);
 
 /* ---------- Admin pages ---------- */
 const AdminReportsPage = lazy(() => import("./pages/AdminReportsPage"));
 const AdminUserDetailPage = lazy(() => import("./pages/AdminUserDetailPage"));
 const AdminAuditLogsPage = lazy(() => import("./pages/AdminAuditLogsPage"));
-const AdminContactMessagesPage = lazy(() => import("./pages/AdminContactMessagesPage"));
-const AdminContactMessageDetailPage = lazy(() => import("./pages/AdminContactMessageDetailPage"));
+const AdminContactMessagesPage = lazy(
+  () => import("./pages/AdminContactMessagesPage"),
+);
+const AdminContactMessageDetailPage = lazy(
+  () => import("./pages/AdminContactMessageDetailPage"),
+);
 const AdminFaqsPage = lazy(() => import("./pages/AdminFaqsPage"));
 const AdminFaqEditPage = lazy(() => import("./pages/AdminFaqEditPage"));
 const AdminConferencesPage = lazy(() => import("./pages/AdminConferencesPage"));
-const AdminEditConferencePage = lazy(() => import("./pages/AdminEditConferencePage"));
+const AdminEditConferencePage = lazy(
+  () => import("./pages/AdminEditConferencePage"),
+);
 const AdminReviewsPage = lazy(() => import("./pages/AdminReviewsPage"));
-const AdminRegistrationsPage = lazy(() => import("./pages/AdminRegistrationsPage"));
-const AdminTestimonialsPage = lazy(() => import("./pages/AdminTestimonialsPage"));
+const AdminRegistrationsPage = lazy(
+  () => import("./pages/AdminRegistrationsPage"),
+);
+const AdminTestimonialsPage = lazy(
+  () => import("./pages/AdminTestimonialsPage"),
+);
 const AdminSubmissionsPage = lazy(() => import("./pages/AdminSubmissionsPage"));
 
 import { ThemeProvider } from "./context/ThemeContext";
@@ -67,6 +83,8 @@ const AuthorDashboard = lazy(() => import("./pages/AuthorDashboard"));
 const ALL_ROLES = ["author", "reviewer", "organiser", "attendee", "admin"];
 
 export default function App() {
+  const { status, role, user } = useAuth();
+
   return (
     <ThemeProvider>
       <Suspense
@@ -114,8 +132,6 @@ export default function App() {
               </ProtectedRoute>
             }
           />
-
-       
 
           <Route
             path="/author/conferences"
@@ -175,12 +191,16 @@ export default function App() {
 
           <Route
             path="/reviewer/pending"
-            element={<Navigate to="/reviewer-dashboard?filter=pending" replace />}
+            element={
+              <Navigate to="/reviewer-dashboard?filter=pending" replace />
+            }
           />
 
           <Route
             path="/reviewer/history"
-            element={<Navigate to="/reviewer-dashboard?filter=locked" replace />}
+            element={
+              <Navigate to="/reviewer-dashboard?filter=locked" replace />
+            }
           />
 
           {/* ==================== ATTENDEE ==================== */}
@@ -456,6 +476,12 @@ export default function App() {
 
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+
+        <ChatBot
+          key={status === "authenticated" ? `user-${user?.id}` : "visitor"}
+          role={status === "authenticated" ? role : null}
+          userId={status === "authenticated" ? user?.id : null}
+        />
       </Suspense>
     </ThemeProvider>
   );
