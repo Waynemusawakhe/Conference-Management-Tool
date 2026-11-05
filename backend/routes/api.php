@@ -5,6 +5,7 @@ use App\Models\User;
 use App\Modules\Account\Controllers\AuthController;
 use App\Modules\Account\Controllers\UserController;
 use App\Modules\Audit\Controllers\AuditLogController;
+use App\Modules\Chat\Controllers\ChatController;
 use App\Modules\Conferences\Controllers\ConferenceController;
 use App\Modules\ContactMessages\Controllers\ContactMessageController;
 use App\Modules\Faq\Controllers\FaqController;
@@ -15,7 +16,6 @@ use App\Modules\Reviews\Controllers\TestimonialController;
 use App\Modules\Sessions\Controllers\SessionController;
 use App\Modules\Submissions\Controllers\SubmissionController;
 use Illuminate\Auth\Events\Verified;
-use App\Modules\Chat\Controllers\ChatController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 

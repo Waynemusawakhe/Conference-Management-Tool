@@ -78,25 +78,25 @@ class CreateRegistrationAction
         return $registration;
     }
 
-            /**
-         * Block attendance registration only after the conference has ended.
-         * Submission deadlines apply to author submissions, not attendees.
-         */
-        private function assertRegistrationOpen(Conference $conference): void
-        {
-            if (! $conference->end_date) {
-                return;
-            }
-
-            $today = Carbon::today();
-            $end = Carbon::parse($conference->end_date)->startOfDay();
-
-            if ($today->greaterThan($end)) {
-                throw ValidationException::withMessages([
-                    'conference_id' => 'Registration is closed because this conference has already ended.',
-                ]);
-            }
+    /**
+     * Block attendance registration only after the conference has ended.
+     * Submission deadlines apply to author submissions, not attendees.
+     */
+    private function assertRegistrationOpen(Conference $conference): void
+    {
+        if (! $conference->end_date) {
+            return;
         }
+
+        $today = Carbon::today();
+        $end = Carbon::parse($conference->end_date)->startOfDay();
+
+        if ($today->greaterThan($end)) {
+            throw ValidationException::withMessages([
+                'conference_id' => 'Registration is closed because this conference has already ended.',
+            ]);
+        }
+    }
 
     private function isUniqueConstraintViolation(
         QueryException $exception
