@@ -221,4 +221,49 @@ class ReviewLifecycleTest extends TestCase
             $review->comments
         );
     }
+
+    public function test_author_is_notified_when_an_organiser_records_a_final_decision(): void
+    {
+        Notification::fake();
+
+        [$author, , $review] = $this->makeReview();
+        $submission = $review->submission;
+        $organiser = $submission->conference->organiser;
+
+        $this->actingAs($organiser, 'sanctum')
+            ->patchJson("/api/v1/submissions/{$submission->id}/status", [
+                'status' => 'accepted',
+            ])
+            ->assertOk()
+            ->assertJsonPath('status', 'accepted');
+
+        $this->assertDatabaseHas('submissions', [
+            'id' => $submission->id,
+            'status' => 'accepted',
+            'final_decision_by' => $organiser->id,
+        ]);
+
+        Notification::assertSentTo(
+            $author,
+            CmtNotification::class,
+            fn (CmtNotification $notification) =>
+                $notification->kind === 'submission_decision'
+                && $notification->metadata['submission_id'] === $submission->id
+                && $notification->metadata['status'] === 'accepted'
+        );
+    }
+
+    public function test_non_final_states_are_rejected_by_the_decision_endpoint(): void
+    {
+        [, , $review] = $this->makeReview();
+        $submission = $review->submission;
+        $organiser = $submission->conference->organiser;
+
+        $this->actingAs($organiser, 'sanctum')
+            ->patchJson("/api/v1/submissions/{$submission->id}/status", [
+                'status' => 'under_review',
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['status']);
+    }
 }

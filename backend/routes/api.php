@@ -201,6 +201,10 @@ Route::prefix('v1/auth')->group(function () {
             [AuthController::class, 'deleteAccount']
         );
 
+        Route::post('/mfa/setup', [AuthController::class, 'setupMfa']);
+        Route::post('/mfa/confirm', [AuthController::class, 'confirmMfa']);
+        Route::delete('/mfa', [AuthController::class, 'disableMfa']);
+
         /*
         |--------------------------------------------------------------------------
         | Password

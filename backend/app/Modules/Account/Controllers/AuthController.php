@@ -11,6 +11,7 @@ use App\Modules\Account\Actions\LoginAction;
 use App\Modules\Account\Actions\LogoutAction;
 use App\Modules\Account\Actions\ResetPasswordAction;
 use App\Modules\Account\Actions\UpdateProfileAction;
+use App\Modules\Account\Services\TotpService;
 use App\Modules\Account\Requests\ChangePasswordRequest;
 use App\Modules\Account\Requests\CreateUserRequest;
 use App\Modules\Account\Requests\DeleteAccountRequest;
@@ -21,6 +22,7 @@ use App\Modules\Account\Requests\UpdateProfileRequest;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 use OpenApi\Attributes as OA;
 
@@ -140,6 +142,14 @@ class AuthController extends Controller
         LoginAction $loginAction
     ): JsonResponse {
         $result = $loginAction->execute($request->validated());
+
+        if (($result['mfa_required'] ?? false) === true) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Enter the code from your authenticator app to finish signing in.',
+                'data' => ['mfa_required' => true],
+            ]);
+        }
 
         return response()->json([
             'success' => true,
@@ -494,5 +504,62 @@ class AuthController extends Controller
             'success' => true,
             'message' => 'Password reset successfully. You can now log in with your new password.',
         ]);
+    }
+
+    public function setupMfa(Request $request, TotpService $totp): JsonResponse
+    {
+        $user = $request->user();
+        $secret = $totp->generateSecret();
+        $user->forceFill([
+            'mfa_secret' => $secret,
+            'mfa_recovery_codes' => null,
+            'mfa_confirmed_at' => null,
+        ])->save();
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'secret' => $secret,
+                'otpauth_uri' => $totp->provisioningUri(config('app.name', 'CMT'), $user->email, $secret),
+            ],
+        ]);
+    }
+
+    public function confirmMfa(Request $request, TotpService $totp): JsonResponse
+    {
+        $data = $request->validate(['code' => ['required', 'string', 'max:16']]);
+        $user = $request->user();
+
+        if (! $user->mfa_secret || ! $totp->verify($user->mfa_secret, $data['code'])) {
+            throw ValidationException::withMessages(['code' => ['The verification code is invalid or has expired.']]);
+        }
+
+        $codes = collect(range(1, 8))->map(fn () => strtoupper(bin2hex(random_bytes(4))))->all();
+        $user->forceFill([
+            'mfa_confirmed_at' => now(),
+            'mfa_recovery_codes' => array_map(fn ($code) => Hash::make($code), $codes),
+        ])->save();
+
+        return response()->json(['success' => true, 'message' => 'Multi-factor authentication is enabled.', 'data' => ['recovery_codes' => $codes]]);
+    }
+
+    public function disableMfa(Request $request, TotpService $totp): JsonResponse
+    {
+        $data = $request->validate([
+            'current_password' => ['required', 'string'],
+            'code' => ['required', 'string', 'max:32'],
+        ]);
+        $user = $request->user();
+
+        if (! Hash::check($data['current_password'], $user->password)) {
+            throw ValidationException::withMessages(['current_password' => ['The current password is incorrect.']]);
+        }
+
+        if (! $totp->verify($user->mfa_secret, $data['code'])) {
+            throw ValidationException::withMessages(['code' => ['The verification code is invalid or has expired.']]);
+        }
+
+        $user->forceFill(['mfa_secret' => null, 'mfa_recovery_codes' => null, 'mfa_confirmed_at' => null])->save();
+        return response()->json(['success' => true, 'message' => 'Multi-factor authentication is disabled.']);
     }
 }
