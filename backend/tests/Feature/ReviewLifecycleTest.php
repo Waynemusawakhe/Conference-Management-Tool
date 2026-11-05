@@ -246,8 +246,7 @@ class ReviewLifecycleTest extends TestCase
         Notification::assertSentTo(
             $author,
             CmtNotification::class,
-            fn (CmtNotification $notification) =>
-                $notification->kind === 'submission_decision'
+            fn (CmtNotification $notification) => $notification->kind === 'submission_decision'
                 && $notification->metadata['submission_id'] === $submission->id
                 && $notification->metadata['status'] === 'accepted'
         );

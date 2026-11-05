@@ -4,10 +4,10 @@ namespace App\Modules\Account\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Modules\Account\Actions\AssignRoleAction;
+use App\Modules\Account\Actions\ChangePasswordAction;
 use App\Modules\Account\Actions\GetReviewersAction;
 use App\Modules\Account\Actions\GetUserAction;
 use App\Modules\Account\Actions\GetUsersAction;
-use App\Modules\Account\Actions\ChangePasswordAction;
 use App\Modules\Account\Requests\AdminResetPasswordRequest;
 use App\Modules\Account\Requests\AssignRoleRequest;
 use App\Modules\Account\Requests\UpdateManagedUserRequest;

@@ -3,6 +3,7 @@
 namespace App\Modules\Account\Actions;
 
 use App\Models\User;
+use App\Modules\Account\Services\TotpService;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
@@ -44,9 +45,11 @@ class LoginAction
 
     private function verifyMfa(User $user, ?string $code): bool
     {
-        if (! $code) return false;
+        if (! $code) {
+            return false;
+        }
 
-        if (app(\App\Modules\Account\Services\TotpService::class)->verify($user->mfa_secret, $code)) {
+        if (app(TotpService::class)->verify($user->mfa_secret, $code)) {
             return true;
         }
 
@@ -55,6 +58,7 @@ class LoginAction
             if (Hash::check($code, $hash)) {
                 unset($recoveryCodes[$index]);
                 $user->forceFill(['mfa_recovery_codes' => array_values($recoveryCodes)])->save();
+
                 return true;
             }
         }

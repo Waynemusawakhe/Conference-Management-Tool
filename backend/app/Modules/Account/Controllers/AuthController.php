@@ -11,8 +11,6 @@ use App\Modules\Account\Actions\LoginAction;
 use App\Modules\Account\Actions\LogoutAction;
 use App\Modules\Account\Actions\ResetPasswordAction;
 use App\Modules\Account\Actions\UpdateProfileAction;
-use App\Modules\Audit\Actions\RecordAuditLogAction;
-use App\Modules\Account\Services\TotpService;
 use App\Modules\Account\Requests\ChangePasswordRequest;
 use App\Modules\Account\Requests\CreateUserRequest;
 use App\Modules\Account\Requests\DeleteAccountRequest;
@@ -20,10 +18,12 @@ use App\Modules\Account\Requests\ForgotPasswordRequest;
 use App\Modules\Account\Requests\LoginRequest;
 use App\Modules\Account\Requests\ResetPasswordRequest;
 use App\Modules\Account\Requests\UpdateProfileRequest;
+use App\Modules\Account\Services\TotpService;
+use App\Modules\Audit\Actions\RecordAuditLogAction;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Password;
 use Illuminate\Validation\ValidationException;
 use OpenApi\Attributes as OA;
 
@@ -581,6 +581,7 @@ class AuthController extends Controller
         }
 
         $user->forceFill(['mfa_secret' => null, 'mfa_recovery_codes' => null, 'mfa_confirmed_at' => null])->save();
+
         return response()->json(['success' => true, 'message' => 'Multi-factor authentication is disabled.']);
     }
 }

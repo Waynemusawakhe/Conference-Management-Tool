@@ -3,8 +3,8 @@
 namespace App\Modules\Submissions\Actions;
 
 use App\Models\User;
-use App\Notifications\CmtNotification;
 use App\Modules\Submissions\Models\Submission;
+use App\Notifications\CmtNotification;
 
 class UpdateSubmissionStatusAction
 {
