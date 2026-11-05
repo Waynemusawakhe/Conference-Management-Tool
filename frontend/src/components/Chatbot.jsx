@@ -490,6 +490,7 @@ function ChatBotSession({ role, userId }) {
   } = useChatVoice({ onTranscript: appendTranscript });
   const scrollRef = useRef(null);
   const inputRef = useRef(null);
+  const launchRef = useRef(null);
   const openRef = useRef(false);
   const sendingRef = useRef(false);
   const requestVersionRef = useRef(0);
@@ -502,6 +503,7 @@ function ChatBotSession({ role, userId }) {
     cancelListening();
     stopSpeaking();
     setOpen(false);
+    launchRef.current?.focus();
   }, [cancelListening, stopSpeaking]);
 
   const copyMessage = async (message) => {
@@ -748,7 +750,7 @@ function ChatBotSession({ role, userId }) {
 
         <button
           type="button"
-
+          ref={launchRef}
           aria-label={open ? "Close chat" : "Open chat assistant"}
 
           aria-expanded={open}
@@ -877,7 +879,10 @@ function ChatBotSession({ role, userId }) {
 
               className="cmt-scroll h-full space-y-4 overflow-y-auto px-4 py-4"
 
+              role="log"
+              aria-label="CMT conversation history"
               aria-live="polite"
+              aria-relevant="additions"
             >
               {messages.map((m) =>
                 m.role === "user" ? (

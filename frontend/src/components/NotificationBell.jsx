@@ -10,6 +10,7 @@ export default function NotificationBell({ dark = false }) {
   const [unread, setUnread] = useState(0);
   const [loading, setLoading] = useState(false);
   const ref = useRef(null);
+  const buttonRef = useRef(null);
 
   const load = async () => {
     try {
@@ -31,9 +32,19 @@ export default function NotificationBell({ dark = false }) {
     const handler = (event) => {
       if (ref.current && !ref.current.contains(event.target)) setOpen(false);
     };
+    const onKeyDown = (event) => {
+      if (event.key === "Escape" && open) {
+        setOpen(false);
+        buttonRef.current?.focus();
+      }
+    };
     document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handler);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [open]);
 
   const openNotification = async (item) => {
     if (!item.read_at) {
@@ -57,14 +68,14 @@ export default function NotificationBell({ dark = false }) {
 
   return (
     <div className="relative" ref={ref}>
-      <button onClick={() => { setOpen((v) => !v); if (!open) load(); }} className={`relative grid h-10 w-10 place-items-center rounded-[11px] transition ${buttonClass}`} aria-label="Notifications" title="Notifications">
+      <button ref={buttonRef} type="button" aria-expanded={open} aria-controls="cmt-notification-panel" onClick={() => { setOpen((v) => !v); if (!open) load(); }} className={`relative grid h-10 w-10 place-items-center rounded-[11px] transition ${buttonClass}`} aria-label="Notifications" title="Notifications">
         <Bell size={17} />
         {unread > 0 && <span className="absolute -right-1 -top-1 min-w-5 h-5 px-1 rounded-full bg-[#6d5dfc] text-white text-[10px] font-extrabold grid place-items-center">{unread > 99 ? "99+" : unread}</span>}
       </button>
       {open && (
-        <div className="absolute right-0 top-12 z-[100] w-[min(380px,calc(100vw-24px))] overflow-hidden rounded-2xl border border-[#e4e8f0] bg-white text-[#18233f] shadow-[0_20px_60px_rgba(15,28,65,.18)]">
+        <div id="cmt-notification-panel" role="region" aria-label="Notifications" className="absolute right-0 top-12 z-[100] w-[min(380px,calc(100vw-24px))] overflow-hidden rounded-2xl border border-[#e4e8f0] bg-white text-[#18233f] shadow-[0_20px_60px_rgba(15,28,65,.18)]">
           <div className="flex items-center justify-between border-b border-[#edf0f5] px-4 py-3">
-            <div><strong className="text-sm">Notifications</strong><p className="m-0 mt-0.5 text-[11px] text-[#78849a]">{unread} unread</p></div>
+            <div><strong className="text-sm">Notifications</strong><p role="status" className="m-0 mt-0.5 text-[11px] text-[#78849a]">{unread} unread</p></div>
             {unread > 0 && <button onClick={markAll} className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-[11px] font-bold text-[#5649dc] hover:bg-[#f1efff]"><CheckCheck size={14}/> Mark all read</button>}
           </div>
           <div className="max-h-[420px] overflow-y-auto">
@@ -72,7 +83,7 @@ export default function NotificationBell({ dark = false }) {
             {!loading && items.length === 0 && <p className="px-4 py-10 text-center text-xs text-[#78849a]">You're all caught up.</p>}
             {items.map((item) => (
               <button key={item.id} onClick={() => openNotification(item)} className={`flex w-full gap-3 border-b border-[#f0f2f6] px-4 py-3 text-left hover:bg-[#f8f8fc] ${!item.read_at ? "bg-[#f5f3ff]" : "bg-white"}`}>
-                <span className={`mt-1 h-2 w-2 shrink-0 rounded-full ${item.read_at ? "bg-[#d5d9e2]" : "bg-[#6d5dfc]"}`} />
+                <span aria-hidden="true" className={`mt-1 h-2 w-2 shrink-0 rounded-full ${item.read_at ? "bg-[#d5d9e2]" : "bg-[#6d5dfc]"}`} />
                 <span className="min-w-0 flex-1"><strong className="block text-[12px]">{item.data?.title || "CMT notification"}</strong><span className="mt-1 block text-[11px] leading-5 text-[#66728b]">{item.data?.message}</span><span className="mt-1 block text-[9px] text-[#9aa3b3]">{item.created_at ? new Date(item.created_at).toLocaleString() : ""}</span></span>
                 {item.data?.action_url && <ExternalLink size={13} className="mt-1 shrink-0 text-[#9aa3b3]" />}
               </button>

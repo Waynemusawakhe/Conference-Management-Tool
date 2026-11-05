@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Navbar from "../components/Navbar";
 import PublicFooter from "../components/PublicFooter";
 import { contactMessagesApi } from "../api/contactMessagesApi";
@@ -8,6 +8,17 @@ export default function Contact() {
   const [errors, setErrors] = useState({});
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const formRef = useRef(null);
+  const priorErrors = useRef(false);
+  useEffect(() => {
+    const hasErrors = Object.values(errors).some(Boolean);
+    if (hasErrors && !priorErrors.current) {
+      const firstInvalid = formRef.current?.querySelector('[aria-invalid="true"]');
+      const firstError = formRef.current?.querySelector('[role="alert"]');
+      (firstInvalid || firstError)?.focus();
+    }
+    priorErrors.current = hasErrors;
+  }, [errors]);
 
   function handleChange(e) {
     const { name, value } = e.target;
@@ -117,9 +128,9 @@ export default function Contact() {
                 </button>
               </div>
             ) : (
-              <form className="grid gap-5" onSubmit={handleSubmit} noValidate>
+              <form ref={formRef} className="grid gap-5" onSubmit={handleSubmit} noValidate>
                 {errors.form && (
-                  <p className="rounded-lg bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">{errors.form}</p>
+                  <p role="alert" tabIndex={-1} className="rounded-lg bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">{errors.form}</p>
                 )}
 
                 <label className="grid gap-2">

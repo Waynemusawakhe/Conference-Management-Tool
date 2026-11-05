@@ -10,6 +10,7 @@ const Register = lazy(() => import("./pages/Register"));
 const Contact = lazy(() => import("./pages/Contact"));
 const HelpFAQ = lazy(() => import("./pages/HelpFAQ"));
 const About = lazy(() => import("./pages/About"));
+const AccessibilityGuide = lazy(() => import("./pages/AccessibilityGuide"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
 const Testimonials = lazy(() => import("./pages/Testimonials"));
 const EmailVerified = lazy(() => import("./pages/EmailVerified"));
@@ -110,6 +111,7 @@ export default function App() {
           <Route path="/contact" element={<Contact />} />
           <Route path="/help-faq" element={<HelpFAQ />} />
           <Route path="/about" element={<About />} />
+          <Route path="/accessibility" element={<AccessibilityGuide />} />
           <Route path="/testimonials" element={<Testimonials />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/email-verified" element={<EmailVerified />} />
