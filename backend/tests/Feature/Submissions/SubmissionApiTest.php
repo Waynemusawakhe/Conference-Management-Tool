@@ -71,9 +71,7 @@ class SubmissionApiTest extends TestCase
 
     public function test_create_submission_requires_valid_conference(): void
     {
-        $author = User::factory()->create([
-            'role' => 'author',
-        ]);
+        $author = User::factory()->create();
 
         $this->actingAs($author, 'sanctum')
             ->postJson('/api/v1/submissions', [
@@ -87,9 +85,7 @@ class SubmissionApiTest extends TestCase
 
     public function test_create_submission_requires_title_and_abstract(): void
     {
-        $author = User::factory()->create([
-            'role' => 'author',
-        ]);
+        $author = User::factory()->create();
         $conference = Conference::factory()->create();
 
         $this->actingAs($author, 'sanctum')

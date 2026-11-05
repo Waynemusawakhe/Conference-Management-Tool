@@ -89,12 +89,8 @@ describe("author submission permissions", () => {
   );
 });
 
-it("shows authors the implemented feedback page in their workspace navigation", async () => {
-  const { unmount } = mount(<RoleChrome><p>Author page</p></RoleChrome>, "/profile");
-  expect(screen.getByRole("link", { name: "Feedback" })).toHaveAttribute("href", "/author/feedback");
+it("does not send authors to an unimplemented feedback page", () => {
+  mount(<RoleChrome><p>Author page</p></RoleChrome>, "/profile");
+  expect(screen.queryByRole("link", { name: "Feedback" })).not.toBeInTheDocument();
   expect(screen.getByRole("link", { name: "Browse conferences" })).toHaveAttribute("href", "/author/conferences");
-  unmount();
-
-  mount(<AuthorDashboard />, "/author-dashboard");
-  expect(await screen.findByRole("link", { name: "Feedback" })).toHaveAttribute("href", "/author/feedback");
 });

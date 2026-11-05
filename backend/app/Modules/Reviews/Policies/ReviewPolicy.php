@@ -18,7 +18,6 @@ class ReviewPolicy
                 'admin',
                 'organiser',
                 'reviewer',
-                'author',
             ],
             true
         );
@@ -30,11 +29,6 @@ class ReviewPolicy
     ): bool {
         if ($user->role === 'admin') {
             return true;
-        }
-
-        if ($user->role === 'author') {
-            return $review->submission?->author_id === $user->id
-                && ! is_null($review->submitted_at);
         }
 
         if ($user->role === 'organiser') {

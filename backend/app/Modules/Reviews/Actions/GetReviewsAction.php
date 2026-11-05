@@ -10,24 +10,14 @@ class GetReviewsAction
 {
     public function execute(array $filters, int $perPage = 15, ?User $requester = null): LengthAwarePaginator
     {
-        $query = SubmissionReview::query()->with('submission');
+        $query = SubmissionReview::query()->with(['submission', 'reviewer']);
 
-        if ($requester?->role === 'author') {
-            $query
-                ->whereHas('submission', function ($submissionQuery) use ($requester) {
-                    $submissionQuery->where('author_id', $requester->id);
-                })
-                ->whereNotNull('submitted_at');
-        } elseif ($requester?->role === 'reviewer') {
+        if ($requester?->role === 'reviewer') {
             $query->where('reviewer_id', $requester->id);
         } elseif ($requester?->role === 'organiser') {
             $query->whereHas('submission.conference', function ($conferenceQuery) use ($requester) {
                 $conferenceQuery->where('organiser_id', $requester->id);
             });
-        }
-
-        if ($requester?->role !== 'author') {
-            $query->with('reviewer');
         }
 
         if (! empty($filters['submission_id'])) {

@@ -3,14 +3,13 @@
 namespace App\Modules\Submissions\Requests;
 
 use App\Modules\Conferences\Models\Conference;
-use App\Modules\Submissions\Models\Submission;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreSubmissionRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->can('create', Submission::class) ?? false;
+        return $this->user() !== null;
     }
 
     public function rules(): array
