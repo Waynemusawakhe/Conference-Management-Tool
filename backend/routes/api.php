@@ -15,6 +15,7 @@ use App\Modules\Reviews\Controllers\TestimonialController;
 use App\Modules\Sessions\Controllers\SessionController;
 use App\Modules\Submissions\Controllers\SubmissionController;
 use Illuminate\Auth\Events\Verified;
+use App\Modules\Chat\Controllers\ChatController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -518,3 +519,6 @@ Route::prefix('v1/reports')
         Route::get('/registrations', [ReportingController::class, 'registrations']);
         Route::get('/conferences', [ReportingController::class, 'conferences']);
     });
+
+Route::post('v1/chat', [ChatController::class, 'store'])
+    ->middleware('throttle:20,1');
