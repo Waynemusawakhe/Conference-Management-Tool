@@ -50,7 +50,6 @@ function unwrapList(response) {
   return [];
 }
 
-// Treat conference dates as local calendar days, not UTC timestamps.
 function parseConferenceDate(value) {
   if (!value) return null;
   const match = String(value).match(/^(\d{4})-(\d{2})-(\d{2})/);
@@ -59,7 +58,6 @@ function parseConferenceDate(value) {
     const month = Number(match[2]) - 1;
     const day = Number(match[3]);
     const date = new Date(year, month, day);
-    // Reject impossible dates rather than silently rolling to another month.
     if (
       date.getFullYear() !== year ||
       date.getMonth() !== month ||
@@ -144,7 +142,6 @@ function getRegistrationConferenceId(registration) {
   );
 }
 
-
 function calculateTimeLeft(targetDate) {
   const target = parseConferenceDate(targetDate);
 
@@ -164,7 +161,6 @@ function calculateTimeLeft(targetDate) {
     seconds: Math.floor((difference / 1000) % 60),
   };
 }
-
 
 function Typewriter({ text, speed = 150 }) {
   const [currentText, setCurrentText] = useState("");
@@ -284,6 +280,64 @@ function HugeCountdownHero({ conference }) {
   );
 }
 
+function RegistrationSuccessModal({ open, conferenceName, onView, onClose }) {
+  if (!open) return null;
+  return (
+    <div
+      className="fixed inset-0 z-[120] grid place-items-center bg-[#030814]/75 p-4 backdrop-blur-md"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-[440px] overflow-hidden rounded-[24px] bg-white shadow-[0_40px_120px_rgba(3,8,20,.5)]"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex flex-col items-center px-6 pb-6 pt-8 text-center">
+          <div className="relative mb-5 grid h-20 w-20 place-items-center">
+            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-[#effaf4] to-[#e0f5ea]" />
+            <div className="absolute inset-0 rounded-full border-2 border-[#bfe5d1] cmt-reg-ring-cf" />
+            <svg viewBox="0 0 52 52" className="relative h-14 w-14" aria-hidden="true">
+              <circle cx="26" cy="26" r="23" fill="none" stroke="#18794e" strokeWidth="2" strokeOpacity=".15" />
+              <path d="M15 27 L23 35 L38 19" fill="none" stroke="#18794e" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" className="cmt-reg-check-cf" />
+            </svg>
+          </div>
+          <h2 className="text-[18px] font-extrabold text-[#1c2a4a]">Registration Successful</h2>
+          {conferenceName && (
+            <p className="mt-2 line-clamp-2 text-[12px] font-bold text-[#35415f]">{conferenceName}</p>
+          )}
+          <p className="mt-3 text-[11px] leading-5 text-[#66728b]">
+            You are now registered for this conference. We look forward to seeing you there.
+          </p>
+        </div>
+        <div className="grid grid-cols-2 gap-3 border-t border-[#edf0f5] bg-[#fafbfe] p-4">
+          <button
+            onClick={onClose}
+            className="inline-flex min-h-11 items-center justify-center rounded-xl border border-[#dfe4ed] bg-white px-4 text-[11px] font-extrabold text-[#5c6880] transition hover:bg-[#07132f] hover:text-white"
+          >
+            Keep browsing
+          </button>
+          <button
+            onClick={onView}
+            className="inline-flex min-h-11 items-center justify-center rounded-xl bg-gradient-to-br from-[#6655f6] to-[#7869ff] px-4 text-[11px] font-extrabold text-white shadow-[0_8px_20px_rgba(103,87,245,.28)] transition hover:from-[#4a3ec9] hover:to-[#5b4be0]"
+          >
+            View my conferences
+          </button>
+        </div>
+      </div>
+      <style>{`
+        .cmt-reg-check-cf { stroke-dasharray: 40; stroke-dashoffset: 40; animation: cmtRegDrawCf .55s ease-out forwards; }
+        @keyframes cmtRegDrawCf { from { stroke-dashoffset: 40; } to { stroke-dashoffset: 0; } }
+        .cmt-reg-ring-cf { animation: cmtRegRingCf 1s ease-out .15s both; }
+        @keyframes cmtRegRingCf { 0% { transform: scale(.85); opacity: 0; } 40% { opacity: 1; } 100% { transform: scale(1.25); opacity: 0; } }
+        @media (prefers-reduced-motion: reduce) {
+          .cmt-reg-check-cf, .cmt-reg-ring-cf { animation: none; }
+          .cmt-reg-check-cf { stroke-dashoffset: 0; }
+          .cmt-reg-ring-cf { opacity: 0; }
+        }
+      `}</style>
+    </div>
+  );
+}
+
 export default function Conferences({ embedded = false }) {
   const navigate = useNavigate();
   const requestVersion = useRef(0);
@@ -300,7 +354,6 @@ export default function Conferences({ embedded = false }) {
     country: searchParams.get("country") || "",
   }));
 
-  // Keep deep-linked searches in sync when the URL changes (e.g. browser Back).
   useEffect(() => {
     setQuery(searchParams.get("search") || "");
     setFilters((current) => ({
@@ -327,6 +380,7 @@ export default function Conferences({ embedded = false }) {
   const [registeringConferenceId, setRegisteringConferenceId] = useState(null);
   const [registrationMessage, setRegistrationMessage] = useState("");
   const [registrationError, setRegistrationError] = useState("");
+  const [registrationSuccess, setRegistrationSuccess] = useState(null);
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -336,7 +390,7 @@ export default function Conferences({ embedded = false }) {
   const compareButtonRef = useRef(null);
 
   const toggleCompare = (conference) => {
-    setCompareError(""); // Clear previous errors
+    setCompareError("");
     const exists = selectedForCompare.find((c) => c.id === conference.id);
     
     if (exists) {
@@ -346,7 +400,7 @@ export default function Conferences({ embedded = false }) {
     
     if (selectedForCompare.length >= 3) {
       setCompareError("You can only compare up to 3 conferences at a time.");
-      setTimeout(() => setCompareError(""), 4000); // Auto-hide after 4 seconds
+      setTimeout(() => setCompareError(""), 4000);
       return;
     }
     
@@ -410,7 +464,6 @@ export default function Conferences({ embedded = false }) {
     };
   }, [loadConferences]);
 
- 
   useEffect(() => {
     if (embedded) {
       setFeaturedLoading(false);
@@ -425,8 +478,6 @@ export default function Conferences({ embedded = false }) {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
-        // Laravel supports date sorting, but not a 'starts after today' filter.
-        // Read sorted pages until the first upcoming event appears.
         let page = 1;
         let lastPage = 1;
         let upcoming = null;
@@ -453,7 +504,6 @@ export default function Conferences({ embedded = false }) {
           setFeaturedUpcoming(upcoming ? normaliseConference(upcoming) : null);
         }
       } catch (err) {
-        
         console.warn("Unable to load the next upcoming conference:", err);
         if (!cancelled) setFeaturedUpcoming(null);
       } finally {
@@ -546,6 +596,9 @@ export default function Conferences({ embedded = false }) {
         return next;
       });
       setRegistrationMessage(`You are now registered for ${conference.name || "this conference"}.`);
+      setRegistrationSuccess({
+        conferenceName: conference.name || "this conference",
+      });
     } catch (err) {
       const validationMessage = Object.values(err?.errors || {}).flat().filter(Boolean).join(" ");
       setRegistrationError(validationMessage || err?.message || "Unable to register for this conference.");
@@ -644,7 +697,6 @@ export default function Conferences({ embedded = false }) {
           <section className={embedded ? "mt-6 rounded-[20px] border border-[#e4e8f0] bg-white p-5 shadow-[0_10px_30px_rgba(15,28,65,.035)] sm:p-6" : "bg-white px-5 py-[88px]"} id="conferences">
             <div className={embedded ? "" : "mx-auto w-[min(1200px,100%)]"}>
               
-              {/* UNIFIED FILTER TOOLBAR */}
               <div className="mb-8 flex flex-wrap items-center gap-2 rounded-[16px] border border-[#e4e8f0] bg-white p-2 shadow-sm xl:flex-nowrap">
                 
                 <div className="relative flex min-w-[200px] flex-1 items-center">
@@ -660,7 +712,6 @@ export default function Conferences({ embedded = false }) {
 
                 <div className="hidden h-6 w-px bg-[#e4e8f0] xl:block" />
                 
-                {/* Country Input goes here */}
                 <input
                   type="text"
                   placeholder="Country..."
@@ -704,7 +755,7 @@ export default function Conferences({ embedded = false }) {
                 {hasActiveFilters && (
                   <button
                     onClick={clearFilters}
-                    className="ml-1 rounded-lg px-3 py-2 text-xs font-bold text-[#ef4444] hover:bg-red-50"
+                    className="ml-1 rounded-lg px-3 py-2 text-xs font-bold text-[#ef4444] transition hover:bg-[#7f1d1d] hover:text-white"
                   >
                     Clear
                   </button>
@@ -726,7 +777,7 @@ export default function Conferences({ embedded = false }) {
                 <div className="flex overflow-hidden rounded-lg border border-[#dfe4ed] bg-white">
                   <button
                     type="button"
-                    className={`grid h-10 w-10 place-items-center transition ${view === "grid" ? "bg-[#efedff] text-[#5c50ec]" : "bg-transparent text-[#68748b] hover:bg-[#f7f9fc]"}`}
+                    className={`grid h-10 w-10 place-items-center transition ${view === "grid" ? "bg-[#07132f] text-white" : "bg-transparent text-[#68748b] hover:bg-[#07132f] hover:text-white"}`}
                     aria-label="Grid view"
                     aria-pressed={view === "grid"}
                     onClick={() => setView("grid")}
@@ -735,7 +786,7 @@ export default function Conferences({ embedded = false }) {
                   </button>
                   <button
                     type="button"
-                    className={`grid h-10 w-10 place-items-center transition ${view === "list" ? "bg-[#efedff] text-[#5c50ec]" : "bg-transparent text-[#68748b] hover:bg-[#f7f9fc]"}`}
+                    className={`grid h-10 w-10 place-items-center transition ${view === "list" ? "bg-[#07132f] text-white" : "bg-transparent text-[#68748b] hover:bg-[#07132f] hover:text-white"}`}
                     aria-label="List view"
                     aria-pressed={view === "list"}
                     onClick={() => setView("list")}
@@ -756,7 +807,7 @@ export default function Conferences({ embedded = false }) {
                   <span className="flex items-center gap-2">
                     <CheckCircle2 size={16} /> {registrationMessage}
                   </span>
-                  <button type="button" onClick={() => navigate("/my-conferences")} className="rounded-lg bg-white px-3 py-2 text-[10px] font-extrabold text-[#18794e] shadow-sm">
+                  <button type="button" onClick={() => navigate("/my-conferences")} className="rounded-lg bg-white px-3 py-2 text-[10px] font-extrabold text-[#18794e] shadow-sm transition hover:bg-[#07132f] hover:text-white">
                     View My Conferences
                   </button>
                 </div>
@@ -794,7 +845,7 @@ export default function Conferences({ embedded = false }) {
                 <div className="rounded-[18px] border border-red-200 bg-red-50 p-8 text-center">
                   <h3 className="text-sm font-bold text-red-700">Unable to load conferences</h3>
                   <p className="mt-2 text-xs leading-6 text-red-600">{error}</p>
-                  <button type="button" onClick={() => loadConferences()} className="mt-5 rounded-[11px] border-0 bg-gradient-to-br from-[#6655f6] to-[#7869ff] px-[18px] py-[11px] text-[13px] font-bold text-white">
+                  <button type="button" onClick={() => loadConferences()} className="mt-5 rounded-[11px] border-0 bg-gradient-to-br from-[#6655f6] to-[#7869ff] px-[18px] py-[11px] text-[13px] font-bold text-white transition hover:from-[#4a3ec9] hover:to-[#5b4be0]">
                     Try again
                   </button>
                 </div>
@@ -809,30 +860,28 @@ export default function Conferences({ embedded = false }) {
                     return (
                       <div key={conference.id} className="min-w-0">
                         <ConferenceCard conference={conference} layout={view} />
-                                                <div className="mt-3 flex justify-end gap-2">
+                        <div className="mt-3 flex justify-end gap-2">
                           
-                          {/* Compare Button */}
                           <button
                             type="button"
                             onClick={() => toggleCompare(conference)}
                             className={`inline-flex min-h-10 items-center justify-center rounded-[10px] px-4 text-[11px] font-extrabold transition ${
                               selectedForCompare.find((c) => c.id === conference.id)
                                 ? "bg-[#07132f] text-white"
-                                : "border border-[#dfe4ed] bg-white text-[#59657d] hover:bg-[#f5f6fa]"
+                                : "border border-[#dfe4ed] bg-white text-[#59657d] hover:bg-[#07132f] hover:text-white"
                             }`}
                           >
                             {selectedForCompare.find((c) => c.id === conference.id) ? "Selected ✓" : "Compare"}
                           </button>
 
-                          {/* Register Button */}
                           <button
                             type="button"
                             disabled={isRegistering}
                             onClick={() => handleRegister(conference)}
                             className={`inline-flex min-h-10 items-center justify-center gap-2 rounded-[10px] px-4 text-[11px] font-extrabold transition disabled:cursor-not-allowed disabled:opacity-60 ${
                               isRegistered
-                                ? "border border-[#bfe5d1] bg-[#effaf4] text-[#18794e] hover:bg-[#e6f7ee]"
-                                : "border border-transparent bg-gradient-to-br from-[#6655f6] to-[#7869ff] text-white shadow-[0_8px_20px_rgba(103,87,245,.18)] hover:-translate-y-px"
+                                ? "border border-[#bfe5d1] bg-[#effaf4] text-[#18794e] hover:bg-[#18794e] hover:text-white"
+                                : "border border-transparent bg-gradient-to-br from-[#6655f6] to-[#7869ff] text-white shadow-[0_8px_20px_rgba(103,87,245,.18)] hover:from-[#4a3ec9] hover:to-[#5b4be0]"
                             }`}
                           >
                             {isRegistering ? (
@@ -855,7 +904,7 @@ export default function Conferences({ embedded = false }) {
                   <Search size={28} className="mx-auto text-[#68748b]" />
                   <h3 className="mt-3 text-base font-bold text-[#0d1b3d]">No conferences found</h3>
                   <p className="mt-2 text-xs text-[#788398]">Try another search or clear your filters.</p>
-                  <button type="button" className="mt-5 rounded-[11px] border-0 bg-gradient-to-br from-[#6655f6] to-[#7869ff] px-[18px] py-[11px] text-[13px] font-bold text-white" onClick={clearFilters}>
+                  <button type="button" className="mt-5 rounded-[11px] border-0 bg-gradient-to-br from-[#6655f6] to-[#7869ff] px-[18px] py-[11px] text-[13px] font-bold text-white transition hover:from-[#4a3ec9] hover:to-[#5b4be0]" onClick={clearFilters}>
                     Clear filters
                   </button>
                 </div>
@@ -879,7 +928,7 @@ export default function Conferences({ embedded = false }) {
                     type="button"
                     disabled={loadingMore}
                     onClick={() => loadConferences({ page: currentPage + 1, append: true })}
-                    className="inline-flex min-h-10 items-center justify-center gap-2 rounded-[10px] border border-[#dfe4ed] bg-white px-5 text-[11px] font-extrabold text-[#5649dc] transition hover:bg-[#f7f6ff] disabled:cursor-not-allowed disabled:opacity-60"
+                    className="inline-flex min-h-10 items-center justify-center gap-2 rounded-[10px] border border-[#dfe4ed] bg-white px-5 text-[11px] font-extrabold text-[#5649dc] transition hover:bg-[#07132f] hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {loadingMore ? "Loading..." : "Load more conferences"}
                   </button>
@@ -920,7 +969,7 @@ export default function Conferences({ embedded = false }) {
           <button 
             ref={compareButtonRef}
             onClick={() => setShowCompareModal(true)} 
-            className="rounded-full bg-[#6655f6] px-5 py-2 text-[11px] font-extrabold text-white shadow-md transition hover:bg-[#7869ff]"
+            className="rounded-full bg-[#6655f6] px-5 py-2 text-[11px] font-extrabold text-white shadow-md transition hover:bg-[#4a3ec9]"
            >
             Compare Now
           </button>
@@ -932,7 +981,7 @@ export default function Conferences({ embedded = false }) {
 
       {showCompareModal && selectedForCompare.length > 0 && (
         <div
-          className="fixed inset-0 z-[100] grid place-items-center bg-[#07132f]/60 p-4 backdrop-blur-sm"
+          className="fixed inset-0 z-[100] grid place-items-center bg-[#030814]/75 p-4 backdrop-blur-md"
           role="dialog"
           aria-modal="true"
           aria-label="Conference Comparison"
@@ -942,10 +991,10 @@ export default function Conferences({ embedded = false }) {
             }
           }}
         >
-          <div className="flex max-h-[90vh] w-full max-w-[900px] flex-col overflow-hidden rounded-[22px] bg-white shadow-2xl">
+          <div className="flex max-h-[90vh] w-full max-w-[900px] flex-col overflow-hidden rounded-[22px] bg-white shadow-[0_40px_120px_rgba(3,8,20,.5)]">
             <div className="flex items-center justify-between border-b border-[#edf0f5] p-6">
               <h2 className="text-xl font-bold text-[#0d1b3d]">Conference Comparison</h2>
-              <button onClick={() => setShowCompareModal(false)} className="text-sm font-bold text-[#66728b] hover:text-red-500">
+              <button onClick={() => setShowCompareModal(false)} className="text-sm font-bold text-[#66728b] transition hover:text-[#7f1d1d]">
                 Close ✕
               </button>
             </div>
@@ -1002,6 +1051,16 @@ export default function Conferences({ embedded = false }) {
           </div>
         </div>
       )}
+
+      <RegistrationSuccessModal
+        open={!!registrationSuccess}
+        conferenceName={registrationSuccess?.conferenceName}
+        onView={() => {
+          setRegistrationSuccess(null);
+          navigate("/my-conferences");
+        }}
+        onClose={() => setRegistrationSuccess(null)}
+      />
     </div>
   );
 }
