@@ -3,6 +3,7 @@ import Navbar from "../components/Navbar";
 import { Link } from "react-router-dom";
 import { FileText, HelpCircle, MessagesSquare, Search, Ticket, UserRound } from "lucide-react";
 import { faqsApi } from '../api/faqsApi';
+import PublicFooter from "../components/PublicFooter";
 const categoryIcons = {
   "Account": UserRound,
   "Authors & Submissions": FileText,
@@ -149,6 +150,7 @@ function HelpFAQ() {
         </div>
         </section>
       </main>
+      <PublicFooter />
     </div>
   );
 }

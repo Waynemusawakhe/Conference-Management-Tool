@@ -9,9 +9,9 @@ import {
   Loader2,
   MapPin,
   Save,
-  Sparkles,
   Tag,
   Users,
+  Wand2,
 } from "lucide-react";
 import RoleChrome from "../components/RoleChrome";
 import { conferencesApi } from "../api/conferencesApi";
@@ -63,6 +63,74 @@ function FieldError({ name, errors }) {
   );
 }
 
+function ConferenceSuccessModal({ open, name, isCreate, onDone, onAnother }) {
+  if (!open) return null;
+  return (
+    <div
+      className="fixed inset-0 z-[120] grid place-items-center bg-[#030814]/75 p-4 backdrop-blur-md"
+      onClick={onDone}
+    >
+      <div
+        className="w-full max-w-[440px] overflow-hidden rounded-[24px] bg-white shadow-[0_40px_120px_rgba(3,8,20,.5)] dark:bg-[#0f172a]"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex flex-col items-center px-6 pb-6 pt-8 text-center">
+          <div className="relative mb-5 grid h-20 w-20 place-items-center">
+            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-[#effaf4] to-[#e0f5ea]" />
+            <div className="absolute inset-0 rounded-full border-2 border-[#bfe5d1] cmt-conf-ring" />
+            <svg viewBox="0 0 52 52" className="relative h-14 w-14" aria-hidden="true">
+              <circle cx="26" cy="26" r="23" fill="none" stroke="#18794e" strokeWidth="2" strokeOpacity=".15" />
+              <path d="M15 27 L23 35 L38 19" fill="none" stroke="#18794e" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" className="cmt-conf-check" />
+            </svg>
+          </div>
+          <h2 className="text-[18px] font-extrabold text-[#1c2a4a] dark:text-white">
+            {isCreate ? "Conference Created Successfully" : "Conference Updated Successfully"}
+          </h2>
+          {name && (
+            <p className="mt-2 line-clamp-2 text-[12px] font-bold text-[#35415f] dark:text-white/80">
+              {name}
+            </p>
+          )}
+          <p className="mt-3 text-[11px] leading-5 text-[#66728b] dark:text-white/60">
+            {isCreate
+              ? "Your conference is now live and ready to receive submissions."
+              : "Your changes have been saved successfully."}
+          </p>
+        </div>
+        <div className="grid grid-cols-2 gap-3 border-t border-[#edf0f5] bg-[#fafbfe] p-4 dark:border-[#1e293b] dark:bg-[#0b1224]">
+          {isCreate && (
+            <button
+              onClick={onAnother}
+              className="inline-flex min-h-11 items-center justify-center rounded-xl border border-[#dfe4ed] bg-white px-4 text-[11px] font-extrabold text-[#5c6880] transition hover:bg-[#07132f] hover:text-white dark:border-[#1e293b] dark:bg-[#0f172a] dark:text-white/70 dark:hover:bg-[#1e293b]"
+            >
+              Create another
+            </button>
+          )}
+          <button
+            onClick={onDone}
+            className={`inline-flex min-h-11 items-center justify-center rounded-xl bg-gradient-to-br from-[#6655f6] to-[#7869ff] px-4 text-[11px] font-extrabold text-white shadow-[0_8px_20px_rgba(103,87,245,.28)] transition hover:from-[#4a3ec9] hover:to-[#5b4be0] ${
+              !isCreate ? "col-span-2" : ""
+            }`}
+          >
+            Done
+          </button>
+        </div>
+      </div>
+      <style>{`
+        .cmt-conf-check { stroke-dasharray: 40; stroke-dashoffset: 40; animation: cmtConfDraw .55s ease-out forwards; }
+        @keyframes cmtConfDraw { from { stroke-dashoffset: 40; } to { stroke-dashoffset: 0; } }
+        .cmt-conf-ring { animation: cmtConfRing 1s ease-out .15s both; }
+        @keyframes cmtConfRing { 0% { transform: scale(.85); opacity: 0; } 40% { opacity: 1; } 100% { transform: scale(1.25); opacity: 0; } }
+        @media (prefers-reduced-motion: reduce) {
+          .cmt-conf-check, .cmt-conf-ring { animation: none; }
+          .cmt-conf-check { stroke-dashoffset: 0; }
+          .cmt-conf-ring { opacity: 0; }
+        }
+      `}</style>
+    </div>
+  );
+}
+
 export default function CreateEditConference() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -70,12 +138,13 @@ export default function CreateEditConference() {
   const dashboardPath =
     role === "admin" ? "/admin-dashboard" : "/organiser-dashboard";
   const isEdit = Boolean(id);
-  
+
   const [form, setForm] = useState(emptyConference);
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [fieldErrors, setFieldErrors] = useState({});
+  const [successData, setSuccessData] = useState(null);
 
   useEffect(() => {
     if (!isEdit) return;
@@ -102,7 +171,7 @@ export default function CreateEditConference() {
         });
       })
       .catch((requestError) =>
-        setError(requestError.message || "Unable to load this conference.")
+        setError(requestError.message || "Unable to load this conference."),
       )
       .finally(() => setLoading(false));
   }, [id, isEdit]);
@@ -121,6 +190,7 @@ export default function CreateEditConference() {
 
   const submit = async (event) => {
     event.preventDefault();
+    if (saving) return;
     setSaving(true);
     setError("");
     setFieldErrors({});
@@ -138,12 +208,12 @@ export default function CreateEditConference() {
         .map((topic) => topic.trim())
         .filter(Boolean),
     };
-    
+
     delete payload.customCategory;
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
+
     const start = new Date(form.start_date + "T00:00:00");
     const end = new Date(form.end_date + "T00:00:00");
     const deadline = new Date(form.submission_deadline + "T00:00:00");
@@ -174,7 +244,7 @@ export default function CreateEditConference() {
     }
     if (deadline > start) {
       setError(
-        "Submission deadline must be on or before the conference start date."
+        "Submission deadline must be on or before the conference start date.",
       );
       setSaving(false);
       return;
@@ -183,12 +253,12 @@ export default function CreateEditConference() {
     try {
       if (isEdit) await conferencesApi.update(id, payload);
       else await conferencesApi.create(payload);
-      navigate(dashboardPath);
+      setSuccessData({ name: form.name, isCreate: !isEdit });
     } catch (requestError) {
       setError(
         requestError.status === 422
           ? "Please review the highlighted fields."
-          : requestError.message || "Unable to save the conference."
+          : requestError.message || "Unable to save the conference.",
       );
       setFieldErrors(requestError.errors || {});
     } finally {
@@ -216,7 +286,7 @@ export default function CreateEditConference() {
     <RoleChrome>
       <div className="mb-8">
         <div className="mb-3 flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-[.14em] text-[#6757f5]">
-          <Sparkles size={14} /> Conference studio
+          <Wand2 size={14} /> Conference studio
         </div>
         <h1 className="text-[clamp(30px,4vw,44px)] font-extrabold leading-[1.05] tracking-[-.05em] text-[#0d1b3d] dark:text-white">
           {isEdit ? "Refine your conference" : "Create a conference"}
@@ -238,7 +308,7 @@ export default function CreateEditConference() {
         className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_310px]"
       >
         <div className="space-y-6">
-          <section className="rounded-2xl border border-[#e4e8f0] bg-white p-5 shadow-[0_12px_32px_rgba(15,28,65,.045)] sm:p-7 dark:border-white/10 dark:bg-[#0d1c44]">
+          <section className="rounded-2xl border border-[#e4e8f0] bg-white p-5 shadow-[0_12px_32px_rgba(15,28,65,.045)] dark:border-white/10 dark:bg-[#0d1c44] sm:p-7">
             <div className="mb-6 flex items-start gap-3">
               <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#efedff] text-[#6757f5] dark:bg-[#6757f5]/20">
                 <Tag size={18} />
@@ -365,7 +435,7 @@ export default function CreateEditConference() {
             </div>
           </section>
 
-          <section className="rounded-2xl border border-[#e4e8f0] bg-white p-5 shadow-[0_12px_32px_rgba(15,28,65,.045)] sm:p-7 dark:border-white/10 dark:bg-[#0d1c44]">
+          <section className="rounded-2xl border border-[#e4e8f0] bg-white p-5 shadow-[0_12px_32px_rgba(15,28,65,.045)] dark:border-white/10 dark:bg-[#0d1c44] sm:p-7">
             <div className="mb-6 flex items-start gap-3">
               <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#eaf9f2] text-[#19a56a]">
                 <CalendarDays size={18} />
@@ -468,7 +538,7 @@ export default function CreateEditConference() {
             </div>
           </section>
 
-          <section className="rounded-2xl border border-[#e4e8f0] bg-white p-5 shadow-[0_12px_32px_rgba(15,28,65,.045)] sm:p-7 dark:border-white/10 dark:bg-[#0d1c44]">
+          <section className="rounded-2xl border border-[#e4e8f0] bg-white p-5 shadow-[0_12px_32px_rgba(15,28,65,.045)] dark:border-white/10 dark:bg-[#0d1c44] sm:p-7">
             <div className="mb-6 flex items-start gap-3">
               <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#fff1e4] text-[#e87f19]">
                 <MapPin size={18} />
@@ -552,7 +622,7 @@ export default function CreateEditConference() {
                 <span className="rounded-full bg-[#6757f5]/20 px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-[.1em] text-[#b9b3ff]">
                   Live preview
                 </span>
-                <Sparkles className="text-[#f59a43]" size={18} />
+                <Wand2 className="text-[#f59a43]" size={18} />
               </div>
               <p className="text-[10px] font-extrabold uppercase tracking-[.13em] text-white/45">
                 {form.code || "YOUR CODE"}
@@ -600,7 +670,7 @@ export default function CreateEditConference() {
             <button
               type="submit"
               disabled={saving}
-              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-[#6655f6] to-[#7869ff] px-5 text-[12px] font-extrabold text-white shadow-[0_12px_28px_rgba(103,87,245,.28)] transition hover:-translate-y-0.5 disabled:cursor-wait disabled:opacity-60"
+              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-[#6655f6] to-[#7869ff] px-5 text-[12px] font-extrabold text-white shadow-[0_12px_28px_rgba(103,87,245,.28)] transition hover:from-[#4a3ec9] hover:to-[#5b4be0] disabled:cursor-wait disabled:opacity-60"
             >
               {saving ? (
                 <Loader2 size={16} className="animate-spin" />
@@ -616,7 +686,7 @@ export default function CreateEditConference() {
             <button
               type="button"
               onClick={() => navigate(dashboardPath)}
-              className="min-h-11 rounded-xl border border-[#e2e6ee] bg-white text-[12px] font-bold text-[#59657d] transition hover:bg-[#f0f2f6] dark:border-white/10 dark:bg-[#0d1c44] dark:text-white/70 dark:hover:bg-white/10"
+              className="min-h-11 rounded-xl border border-[#e2e6ee] bg-white text-[12px] font-bold text-[#59657d] transition hover:bg-[#07132f] hover:text-white dark:border-white/10 dark:bg-[#0d1c44] dark:text-white/70 dark:hover:bg-[#1e293b]"
             >
               Cancel
             </button>
@@ -633,6 +703,22 @@ export default function CreateEditConference() {
           </div>
         </aside>
       </form>
+
+      <ConferenceSuccessModal
+        open={Boolean(successData)}
+        name={successData?.name}
+        isCreate={successData?.isCreate}
+        onDone={() => {
+          setSuccessData(null);
+          navigate(dashboardPath);
+        }}
+        onAnother={() => {
+          setSuccessData(null);
+          setForm(emptyConference);
+          setError("");
+          setFieldErrors({});
+        }}
+      />
     </RoleChrome>
   );
 }

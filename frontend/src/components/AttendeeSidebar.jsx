@@ -19,8 +19,8 @@ function NavItem({ icon, label, active, onClick }) {
       onClick={onClick}
       className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] transition-colors ${
         active
-          ? "bg-[#efedff] font-extrabold text-[#5649dc]"
-          : "font-semibold text-[#66728b] hover:bg-[#f5f6fa] hover:text-[#1c2a4a]"
+          ? "bg-[#07132f] font-extrabold text-white shadow-[0_4px_12px_rgba(7,19,47,.25)]"
+          : "font-semibold text-[#66728b] hover:bg-[#07132f] hover:text-white"
       }`}
     >
       {icon}
@@ -42,13 +42,9 @@ export default function AttendeeSidebar({ open, onClose }) {
 
   const handleLogout = async () => {
     if (signingOut) return;
-
     setSigningOut(true);
     await logout();
-
-    navigate("/login", {
-      replace: true,
-    });
+    navigate("/login", { replace: true });
   };
 
   return (
@@ -56,7 +52,7 @@ export default function AttendeeSidebar({ open, onClose }) {
       {open && (
         <button
           type="button"
-          className="fixed inset-0 z-30 bg-[#07132f]/45 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-30 bg-[#030814]/70 backdrop-blur-sm lg:hidden"
           onClick={onClose}
           aria-label="Close attendee navigation"
         />
@@ -67,7 +63,7 @@ export default function AttendeeSidebar({ open, onClose }) {
           open ? "fixed left-4 top-[88px] z-40 block" : "hidden"
         } w-[250px] shrink-0 rounded-2xl border border-[#e4e8f0] bg-white p-3 shadow-[0_18px_45px_rgba(15,28,65,.12)] lg:sticky lg:top-[100px] lg:block lg:h-[calc(100vh-124px)] lg:overflow-y-auto lg:shadow-none`}
       >
-        <div className="mb-3 rounded-xl bg-gradient-to-br from-[#111e4b] to-[#342b87] p-4 text-white">
+        <div className="mb-3 rounded-xl bg-gradient-to-br from-[#07132f] to-[#342b87] p-4 text-white">
           <span className="mb-2 grid h-9 w-9 place-items-center rounded-lg bg-white/10">
             <TicketCheck size={17} />
           </span>
@@ -137,7 +133,7 @@ export default function AttendeeSidebar({ open, onClose }) {
           onClick={handleLogout}
           disabled={signingOut}
           aria-busy={signingOut}
-          className="mt-1 flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] font-semibold text-[#9a6470] transition-colors hover:bg-[#fff4f5] disabled:cursor-wait disabled:opacity-70"
+          className="mt-1 flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[12px] font-semibold text-[#9a6470] transition-colors hover:bg-[#7f1d1d] hover:text-white disabled:cursor-wait disabled:opacity-70"
         >
           {signingOut ? (
             <LoaderCircle size={16} className="animate-spin" />

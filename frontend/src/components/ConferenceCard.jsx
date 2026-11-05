@@ -149,6 +149,16 @@ export default function ConferenceCard({
   const formattedDeadline =
     formatDate(submissionDeadline);
 
+      const deadlinePassed =
+    Boolean(submissionDeadline) &&
+    String(submissionDeadline).slice(0, 10) <
+      new Date().toLocaleDateString("en-CA");
+
+  const displayStatus =
+    conferenceStatus === "open" && deadlinePassed
+      ? "deadline_passed"
+      : conferenceStatus;
+
   function handleViewConference() {
     if (!conference?.id) return;
 
@@ -157,6 +167,9 @@ export default function ConferenceCard({
         conference.id,
       )}`,
     );
+
+     
+      conferenceStatus;
   }
 
   return (
@@ -213,13 +226,14 @@ export default function ConferenceCard({
             {conferenceCategory}
           </span>
 
-          {conferenceStatus && (
+          {displayStatus && (
             <span className="rounded-full bg-[#eaf9f2] px-2 py-1 text-[9px] font-bold text-[#159b64]">
-              {{
+                            {{
                 open: "Open for submissions",
                 closed: "Closed",
-              }[conferenceStatus] ||
-                conferenceStatus}
+                deadline_passed: "Deadline passed",
+              }[displayStatus] ||
+                displayStatus}
             </span>
           )}
 

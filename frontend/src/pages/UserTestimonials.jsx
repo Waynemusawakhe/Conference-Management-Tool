@@ -89,8 +89,11 @@ function StarRow({ value, size = 14 }) {
 
 function TestimonialCard({ item, isOwn, onEdit, onRequestDelete, isDeleting }) {
   return (
-    <article className="flex flex-col rounded-[17px] border border-[#e9ecf2] bg-white p-5 shadow-[0_10px_28px_rgba(15,28,65,.04)]">
-      <Quote size={18} className="text-[#6757f5]" />
+    <article className="group flex flex-col rounded-[17px] border border-[#e9ecf2] bg-white p-5 shadow-[0_10px_28px_rgba(15,28,65,.04)] transition hover:border-[#07132f] hover:shadow-[0_14px_34px_rgba(7,19,47,.12)]">
+      <Quote
+        size={18}
+        className="text-[#6757f5] transition group-hover:text-[#07132f]"
+      />
 
       <p className="mt-3 flex-1 whitespace-pre-wrap text-[12px] leading-6 text-[#35415f]">
         {item.quote}
@@ -103,7 +106,7 @@ function TestimonialCard({ item, isOwn, onEdit, onRequestDelete, isDeleting }) {
       )}
 
       <div className="mt-4 flex items-center gap-3 border-t border-[#edf0f5] pt-4">
-        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#efedff] text-[10px] font-extrabold text-[#5649dc]">
+        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#efedff] text-[10px] font-extrabold text-[#5649dc] transition group-hover:bg-[#07132f] group-hover:text-white">
           {item.initials}
         </span>
         <div className="min-w-0 flex-1">
@@ -116,14 +119,14 @@ function TestimonialCard({ item, isOwn, onEdit, onRequestDelete, isDeleting }) {
             </p>
           )}
         </div>
-        
+
         {isOwn && (
           <div className="flex items-center gap-1.5">
             <button
               type="button"
               onClick={() => onEdit(item)}
               disabled={isDeleting}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-[#efedff] px-2.5 py-1.5 text-[10px] font-extrabold text-[#5649dc] transition hover:bg-[#e5e2ff] disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-[#efedff] px-2.5 py-1.5 text-[10px] font-extrabold text-[#5649dc] transition hover:bg-[#07132f] hover:text-white disabled:opacity-50"
             >
               <Pencil size={11} /> Edit
             </button>
@@ -131,7 +134,7 @@ function TestimonialCard({ item, isOwn, onEdit, onRequestDelete, isDeleting }) {
               type="button"
               onClick={() => onRequestDelete(item)}
               disabled={isDeleting}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-red-50 px-2.5 py-1.5 text-[10px] font-extrabold text-red-600 transition hover:bg-red-100 disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-red-50 px-2.5 py-1.5 text-[10px] font-extrabold text-red-600 transition hover:bg-[#7f1d1d] hover:text-white disabled:opacity-50"
             >
               {isDeleting ? (
                 <Loader2 size={11} className="animate-spin" />
@@ -152,11 +155,11 @@ function ConfirmDeleteModal({ open, onClose, onConfirm, isDeleting }) {
 
   return (
     <div
-      className="fixed inset-0 z-[110] grid place-items-center bg-[#07132f]/60 p-4 backdrop-blur-sm transition-all"
+      className="fixed inset-0 z-[110] grid place-items-center bg-[#030814]/75 p-4 backdrop-blur-md transition-all"
       onClick={isDeleting ? undefined : onClose}
     >
       <div
-        className="w-full max-w-[400px] overflow-hidden rounded-2xl bg-white shadow-[0_30px_90px_rgba(7,19,47,.3)] animate-[cmtScaleIn_.2s_ease-out]"
+        className="w-full max-w-[400px] overflow-hidden rounded-2xl bg-white shadow-[0_40px_120px_rgba(3,8,20,.5)]"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex flex-col items-center p-6 text-center">
@@ -167,7 +170,8 @@ function ConfirmDeleteModal({ open, onClose, onConfirm, isDeleting }) {
             Delete testimonial?
           </h2>
           <p className="mt-2 text-[13px] leading-6 text-[#66728b]">
-            Are you sure you want to delete your testimonial? This action cannot be undone and will permanently remove it from the platform.
+            Are you sure you want to delete your testimonial? This action cannot
+            be undone and will permanently remove it from the platform.
           </p>
         </div>
 
@@ -176,7 +180,7 @@ function ConfirmDeleteModal({ open, onClose, onConfirm, isDeleting }) {
             type="button"
             onClick={onClose}
             disabled={isDeleting}
-            className="inline-flex min-h-11 items-center justify-center rounded-xl border border-[#e4e8f0] bg-white px-4 text-[12px] font-extrabold text-[#5c6880] transition hover:bg-[#f3f5f9] disabled:opacity-50"
+            className="inline-flex min-h-11 items-center justify-center rounded-xl border border-[#e4e8f0] bg-white px-4 text-[12px] font-extrabold text-[#5c6880] transition hover:bg-[#07132f] hover:text-white disabled:opacity-50"
           >
             No, keep it
           </button>
@@ -184,7 +188,7 @@ function ConfirmDeleteModal({ open, onClose, onConfirm, isDeleting }) {
             type="button"
             onClick={onConfirm}
             disabled={isDeleting}
-            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-red-600 px-4 text-[12px] font-extrabold text-white shadow-[0_8px_20px_rgba(220,38,38,.25)] transition hover:bg-red-700 hover:shadow-[0_12px_25px_rgba(220,38,38,.35)] disabled:opacity-50"
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-red-600 px-4 text-[12px] font-extrabold text-white shadow-[0_8px_20px_rgba(220,38,38,.25)] transition hover:bg-red-800 hover:shadow-[0_12px_25px_rgba(220,38,38,.35)] disabled:opacity-50"
           >
             {isDeleting ? (
               <>
@@ -301,11 +305,11 @@ function TestimonialDialog({
 
   return (
     <div
-      className="fixed inset-0 z-[100] grid place-items-center bg-[#07132f]/60 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-[100] grid place-items-center bg-[#030814]/75 p-4 backdrop-blur-md"
       onClick={closeDialog}
     >
       <div
-        className="w-full max-w-[540px] overflow-hidden rounded-[22px] bg-white shadow-[0_30px_90px_rgba(7,19,47,.3)]"
+        className="w-full max-w-[540px] overflow-hidden rounded-[22px] bg-white shadow-[0_40px_120px_rgba(3,8,20,.5)]"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between gap-3 border-b border-[#edf0f5] px-6 py-5">
@@ -321,7 +325,7 @@ function TestimonialDialog({
             type="button"
             onClick={closeDialog}
             disabled={saving}
-            className="grid h-9 w-9 place-items-center rounded-xl bg-[#f3f5f9] text-[#657089] hover:bg-[#e9ecf3] disabled:cursor-not-allowed disabled:opacity-50"
+            className="grid h-9 w-9 place-items-center rounded-xl bg-[#f3f5f9] text-[#657089] transition hover:bg-[#07132f] hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
             aria-label="Close"
           >
             <X size={17} />
@@ -340,7 +344,7 @@ function TestimonialDialog({
                 onChange={(e) => setConferenceId(e.target.value)}
                 disabled={conferencesLoading || saving}
                 required
-                className="h-11 rounded-xl border border-[#e4e8f0] bg-white px-3.5 text-[13px] text-[#1c2a4a] outline-none transition focus:border-[#8878f8] focus:ring-4 focus:ring-[#8878f8]/10 disabled:cursor-not-allowed disabled:bg-[#f7f8fb]"
+                className="h-11 rounded-xl border border-[#e4e8f0] bg-white px-3.5 text-[13px] text-[#1c2a4a] outline-none transition focus:border-[#07132f] focus:ring-4 focus:ring-[#07132f]/10 disabled:cursor-not-allowed disabled:bg-[#f7f8fb]"
               >
                 <option value="">
                   {conferencesLoading
@@ -367,7 +371,7 @@ function TestimonialDialog({
               maxLength={1000}
               required
               placeholder="What has your experience with CMT been like?"
-              className="resize-y rounded-xl border border-[#e4e8f0] bg-white px-3.5 py-3 text-[13px] text-[#1c2a4a] outline-none transition focus:border-[#8878f8] focus:ring-4 focus:ring-[#8878f8]/10"
+              className="resize-y rounded-xl border border-[#e4e8f0] bg-white px-3.5 py-3 text-[13px] text-[#1c2a4a] outline-none transition focus:border-[#07132f] focus:ring-4 focus:ring-[#07132f]/10"
             />
             <span className="text-right text-[9px] text-[#8a95a8]">
               {content.length}/1000
@@ -382,7 +386,7 @@ function TestimonialDialog({
                   key={n}
                   type="button"
                   onClick={() => setRating(n)}
-                  className="grid h-11 w-11 place-items-center rounded-xl border border-[#e4e8f0] bg-white transition hover:border-[#d6dbe8] hover:bg-[#fafbff]"
+                  className="grid h-11 w-11 place-items-center rounded-xl border border-[#e4e8f0] bg-white transition hover:border-[#07132f] hover:bg-[#fafbff]"
                   aria-label={`${n} star${n === 1 ? "" : "s"}`}
                 >
                   <Star
@@ -439,7 +443,7 @@ function TestimonialDialog({
               type="button"
               onClick={closeDialog}
               disabled={saving}
-              className="inline-flex min-h-11 items-center justify-center rounded-xl border border-[#e4e8f0] bg-white px-4 text-[11px] font-bold text-[#5c6880] hover:bg-[#fafbff] disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex min-h-11 items-center justify-center rounded-xl border border-[#e4e8f0] bg-white px-4 text-[11px] font-bold text-[#5c6880] transition hover:bg-[#07132f] hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
             >
               Cancel
             </button>
@@ -450,7 +454,7 @@ function TestimonialDialog({
                 rating < 1 ||
                 (!isEdit && (conferencesLoading || conferences.length === 0))
               }
-              className="inline-flex min-h-11 items-center justify-center rounded-xl bg-gradient-to-br from-[#6655f6] to-[#7869ff] px-5 text-[11px] font-extrabold text-white shadow-[0_12px_28px_rgba(103,87,245,.28)] transition hover:-translate-y-px disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex min-h-11 items-center justify-center rounded-xl bg-gradient-to-br from-[#6655f6] to-[#7869ff] px-5 text-[11px] font-extrabold text-white shadow-[0_12px_28px_rgba(103,87,245,.28)] transition hover:from-[#4a3ec9] hover:to-[#5b4be0] hover:-translate-y-px disabled:cursor-not-allowed disabled:opacity-60"
             >
               {saving
                 ? "Saving..."
@@ -544,7 +548,7 @@ export default function UserTestimonials() {
     setIsDeleting(true);
     setError("");
     setFeedback("");
-    
+
     try {
       await testimonialsApi.remove(deleteTarget.id);
       await loadTestimonials();
@@ -593,8 +597,10 @@ export default function UserTestimonials() {
           </div>
           <button
             type="button"
-            onClick={myTestimonial ? () => handleEdit(myTestimonial) : handleAdd}
-            className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-br from-[#6655f6] to-[#7869ff] px-4 py-3 text-[12px] font-extrabold text-white shadow-[0_12px_28px_rgba(103,87,245,.28)] transition hover:-translate-y-px"
+            onClick={
+              myTestimonial ? () => handleEdit(myTestimonial) : handleAdd
+            }
+            className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-br from-[#6655f6] to-[#7869ff] px-4 py-3 text-[12px] font-extrabold text-white shadow-[0_12px_28px_rgba(103,87,245,.28)] transition hover:from-[#4a3ec9] hover:to-[#5b4be0] hover:-translate-y-px"
           >
             {myTestimonial ? <Pencil size={16} /> : <Plus size={16} />}
             {myTestimonial ? "Edit yours" : "Add yours"}
@@ -627,7 +633,7 @@ export default function UserTestimonials() {
           <button
             type="button"
             onClick={loadTestimonials}
-            className="font-extrabold underline"
+            className="font-extrabold underline hover:text-[#07132f]"
           >
             Retry
           </button>
@@ -653,10 +659,7 @@ export default function UserTestimonials() {
           </div>
         ) : items.length === 0 ? (
           <div className="p-12 text-center">
-            <MessageSquareQuote
-              size={22}
-              className="mx-auto text-[#aeb6c6]"
-            />
+            <MessageSquareQuote size={22} className="mx-auto text-[#aeb6c6]" />
             <h3 className="mb-1 mt-3 text-[13px] font-bold">
               No testimonials yet
             </h3>
@@ -666,7 +669,7 @@ export default function UserTestimonials() {
             <button
               type="button"
               onClick={handleAdd}
-              className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-[#efedff] px-3 py-2 text-[10px] font-extrabold text-[#5649dc] hover:bg-[#e5e2ff]"
+              className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-[#efedff] px-3 py-2 text-[10px] font-extrabold text-[#5649dc] transition hover:bg-[#07132f] hover:text-white"
             >
               <Plus size={12} /> Add yours
             </button>

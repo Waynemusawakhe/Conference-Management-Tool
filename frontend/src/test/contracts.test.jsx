@@ -1,3 +1,6 @@
+
+
+
 import React from "react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import {
@@ -26,6 +29,11 @@ import { registrationsApi } from "../api/registrationsApi";
 import { contactMessagesApi } from "../api/contactMessagesApi";
 import { submissionsApi } from "../api/submissionsApi";
 import { reviewsApi } from "../api/reviewsApi";
+
+beforeEach(() => {
+  URL.createObjectURL = vi.fn(() => "blob:test");
+  URL.revokeObjectURL = vi.fn();
+});
 
 vi.mock("../context/ThemeContext", () => ({
   useTheme: () => ({ dark: false, toggleTheme: vi.fn() }),
@@ -389,7 +397,7 @@ describe("proposal uploads", () => {
     Object.defineProperty(file, "size", { value: 10 * 1024 * 1024 + 1 });
     fireEvent.change(input, { target: { files: [file] } });
     expect(
-      screen.getByText("The file must be 10MB or smaller."),
+          screen.getByText(/The file is .* The limit is 10 MB\./),
     ).toBeInTheDocument();
   });
   it("rejects unsupported files", async () => {
@@ -418,7 +426,7 @@ describe("proposal uploads", () => {
       },
     });
     expect(
-      screen.getByText("Only PDF, DOC, or DOCX files are allowed."),
+          screen.getByText(/Unsupported format\. Only PDF, DOC and DOCX files are allowed\./),
     ).toBeInTheDocument();
   });
 });

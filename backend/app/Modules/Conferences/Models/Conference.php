@@ -46,6 +46,23 @@ class Conference extends Model
         ];
     }
 
+    public function isAcceptingSubmissions(): bool
+    {
+        if ($this->submission_status === 'closed') {
+            return false;
+        }
+
+        // The deadline day itself still counts as open.
+        if (
+            $this->submission_deadline &&
+            $this->submission_deadline->toDateString() < now()->toDateString()
+        ) {
+            return false;
+        }
+
+        return true;
+    }
+
     public function organiser(): BelongsTo
     {
         return $this->belongsTo(User::class, 'organiser_id');
