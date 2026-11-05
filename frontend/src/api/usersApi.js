@@ -9,7 +9,7 @@ export const usersApi = {
 
   getReviewers: () =>
     http.get("/users/reviewers"),
-  
+
   updateRole: (id, role) =>
     http.patch(`/users/${encodeURIComponent(id)}/role`, { role }),
 
@@ -19,4 +19,15 @@ export const usersApi = {
   sendPasswordResetEmail: (id) =>
     http.post(`/users/${encodeURIComponent(id)}/reset-password`),
 
+  updateAccountStatus: (id, accountStatus, reason = "") =>
+    http.patch(
+      `/users/${encodeURIComponent(id)}/account-status`,
+      {
+        account_status: accountStatus,
+        reason: reason || null,
+      }
+    ),
+
+  archive: (id) =>
+    http.delete(`/users/${encodeURIComponent(id)}`),
 };
