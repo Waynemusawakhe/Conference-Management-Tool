@@ -1,5 +1,7 @@
 import { lazy, Suspense } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
+import { useAuth } from "./context/AuthContext";
+const ChatBot = lazy(() => import("./components/ChatBot"));
 
 const UserConferencePage = lazy(() => import("./pages/UserConferencePage"));
 const Home = lazy(() => import("./pages/Home"));
@@ -30,6 +32,7 @@ const ScoreSubmission = lazy(() => import("./pages/ScoreSubmission"));
 const AttendeeDashboard = lazy(() => import("./pages/AttendeeDashboard"));
 const MyConferences = lazy(() => import("./pages/MyConferences"));
 const UsersPage = lazy(() => import("./pages/UsersPage"));
+
 
 /* ---------- Shared authenticated ---------- */
 const UserTestimonials = lazy(() => import("./pages/UserTestimonials"));
@@ -65,6 +68,7 @@ const AuthorDashboard = lazy(() => import("./pages/AuthorDashboard"));
 const ALL_ROLES = ["author", "reviewer", "organiser", "attendee", "admin"];
 
 export default function App() {
+   const { status, role } = useAuth();
   return (
     <ThemeProvider>
       <Suspense
@@ -436,6 +440,13 @@ export default function App() {
 
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+
+      
+      <ChatBot
+         key={status === "authenticated" ? "signed-in" : "visitor"}
+         role={status === "authenticated" ? role : null}
+      />
+
       </Suspense>
     </ThemeProvider>
   );
