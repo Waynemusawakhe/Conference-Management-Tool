@@ -24,6 +24,9 @@ const MfaSettings = lazy(() => import("./pages/MfaSettings"));
 const Profile = lazy(() => import("./pages/Profile"));
 const Settings = lazy(() => import("./pages/Settings"));
 const SubmitProposal = lazy(() => import("./pages/SubmitProposal"));
+const AdminNotificationsPage = lazy(
+  () => import("./pages/AdminNotificationsPage")
+);
 
 const CreateEditConference = lazy(
   () => import("./pages/create_edit_conference"),
@@ -230,6 +233,15 @@ export default function App() {
             element={
               <ProtectedRoute roles={["organiser"]}>
                 <OrganiserDashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/admin/notifications"
+            element={
+              <ProtectedRoute roles={["admin"]}>
+                <AdminNotificationsPage />
               </ProtectedRoute>
             }
           />

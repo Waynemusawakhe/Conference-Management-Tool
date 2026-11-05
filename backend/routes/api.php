@@ -4,6 +4,7 @@ use App\Http\Controllers\NotificationController;
 use App\Models\User;
 use App\Modules\Account\Controllers\AuthController;
 use App\Modules\Account\Controllers\UserController;
+use App\Modules\AdminNotifications\Controllers\AdminNotificationController;
 use App\Modules\Audit\Controllers\AuditLogController;
 use App\Modules\Chat\Controllers\ChatController;
 use App\Modules\Conferences\Controllers\ConferenceController;
@@ -522,3 +523,37 @@ Route::prefix('v1/reports')
 
 Route::post('v1/chat', [ChatController::class, 'store'])
     ->middleware('throttle:20,1');
+
+Route::prefix('v1/admin/notifications')
+    ->middleware(['auth:sanctum', 'role:admin'])
+    ->group(function () {
+        Route::get(
+            '/templates',
+            [AdminNotificationController::class, 'templates']
+        );
+
+        Route::post(
+            '/templates',
+            [AdminNotificationController::class, 'storeTemplate']
+        );
+
+        Route::put(
+            '/templates/{template}',
+            [AdminNotificationController::class, 'updateTemplate']
+        );
+
+        Route::delete(
+            '/templates/{template}',
+            [AdminNotificationController::class, 'destroyTemplate']
+        );
+
+        Route::get(
+            '/history',
+            [AdminNotificationController::class, 'history']
+        );
+
+        Route::post(
+            '/send',
+            [AdminNotificationController::class, 'send']
+        );
+    });
