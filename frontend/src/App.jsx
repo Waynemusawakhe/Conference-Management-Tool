@@ -4,7 +4,6 @@ import { LoaderCircle } from "lucide-react";
 import Logo from "./components/Logo";
 import { useAuth } from "./context/AuthContext";
 
-import { useAuth } from "./context/AuthContext";
 const ChatBot = lazy(() => import("./components/Chatbot"));
 
 const UserConferencePage = lazy(() => import("./pages/UserConferencePage"));
