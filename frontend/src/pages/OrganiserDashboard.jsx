@@ -239,7 +239,7 @@ function dateLabel(value) {
 
 
 
-  if (!value) return "â€”";
+  if (!value) return "—";
 
 
 
@@ -1871,7 +1871,7 @@ const assignReviewer = async (e) => {
 
 
 
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const blob = new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8" });
 
 
 
@@ -1907,11 +1907,19 @@ const assignReviewer = async (e) => {
 
 
 
+    document.body.appendChild(link);
+
+
+
     link.click();
 
 
 
-    URL.revokeObjectURL(url);
+    link.remove();
+
+
+
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
 
 
 
@@ -1936,8 +1944,168 @@ const assignReviewer = async (e) => {
 
 
     <OrganiserLayout>
+      <div className="organiser-dashboard-content min-w-0 text-[#0d1b3d] dark:text-[#e2e8f0]">
+        <style>{`
+          .organiser-dashboard-content input,
+          .organiser-dashboard-content select,
+          .organiser-dashboard-content textarea {
+            color: #0d1b3d;
+            background-color: #ffffff;
+            border-color: #dfe4ed;
+            color-scheme: light;
+          }
+          .organiser-dashboard-content input::placeholder,
+          .organiser-dashboard-content textarea::placeholder {
+            color: #8993a6;
+            opacity: 1;
+          }
+          .organiser-dashboard-content select option {
+            color: #0d1b3d;
+            background: #ffffff;
+          }
+          .organiser-dashboard-content :where(label) {
+            color: inherit;
+          }
+          .organiser-dashboard-content :where(button, a, input, select, textarea):focus-visible {
+            outline: 3px solid rgba(102, 85, 246, .35);
+            outline-offset: 2px;
+          }
+          .organiser-dashboard-content button:not(:disabled) {
+            cursor: pointer;
+          }
+          .dark .organiser-dashboard-content input,
+          .dark .organiser-dashboard-content select,
+          .dark .organiser-dashboard-content textarea {
+            color: #e2e8f0;
+            background-color: #0b1224;
+            border-color: #334155;
+            color-scheme: dark;
+          }
+          .dark .organiser-dashboard-content input::placeholder,
+          .dark .organiser-dashboard-content textarea::placeholder {
+            color: #94a3b8;
+          }
+          .dark .organiser-dashboard-content select option {
+            color: #e2e8f0;
+            background: #0b1224;
+          }
 
-
+          /* Page-only visual refresh: keep the existing purple/navy identity. */
+          .organiser-dashboard-content {
+            --od-accent: #6655f6;
+            --od-ink: #14213d;
+            --od-muted: #68758d;
+            --od-line: #e6eaf2;
+            display: grid;
+            gap: 22px;
+            padding-bottom: 28px;
+          }
+          .organiser-dashboard-content #overview {
+            min-height: 210px;
+            display: flex;
+            align-items: center;
+            border: 1px solid rgba(139, 128, 255, .22);
+            border-radius: 26px;
+            background-image:
+              radial-gradient(circle at 82% 20%, rgba(135,119,255,.32), transparent 26%),
+              radial-gradient(circle at 96% 100%, rgba(55,117,255,.22), transparent 34%),
+              linear-gradient(125deg, #091630 0%, #101d49 58%, #29216d 100%);
+            box-shadow: 0 22px 55px rgba(20, 28, 75, .16);
+          }
+          .organiser-dashboard-content #overview h1 { letter-spacing: -.055em; }
+          .organiser-dashboard-content #overview button {
+            min-height: 44px;
+            border: 1px solid rgba(255,255,255,.2);
+            box-shadow: 0 10px 25px rgba(102,85,246,.28);
+          }
+          .organiser-dashboard-content > section:not(#overview) { min-width: 0; }
+          .organiser-dashboard-content article,
+          .organiser-dashboard-content [class*="rounded-[20px]"] {
+            transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+          }
+          .organiser-dashboard-content > section.grid.grid-cols-4 > article {
+            position: relative;
+            overflow: hidden;
+            min-height: 138px;
+            border-radius: 19px;
+            padding: 19px;
+            box-shadow: 0 8px 24px rgba(22, 34, 67, .045);
+          }
+          .organiser-dashboard-content > section.grid.grid-cols-4 > article::after {
+            content: "";
+            position: absolute;
+            width: 92px;
+            height: 92px;
+            right: -38px;
+            top: -42px;
+            border-radius: 50%;
+            background: rgba(102,85,246,.055);
+            pointer-events: none;
+          }
+          .organiser-dashboard-content > section.grid.grid-cols-4 > article:hover {
+            transform: translateY(-3px);
+            border-color: #c9c3ff;
+            box-shadow: 0 15px 32px rgba(22, 34, 67, .09);
+          }
+          .organiser-dashboard-content article.rounded-\[20px\],
+          .organiser-dashboard-content section.rounded-\[20px\] {
+            border-radius: 21px;
+            box-shadow: 0 10px 30px rgba(22, 34, 67, .045);
+          }
+          .organiser-dashboard-content input,
+          .organiser-dashboard-content select,
+          .organiser-dashboard-content textarea {
+            min-height: 40px;
+            border-radius: 11px;
+            transition: border-color .15s ease, box-shadow .15s ease;
+          }
+          .organiser-dashboard-content input:focus,
+          .organiser-dashboard-content select:focus,
+          .organiser-dashboard-content textarea:focus {
+            border-color: #8175ef;
+            box-shadow: 0 0 0 3px rgba(102,85,246,.11);
+            outline: none;
+          }
+          .organiser-dashboard-content button {
+            transition: transform .16s ease, box-shadow .16s ease, background-color .16s ease;
+          }
+          .organiser-dashboard-content button:not(:disabled):hover {
+            filter: brightness(.985);
+          }
+          .organiser-dashboard-content button:disabled { cursor: not-allowed; }
+          .organiser-dashboard-content table { border-collapse: separate; border-spacing: 0; }
+          .organiser-dashboard-content thead th { white-space: nowrap; }
+          .organiser-dashboard-content tbody tr:last-child { border-bottom: 0; }
+          .organiser-dashboard-content [role="alert"] { border-radius: 14px; }
+          .dark .organiser-dashboard-content {
+            --od-ink: #e8edf7;
+            --od-muted: #a5b1c5;
+            --od-line: #29364b;
+          }
+          .dark .organiser-dashboard-content > section.grid.grid-cols-4 > article:hover {
+            border-color: #6257b9;
+            box-shadow: 0 15px 32px rgba(0,0,0,.22);
+          }
+          .dark .organiser-dashboard-content input,
+          .dark .organiser-dashboard-content select,
+          .dark .organiser-dashboard-content textarea {
+            background-color: #111c30;
+            border-color: #35445c;
+          }
+          .dark .organiser-dashboard-content select option {
+            background-color: #111c30;
+          }
+          @media (max-width: 640px) {
+            .organiser-dashboard-content { gap: 16px; }
+            .organiser-dashboard-content #overview { min-height: 0; border-radius: 20px; }
+            .organiser-dashboard-content > section.grid.grid-cols-4 > article { min-height: 120px; }
+          }
+          @media (prefers-reduced-motion: reduce) {
+            .organiser-dashboard-content *,
+            .organiser-dashboard-content *::before,
+            .organiser-dashboard-content *::after { transition-duration: .01ms !important; }
+          }
+        `}</style>
 
       {/* Hero */}
 
@@ -2483,7 +2651,7 @@ const assignReviewer = async (e) => {
 
 
 
-                      {dateLabel(c.start_date)} â€” {dateLabel(c.end_date)} Â·{" "}
+                      {dateLabel(c.start_date)} — {dateLabel(c.end_date)} ·{" "}
 
 
 
@@ -2789,13 +2957,60 @@ const assignReviewer = async (e) => {
 
 
 
+                <button
+                  type="button"
+                  onClick={exportReport}
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-[#dfe4ed] bg-white px-3 py-2 text-[10px] font-extrabold text-[#58647b] transition hover:-translate-y-px dark:border-[#1e293b] dark:bg-[#0f172a] dark:text-[#94a3b8]"
+                >
+                  <Download size={13} /> Export report
+                </button>
+
+
+
               </div>
 
 
 
             </div>
 
+            <div className="mt-5 grid gap-3 border-t border-[#edf0f5] pt-4 dark:border-[#1e293b] sm:grid-cols-2 lg:grid-cols-4">
+              <div className="rounded-xl bg-white p-3 dark:bg-[#0f172a]">
+                <p className="m-0 text-[9px] font-extrabold uppercase tracking-wide text-[#8c96a9] dark:text-[#94a3b8]">Conference code</p>
+                <p className="mb-0 mt-1 text-xs font-bold text-[#0d1b3d] dark:text-white">{selectedConference.code || "Not set"}</p>
+              </div>
+              <div className="rounded-xl bg-white p-3 dark:bg-[#0f172a]">
+                <p className="m-0 text-[9px] font-extrabold uppercase tracking-wide text-[#8c96a9] dark:text-[#94a3b8]">Conference dates</p>
+                <p className="mb-0 mt-1 text-xs font-bold text-[#0d1b3d] dark:text-white">{dateLabel(selectedConference.start_date)} – {dateLabel(selectedConference.end_date)}</p>
+              </div>
+              <div className="rounded-xl bg-white p-3 dark:bg-[#0f172a]">
+                <p className="m-0 text-[9px] font-extrabold uppercase tracking-wide text-[#8c96a9] dark:text-[#94a3b8]">Submission status</p>
+                <p className={`mb-0 mt-1 text-xs font-extrabold ${selectedConference.submission_status === "open" ? "text-emerald-600 dark:text-emerald-400" : "text-slate-500 dark:text-slate-400"}`}>
+                  {selectedConference.submission_status === "open" ? "Open for submissions" : "Closed to submissions"}
+                </p>
+              </div>
+              <div className="rounded-xl bg-white p-3 dark:bg-[#0f172a]">
+                <p className="m-0 text-[9px] font-extrabold uppercase tracking-wide text-[#8c96a9] dark:text-[#94a3b8]">Submission deadline</p>
+                <p className="mb-0 mt-1 text-xs font-bold text-[#0d1b3d] dark:text-white">{dateLabel(selectedConference.submission_deadline)}</p>
+              </div>
+            </div>
 
+            <div className="mt-4 rounded-xl border border-[#edf0f5] bg-white p-4 dark:border-[#1e293b] dark:bg-[#0f172a]">
+              <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+                <div><p className="m-0 text-[9px] font-semibold text-[#8c96a9] dark:text-[#94a3b8]">Total submissions</p><p className="mb-0 mt-1 text-xl font-extrabold text-[#0d1b3d] dark:text-white">{stats.submissions}</p></div>
+                <div><p className="m-0 text-[9px] font-semibold text-[#8c96a9] dark:text-[#94a3b8]">Awaiting review</p><p className="mb-0 mt-1 text-xl font-extrabold text-amber-600">{stats.pending}</p></div>
+                <div><p className="m-0 text-[9px] font-semibold text-[#8c96a9] dark:text-[#94a3b8]">Reviewed</p><p className="mb-0 mt-1 text-xl font-extrabold text-emerald-600">{stats.reviewed}</p></div>
+                <div><p className="m-0 text-[9px] font-semibold text-[#8c96a9] dark:text-[#94a3b8]">Registered attendees</p><p className="mb-0 mt-1 text-xl font-extrabold text-[#0d1b3d] dark:text-white">{stats.attendees}</p></div>
+              </div>
+              <div className="mt-4">
+                <div className="mb-1.5 flex items-center justify-between text-[9px] font-bold text-[#7c879a] dark:text-[#94a3b8]">
+                  <span>Review progress</span>
+                  <span>{stats.submissions ? Math.round((stats.reviewed / stats.submissions) * 100) : 0}%</span>
+                </div>
+                <div className="h-2 overflow-hidden rounded-full bg-[#edf0f5] dark:bg-[#1e293b]">
+                  <div className="h-full rounded-full bg-gradient-to-r from-[#6655f6] to-[#7869ff] transition-all" style={{ width: `${stats.submissions ? Math.min(100, (stats.reviewed / stats.submissions) * 100) : 0}%` }} />
+                </div>
+              </div>
+            </div>
 
           </div>
 
@@ -2909,7 +3124,7 @@ const assignReviewer = async (e) => {
 
 
 
-                  placeholder="Search submissionsâ€¦"
+                  placeholder="Search submissions…"
 
 
 
@@ -3155,7 +3370,7 @@ const assignReviewer = async (e) => {
 
 
 
-                                #{s.id} Â· {s.track || "General track"}
+                                #{s.id} · {s.track || "General track"}
 
 
 
@@ -3493,7 +3708,7 @@ const assignReviewer = async (e) => {
 
 
 
-                          {s.author?.name || "Author"} Â·{" "}
+                          {s.author?.name || "Author"} ·{" "}
 
 
 
@@ -4045,7 +4260,7 @@ const assignReviewer = async (e) => {
 
 
 
-                  {sessionSaving ? "Savingâ€¦" : "Add session"}
+                  {sessionSaving ? "Saving…" : "Add session"}
 
 
 
@@ -4117,7 +4332,7 @@ const assignReviewer = async (e) => {
 
 
 
-                      {dateLabel(session.scheduled_time)} Â·{" "}
+                      {dateLabel(session.scheduled_time)} ·{" "}
 
 
 
@@ -4269,7 +4484,7 @@ const assignReviewer = async (e) => {
 
 
 
-              1 Â· Assign
+              1 · Assign
 
 
 
@@ -4281,7 +4496,7 @@ const assignReviewer = async (e) => {
 
 
 
-              2 Â· Review
+              2 · Review
 
 
 
@@ -4293,7 +4508,7 @@ const assignReviewer = async (e) => {
 
 
 
-              3 Â· Decide
+              3 · Decide
 
 
 
@@ -4329,7 +4544,7 @@ const assignReviewer = async (e) => {
 
 
 
-          title={`Assign reviewer Â· ${selectedSubmission.title}`}
+          title={`Assign reviewer · ${selectedSubmission.title}`}
 
 
 
@@ -4403,7 +4618,7 @@ const assignReviewer = async (e) => {
 
 
 
-                      {r.name || r.email || `User #${r.id}`} Â· #{r.id}
+                      {r.name || r.email || `User #${r.id}`} · #{r.id}
 
 
 
@@ -4567,7 +4782,7 @@ const assignReviewer = async (e) => {
 
 
 
-                {saving ? "Assigningâ€¦" : "Assign reviewer"}
+                {saving ? "Assigning…" : "Assign reviewer"}
 
 
 
@@ -4589,8 +4804,7 @@ const assignReviewer = async (e) => {
 
       ) : null}
 
-
-
+      </div>
     </OrganiserLayout>
 
 
