@@ -20,7 +20,7 @@ class ConferenceTypoSearch
             return $query;
         }
 
-        return $query->orWhereRaw('similarity(name, ?) >= ?', [$term, 0.3]);
+        return $query->orWhereRaw('word_similarity(?, name) >= ?', [$term, 0.3]);
     }
 
     public static function suggestedTitle(string $term): ?string
@@ -31,8 +31,8 @@ class ConferenceTypoSearch
 
         $match = Conference::query()
             ->select('name')
-            ->selectRaw('similarity(name, ?) AS match_score', [$term])
-            ->whereRaw('similarity(name, ?) >= ?', [$term, 0.3])
+            ->selectRaw('word_similarity(?, name) AS match_score', [$term])
+            ->whereRaw('word_similarity(?, name) >= ?', [$term, 0.3])
             ->orderByDesc('match_score')
             ->orderBy('name')
             ->first();
