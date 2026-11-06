@@ -7,6 +7,7 @@ use App\Modules\Conferences\Actions\DeleteConference;
 use App\Modules\Conferences\Actions\UpdateConference;
 use App\Modules\Conferences\Actions\UpdateConferenceStatus;
 use App\Modules\Conferences\Models\Conference;
+use App\Modules\Conferences\Support\ConferenceTypoSearch;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -219,6 +220,8 @@ class ConferenceController
                             'topics',
                             $search
                         );
+
+                    ConferenceTypoSearch::apply($conferenceQuery, $search);
                 }
             );
         }
