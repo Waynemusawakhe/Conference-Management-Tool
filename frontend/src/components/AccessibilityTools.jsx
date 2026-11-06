@@ -60,6 +60,7 @@ function splitSpeech(text) {
 export default function AccessibilityTools() {
   const { pathname } = useLocation();
   const [open, setOpen] = useState(false);
+  const [minimized, setMinimized] = useState(false);
   const [preferences, setPreferences] = useState(loadPreferences);
   const [speechState, setSpeechState] = useState("idle");
   const [message, setMessage] = useState("");
@@ -187,15 +188,43 @@ export default function AccessibilityTools() {
           className="cmt-a11y-launcher"
           aria-expanded={open}
           aria-controls="cmt-accessibility-panel"
-          onClick={() => setOpen((previous) => !previous)}
+          aria-label={minimized ? "Show accessibility tools" : "Accessibility tools"}
+          onClick={() => {
+            if (minimized) {
+              setMinimized(false);
+              setOpen(true);
+            } else {
+              setOpen((previous) => !previous);
+            }
+          }}
         >
-          <Accessibility size={19} aria-hidden="true" /> Accessibility
+          <Accessibility size={19} aria-hidden="true" />
+          {!minimized && "Accessibility"}
         </button>
         {open && (
           <section className="cmt-a11y-panel" id="cmt-accessibility-panel" ref={panel} aria-label="Accessibility settings and reading controls">
             <div className="cmt-a11y-panel-header">
               <h2>Accessibility tools</h2>
-              <button type="button" aria-label="Close accessibility tools" onClick={() => { setOpen(false); trigger.current?.focus(); }}><X size={20} aria-hidden="true" /></button>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    stop();
+                    setOpen(false);
+                    setMinimized(true);
+                    trigger.current?.focus();
+                  }}
+                >
+                  Hide
+                </button>
+                <button
+                  type="button"
+                  aria-label="Close accessibility tools"
+                  onClick={() => { setOpen(false); trigger.current?.focus(); }}
+                >
+                  <X size={20} aria-hidden="true" />
+                </button>
+              </div>
             </div>
             <p className="cmt-a11y-description">Supports screen readers and keyboard navigation. Read Aloud is optional.</p>
             <div className="cmt-a11y-buttons">
