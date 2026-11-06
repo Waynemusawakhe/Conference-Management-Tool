@@ -1883,3 +1883,90 @@ html.dark .cmt-manage-hover:active { background-color: #1b3261; }
   .dark .cmt-mobile-card-table tbody tr.cmt-conference-row:is(:hover, :focus-within) .cmt-conference-row__meta { color: #cbd5e1 !important; }
   .dark .cmt-mobile-card-table tbody tr.cmt-conference-row:is(:hover, :focus-within) .cmt-conference-row__location { color: #e2e8f0 !important; }
 }
+
+/* Accessibility foundations: usable without JavaScript speech or the CMT chatbot. */
+.cmt-skip-link {
+  position: fixed;
+  top: 0.75rem;
+  left: 0.75rem;
+  z-index: 99999;
+  background: #fff;
+  color: #07132f;
+  border: 3px solid #5045dc;
+  border-radius: .625rem;
+  padding: .75rem 1rem;
+  font-weight: 800;
+  transform: translateY(-160%);
+}
+.cmt-skip-link:focus { transform: none; }
+:where(button, a, input, textarea, select, [tabindex]):focus-visible {
+  outline: 3px solid #b35200;
+  outline-offset: 3px;
+}
+:where(main, h1, h2, h3, h4, h5, h6)[tabindex="-1"]:focus { outline: none; }
+html[data-cmt-text-size="125"] { font-size: 125%; }
+html[data-cmt-text-size="150"] { font-size: 150%; }
+html[data-cmt-contrast="high"] { filter: contrast(1.25); }
+html[data-cmt-contrast="high"] :where(a, button, input, select, textarea):focus-visible { outline: 4px solid #ff8c00; }
+html[data-cmt-reduce-motion="true"] *,
+html[data-cmt-reduce-motion="true"] *::before,
+html[data-cmt-reduce-motion="true"] *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+}
+.cmt-a11y-widget {
+  position: fixed;
+  z-index: 80;
+  bottom: 1rem;
+  left: 1rem;
+  width: max-content;
+  max-width: calc(100vw - 2rem);
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+}
+.cmt-a11y-launcher {
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  border: 2px solid #f3f1ff;
+  border-radius: 999px;
+  padding: .65rem .9rem;
+  background: #07132f;
+  color: #fff;
+  font-size: .875rem;
+  font-weight: 800;
+  box-shadow: 0 8px 30px rgba(7,19,47,.3);
+}
+.cmt-a11y-panel {
+  position: absolute;
+  bottom: calc(100% + .75rem);
+  left: 0;
+  width: min(360px, calc(100vw - 2rem));
+  max-height: min(72vh, 620px);
+  overflow-y: auto;
+  border: 2px solid #515a81;
+  border-radius: 18px;
+  background: #fff;
+  color: #0d1b3d;
+  box-shadow: 0 12px 50px rgba(7,19,47,.35);
+  padding: 1rem;
+  font-size: .875rem;
+}
+.cmt-a11y-panel-header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.cmt-a11y-panel-header h2 { font-size: 1.15rem; font-weight: 800; }
+.cmt-a11y-panel-header button { display: grid; place-items: center; min-width: 42px; min-height: 42px; border: 1px solid #cbd3e3; border-radius: .75rem; }
+.cmt-a11y-description { margin: .5rem 0; color: #35415a; line-height: 1.5; }
+.cmt-a11y-buttons { display: flex; flex-wrap: wrap; gap: .5rem; margin: .75rem 0; }
+.cmt-a11y-buttons button { display: inline-flex; align-items: center; gap: .35rem; min-height: 42px; border: 1px solid #a3afd2; border-radius: .6rem; padding: .4rem .65rem; font-weight: 700; background: #f4f5ff; color: #121c42; }
+.cmt-a11y-buttons button:disabled { opacity: .5; cursor: not-allowed; }
+.cmt-a11y-field { display: grid; gap: .35rem; font-weight: 700; margin-top: .85rem; }
+.cmt-a11y-field select { width: 100%; min-height: 42px; border-radius: .5rem; border: 1px solid #6d7897; padding: .35rem; background: #fff; color: #081a41; }
+.cmt-a11y-check { display: flex; align-items: center; gap: .65rem; padding-block: .6rem; font-weight: 600; }
+.cmt-a11y-check input { width: 20px; height: 20px; accent-color: #5045dc; }
+.cmt-a11y-panel a { display: inline-block; margin-top: .5rem; text-decoration: underline; font-weight: 700; }
+.cmt-a11y-message { min-height: 1.25rem; margin-top: .75rem; color: #233b65; line-height: 1.45; }
+@media (max-width: 480px) {
+  .cmt-a11y-widget { bottom: .75rem; left: .75rem; }
+  .cmt-a11y-launcher { padding: .6rem .75rem; font-size: .8rem; }
+  .cmt-a11y-panel { max-height: 68vh; }
+}
