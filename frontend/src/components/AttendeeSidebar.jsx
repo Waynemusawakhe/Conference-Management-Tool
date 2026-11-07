@@ -101,6 +101,13 @@ export default function AttendeeSidebar({ open, onClose }) {
             active={location.pathname === "/conferences"}
             onClick={() => goTo("/conferences")}
           />
+
+          <NavItem
+            icon={<MessageSquareQuote size={16} />}
+            label="My Discussions"
+            active={location.pathname === "/my-discussions"}
+            onClick={() => goTo("/my-discussions")}
+          />
         </nav>
 
         <div className="my-4 border-t border-[#edf0f5]" />
