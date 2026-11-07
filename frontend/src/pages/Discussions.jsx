@@ -130,9 +130,12 @@ export default function Discussions() {
               <p className="mt-3 text-white/75">A shared space for researchers, attendees, reviewers and organisers to learn from one another.</p>
             </div>
             {authenticated ? (
-              <button onClick={() => setShowComposer(true)} className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 font-bold text-[#3f35bd] transition hover:-translate-y-0.5">
-                <Plus size={18} /> Start a discussion
-              </button>
+              <div className="flex flex-wrap gap-2">
+                <Link to="/my-discussions" className="inline-flex shrink-0 items-center justify-center rounded-xl border border-white/40 px-4 py-3 font-bold text-white">My activity</Link>
+                <button onClick={() => setShowComposer(true)} className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 font-bold text-[#3f35bd] transition hover:-translate-y-0.5">
+                  <Plus size={18} /> Start a discussion
+                </button>
+              </div>
             ) : (
               <button onClick={() => navigate("/login")} className="rounded-xl bg-white px-5 py-3 font-bold text-[#3f35bd]">Join to contribute</button>
             )}

@@ -5,6 +5,7 @@ namespace App\Modules\Discussions\Controllers;
 use App\Http\Controllers\Controller;
 use App\Modules\Discussions\Models\Discussion;
 use App\Modules\Discussions\Models\DiscussionComment;
+use App\Modules\Discussions\Models\DiscussionLike;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -27,6 +28,7 @@ class DiscussionController extends Controller
             ])
             ->withCount([
                 'comments' => fn ($query) => $query->where('is_hidden', false),
+                'likes',
             ])
             ->when($validated['category'] ?? null, fn ($query, $category) => $query->where('category', $category))
             ->when($validated['conference_id'] ?? null, fn ($query, $conferenceId) => $query->where('conference_id', $conferenceId))
@@ -56,7 +58,15 @@ class DiscussionController extends Controller
             'comments.user:id,name',
         ])->loadCount([
             'comments' => fn ($query) => $query->where('is_hidden', false),
+            'likes',
         ]);
+
+        $discussion->setAttribute(
+            'is_liked_by_current_user',
+            request()->user()
+                ? $discussion->likes()->where('user_id', request()->user()->id)->exists()
+                : false
+        );
 
         return response()->json(['data' => $discussion]);
     }
@@ -96,6 +106,71 @@ class DiscussionController extends Controller
         $comment->load('user:id,name');
 
         return response()->json(['data' => $comment], 201);
+    }
+
+    public function mine(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        $discussions = Discussion::query()
+            ->where('user_id', $user->id)
+            ->with([
+                'conference:id,name,code',
+                'comments' => fn ($query) => $query->where('is_hidden', false)->latest()->limit(5),
+                'comments.user:id,name',
+            ])
+            ->withCount([
+                'comments' => fn ($query) => $query->where('is_hidden', false),
+                'likes',
+            ])
+            ->latest()
+            ->paginate(20);
+
+        return response()->json($discussions);
+    }
+
+    public function update(Request $request, Discussion $discussion): JsonResponse
+    {
+        abort_unless($this->canManage($request, $discussion->user_id), 403);
+
+        $validated = $request->validate([
+            'title' => ['required', 'string', 'min:4', 'max:180'],
+            'body' => ['required', 'string', 'min:10', 'max:5000'],
+            'category' => ['required', 'string', 'max:60'],
+            'conference_id' => ['nullable', 'integer', 'exists:conferences,id'],
+        ]);
+
+        $discussion->update($validated);
+
+        return response()->json(['data' => $discussion->fresh()]);
+    }
+
+    public function toggleLike(Request $request, Discussion $discussion): JsonResponse
+    {
+        abort_if($discussion->is_hidden, 404);
+
+        $like = DiscussionLike::query()->where([
+            'discussion_id' => $discussion->id,
+            'user_id' => $request->user()->id,
+        ])->first();
+
+        if ($like) {
+            $like->delete();
+            $liked = false;
+        } else {
+            DiscussionLike::create([
+                'discussion_id' => $discussion->id,
+                'user_id' => $request->user()->id,
+            ]);
+            $liked = true;
+        }
+
+        return response()->json([
+            'data' => [
+                'liked' => $liked,
+                'likes_count' => $discussion->likes()->count(),
+            ],
+        ]);
     }
 
     public function destroy(Request $request, Discussion $discussion): JsonResponse

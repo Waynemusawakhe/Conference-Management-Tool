@@ -42,4 +42,9 @@ class Discussion extends Model
     {
         return $this->hasMany(DiscussionComment::class);
     }
+
+    public function likes(): HasMany
+    {
+        return $this->hasMany(DiscussionLike::class);
+    }
 }
