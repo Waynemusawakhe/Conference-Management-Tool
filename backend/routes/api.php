@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\NotificationController;
+use App\Modules\Discussions\Controllers\DiscussionController;
 use App\Models\User;
 use App\Modules\Account\Controllers\AuthController;
 use App\Modules\Account\Controllers\UserController;
@@ -569,3 +570,38 @@ Route::prefix('v1/admin/notifications')
             [AdminNotificationController::class, 'send']
         );
     });
+
+    /*
+|--------------------------------------------------------------------------
+| Community Discussions
+|--------------------------------------------------------------------------
+*/
+
+Route::prefix('v1/discussions')->group(function () {
+    Route::get('/', [DiscussionController::class, 'index']);
+    Route::get('/{discussion}', [DiscussionController::class, 'show']);
+
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::post('/', [DiscussionController::class, 'store']);
+
+        Route::post(
+            '/{discussion}/comments',
+            [DiscussionController::class, 'storeComment']
+        );
+
+        Route::delete(
+            '/{discussion}',
+            [DiscussionController::class, 'destroy']
+        );
+
+        Route::delete(
+            '/{discussion}/comments/{comment}',
+            [DiscussionController::class, 'destroyComment']
+        );
+
+        Route::patch(
+            '/{discussion}/visibility',
+            [DiscussionController::class, 'updateVisibility']
+        );
+    });
+});
