@@ -42,6 +42,12 @@ export const REVIEWER_NAV = [
     icon: FileText,
     to: "/reviewer-dashboard?filter=submitted",
   },
+    {
+    key: "discussions",
+    label: "My Discussions",
+    icon: MessageSquareQuote,
+    to: "/my-discussions",
+  },
   {
     key: "locked",
     label: "Locked",
