@@ -577,46 +577,33 @@ Route::prefix('v1/admin/notifications')
 |--------------------------------------------------------------------------
 */
 
-Route::prefix('v1/discussions')->group(function () {
-    Route::get('/', [DiscussionController::class, 'index']);
+Route::get('discussions', [DiscussionController::class, 'index']);
 
-    Route::middleware('auth:sanctum')->group(function () {
-        Route::get('/mine', [DiscussionController::class, 'mine']);
-        Route::post('/', [DiscussionController::class, 'store']);
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('discussions/mine', [DiscussionController::class, 'mine']);
 
-        Route::put(
-            '/{discussion}',
-            [DiscussionController::class, 'update']
-        );
+    Route::post('discussions', [DiscussionController::class, 'store']);
 
-        Route::post(
-            '/{discussion}/like',
-            [DiscussionController::class, 'toggleLike']
-        );
+    Route::get('discussions/{discussion}', [DiscussionController::class, 'show']);
 
-        Route::post(
-            '/{discussion}/comments',
-            [DiscussionController::class, 'storeComment']
-        );
+    Route::put('discussions/{discussion}', [DiscussionController::class, 'update']);
 
-        Route::delete(
-            '/{discussion}',
-            [DiscussionController::class, 'destroy']
-        );
+    Route::delete('discussions/{discussion}', [DiscussionController::class, 'destroy']);
 
-        Route::delete(
-            '/{discussion}/comments/{comment}',
-            [DiscussionController::class, 'destroyComment']
-        );
+    Route::post('discussions/{discussion}/like', [DiscussionController::class, 'toggleLike']);
 
-        Route::patch(
-            '/{discussion}/visibility',
-            [DiscussionController::class, 'updateVisibility']
-        );
-    });
+    Route::post(
+        'discussions/{discussion}/comments',
+        [DiscussionController::class, 'storeComment']
+    );
 
-    Route::get(
-        '/{discussion}',
-        [DiscussionController::class, 'show']
+    Route::delete(
+        'discussions/{discussion}/comments/{comment}',
+        [DiscussionController::class, 'destroyComment']
+    );
+
+    Route::patch(
+        'discussions/{discussion}/visibility',
+        [DiscussionController::class, 'updateVisibility']
     );
 });
