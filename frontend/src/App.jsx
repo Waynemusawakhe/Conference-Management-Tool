@@ -1,6 +1,5 @@
 import { lazy, Suspense } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
-import { useAuth } from "./context/AuthContext";
 
 const UserConferencePage = lazy(() => import("./pages/UserConferencePage"));
 const Home = lazy(() => import("./pages/Home"));
@@ -10,73 +9,53 @@ const Register = lazy(() => import("./pages/Register"));
 const Contact = lazy(() => import("./pages/Contact"));
 const HelpFAQ = lazy(() => import("./pages/HelpFAQ"));
 const About = lazy(() => import("./pages/About"));
-const AccessibilityGuide = lazy(() => import("./pages/AccessibilityGuide"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
 const Testimonials = lazy(() => import("./pages/Testimonials"));
 const EmailVerified = lazy(() => import("./pages/EmailVerified"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const Discussions = lazy(() => import("./pages/Discussions"));
 
 const ReviewerDashboard = lazy(() => import("./pages/ReviewerDashboard"));
 const OrganiserDashboard = lazy(() => import("./pages/OrganiserDashboard"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 
 const AccountSettings = lazy(() => import("./pages/AccountSettings"));
-const MfaSettings = lazy(() => import("./pages/MfaSettings"));
 const Profile = lazy(() => import("./pages/Profile"));
 const Settings = lazy(() => import("./pages/Settings"));
 const SubmitProposal = lazy(() => import("./pages/SubmitProposal"));
-const AdminNotificationsPage = lazy(
-  () => import("./pages/AdminNotificationsPage")
-);
 
-const CreateEditConference = lazy(
-  () => import("./pages/create_edit_conference"),
-);
+const CreateEditConference = lazy(() => import("./pages/create_edit_conference"));
 const EditSubmissionPage = lazy(() => import("./pages/EditSubmissionPage"));
 const AssignReviewersPage = lazy(() => import("./pages/AssignReviewersPage"));
 const ScoreSubmission = lazy(() => import("./pages/ScoreSubmission"));
 const AttendeeDashboard = lazy(() => import("./pages/AttendeeDashboard"));
 const MyConferences = lazy(() => import("./pages/MyConferences"));
 const UsersPage = lazy(() => import("./pages/UsersPage"));
-const ChatBot = lazy(() => import("./components/Chatbot"));
 
 /* ---------- Shared authenticated ---------- */
 const UserTestimonials = lazy(() => import("./pages/UserTestimonials"));
 
 /* ---------- Author sub-pages ---------- */
+ 
 const AuthorConferences = lazy(() => import("./pages/AuthorConferences"));
-const AuthorFeedback = lazy(() => import("./pages/AuthorFeedback"));
 
 /* ---------- Organiser sub-pages ---------- */
 const OrganiserConferences = lazy(() => import("./pages/OrganiserConferences"));
 const OrganiserReviews = lazy(() => import("./pages/OrganiserReviews"));
-const OrganiserRegistrations = lazy(
-  () => import("./pages/OrganiserRegistrations"),
-);
+const OrganiserRegistrations = lazy(() => import("./pages/OrganiserRegistrations"));
 
 /* ---------- Admin pages ---------- */
 const AdminReportsPage = lazy(() => import("./pages/AdminReportsPage"));
 const AdminUserDetailPage = lazy(() => import("./pages/AdminUserDetailPage"));
-const AdminAuditLogsPage = lazy(() => import("./pages/AdminAuditLogsPage"));
-const AdminContactMessagesPage = lazy(
-  () => import("./pages/AdminContactMessagesPage"),
-);
-const AdminContactMessageDetailPage = lazy(
-  () => import("./pages/AdminContactMessageDetailPage"),
-);
+const AdminContactMessagesPage = lazy(() => import("./pages/AdminContactMessagesPage"));
+const AdminContactMessageDetailPage = lazy(() => import("./pages/AdminContactMessageDetailPage"));
 const AdminFaqsPage = lazy(() => import("./pages/AdminFaqsPage"));
 const AdminFaqEditPage = lazy(() => import("./pages/AdminFaqEditPage"));
 const AdminConferencesPage = lazy(() => import("./pages/AdminConferencesPage"));
-const AdminEditConferencePage = lazy(
-  () => import("./pages/AdminEditConferencePage"),
-);
+const AdminEditConferencePage = lazy(() => import("./pages/AdminEditConferencePage"));
 const AdminReviewsPage = lazy(() => import("./pages/AdminReviewsPage"));
-const AdminRegistrationsPage = lazy(
-  () => import("./pages/AdminRegistrationsPage"),
-);
-const AdminTestimonialsPage = lazy(
-  () => import("./pages/AdminTestimonialsPage"),
-);
+const AdminRegistrationsPage = lazy(() => import("./pages/AdminRegistrationsPage"));
+const AdminTestimonialsPage = lazy(() => import("./pages/AdminTestimonialsPage"));
 const AdminSubmissionsPage = lazy(() => import("./pages/AdminSubmissionsPage"));
 
 import { ThemeProvider } from "./context/ThemeContext";
@@ -87,8 +66,6 @@ const AuthorDashboard = lazy(() => import("./pages/AuthorDashboard"));
 const ALL_ROLES = ["author", "reviewer", "organiser", "attendee", "admin"];
 
 export default function App() {
-  const { status, role, user } = useAuth();
-
   return (
     <ThemeProvider>
       <Suspense
@@ -111,10 +88,10 @@ export default function App() {
           <Route path="/contact" element={<Contact />} />
           <Route path="/help-faq" element={<HelpFAQ />} />
           <Route path="/about" element={<About />} />
-          <Route path="/accessibility" element={<AccessibilityGuide />} />
           <Route path="/testimonials" element={<Testimonials />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/email-verified" element={<EmailVerified />} />
+          <Route path="/discussions" element={<Discussions />} />
 
           {/* ==================== SHARED AUTHENTICATED ==================== */}
 
@@ -138,20 +115,13 @@ export default function App() {
             }
           />
 
+       
+
           <Route
             path="/author/conferences"
             element={
               <ProtectedRoute roles={["author"]}>
                 <AuthorConferences />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/author/feedback"
-            element={
-              <ProtectedRoute roles={["author"]}>
-                <AuthorFeedback />
               </ProtectedRoute>
             }
           />
@@ -205,16 +175,12 @@ export default function App() {
 
           <Route
             path="/reviewer/pending"
-            element={
-              <Navigate to="/reviewer-dashboard?filter=pending" replace />
-            }
+            element={<Navigate to="/reviewer-dashboard?filter=pending" replace />}
           />
 
           <Route
             path="/reviewer/history"
-            element={
-              <Navigate to="/reviewer-dashboard?filter=locked" replace />
-            }
+            element={<Navigate to="/reviewer-dashboard?filter=locked" replace />}
           />
 
           {/* ==================== ATTENDEE ==================== */}
@@ -244,15 +210,6 @@ export default function App() {
             element={
               <ProtectedRoute roles={["organiser"]}>
                 <OrganiserDashboard />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/admin/notifications"
-            element={
-              <ProtectedRoute roles={["admin"]}>
-                <AdminNotificationsPage />
               </ProtectedRoute>
             }
           />
@@ -327,15 +284,6 @@ export default function App() {
             element={
               <ProtectedRoute roles={["admin"]}>
                 <AdminReportsPage />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/admin/audit-logs"
-            element={
-              <ProtectedRoute roles={["admin"]}>
-                <AdminAuditLogsPage />
               </ProtectedRoute>
             }
           />
@@ -486,25 +434,10 @@ export default function App() {
             }
           />
 
-          <Route
-            path="/account-settings/mfa"
-            element={
-              <ProtectedRoute roles={ALL_ROLES}>
-                <MfaSettings />
-              </ProtectedRoute>
-            }
-          />
-
           {/* ==================== FALLBACK ==================== */}
 
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
-
-        <ChatBot
-          key={status === "authenticated" ? `user-${user?.id}` : "visitor"}
-          role={status === "authenticated" ? role : null}
-          userId={status === "authenticated" ? user?.id : null}
-        />
       </Suspense>
     </ThemeProvider>
   );
