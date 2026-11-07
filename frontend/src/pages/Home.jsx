@@ -26,7 +26,10 @@ const TOPICS = [
   "Engineering",
   "Medicine",
   "Education",
+  "Other",
 ];
+
+import ProductStory from "../components/ProductStory";
 
 function unwrapList(response) {
   if (Array.isArray(response)) return response;
@@ -316,7 +319,10 @@ export default function Home() {
             </div>
           </div>
         </section>
-
+        <ProductStory
+          onExplore={() => navigate("/conferences")}
+          onCreate={() => navigate("/register")}
+        />
         <section className="bg-white px-5 pb-24 pt-5">
           <div className="relative mx-auto flex max-w-[1200px] flex-col items-start justify-between gap-7 overflow-hidden rounded-[28px] bg-[linear-gradient(120deg,#07132f,#15165a)] px-8 py-12 text-white sm:px-12 lg:flex-row lg:items-center">
             <div className="pointer-events-none absolute -right-16 -top-36 h-80 w-80 rounded-full border-[55px] border-[#6655f6]/20" />
