@@ -1,7 +1,6 @@
 <?php
 
 use App\Http\Controllers\NotificationController;
-use App\Modules\Discussions\Controllers\DiscussionController;
 use App\Models\User;
 use App\Modules\Account\Controllers\AuthController;
 use App\Modules\Account\Controllers\UserController;
@@ -11,6 +10,7 @@ use App\Modules\Chat\Controllers\ChatController;
 use App\Modules\Conferences\Controllers\ConferenceController;
 use App\Modules\Conferences\Controllers\ConferenceSuggestionController;
 use App\Modules\ContactMessages\Controllers\ContactMessageController;
+use App\Modules\Discussions\Controllers\DiscussionController;
 use App\Modules\Faq\Controllers\FaqController;
 use App\Modules\Registrations\Controllers\RegistrationController;
 use App\Modules\Reporting\Controllers\ReportingController;
@@ -571,7 +571,7 @@ Route::prefix('v1/admin/notifications')
         );
     });
 
-    /*
+/*
 |--------------------------------------------------------------------------
 | Community Discussions
 |--------------------------------------------------------------------------
