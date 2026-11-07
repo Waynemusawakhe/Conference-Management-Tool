@@ -3,6 +3,7 @@
 namespace App\Modules\Conferences\Controllers;
 
 use App\Modules\Conferences\Models\Conference;
+use App\Modules\Conferences\Support\ConferenceTypoSearch;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -22,7 +23,14 @@ class ConferenceSuggestionController
 
         $conferences = Conference::query()
             ->select(['id', 'name', 'category', 'city', 'country'])
-            ->where('name', 'ilike', '%'.addcslashes($term, '%_\\').'%')
+            ->where(function ($query) use ($term): void {
+                $query->where('name', 'ilike', '%'.addcslashes($term, '%_\\\\').'%');
+                ConferenceTypoSearch::apply($query, $term);
+            })
+            ->when(ConferenceTypoSearch::enabled() && mb_strlen($term) >= 3, function ($query) use ($term) {
+                $query->orderByRaw('CASE WHEN LOWER(name) LIKE ? THEN 0 ELSE 1 END', [mb_strtolower($term).'%'])
+                    ->orderByRaw('similarity(name, ?) DESC', [$term]);
+            })
             ->orderBy('name')
             ->limit(5)
             ->get();

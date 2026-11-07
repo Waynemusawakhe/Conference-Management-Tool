@@ -20,6 +20,7 @@ import SectionHeading from "../components/SectionHeading";
 import { conferencesApi } from "../api/conferencesApi";
 import { registrationsApi } from "../api/registrationsApi";
 import { useAuth } from "../hooks/useAuth";
+import useModalKeyboard from "../hooks/useModalKeyboard";
 
 const CATEGORIES = [
   "Technology",
@@ -281,15 +282,21 @@ function HugeCountdownHero({ conference }) {
 }
 
 function RegistrationSuccessModal({ open, conferenceName, onView, onClose }) {
+  const dialogRef = useRef(null);
+  useModalKeyboard(open, dialogRef, onClose);
   if (!open) return null;
   return (
     <div
       className="fixed inset-0 z-[120] grid place-items-center bg-[#030814]/75 p-4 backdrop-blur-md"
-      onClick={onClose}
+      onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}
     >
       <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="cmt-registration-success-title"
+        tabIndex={-1}
         className="w-full max-w-[440px] overflow-hidden rounded-[24px] bg-white shadow-[0_40px_120px_rgba(3,8,20,.5)]"
-        onClick={(e) => e.stopPropagation()}
       >
         <div className="flex flex-col items-center px-6 pb-6 pt-8 text-center">
           <div className="relative mb-5 grid h-20 w-20 place-items-center">
@@ -300,7 +307,7 @@ function RegistrationSuccessModal({ open, conferenceName, onView, onClose }) {
               <path d="M15 27 L23 35 L38 19" fill="none" stroke="#18794e" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" className="cmt-reg-check-cf" />
             </svg>
           </div>
-          <h2 className="text-[18px] font-extrabold text-[#1c2a4a]">Registration Successful</h2>
+          <h2 id="cmt-registration-success-title" className="text-[18px] font-extrabold text-[#1c2a4a]">Registration Successful</h2>
           {conferenceName && (
             <p className="mt-2 line-clamp-2 text-[12px] font-bold text-[#35415f]">{conferenceName}</p>
           )}
@@ -388,6 +395,8 @@ export default function Conferences({ embedded = false }) {
   const [showCompareModal, setShowCompareModal] = useState(false);
   const [compareError, setCompareError] = useState("");
   const compareButtonRef = useRef(null);
+  const compareDialogRef = useRef(null);
+  useModalKeyboard(showCompareModal, compareDialogRef, () => setShowCompareModal(false), compareButtonRef);
 
   const toggleCompare = (conference) => {
     setCompareError("");
@@ -547,23 +556,6 @@ export default function Conferences({ embedded = false }) {
     loadMyRegistrations();
   }, [loadMyRegistrations]);
 
-  useEffect(() => {
-    if (showCompareModal) {
-      document.body.style.overflow = "hidden";
-      const handleEscape = (e) => {
-        if (e.key === "Escape") setShowCompareModal(false);
-      };
-      document.addEventListener("keydown", handleEscape);
-      
-      return () => {
-        document.body.style.overflow = "unset";
-        document.removeEventListener("keydown", handleEscape);
-        if (compareButtonRef.current) {
-          compareButtonRef.current.focus();
-        }
-      };
-    }
-  }, [showCompareModal]);
 
   const handleRegister = async (conference) => {
     setRegistrationMessage("");
@@ -654,7 +646,7 @@ export default function Conferences({ embedded = false }) {
       <div className={showAttendeeChrome ? "mx-auto flex w-[min(1400px,calc(100%-32px))] gap-6 py-6 lg:gap-7" : ""}>
         {showAttendeeChrome && <AttendeeSidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />}
 
-        <main className={showAttendeeChrome ? "min-w-0 flex-1" : ""}>
+        <main id="cmt-main-content" className={showAttendeeChrome ? "min-w-0 flex-1" : ""}>
           
           {!embedded && (
             featuredUpcoming && !featuredLoading ? (
@@ -819,6 +811,9 @@ export default function Conferences({ embedded = false }) {
                 </div>
               )}
 
+              <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+                {!loading && !error ? `${displayConferences.length} conferences displayed` : ""}
+              </div>
               <SectionHeading
                 eyebrow="Conference catalogue"
                 title={
@@ -865,6 +860,8 @@ export default function Conferences({ embedded = false }) {
                           <button
                             type="button"
                             onClick={() => toggleCompare(conference)}
+                            aria-pressed={Boolean(selectedForCompare.find((c) => c.id === conference.id))}
+                            aria-label={`${selectedForCompare.some((c) => c.id === conference.id) ? "Remove" : "Add"} ${conference.name} ${selectedForCompare.some((c) => c.id === conference.id) ? "from" : "to"} comparison`}
                             className={`inline-flex min-h-10 items-center justify-center rounded-[10px] px-4 text-[11px] font-extrabold transition ${
                               selectedForCompare.find((c) => c.id === conference.id)
                                 ? "bg-[#07132f] text-white"
@@ -958,13 +955,13 @@ export default function Conferences({ embedded = false }) {
       )}
 
       {compareError && (
-        <div className="fixed bottom-24 left-1/2 z-[90] -translate-x-1/2 rounded-xl bg-red-600 px-6 py-3 text-[12px] font-bold text-white shadow-lg">
+        <div role="alert" className="fixed bottom-24 left-1/2 z-[90] -translate-x-1/2 rounded-xl bg-red-600 px-6 py-3 text-[12px] font-bold text-white shadow-lg">
           {compareError}
         </div>
       )}
 
       {selectedForCompare.length >= 2 && (
-        <div className="fixed bottom-6 left-1/2 z-[90] flex -translate-x-1/2 items-center gap-4 rounded-full bg-[#07132f] px-6 py-3 text-white shadow-[0_20px_50px_rgba(0,0,0,0.3)]">
+        <div role="region" aria-label="Selected conference comparison" className="fixed bottom-6 left-1/2 z-[90] flex -translate-x-1/2 items-center gap-4 rounded-full bg-[#07132f] px-6 py-3 text-white shadow-[0_20px_50px_rgba(0,0,0,0.3)]">
           <span className="text-[12px] font-bold">{selectedForCompare.length} conferences selected</span>
           <button 
             ref={compareButtonRef}
@@ -981,10 +978,12 @@ export default function Conferences({ embedded = false }) {
 
       {showCompareModal && selectedForCompare.length > 0 && (
         <div
+          ref={compareDialogRef}
+          tabIndex={-1}
           className="fixed inset-0 z-[100] grid place-items-center bg-[#030814]/75 p-4 backdrop-blur-md"
           role="dialog"
           aria-modal="true"
-          aria-label="Conference Comparison"
+          aria-labelledby="cmt-compare-dialog-title"
           onMouseDown={(event) => {
             if (event.target === event.currentTarget) {
               setShowCompareModal(false);
@@ -993,49 +992,50 @@ export default function Conferences({ embedded = false }) {
         >
           <div className="flex max-h-[90vh] w-full max-w-[900px] flex-col overflow-hidden rounded-[22px] bg-white shadow-[0_40px_120px_rgba(3,8,20,.5)]">
             <div className="flex items-center justify-between border-b border-[#edf0f5] p-6">
-              <h2 className="text-xl font-bold text-[#0d1b3d]">Conference Comparison</h2>
-              <button onClick={() => setShowCompareModal(false)} className="text-sm font-bold text-[#66728b] transition hover:text-[#7f1d1d]">
+              <h2 id="cmt-compare-dialog-title" className="text-xl font-bold text-[#0d1b3d]">Conference Comparison</h2>
+              <button type="button" onClick={() => setShowCompareModal(false)} aria-label="Close conference comparison" className="text-sm font-bold text-[#66728b] transition hover:text-[#7f1d1d]">
                 Close ✕
               </button>
             </div>
             <div className="overflow-auto p-6">
               <div className="min-w-[600px]">
               <table className="w-full text-left border-collapse">
+                <caption className="sr-only">Side-by-side comparison of selected conferences</caption>
                 <thead>
                   <tr>
-                    <th className="p-3 border-b bg-[#fafbfe] text-[11px] font-extrabold uppercase text-[#8993a6] w-1/4">Feature</th>
+                    <th scope="col" className="p-3 border-b bg-[#fafbfe] text-[11px] font-extrabold uppercase text-[#8993a6] w-1/4">Feature</th>
                     {selectedForCompare.map((c) => (
-                      <th key={c.id} className="p-3 border-b bg-[#fafbfe] text-[13px] font-bold text-[#0d1b3d]">{c.name}</th>
+                      <th key={c.id} scope="col" className="p-3 border-b bg-[#fafbfe] text-[13px] font-bold text-[#0d1b3d]">{c.name}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody className="text-[12px] text-[#43506a]">
                   <tr>
-                    <td className="p-3 border-b font-bold">Dates</td>
+                    <th scope="row" className="p-3 border-b font-bold">Dates</th>
                     {selectedForCompare.map((c) => (
                       <td key={c.id} className="p-3 border-b">{c.startDate} - {c.endDate}</td>
                     ))}
                   </tr>
                   <tr>
-                    <td className="p-3 border-b font-bold">Location</td>
+                    <th scope="row" className="p-3 border-b font-bold">Location</th>
                     {selectedForCompare.map((c) => (
                       <td key={c.id} className="p-3 border-b">{c.city}, {c.country}</td>
                     ))}
                   </tr>
                   <tr>
-                    <td className="p-3 border-b font-bold">Format</td>
+                    <th scope="row" className="p-3 border-b font-bold">Format</th>
                     {selectedForCompare.map((c) => (
                       <td key={c.id} className="p-3 border-b capitalize">{c.format?.replace("_", " ")}</td>
                     ))}
                   </tr>
                   <tr>
-                    <td className="p-3 border-b font-bold">Deadline</td>
+                    <th scope="row" className="p-3 border-b font-bold">Deadline</th>
                     {selectedForCompare.map((c) => (
                       <td key={c.id} className="p-3 border-b text-red-600 font-semibold">{c.submissionDeadline}</td>
                     ))}
                   </tr>
                   <tr>
-                    <td className="p-3 border-b font-bold">Topics</td>
+                    <th scope="row" className="p-3 border-b font-bold">Topics</th>
                     {selectedForCompare.map((c) => (
                       <td key={c.id} className="p-3 border-b">
                         {c.topics && c.topics.length > 0 
