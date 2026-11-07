@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 
 import { useNavigate } from "react-router-dom";
+import StatusIndicator from "./StatusIndicator";
 
 const accentClasses = {
   purple: {
@@ -226,16 +227,7 @@ export default function ConferenceCard({
             {conferenceCategory}
           </span>
 
-          {displayStatus && (
-            <span className="rounded-full bg-[#eaf9f2] px-2 py-1 text-[9px] font-bold text-[#159b64]">
-                            {{
-                open: "Open for submissions",
-                closed: "Closed",
-                deadline_passed: "Deadline passed",
-              }[displayStatus] ||
-                displayStatus}
-            </span>
-          )}
+          {displayStatus && <StatusIndicator status={displayStatus} />}
 
           {conferenceFormat && (
             <span className="rounded-full bg-[#f2f1ff] px-2 py-1 text-[9px] font-bold text-[#5c50ec]">
