@@ -10,6 +10,7 @@ use App\Modules\Chat\Controllers\ChatController;
 use App\Modules\Conferences\Controllers\ConferenceController;
 use App\Modules\Conferences\Controllers\ConferenceSuggestionController;
 use App\Modules\ContactMessages\Controllers\ContactMessageController;
+use App\Modules\Discussions\Controllers\DiscussionController;
 use App\Modules\Faq\Controllers\FaqController;
 use App\Modules\Registrations\Controllers\RegistrationController;
 use App\Modules\Reporting\Controllers\ReportingController;
@@ -569,3 +570,41 @@ Route::prefix('v1/admin/notifications')
             [AdminNotificationController::class, 'send']
         );
     });
+
+/*
+|--------------------------------------------------------------------------
+| Community Discussions
+|--------------------------------------------------------------------------
+*/
+
+Route::prefix('v1')->group(function () {
+    Route::get('discussions', [DiscussionController::class, 'index']);
+
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::get('discussions/mine', [DiscussionController::class, 'mine']);
+        Route::post('discussions', [DiscussionController::class, 'store']);
+        Route::get('discussions/{discussion}', [DiscussionController::class, 'show']);
+        Route::put('discussions/{discussion}', [DiscussionController::class, 'update']);
+        Route::delete('discussions/{discussion}', [DiscussionController::class, 'destroy']);
+
+        Route::post(
+            'discussions/{discussion}/comments',
+            [DiscussionController::class, 'storeComment']
+        );
+
+        Route::delete(
+            'discussions/{discussion}/comments/{comment}',
+            [DiscussionController::class, 'destroyComment']
+        );
+
+        Route::post(
+            'discussions/{discussion}/like',
+            [DiscussionController::class, 'toggleLike']
+        );
+
+        Route::patch(
+            'discussions/{discussion}/visibility',
+            [DiscussionController::class, 'updateVisibility']
+        );
+    });
+});

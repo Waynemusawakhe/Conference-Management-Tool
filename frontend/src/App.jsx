@@ -15,6 +15,8 @@ const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
 const Testimonials = lazy(() => import("./pages/Testimonials"));
 const EmailVerified = lazy(() => import("./pages/EmailVerified"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const Discussions = lazy(() => import("./pages/Discussions"));
+const MyDiscussions = lazy(() => import("./pages/MyDiscussions"));
 
 const ReviewerDashboard = lazy(() => import("./pages/ReviewerDashboard"));
 const OrganiserDashboard = lazy(() => import("./pages/OrganiserDashboard"));
@@ -115,6 +117,7 @@ export default function App() {
           <Route path="/testimonials" element={<Testimonials />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/email-verified" element={<EmailVerified />} />
+          <Route path="/discussions" element={<Discussions />} />
 
           {/* ==================== SHARED AUTHENTICATED ==================== */}
 
@@ -123,6 +126,15 @@ export default function App() {
             element={
               <ProtectedRoute roles={ALL_ROLES}>
                 <UserTestimonials />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/my-discussions"
+            element={
+              <ProtectedRoute roles={ALL_ROLES}>
+                <MyDiscussions />
               </ProtectedRoute>
             }
           />

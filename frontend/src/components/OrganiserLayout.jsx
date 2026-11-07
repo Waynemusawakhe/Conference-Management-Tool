@@ -29,6 +29,11 @@ const PRIMARY_NAV = [
   { label: "My conferences", to: "/organiser/conferences", icon: CalendarDays },
   { label: "Reviews", to: "/organiser/reviews", icon: CheckCheck },
   { label: "Attendees", to: "/organiser/registrations", icon: Users },
+    {
+    label: "My Discussions",
+    to: "/my-discussions",
+    icon: MessageSquareQuote,
+  },
   { label: "Create conference", to: "/create-conference", icon: Plus },
 ];
 

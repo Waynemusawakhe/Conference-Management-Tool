@@ -68,10 +68,16 @@ const NAV_ITEMS = [
     label: "Users",
     icon: Users,
   },
+
   {
-  to: "/admin/notifications",
-  label: "Notifications",
-  icon: Bell,
+    to: "/my-discussions",
+    label: "My Discussions",
+    icon: MessageSquareQuote,
+  },
+  {
+    to: "/admin/notifications",
+    label: "Notifications",
+    icon: Bell,
   },
   {
     to: "/admin/testimonials",

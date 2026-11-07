@@ -1,4 +1,4 @@
-import { Menu, Moon, Sun, X } from "lucide-react";
+import { LogOut, Menu, Moon, Sun, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Logo from "./Logo";
@@ -10,19 +10,19 @@ const navItems = [
   { label: "Conferences", target: "/conferences" },
   { label: "About", target: "/about" },
   { label: "Testimonials", target: "/testimonials" },
+  { label: "Discussions", target: "/discussions" },
   { label: "Help & FAQ", target: "/help-faq" },
   { label: "Contact", target: "/contact" },
 ];
 
-const dashboardPathByRole = {
+const dashboardByRole = {
   admin: "/admin-dashboard",
-  organiser: "/organiser-dashboard",
-  author: "/author-dashboard",
-  reviewer: "/reviewer-dashboard",
   attendee: "/attendee-dashboard",
+  author: "/author-dashboard",
+  organiser: "/organiser-dashboard",
+  organizer: "/organiser-dashboard",
+  reviewer: "/reviewer-dashboard",
 };
-
-const getDashboardPath = (role) => dashboardPathByRole[role] || "/home";
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
@@ -31,14 +31,15 @@ export default function Navbar() {
   const { dark, toggleTheme } = useTheme();
   const { status, role, logout } = useAuth();
 
+  const isAuthenticated = status === "authenticated";
+  const dashboardPath = dashboardByRole[role] || "/home";
+
   useEffect(() => {
     setOpen(false);
   }, [location.pathname, location.search, location.hash]);
 
   useEffect(() => {
-    if (!open) {
-      return undefined;
-    }
+    if (!open) return undefined;
 
     const handleKeyDown = (event) => {
       if (event.key === "Escape") {
@@ -58,8 +59,8 @@ export default function Navbar() {
 
     if (target === "/conferences") {
       return (
-        location.pathname === target ||
-        location.pathname.startsWith(`${target}/`)
+        location.pathname === "/conferences" ||
+        location.pathname.startsWith("/conferences/")
       );
     }
 
@@ -69,10 +70,11 @@ export default function Navbar() {
   const goTo = ({ target, section }) => {
     setOpen(false);
 
-    if (
-      location.pathname === target ||
-      (target === "/home" && location.pathname === "/")
-    ) {
+    const alreadyOnHome =
+      target === "/home" &&
+      (location.pathname === "/" || location.pathname === "/home");
+
+    if (location.pathname === target || alreadyOnHome) {
       document
         .getElementById(section || "top")
         ?.scrollIntoView({ behavior: "smooth" });
@@ -92,22 +94,22 @@ export default function Navbar() {
   };
 
   const handleLogout = () => {
-    logout();
     setOpen(false);
-    navigate("/home");
+    logout();
+    navigate("/home", { replace: true });
   };
 
   return (
     <header className="sticky top-0 z-50 border-b border-white/10 bg-[#07132f]/90 text-white backdrop-blur-xl">
       <div className="mx-auto flex min-h-[82px] w-[min(1200px,calc(100%-40px))] items-center gap-7">
         <a
-          href="/"
+          href="/home"
+          aria-label="CMT home"
+          className="rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b9b3ff]"
           onClick={(event) => {
             event.preventDefault();
             goTo(navItems[0]);
           }}
-          aria-label="CMT home"
-          className="rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b9b3ff]"
         >
           <Logo />
         </a>
@@ -148,25 +150,26 @@ export default function Navbar() {
             {dark ? <Sun size={17} /> : <Moon size={17} />}
           </button>
 
-          {status === "authenticated" ? (
+          {isAuthenticated ? (
             <>
               <button
                 type="button"
                 className="min-h-11 rounded-[11px] border border-white/20 bg-transparent px-[18px] text-[13px] font-bold text-white transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b9b3ff]"
-                onClick={() => navigate(getDashboardPath(role))}
+                onClick={() => navigate(dashboardPath)}
               >
                 Dashboard
               </button>
 
               <button
                 type="button"
-                className="min-h-11 rounded-[11px] bg-gradient-to-br from-[#6655f6] to-[#7869ff] px-[18px] text-[13px] font-bold text-white shadow-[0_10px_26px_rgba(103,87,245,.26)] transition hover:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b9b3ff]"
+                className="inline-flex min-h-11 items-center gap-2 rounded-[11px] bg-gradient-to-br from-[#6655f6] to-[#7869ff] px-[18px] text-[13px] font-bold text-white shadow-[0_10px_26px_rgba(103,87,245,.26)] transition hover:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b9b3ff]"
                 onClick={handleLogout}
               >
-                Sign out
+                <LogOut size={16} />
+                Logout
               </button>
             </>
-          ) : status === "unauthenticated" ? (
+          ) : (
             <>
               <button
                 type="button"
@@ -184,7 +187,7 @@ export default function Navbar() {
                 Register
               </button>
             </>
-          ) : null}
+          )}
         </div>
 
         <button
@@ -219,14 +222,14 @@ export default function Navbar() {
 
                 return (
                   <button
+                    key={item.label}
                     type="button"
+                    aria-current={active ? "page" : undefined}
                     className={`min-h-11 w-full rounded-lg border-0 px-3 text-left text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b9b3ff] ${
                       active
                         ? "bg-white/10 text-white"
                         : "bg-transparent text-white/75 hover:bg-white/[.06] hover:text-white"
                     }`}
-                    key={item.label}
-                    aria-current={active ? "page" : undefined}
                     onClick={() => goTo(item)}
                   >
                     {item.label}
@@ -244,14 +247,14 @@ export default function Navbar() {
                   {dark ? <Sun size={17} /> : <Moon size={17} />}
                 </button>
 
-                {status === "authenticated" ? (
+                {isAuthenticated ? (
                   <>
                     <button
                       type="button"
-                      className="min-h-11 flex-1 rounded-[11px] border border-white/20 bg-transparent px-[18px] text-[13px] font-bold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b9b3ff]"
+                      className="min-h-11 flex-1 rounded-[11px] border border-white/20 bg-transparent px-[18px] text-[13px] font-bold text-white"
                       onClick={() => {
                         setOpen(false);
-                        navigate(getDashboardPath(role));
+                        navigate(dashboardPath);
                       }}
                     >
                       Dashboard
@@ -259,17 +262,17 @@ export default function Navbar() {
 
                     <button
                       type="button"
-                      className="min-h-11 flex-1 rounded-[11px] bg-gradient-to-br from-[#6655f6] to-[#7869ff] px-[18px] text-[13px] font-bold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b9b3ff]"
+                      className="min-h-11 flex-1 rounded-[11px] bg-gradient-to-br from-[#6655f6] to-[#7869ff] px-[18px] text-[13px] font-bold text-white"
                       onClick={handleLogout}
                     >
-                      Sign out
+                      Logout
                     </button>
                   </>
-                ) : status === "unauthenticated" ? (
+                ) : (
                   <>
                     <button
                       type="button"
-                      className="min-h-11 flex-1 rounded-[11px] border border-white/20 bg-transparent px-[18px] text-[13px] font-bold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b9b3ff]"
+                      className="min-h-11 flex-1 rounded-[11px] border border-white/20 bg-transparent px-[18px] text-[13px] font-bold text-white"
                       onClick={() => {
                         setOpen(false);
                         navigate("/login");
@@ -280,7 +283,7 @@ export default function Navbar() {
 
                     <button
                       type="button"
-                      className="min-h-11 flex-1 rounded-[11px] bg-gradient-to-br from-[#6655f6] to-[#7869ff] px-[18px] text-[13px] font-bold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b9b3ff]"
+                      className="min-h-11 flex-1 rounded-[11px] bg-gradient-to-br from-[#6655f6] to-[#7869ff] px-[18px] text-[13px] font-bold text-white"
                       onClick={() => {
                         setOpen(false);
                         navigate("/register");
@@ -289,7 +292,7 @@ export default function Navbar() {
                       Register
                     </button>
                   </>
-                ) : null}
+                )}
               </div>
             </nav>
           </div>

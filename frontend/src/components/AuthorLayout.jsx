@@ -23,8 +23,17 @@ import { useAuth } from "../context/AuthContext";
 
 const NAV = [
   { label: "Overview", to: "/author-dashboard", icon: LayoutDashboard },
-  { label: "My proposals", to: "/author-dashboard#my-proposals", icon: FileText },
+  {
+    label: "My proposals",
+    to: "/author-dashboard#my-proposals",
+    icon: FileText,
+  },
   { label: "Deadlines", to: "/author-dashboard#deadlines", icon: CalendarDays },
+  {
+    label: "My Discussions",
+    to: "/my-discussions",
+    icon: MessageSquareQuote,
+  },
   { label: "Browse conferences", to: "/author/conferences", icon: Search },
   { label: "Feedback", to: "/author/feedback", icon: MessageSquareQuote },
 ];
@@ -64,7 +73,10 @@ export default function AuthorLayout({ children }) {
 
   const isActive = (to) => {
     const [path] = to.split("#");
-    if (to === "/author-dashboard" && location.pathname === "/author-dashboard") {
+    if (
+      to === "/author-dashboard" &&
+      location.pathname === "/author-dashboard"
+    ) {
       return !location.hash;
     }
     if (to.startsWith("/author-dashboard#")) {
@@ -115,9 +127,7 @@ export default function AuthorLayout({ children }) {
             <button
               className="hidden h-10 w-10 place-items-center rounded-[11px] border border-white/15 bg-white/[.05] text-white/80 transition hover:bg-white hover:text-[#07132f] sm:grid"
               onClick={toggleTheme}
-              aria-label={
-                dark ? "Switch to light mode" : "Switch to dark mode"
-              }
+              aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
               title={dark ? "Switch to light mode" : "Switch to dark mode"}
             >
               {dark ? <Sun size={16} /> : <Moon size={16} />}
