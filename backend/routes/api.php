@@ -588,9 +588,15 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::put('discussions/{discussion}', [DiscussionController::class, 'update']);
 
-    Route::delete('discussions/{discussion}', [DiscussionController::class, 'destroy']);
+    Route::post(
+        'discussions/{discussion}/like',
+        [DiscussionController::class, 'toggleLike']
+    );
 
-    Route::post('discussions/{discussion}/like', [DiscussionController::class, 'toggleLike']);
+    Route::delete(
+        'discussions/{discussion}',
+        [DiscussionController::class, 'destroy']
+    );
 
     Route::post(
         'discussions/{discussion}/comments',
