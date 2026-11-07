@@ -579,10 +579,20 @@ Route::prefix('v1/admin/notifications')
 
 Route::prefix('v1/discussions')->group(function () {
     Route::get('/', [DiscussionController::class, 'index']);
-    Route::get('/{discussion}', [DiscussionController::class, 'show']);
 
     Route::middleware('auth:sanctum')->group(function () {
+        Route::get('/mine', [DiscussionController::class, 'mine']);
         Route::post('/', [DiscussionController::class, 'store']);
+
+        Route::put(
+            '/{discussion}',
+            [DiscussionController::class, 'update']
+        );
+
+        Route::post(
+            '/{discussion}/like',
+            [DiscussionController::class, 'toggleLike']
+        );
 
         Route::post(
             '/{discussion}/comments',
@@ -604,4 +614,9 @@ Route::prefix('v1/discussions')->group(function () {
             [DiscussionController::class, 'updateVisibility']
         );
     });
+
+    Route::get(
+        '/{discussion}',
+        [DiscussionController::class, 'show']
+    );
 });
