@@ -9,6 +9,8 @@ import {
   LogOut,
   Menu,
   MessageSquareQuote,
+  MessagesSquare,
+  Star,
   Moon,
   Search,
   Settings as SettingsIcon,
@@ -32,14 +34,14 @@ const NAV = [
   {
     label: "My Discussions",
     to: "/my-discussions",
-    icon: MessageSquareQuote,
+    icon: MessagesSquare,
   },
   { label: "Browse conferences", to: "/author/conferences", icon: Search },
   { label: "Feedback", to: "/author/feedback", icon: MessageSquareQuote },
 ];
 
 const FOOTER_NAV = [
-  { label: "Testimonials", to: "/user-testimonials", icon: MessageSquareQuote },
+  { label: "Testimonials", to: "/user-testimonials", icon: Star },
 ];
 
 const SETTINGS_NAV = [

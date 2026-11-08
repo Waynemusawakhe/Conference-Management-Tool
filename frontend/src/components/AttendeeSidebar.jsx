@@ -3,7 +3,8 @@ import {
   LayoutDashboard,
   LoaderCircle,
   LogOut,
-  MessageSquareQuote,
+  MessagesSquare,
+  Star,
   Settings,
   TicketCheck,
   UserRound,
@@ -103,7 +104,7 @@ export default function AttendeeSidebar({ open, onClose }) {
           />
 
           <NavItem
-            icon={<MessageSquareQuote size={16} />}
+            icon={<MessagesSquare size={16} />}
             label="My Discussions"
             active={location.pathname === "/my-discussions"}
             onClick={() => goTo("/my-discussions")}
@@ -113,7 +114,7 @@ export default function AttendeeSidebar({ open, onClose }) {
         <div className="my-4 border-t border-[#edf0f5]" />
 
         <NavItem
-          icon={<MessageSquareQuote size={16} />}
+          icon={<Star size={16} />}
           label="Testimonials"
           active={location.pathname === "/user-testimonials"}
           onClick={() => goTo("/user-testimonials")}

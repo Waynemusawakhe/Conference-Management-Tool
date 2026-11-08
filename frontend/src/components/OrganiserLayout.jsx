@@ -10,7 +10,8 @@ import {
   LoaderCircle,
   LogOut,
   Menu,
-  MessageSquareQuote,
+  MessagesSquare,
+  Star,
   Moon,
   Plus,
   Settings as SettingsIcon,
@@ -32,7 +33,7 @@ const PRIMARY_NAV = [
     {
     label: "My Discussions",
     to: "/my-discussions",
-    icon: MessageSquareQuote,
+    icon: MessagesSquare,
   },
   { label: "Create conference", to: "/create-conference", icon: Plus },
 ];
@@ -411,7 +412,7 @@ export default function OrganiserLayout({ children }) {
             onClick={() => setSidebarOpen(false)}
             className={navItemClass("/user-testimonials")}
           >
-            <MessageSquareQuote size={16} />
+            <Star size={16} />
             <span className="truncate">Testimonials</span>
           </Link>
 

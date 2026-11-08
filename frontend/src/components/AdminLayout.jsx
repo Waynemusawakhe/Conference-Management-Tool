@@ -14,7 +14,8 @@ import {
   LogOut,
   Mail,
   Menu,
-  MessageSquareQuote,
+  MessagesSquare,
+  Star,
   Moon,
   Settings,
   Sun,
@@ -72,7 +73,7 @@ const NAV_ITEMS = [
   {
     to: "/my-discussions",
     label: "My Discussions",
-    icon: MessageSquareQuote,
+    icon: MessagesSquare,
   },
   {
     to: "/admin/notifications",
@@ -82,7 +83,7 @@ const NAV_ITEMS = [
   {
     to: "/admin/testimonials",
     label: "Testimonials",
-    icon: MessageSquareQuote,
+    icon: Star,
   },
   {
     to: "/admin/contact-messages",
