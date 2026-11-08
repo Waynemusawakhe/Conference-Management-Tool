@@ -1,3 +1,4 @@
+import { MessageCircleMore } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
@@ -43,10 +44,11 @@ export const REVIEWER_NAV = [
     icon: FileText,
     to: "/reviewer-dashboard?filter=submitted",
   },
-    {
+    { key: "community", label: "Discussions", icon: MessagesSquare, to: "/discussions" },
+  {
     key: "discussions",
     label: "My Discussions",
-    icon: MessagesSquare,
+    icon: MessageCircleMore,
     to: "/my-discussions",
   },
   {

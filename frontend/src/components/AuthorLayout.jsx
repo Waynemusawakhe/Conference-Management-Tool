@@ -1,3 +1,4 @@
+import { MessageCircleMore } from "lucide-react";
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
@@ -31,10 +32,11 @@ const NAV = [
     icon: FileText,
   },
   { label: "Deadlines", to: "/author-dashboard#deadlines", icon: CalendarDays },
+  { label: "Discussions", to: "/discussions", icon: MessagesSquare },
   {
     label: "My Discussions",
     to: "/my-discussions",
-    icon: MessagesSquare,
+    icon: MessageCircleMore,
   },
   { label: "Browse conferences", to: "/author/conferences", icon: Search },
   { label: "Feedback", to: "/author/feedback", icon: MessageSquareQuote },

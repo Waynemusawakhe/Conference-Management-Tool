@@ -26,6 +26,7 @@ import AttendeeSidebar from "./AttendeeSidebar";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import AdminLayout from "./AdminLayout";
+import AuthorLayout from "./AuthorLayout";
 import ReviewerLayout from "./ReviewerLayout";
 import OrganiserLayout from "./OrganiserLayout";
 
@@ -436,7 +437,7 @@ export default function RoleChrome({ children }) {
   if (role === "reviewer") return <ReviewerLayout>{children}</ReviewerLayout>;
   if (role === "organiser") return <OrganiserLayout>{children}</OrganiserLayout>;
   if (role === "author")
-    return <AuthorWorkspaceShell>{children}</AuthorWorkspaceShell>;
+    return <AuthorLayout>{children}</AuthorLayout>;
   if (role === "attendee")
     return <AttendeeWorkspaceShell>{children}</AttendeeWorkspaceShell>;
   return <GenericShell>{children}</GenericShell>;

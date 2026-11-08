@@ -1,3 +1,4 @@
+import { MessageCircleMore } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -70,10 +71,11 @@ const NAV_ITEMS = [
     icon: Users,
   },
 
+  { to: "/discussions", label: "Discussions", icon: MessagesSquare },
   {
     to: "/my-discussions",
     label: "My Discussions",
-    icon: MessagesSquare,
+    icon: MessageCircleMore,
   },
   {
     to: "/admin/notifications",
