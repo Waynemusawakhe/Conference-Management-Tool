@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowRight, Bookmark, ChevronLeft, ChevronRight, Heart, MessageCircle, MessageSquareText, Plus, RefreshCw, Search, Send, SlidersHorizontal, Sparkles, X, ShieldCheck, Pin, EyeOff, Trash2, LogIn, TrendingUp } from "lucide-react";
+import { ArrowRight, Bookmark, ChevronLeft, ChevronRight, Heart, MessageCircle, MessageSquareText, Plus, RefreshCw, Search, Send, SlidersHorizontal, Sparkles, CheckCircle2, AlertTriangle, X, ShieldCheck, Pin, EyeOff, Trash2, LogIn, TrendingUp } from "lucide-react";
 import { discussionsApi } from "../api/discussionsApi";
 import { useAuth } from "../context/AuthContext";
 import DiscussionWorkspaceLayout from "../components/DiscussionWorkspaceLayout";
@@ -40,6 +40,8 @@ export default function Discussions() {
   const [sortBy, setSortBy] = useState("newest");
   const [likedIds, setLikedIds] = useState({});
   const [cardLikeBusy, setCardLikeBusy] = useState(null);
+  const [deleteConfirm, setDeleteConfirm] = useState(false);
+  const [notice, setNotice] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true); setError("");
@@ -53,7 +55,7 @@ export default function Discussions() {
   useEffect(() => { load(); }, [load]);
 
   const openDetail = async (id) => {
-    setSelectedId(id); setDetail(null); setDetailLoading(signedIn); setActionError(""); setReply("");
+    setDeleteConfirm(false); setSelectedId(id); setDetail(null); setDetailLoading(signedIn); setActionError(""); setReply("");
     if (!signedIn) {
       const preview = items.find((item) => item.id === id);
       setDetail(preview || null);
@@ -67,13 +69,14 @@ export default function Discussions() {
   const create = async (e) => {
     e.preventDefault(); if (saving) return;
     setSaving(true); setActionError("");
-    try { await discussionsApi.create({ title: draft.title.trim(), body: draft.body.trim(), category: draft.category }); setCompose(false); setDraft(emptyDraft); setSearch(""); setQuery(""); setCategory("All"); setOnlySaved(false); setPage(1); if (page === 1 && category === "All" && !query) await load(); }
+    try { await discussionsApi.create({ title: draft.title.trim(), body: draft.body.trim(), category: draft.category }); setCompose(false); setDraft(emptyDraft); setSearch(""); setQuery(""); setCategory("All"); setOnlySaved(false); setPage(1); if (page === 1 && category === "All" && !query) await load(); setNotice("Your discussion was published successfully!"); }
     catch (e) { setActionError(errorText(e)); }
     finally { setSaving(false); }
   };
   const manageDiscussion = async (action) => {
     if (!isAdmin || !detail || adminBusy) return;
-    if (action === "delete" && !window.confirm("Permanently delete this discussion and its replies?")) return;
+    if (action === "delete" && !deleteConfirm) { setDeleteConfirm(true); return; }
+    setDeleteConfirm(false);
     setAdminBusy(true); setActionError("");
     try {
       if (action === "delete") {
@@ -88,6 +91,7 @@ export default function Discussions() {
         else setDetail((current) => ({ ...current, is_pinned: !current.is_pinned }));
       }
       await load();
+      setNotice(action === "delete" ? "Discussion deleted." : action === "hide" ? "Discussion hidden." : "Discussion pin updated.");
     } catch (e) { setActionError(errorText(e)); }
     finally { setAdminBusy(false); }
   };
@@ -136,6 +140,8 @@ export default function Discussions() {
   });
   return <DiscussionWorkspaceLayout>
     <div className="min-w-0 text-[#14213d]">
+      {notice && <div role="status" aria-live="polite" className="fixed left-1/2 top-24 z-[120] flex w-[min(92vw,440px)] -translate-x-1/2 items-center gap-3 rounded-2xl border border-emerald-200 bg-white p-4 text-sm font-semibold text-emerald-900 shadow-2xl motion-safe:animate-[cmt-notice-in_.35s_ease-out] motion-reduce:animate-none"><CheckCircle2 className="shrink-0 text-emerald-600" size={22}/><span className="flex-1">{notice}</span><button type="button" onClick={() => setNotice("")} aria-label="Dismiss notification" className="rounded-lg p-1 hover:bg-emerald-50"><X size={18}/></button></div>}
+      <style>{`@keyframes cmt-notice-in { from { opacity:0; transform:translateY(-16px) scale(.96); } to { opacity:1; transform:translateY(0) scale(1); } } @keyframes cmt-publish-pop { 0% { transform:scale(.85); opacity:0; } 70% { transform:scale(1.06); } 100% { transform:scale(1); opacity:1; } }`}</style>
       <section className="rounded-[24px] bg-gradient-to-br from-[#081a46] via-[#182967] to-[#584bd0] p-6 text-white shadow-lg sm:p-8">
         <div className="flex flex-wrap items-start justify-between gap-5"><div className="max-w-2xl"><p className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[#c8c4ff]"><Sparkles size={16} /> CMT community</p><h1 className="mt-3 text-3xl font-extrabold sm:text-4xl">Discussions</h1><p className="mt-3 text-sm leading-7 text-white/80">Explore conversations, exchange research ideas and get answers from the CMT community.</p></div>
           <div className="flex flex-wrap gap-2">{signedIn && <Link to="/my-discussions" className="inline-flex items-center gap-2 rounded-xl border border-white/35 px-4 py-3 text-sm font-bold hover:bg-white/10"><MessageSquareText size={17} /> My discussions</Link>}<button type="button" onClick={() => signedIn ? (setActionError(""), setCompose(true)) : navigate("/login")} className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-3 text-sm font-bold text-[#3930a6] hover:bg-[#f0eeff]"><Plus size={17} /> Start discussion</button></div></div>
@@ -158,11 +164,12 @@ export default function Discussions() {
       {!loading && !onlySaved && lastPage > 1 && <nav aria-label="Discussion pages" className="mt-5 flex items-center justify-center gap-4"><button type="button" disabled={page <= 1} onClick={() => setPage((p) => p - 1)} className="rounded-lg border bg-white p-2 disabled:opacity-40" aria-label="Previous page"><ChevronLeft /></button><span className="text-sm">Page {page} of {lastPage}</span><button type="button" disabled={page >= lastPage} onClick={() => setPage((p) => p + 1)} className="rounded-lg border bg-white p-2 disabled:opacity-40" aria-label="Next page"><ChevronRight /></button></nav>}
     </div>
     {compose && <div className="fixed inset-0 z-[90] flex items-center justify-center overflow-y-auto bg-[#07132f]/75 p-4" role="presentation"><div role="dialog" aria-modal="true" aria-labelledby="create-discussion-heading" className="max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-2xl bg-white p-6 text-[#14213d]"><div className="flex items-center justify-between"><h2 id="create-discussion-heading" className="text-xl font-bold">Start a discussion</h2><button type="button" aria-label="Close" onClick={() => setCompose(false)}><X /></button></div><form onSubmit={create} className="mt-5 grid gap-4"><label className="grid gap-1 text-sm font-semibold">Title<input required minLength={4} maxLength={180} value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} className="rounded-xl border p-3" placeholder="What would you like to discuss?" /></label><label className="grid gap-1 text-sm font-semibold">Category<select value={draft.category} onChange={(e) => setDraft({ ...draft, category: e.target.value })} className="rounded-xl border p-3">{CATEGORIES.slice(1).map((c) => <option key={c}>{c}</option>)}</select></label><label className="grid gap-1 text-sm font-semibold">Details<textarea required minLength={10} maxLength={5000} rows={6} value={draft.body} onChange={(e) => setDraft({ ...draft, body: e.target.value })} className="rounded-xl border p-3" placeholder="Add context to help others respond" /></label>{actionError && <p role="alert" className="text-sm text-red-700">{actionError}</p>}<button disabled={saving} type="submit" className="rounded-xl bg-[#6252f5] p-3 font-bold text-white disabled:opacity-60">{saving ? "Publishing…" : "Publish discussion"}</button></form></div></div>}
-    {selectedId !== null && <div className="fixed inset-0 z-[100] flex justify-end bg-[#07132f]/65" onMouseDown={(e) => { if (e.target === e.currentTarget) { setSelectedId(null); setDetail(null); } }}>
-      <section role="dialog" aria-modal="true" aria-labelledby="discussion-detail-heading" className="flex h-full w-full max-w-[540px] flex-col overflow-hidden bg-white text-[#14213d] shadow-2xl animate-in slide-in-from-right duration-200 sm:rounded-l-3xl">
+    {deleteConfirm && <div className="fixed inset-0 z-[130] flex items-center justify-center bg-[#07132f]/75 p-4" role="presentation"><section role="alertdialog" aria-modal="true" aria-labelledby="discussion-delete-title" aria-describedby="discussion-delete-description" className="w-full max-w-md rounded-3xl bg-white p-6 text-[#14213d] shadow-2xl"><div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-50 text-red-600"><AlertTriangle size={24}/></div><h2 id="discussion-delete-title" className="text-xl font-extrabold">Delete this discussion?</h2><p id="discussion-delete-description" className="mt-2 text-sm leading-6 text-[#5b6780]">This permanently removes the discussion and its replies. This cannot be undone.</p><div className="mt-6 flex justify-end gap-3"><button type="button" onClick={() => setDeleteConfirm(false)} className="rounded-xl border px-4 py-2 font-semibold">Cancel</button><button type="button" disabled={adminBusy} onClick={() => manageDiscussion("delete")} className="rounded-xl bg-red-600 px-4 py-2 font-bold text-white disabled:opacity-50">{adminBusy ? "Deleting…" : "Delete discussion"}</button></div></section></div>}
+    {selectedId !== null && <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#07132f]/65 p-3 sm:p-6" onMouseDown={(e) => { if (e.target === e.currentTarget) { setSelectedId(null); setDetail(null); setDeleteConfirm(false); } }}>
+      <section role="dialog" aria-modal="true" aria-labelledby="discussion-detail-heading" className="flex max-h-[min(92vh,900px)] h-full w-full max-w-[700px] flex-col overflow-hidden rounded-2xl bg-white text-[#14213d] shadow-2xl sm:h-auto sm:min-h-[65vh] sm:rounded-3xl">
         <header className="flex shrink-0 items-center justify-between border-b border-[#e7eaf3] px-5 py-4">
           <div><p className="text-xs font-bold uppercase tracking-wider text-[#6556db]">CMT community</p><h2 id="discussion-detail-heading" className="text-lg font-extrabold">Discussion replies</h2></div>
-          <button type="button" onClick={() => { setSelectedId(null); setDetail(null); }} aria-label="Close replies" className="rounded-full border border-[#dfe3ee] p-2 hover:bg-[#f1f2fa] focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-600"><X size={20}/></button>
+          <button type="button" onClick={() => { setSelectedId(null); setDetail(null); setDeleteConfirm(false); }} aria-label="Close replies" className="rounded-full border border-[#dfe3ee] p-2 hover:bg-[#f1f2fa] focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-600"><X size={20}/></button>
         </header>
         <div className="min-h-0 flex-1 overflow-y-auto px-4 py-5 sm:px-6">
           {detailLoading ? <p role="status">Loading replies…</p> : detail ? <>
@@ -172,7 +179,7 @@ export default function Discussions() {
             {isAdmin && <div className="mt-4 rounded-2xl border-2 border-indigo-200 bg-indigo-50 p-4"><h3 className="flex items-center gap-2 text-sm font-extrabold text-indigo-900"><ShieldCheck size={17}/> Manage discussion · Admin only</h3><div className="mt-3 flex flex-wrap gap-2"><button type="button" disabled={adminBusy} onClick={() => manageDiscussion("pin")} className="inline-flex items-center gap-1 rounded-lg bg-white px-3 py-2 text-sm font-semibold"><Pin size={15}/>{detail.is_pinned ? "Unpin" : "Pin"}</button><button type="button" disabled={adminBusy} onClick={() => manageDiscussion("hide")} className="inline-flex items-center gap-1 rounded-lg bg-white px-3 py-2 text-sm font-semibold"><EyeOff size={15}/> Hide</button><button type="button" disabled={adminBusy} onClick={() => manageDiscussion("delete")} className="inline-flex items-center gap-1 rounded-lg bg-white px-3 py-2 text-sm font-semibold text-red-700"><Trash2 size={15}/> Delete</button></div></div>}
             {signedIn ? <><div className="mt-6 flex items-center justify-between"><h3 className="text-base font-extrabold">Replies <span className="text-[#6b7390]">({detail.comments?.length ?? detail.comments_count ?? 0})</span></h3><span className="text-xs text-[#68748c]">Community conversation</span></div>
               <div className="mt-4 space-y-5" aria-live="polite">{(detail.comments || []).length ? detail.comments.map((comment) => <article key={comment.id} className="flex items-start gap-3"><div aria-hidden="true" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#e5e3ff] text-sm font-extrabold text-[#5141b8]">{(comment.user?.name || "C").trim().charAt(0).toUpperCase()}</div><div className="min-w-0 flex-1"><div className="rounded-2xl bg-[#f1f3f9] px-4 py-3"><p className="text-sm font-bold">{comment.user?.name || "CMT member"}</p><p className="mt-1 whitespace-pre-wrap break-words text-sm leading-6">{comment.body}</p></div><p className="mt-1 px-2 text-xs text-[#68748c]">{formatDate(comment.created_at)}</p></div></article>) : <p className="rounded-xl bg-[#f5f6fb] p-5 text-center text-sm text-[#66728a]">No replies yet. Be the first to reply.</p>}</div>
-            </> : <div className="mt-5 rounded-xl border border-indigo-200 bg-indigo-50 p-4 text-sm text-indigo-950"><p className="font-bold">Sign in to read replies</p><p className="mt-1">The current API requires login to view full replies and write a reply.</p><Link to="/login" state={{ from: "/discussions" }} className="mt-3 inline-flex items-center gap-2 rounded-lg bg-indigo-700 px-4 py-2 font-bold text-white"><LogIn size={16}/> Sign in</Link></div>}
+            </> : <div className="mt-5 rounded-xl border border-indigo-200 bg-indigo-50 p-4 text-sm text-indigo-950"><p className="font-bold">Sign in to read replies</p><p className="mt-1">Sign in to see the full conversation and share your thoughts with the community.</p><Link to="/login" state={{ from: "/discussions" }} className="mt-3 inline-flex items-center gap-2 rounded-lg bg-indigo-700 px-4 py-2 font-bold text-white"><LogIn size={16}/> Sign in to reply</Link></div>}
           </> : <p role="alert">Discussion unavailable.</p>}
           {actionError && <p role="alert" className="mt-4 rounded-xl bg-red-50 p-3 text-sm text-red-700">{actionError}</p>}
         </div>
