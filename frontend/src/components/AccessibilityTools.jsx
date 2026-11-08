@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Accessibility, Pause, Play, RotateCcw, Square, Volume2, X } from "lucide-react";
+import { Accessibility, ChevronDown, Pause, Play, RotateCcw, Square, Volume2, X } from "lucide-react";
 
 const STORAGE_KEY = "cmt-accessibility-preferences-v1";
 
@@ -14,6 +14,7 @@ const DISPLAY_MODES = [
 ];
 
 const DEFAULTS = {
+  visualEnabled: true,
   textSize: "100",
   displayMode: "default",
   reduceMotion: false,
@@ -27,6 +28,7 @@ function loadPreferences() {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
     if (!saved || typeof saved !== "object") return { ...DEFAULTS };
     return {
+      visualEnabled: saved.visualEnabled !== false,
       textSize: ["100", "125", "150"].includes(saved.textSize) ? saved.textSize : "100",
       displayMode: DISPLAY_MODES.some(({ value }) => value === saved.displayMode)
         ? saved.displayMode
@@ -86,19 +88,29 @@ export default function AccessibilityTools() {
   const [message, setMessage] = useState("");
   const trigger = useRef(null);
   const panel = useRef(null);
+  const readingTools = useRef(null);
+  const readingSummary = useRef(null);
   const speechSession = useRef(0);
   const ownSpeech = useRef(false);
   const headingIndex = useRef(-1);
+  const [readingExpanded, setReadingExpanded] = useState(false);
 
   const canSpeak = typeof window !== "undefined" &&
     "speechSynthesis" in window && "SpeechSynthesisUtterance" in window;
 
   useEffect(() => {
-    document.documentElement.dataset.cmtTextSize = preferences.textSize;
-    document.documentElement.dataset.cmtDisplayMode = preferences.displayMode;
-    document.documentElement.dataset.cmtReduceMotion = preferences.reduceMotion ? "true" : "false";
-    document.documentElement.dataset.cmtEmphasizeLinks = preferences.emphasizeLinks ? "true" : "false";
-    document.documentElement.dataset.cmtReadingSpacing = preferences.readingSpacing ? "true" : "false";
+    document.documentElement.dataset.cmtDisplayMode = preferences.visualEnabled
+      ? preferences.displayMode
+      : "default";
+    document.documentElement.dataset.cmtTextSize = preferences.visualEnabled
+      ? preferences.textSize
+      : "100";
+    document.documentElement.dataset.cmtReduceMotion =
+      preferences.visualEnabled && preferences.reduceMotion ? "true" : "false";
+    document.documentElement.dataset.cmtEmphasizeLinks =
+      preferences.visualEnabled && preferences.emphasizeLinks ? "true" : "false";
+    document.documentElement.dataset.cmtReadingSpacing =
+      preferences.visualEnabled && preferences.readingSpacing ? "true" : "false";
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(preferences)); } catch { /* storage disabled */ }
   }, [preferences]);
 
@@ -254,6 +266,22 @@ export default function AccessibilityTools() {
               </button>
             </div>
 
+            <label className="cmt-a11y-visual-toggle">
+              <input
+                type="checkbox"
+                role="switch"
+                checked={preferences.visualEnabled}
+                aria-describedby="cmt-visual-toggle-help"
+                onChange={(event) => update("visualEnabled", event.target.checked)}
+              />
+              <span>
+                <strong>Visual accessibility preferences: {preferences.visualEnabled ? "On" : "Off"}</strong>
+                <small id="cmt-visual-toggle-help">
+                  Turn off to restore CMT colours; your choices stay saved.
+                </small>
+              </span>
+            </label>
+
             <fieldset className="cmt-a11y-modes">
               <legend>Colour and contrast</legend>
               <div className="cmt-a11y-mode-list">
@@ -264,6 +292,7 @@ export default function AccessibilityTools() {
                       name="cmt-vision-mode"
                       value={option.value}
                       checked={preferences.displayMode === option.value}
+                      disabled={!preferences.visualEnabled}
                       onChange={() => update("displayMode", option.value)}
                     />
                     <span className={`cmt-a11y-swatch cmt-a11y-swatch--${option.value}`} aria-hidden="true" />
@@ -278,29 +307,46 @@ export default function AccessibilityTools() {
 
             <div className="cmt-a11y-options">
               <label className="cmt-a11y-field">Text size
-                <select value={preferences.textSize} onChange={(event) => update("textSize", event.target.value)}>
+                <select value={preferences.textSize} disabled={!preferences.visualEnabled} onChange={(event) => update("textSize", event.target.value)}>
                   <option value="100">Standard (100%)</option>
                   <option value="125">Large (125%)</option>
                   <option value="150">Extra large (150%)</option>
                 </select>
               </label>
               <label className="cmt-a11y-check">
-                <input type="checkbox" checked={preferences.emphasizeLinks} onChange={(event) => update("emphasizeLinks", event.target.checked)} />
+                <input type="checkbox" checked={preferences.emphasizeLinks} disabled={!preferences.visualEnabled} onChange={(event) => update("emphasizeLinks", event.target.checked)} />
                 Underline links and buttons
               </label>
               <label className="cmt-a11y-check">
-                <input type="checkbox" checked={preferences.readingSpacing} onChange={(event) => update("readingSpacing", event.target.checked)} />
+                <input type="checkbox" checked={preferences.readingSpacing} disabled={!preferences.visualEnabled} onChange={(event) => update("readingSpacing", event.target.checked)} />
                 Increase reading spacing
               </label>
               <label className="cmt-a11y-check">
-                <input type="checkbox" checked={preferences.reduceMotion} onChange={(event) => update("reduceMotion", event.target.checked)} />
+                <input type="checkbox" checked={preferences.reduceMotion} disabled={!preferences.visualEnabled} onChange={(event) => update("reduceMotion", event.target.checked)} />
                 Reduce animations
               </label>
             </div>
 
-            <details className="cmt-a11y-reading">
-              <summary>Read Aloud and keyboard tools</summary>
-              <p>Optional browser speech. Use NVDA, TalkBack or VoiceOver for full navigation.</p>
+            <details
+              className="cmt-a11y-reading"
+              ref={readingTools}
+              onToggle={(event) => setReadingExpanded(event.currentTarget.open)}
+              onKeyDown={(event) => {
+                if (event.key === "Escape" && readingTools.current?.open) {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  readingTools.current.open = false;
+                  setReadingExpanded(false);
+                  readingSummary.current?.focus();
+                }
+              }}
+            >
+              <summary ref={readingSummary} aria-expanded={readingExpanded}>
+                <Volume2 size={17} aria-hidden="true" />
+                <span>Read Aloud and keyboard tools</span>
+                <ChevronDown className="cmt-a11y-reading-chevron" size={17} aria-hidden="true" />
+              </summary>
+              <p>Read this page or selected text aloud, pause or stop speech, and move through headings. Use NVDA, TalkBack or VoiceOver for full navigation.</p>
               <div className="cmt-a11y-buttons">
                 <button type="button" onClick={() => speak(readableText(document.querySelector("main")))} disabled={!canSpeak}>
                   <Volume2 size={16} aria-hidden="true" /> Read page

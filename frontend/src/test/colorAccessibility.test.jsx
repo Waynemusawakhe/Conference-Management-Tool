@@ -81,6 +81,50 @@ describe("CMT colour accessibility settings", () => {
     expect(document.documentElement.dataset.cmtDisplayMode).toBe("default");
     expect(screen.getByRole("checkbox", { name: "Underline links and buttons" })).not.toBeChecked();
   });
+
+  it("turns visual preferences off without losing the saved selections", () => {
+    mountTools();
+    fireEvent.click(screen.getByRole("button", { name: "Open accessibility settings" }));
+    fireEvent.click(screen.getByRole("radio", { name: /Monochrome/i }));
+    const preferenceSwitch = screen.getByRole("switch", {
+      name: /Visual accessibility preferences: On/i,
+    });
+
+    fireEvent.click(preferenceSwitch);
+
+    expect(document.documentElement.dataset.cmtDisplayMode).toBe("default");
+    expect(screen.getByRole("radio", { name: /Monochrome/i })).toBeChecked();
+    expect(screen.getByRole("radio", { name: /Monochrome/i })).toBeDisabled();
+    expect(JSON.parse(localStorage.getItem("cmt-accessibility-preferences-v1"))).toMatchObject({
+      visualEnabled: false,
+      displayMode: "monochrome",
+    });
+
+    fireEvent.click(screen.getByRole("switch", {
+      name: /Visual accessibility preferences: Off/i,
+    }));
+
+    expect(document.documentElement.dataset.cmtDisplayMode).toBe("monochrome");
+    expect(screen.getByRole("radio", { name: /Monochrome/i })).toBeEnabled();
+  });
+
+  it("makes Read Aloud tools discoverable and closes the accordion with Escape", () => {
+    mountTools();
+    fireEvent.click(screen.getByRole("button", { name: "Open accessibility settings" }));
+    const summary = screen.getByText("Read Aloud and keyboard tools").closest("summary");
+
+    expect(summary).toHaveAttribute("aria-expanded", "false");
+    expect(summary.querySelectorAll("svg")).toHaveLength(2);
+    fireEvent.click(summary);
+
+    expect(summary).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByText(/Read this page or selected text aloud/)).toBeInTheDocument();
+
+    fireEvent.keyDown(summary, { key: "Escape" });
+
+    expect(summary).toHaveAttribute("aria-expanded", "false");
+    expect(summary).toHaveFocus();
+  });
 });
 
 describe("semantic status indicators", () => {

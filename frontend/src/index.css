@@ -2135,6 +2135,11 @@ html:is([data-cmt-display-mode="high-light"], [data-cmt-display-mode="monochrome
 .cmt-a11y-panel-header h2 { margin: 0; color: #0d1b3d; font-size: 1.15rem; font-weight: 800; }
 .cmt-a11y-description { margin: .2rem 0 .85rem; color: #43506a; font-size: .78rem; }
 .cmt-a11y-panel-header button { display: grid; place-items: center; min-height: 40px; min-width: 40px; border: 1px solid #aab2c6; border-radius: .6rem; background: #f5f5fb; color: #07132f; }
+.cmt-a11y-visual-toggle { display: flex; align-items: center; gap: .65rem; margin: .85rem 0; border: 1px solid #aab2c6; border-radius: .7rem; background: #f7f8fc; color: #0d1b3d; padding: .65rem; cursor: pointer; }
+.cmt-a11y-visual-toggle input { width: 20px; height: 20px; flex: 0 0 auto; accent-color: #4937bb; }
+.cmt-a11y-visual-toggle strong, .cmt-a11y-visual-toggle small { display: block; color: #0d1b3d; }
+.cmt-a11y-visual-toggle strong { font-size: .82rem; }
+.cmt-a11y-visual-toggle small { margin-top: .15rem; font-size: .68rem; line-height: 1.35; }
 .cmt-a11y-modes { padding: 0; border: 0; margin: 0; min-width: 0; }
 .cmt-a11y-modes legend { margin-bottom: .55rem; font-weight: 800; color: #0d1b3d; }
 .cmt-a11y-mode-list { display: grid; gap: .4rem; }
@@ -2166,7 +2171,11 @@ html:is([data-cmt-display-mode="high-light"], [data-cmt-display-mode="monochrome
 .cmt-a11y-check { display: flex; align-items: center; gap: .6rem; min-height: 36px; font-weight: 600; color: #0d1b3d; }
 .cmt-a11y-check input { width: 18px; height: 18px; accent-color: #4937bb; }
 .cmt-a11y-reading { margin: .8rem 0; border-top: 1px solid #dfe4ed; padding-top: .8rem; }
-.cmt-a11y-reading summary { font-weight: 800; color: #251a7d; cursor: pointer; }
+.cmt-a11y-reading summary { display: flex; align-items: center; gap: .55rem; min-height: 44px; border: 1px solid #aab2c6; border-radius: .65rem; background: #f5f2ff; padding: .55rem .65rem; font-weight: 800; color: #251a7d; cursor: pointer; list-style: none; }
+.cmt-a11y-reading summary::-webkit-details-marker { display: none; }
+.cmt-a11y-reading summary:focus-visible { outline: 3px solid #b35200; outline-offset: 3px; }
+.cmt-a11y-reading-chevron { margin-left: auto; transition: transform .18s ease; }
+.cmt-a11y-reading[open] .cmt-a11y-reading-chevron { transform: rotate(180deg); }
 .cmt-a11y-reading p { margin: .5rem 0; font-size: .75rem; color: #43506a; }
 .cmt-a11y-buttons { display: flex; flex-wrap: wrap; gap: .45rem; margin: .55rem 0; }
 .cmt-a11y-buttons button { display: inline-flex; align-items: center; gap: .35rem; min-height: 42px; border: 1px solid #8b93b1; border-radius: .5rem; padding: .45rem .6rem; background: #f1f0ff; color: #17184e; font-weight: 700; }
@@ -2177,6 +2186,62 @@ html:is([data-cmt-display-mode="high-light"], [data-cmt-display-mode="monochrome
 .cmt-a11y-reset { border: 1px solid #aab2c6; background: #fff; color: #0d1b3d; }
 .cmt-a11y-done { border: 1px solid #3929a5; background: #4937ba; color: #fff; }
 .cmt-a11y-message { min-height: 1rem; color: #35415a; font-size: .75rem; margin: .45rem 0 0; }
+.cmt-a11y-visual-toggle:has(input:disabled) { cursor: default; }
+.cmt-a11y-visual-toggle input:focus-visible,
+.cmt-a11y-mode:has(input:focus-visible),
+.cmt-a11y-check input:focus-visible { outline: 3px solid #b35200; outline-offset: 3px; }
+
+/* Preserve dark text on the accessibility panel's intentionally light mode cards. */
+html:is([data-cmt-display-mode="high-dark"], [data-cmt-display-mode="high-light"], [data-cmt-display-mode="monochrome"]) #root .cmt-a11y-panel .cmt-a11y-mode,
+html:is([data-cmt-display-mode="high-dark"], [data-cmt-display-mode="high-light"], [data-cmt-display-mode="monochrome"]) #root .cmt-a11y-panel .cmt-a11y-mode :is(strong, small) {
+  color: #0d1b3d !important;
+}
+html:is([data-cmt-display-mode="high-dark"], [data-cmt-display-mode="high-light"], [data-cmt-display-mode="monochrome"]) #root .cmt-a11y-panel .cmt-a11y-visual-toggle,
+html:is([data-cmt-display-mode="high-dark"], [data-cmt-display-mode="high-light"], [data-cmt-display-mode="monochrome"]) #root .cmt-a11y-panel .cmt-a11y-visual-toggle :is(strong, small),
+html:is([data-cmt-display-mode="high-dark"], [data-cmt-display-mode="high-light"], [data-cmt-display-mode="monochrome"]) #root .cmt-a11y-panel .cmt-a11y-reading summary {
+  color: #0d1b3d !important;
+}
+html:is([data-cmt-display-mode="high-dark"], [data-cmt-display-mode="high-light"], [data-cmt-display-mode="monochrome"]) #root .cmt-a11y-panel .cmt-a11y-visual-toggle input {
+  background-color: #fff !important;
+  border: 2px solid #080808 !important;
+}
+html:is([data-cmt-display-mode="high-dark"], [data-cmt-display-mode="high-light"], [data-cmt-display-mode="monochrome"]) #root .cmt-a11y-panel .cmt-a11y-mode:hover,
+html:is([data-cmt-display-mode="high-dark"], [data-cmt-display-mode="high-light"], [data-cmt-display-mode="monochrome"]) #root .cmt-a11y-panel .cmt-a11y-mode:focus-within {
+  border-color: #080808 !important;
+}
+
+/* Global high-contrast rules recolour button descendants; keep each starter icon distinct from its chip. */
+html[data-cmt-display-mode="high-dark"] #root .cmt-chat-panel .cmt-chat-starter-card > .cmt-chat-starter-icon {
+  border: 1px solid #ffe37b !important;
+  background: #050a14 !important;
+  color: #ffe37b !important;
+}
+html[data-cmt-display-mode="high-dark"] #root .cmt-chat-panel .cmt-chat-starter-card > .cmt-chat-starter-icon > svg {
+  color: #ffe37b !important;
+  stroke: currentColor !important;
+  opacity: 1 !important;
+}
+html[data-cmt-display-mode="high-dark"] #root .cmt-chat-panel .cmt-chat-starter-card > .cmt-chat-starter-icon > svg * {
+  color: #ffe37b !important;
+  stroke: currentColor !important;
+  opacity: 1 !important;
+}
+html:is([data-cmt-display-mode="high-light"], [data-cmt-display-mode="monochrome"]) #root .cmt-chat-panel .cmt-chat-starter-card > .cmt-chat-starter-icon {
+  border: 1px solid #080808 !important;
+  background: #fff !important;
+  color: #080808 !important;
+}
+html:is([data-cmt-display-mode="high-light"], [data-cmt-display-mode="monochrome"]) #root .cmt-chat-panel .cmt-chat-starter-card > .cmt-chat-starter-icon > svg {
+  color: #080808 !important;
+  stroke: currentColor !important;
+  opacity: 1 !important;
+}
+html:is([data-cmt-display-mode="high-light"], [data-cmt-display-mode="monochrome"]) #root .cmt-chat-panel .cmt-chat-starter-card > .cmt-chat-starter-icon > svg * {
+  color: #080808 !important;
+  stroke: currentColor !important;
+  opacity: 1 !important;
+}
+.cmt-chat-starter-icon > svg { display: block; fill: none; stroke: currentColor; opacity: 1; }
 @media (max-width: 480px) {
   .cmt-a11y-widget { left: .75rem; bottom: max(.75rem, env(safe-area-inset-bottom)); }
   .cmt-a11y-panel { width: min(355px, calc(100vw - 1.5rem)); max-height: 74vh; }
