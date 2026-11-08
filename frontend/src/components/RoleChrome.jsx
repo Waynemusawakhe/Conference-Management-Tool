@@ -9,6 +9,8 @@ import {
   LogOut,
   Menu,
   MessageSquareQuote,
+  MessagesSquare,
+  MessageCircleMore,
   Moon,
   Search,
   Settings as SettingsIcon,
@@ -44,6 +46,8 @@ const AUTHOR_NAV = [
   { label: "Deadlines", to: "/author-dashboard#deadlines", icon: CalendarDays },
   { label: "Browse conferences", to: "/author/conferences", icon: Search },
   { label: "Feedback", to: "/author/feedback", icon: MessageSquareQuote },
+  { label: "Discussions", to: "/discussions", icon: MessagesSquare },
+  { label: "My Discussions", to: "/my-discussions", icon: MessageCircleMore },
 ];
 
 function AuthorWorkspaceShell({ children }) {
