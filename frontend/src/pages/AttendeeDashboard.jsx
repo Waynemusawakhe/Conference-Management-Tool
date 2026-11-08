@@ -22,31 +22,10 @@ import { useLocation, useNavigate } from "react-router-dom";
 
 import AttendeeHeader from "../components/AttendeeHeader";
 import AttendeeSidebar from "../components/AttendeeSidebar";
+import StatusIndicator from "../components/StatusIndicator";
 import { useAuth } from "../context/AuthContext";
 import { conferencesApi } from "../api/conferencesApi";
 import { registrationsApi } from "../api/registrationsApi";
-
-const REGISTRATION_STATUS_LABELS = {
-  pending: "Pending",
-  confirmed: "Confirmed",
-  registered: "Registered",
-  approved: "Approved",
-  cancelled: "Cancelled",
-  canceled: "Cancelled",
-  rejected: "Rejected",
-  completed: "Completed",
-};
-
-const REGISTRATION_STATUS_STYLES = {
-  pending: "border-[#e9d9a7] bg-[#fff9e9] text-[#9b7414]",
-  confirmed: "border-[#bfe5d1] bg-[#effaf4] text-[#18794e]",
-  registered: "border-[#bfe5d1] bg-[#effaf4] text-[#18794e]",
-  approved: "border-[#bfe5d1] bg-[#effaf4] text-[#18794e]",
-  cancelled: "border-[#d7dce5] bg-[#f4f6f9] text-[#68748b]",
-  canceled: "border-[#d7dce5] bg-[#f4f6f9] text-[#68748b]",
-  rejected: "border-[#f1c8c8] bg-[#fff2f2] text-[#b13a3a]",
-  completed: "border-[#cfd0ff] bg-[#f0efff] text-[#5548d7]",
-};
 
 function getErrorMessage(error) {
   const first = Object.values(error?.errors || {})[0];
@@ -817,11 +796,7 @@ export default function AttendeeDashboard() {
                               {conferenceEndDate(conference) ? ` – ${formatDate(conferenceEndDate(conference))}` : ""}
                             </td>
                             <td className="px-4 py-4">
-                              <span className={`inline-flex rounded-full border px-2.5 py-1 text-[9px] font-extrabold ${
-                                REGISTRATION_STATUS_STYLES[status] || REGISTRATION_STATUS_STYLES.pending
-                              }`}>
-                                {REGISTRATION_STATUS_LABELS[status] || registration.status || "Pending"}
-                              </span>
+                              <StatusIndicator status={status} />
                             </td>
                             <td className="px-6 py-4">
                               <div className="flex justify-end gap-2">
@@ -866,11 +841,7 @@ export default function AttendeeDashboard() {
                           <div className="min-w-0 flex-1">
                             <strong className="block text-[11px] text-[#1c2a4a]">{conferenceName(conference)}</strong>
                             <p className="mb-2 mt-1 text-[9px] text-[#8c96a9]">{formatDate(conferenceStartDate(conference))}</p>
-                            <span className={`inline-flex rounded-full border px-2.5 py-1 text-[9px] font-extrabold ${
-                              REGISTRATION_STATUS_STYLES[status] || REGISTRATION_STATUS_STYLES.pending
-                            }`}>
-                              {REGISTRATION_STATUS_LABELS[status] || registration.status || "Pending"}
-                            </span>
+                            <StatusIndicator status={status} />
                           </div>
                         </div>
                         <div className="mt-3 flex justify-end gap-2">

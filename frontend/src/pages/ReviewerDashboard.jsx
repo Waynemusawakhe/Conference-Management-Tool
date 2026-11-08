@@ -18,6 +18,7 @@ import {
 import ReviewerLayout from "../components/ReviewerLayout";
 import { useAuth } from "../context/AuthContext";
 import { reviewsApi } from "../api/reviewsApi";
+import StatusIndicator from "../components/StatusIndicator";
 
 function reviewIsLocked(r) {
   return Boolean(r.locked ?? r.is_locked);
@@ -32,24 +33,6 @@ function reviewState(r) {
   if (reviewIsSubmitted(r)) return "submitted";
   return "pending";
 }
-
-const STATE_META = {
-  pending: {
-    label: "Pending",
-    chip: "border-[#e9d9a7] bg-[#fff9e9] text-[#9b7414]",
-    dot: "bg-[#9b7414]",
-  },
-  submitted: {
-    label: "Submitted",
-    chip: "border-[#cfd0ff] bg-[#f0efff] text-[#5548d7]",
-    dot: "bg-[#5548d7]",
-  },
-  locked: {
-    label: "Locked",
-    chip: "border-[#bfe5d1] bg-[#effaf4] text-[#18794e]",
-    dot: "bg-[#18794e]",
-  },
-};
 
 const RECOMMENDATION_META = {
   accept: {
@@ -134,7 +117,6 @@ function ScoreChip({ review }) {
 
 function ReviewCard({ review, onEvaluate }) {
   const state = reviewState(review);
-  const meta = STATE_META[state];
   const conference = itemConference(review);
   const track = itemTrack(review);
   const abstract = itemAbstract(review);
@@ -144,12 +126,7 @@ function ReviewCard({ review, onEvaluate }) {
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <span
-              className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[9px] font-extrabold uppercase tracking-[.06em] ${meta.chip}`}
-            >
-              <span className={`h-1.5 w-1.5 rounded-full ${meta.dot}`} />
-              {meta.label}
-            </span>
+            <StatusIndicator status={state} />
             <span className="text-[9px] font-semibold text-[#aeb6c6]">
               Review #{itemReviewId(review)}
             </span>

@@ -22,9 +22,14 @@ export default function AccessibilityGuide() {
             <li>Press Tab at the start of a page to reveal “Skip to main content”.</li>
           </ul>
         </section>
+        <section aria-labelledby="colour-guide" className="mt-8">
+          <h2 id="colour-guide" className="text-xl font-bold">Colour blindness and low vision</h2>
+          <p className="mt-2 leading-7">Select the small round Accessibility button at the bottom-left of CMT. The panel offers a colour-blind-friendly palette, high contrast dark and light settings, and a monochrome option. Important submission statuses include both an icon and a text label, so you don't have to identify a status by colour alone.</p>
+          <p className="mt-2 leading-7">You can also enlarge text, underline links, adjust reading spacing, and reduce animations. Settings stay on your device until you choose Reset settings. These display modes are not medical simulations of colour-vision conditions.</p>
+        </section>
         <section aria-labelledby="reading-guide" className="mt-8">
           <h2 id="reading-guide" className="text-xl font-bold">Reading and display settings</h2>
-          <p className="mt-2 leading-7">Open the Accessibility button near the bottom-left of the page to read page text or selected text aloud, jump between headings, enlarge text, strengthen contrast or reduce animations. Audio playback requires browser speech support and starts only when you choose it.</p>
+          <p className="mt-2 leading-7">Open the small round Accessibility button near the bottom-left of the page, expand Read Aloud and keyboard tools, and choose Read page, Read selection or Next heading. Audio playback requires browser speech support and starts only when you choose it.</p>
         </section>
         <section aria-labelledby="support-guide" className="mt-8">
           <h2 id="support-guide" className="text-xl font-bold">Need an accessible document or assistance?</h2>

@@ -1,0 +1,17 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "CMT frontend tests",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"test",
+				"--prefix",
+				"frontend"
+			],
+			"isBackground": false
+		}
+	]
+}

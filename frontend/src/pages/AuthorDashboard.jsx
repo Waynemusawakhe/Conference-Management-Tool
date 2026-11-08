@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import AuthorLayout from "../components/AuthorLayout";
+import StatusIndicator from "../components/StatusIndicator";
 import { useAuth } from "../context/AuthContext";
 import { submissionsApi } from "../api/submissionsApi";
 import { conferencesApi } from "../api/conferencesApi";
@@ -36,15 +37,6 @@ const STATUS_LABELS = {
   rejected: "Rejected",
   revision_requested: "Revision requested",
   withdrawn: "Withdrawn",
-};
-
-const STATUS_STYLES = {
-  pending: "border-[#e9d9a7] bg-[#fff9e9] text-[#9b7414]",
-  under_review: "border-[#cfd0ff] bg-[#f0efff] text-[#5548d7]",
-  accepted: "border-[#bfe5d1] bg-[#effaf4] text-[#18794e]",
-  rejected: "border-[#f1c8c8] bg-[#fff2f2] text-[#b13a3a]",
-  revision_requested: "border-[#f0d0b9] bg-[#fff6ee] text-[#a55b25]",
-  withdrawn: "border-[#d7dce5] bg-[#f4f6f9] text-[#68748b]",
 };
 
 const todayISO = () => {
@@ -742,13 +734,7 @@ export default function AuthorDashboard() {
                             {dateLabel(proposal.created_at)}
                           </td>
                           <td className="px-4 py-4">
-                            <span
-                              className={`inline-flex rounded-full border px-2.5 py-1 text-[9px] font-extrabold ${
-                                STATUS_STYLES[status] || STATUS_STYLES.pending
-                              }`}
-                            >
-                              {STATUS_LABELS[status] || status}
-                            </span>
+                            <StatusIndicator status={status} />
                           </td>
                           <td className="px-6 py-4">
                             <div className="flex justify-end gap-1.5">
@@ -828,13 +814,7 @@ export default function AuthorDashboard() {
                           <p className="mb-2 mt-1 text-[9px] text-[#8c96a9]">
                             {conferenceName}
                           </p>
-                          <span
-                            className={`inline-flex rounded-full border px-2.5 py-1 text-[9px] font-extrabold ${
-                              STATUS_STYLES[status] || STATUS_STYLES.pending
-                            }`}
-                          >
-                            {STATUS_LABELS[status] || status}
-                          </span>
+                          <StatusIndicator status={status} />
                         </div>
                       </div>
                       <div className="mt-3 flex flex-wrap justify-between gap-2 text-[9px] text-[#8c96a9]">
@@ -1192,15 +1172,7 @@ export default function AuthorDashboard() {
         >
           <div className="space-y-6">
             <div className="flex flex-wrap items-center gap-3">
-              <span
-                className={`inline-flex rounded-full border px-3 py-1 text-[10px] font-extrabold ${
-                  STATUS_STYLES[selected.status] || STATUS_STYLES.pending
-                }`}
-              >
-                {STATUS_LABELS[selected.status] ||
-                  selected.status ||
-                  "Pending"}
-              </span>
+              <StatusIndicator status={selected.status || "pending"} />
               {selected.track && (
                 <span className="text-[10px] font-semibold text-[#8993a6]">
                   {selected.track}

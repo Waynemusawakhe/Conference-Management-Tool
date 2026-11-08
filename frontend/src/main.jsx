@@ -13,7 +13,9 @@ ReactDOM.createRoot(document.getElementById("root")).render(
       <AuthProvider>
         <AccessibleRouteFocus />
         <AccessibilityTools />
-        <App />
+        <div className="cmt-application-shell">
+          <App />
+        </div>
       </AuthProvider>
     </BrowserRouter>
   </React.StrictMode>

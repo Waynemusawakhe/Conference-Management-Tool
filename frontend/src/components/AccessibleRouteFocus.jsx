@@ -29,7 +29,13 @@ export default function AccessibleRouteFocus() {
       const title = heading.textContent?.replace(/\s+/g, " ").trim() || "CMT page";
       document.title = `${title} | CMT`;
       setAnnouncement(`${title} page loaded`);
-      if (!firstPage) {
+      // Preserve screen-reader announcements, but only move focus when explicitly enabled.
+      let focusEnabled = false;
+      try {
+        const saved = JSON.parse(localStorage.getItem("cmt-accessibility-preferences-v1") || "null");
+        focusEnabled = saved?.visualEnabled === true && saved?.routeFocus === true;
+      } catch { /* Optional preferences */ }
+      if (!firstPage && focusEnabled) {
         heading.tabIndex = -1;
         heading.focus({ preventScroll: true });
       }

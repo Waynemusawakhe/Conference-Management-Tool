@@ -25,18 +25,10 @@ import {
 } from "lucide-react";
 
 import Navbar from "../components/Navbar";
+import StatusIndicator from "../components/StatusIndicator";
 import { conferencesApi } from "../api/conferencesApi";
 import { registrationsApi } from "../api/registrationsApi";
 import { useAuth } from "../hooks/useAuth";
-
-const STATUS_LABELS = {
-  draft: "Draft",
-  published: "Published",
-  ongoing: "Ongoing",
-  completed: "Completed",
-  closed: "Closed",
-  open: "Open",
-};
 
 function formatDate(value) {
   if (!value) return "Date not set";
@@ -535,11 +527,7 @@ export default function UserConferencePage() {
                     {conferenceStatus && (
                       <DetailItem
                         label="Status"
-                        value={
-                          STATUS_LABELS[
-                            conferenceStatus
-                          ] || conferenceStatus
-                        }
+                        value={<StatusIndicator status={conferenceStatus} />}
                       />
                     )}
 

@@ -22,6 +22,7 @@ import { collectPages } from "../utils/pagination";
 import { useAuth } from "../context/AuthContext";
 import { conferencesApi } from "../api/conferencesApi";
 import { registrationsApi } from "../api/registrationsApi";
+import StatusIndicator from "../components/StatusIndicator";
 
 const REGISTRATION_STATUS_LABELS = {
   pending: "Pending",
@@ -32,17 +33,6 @@ const REGISTRATION_STATUS_LABELS = {
   canceled: "Cancelled",
   rejected: "Rejected",
   completed: "Completed",
-};
-
-const REGISTRATION_STATUS_STYLES = {
-  pending: "border-[#e9d9a7] bg-[#fff9e9] text-[#9b7414]",
-  confirmed: "border-[#bfe5d1] bg-[#effaf4] text-[#18794e]",
-  registered: "border-[#bfe5d1] bg-[#effaf4] text-[#18794e]",
-  approved: "border-[#bfe5d1] bg-[#effaf4] text-[#18794e]",
-  cancelled: "border-[#d7dce5] bg-[#f4f6f9] text-[#68748b]",
-  canceled: "border-[#d7dce5] bg-[#f4f6f9] text-[#68748b]",
-  rejected: "border-[#f1c8c8] bg-[#fff2f2] text-[#b13a3a]",
-  completed: "border-[#cfd0ff] bg-[#f0efff] text-[#5548d7]",
 };
 
 function normalizeStatus(value) {
@@ -469,12 +459,16 @@ export default function MyConferences() {
         id: key,
         resolvedConference: conference,
         relationships: [],
+        statuses: [],
         normalizedStatus: "confirmed",
         attendingRegistration: null,
       };
       if (!row.resolvedConference && conference) row.resolvedConference = conference;
       const label = `${relationship}${status ? ` (${REGISTRATION_STATUS_LABELS[status] || status})` : ""}`;
       if (!row.relationships.includes(label)) row.relationships.push(label);
+      if (status && !row.statuses.some((item) => item.relationship === relationship && item.status === status)) {
+        row.statuses.push({ relationship, status });
+      }
       if (relationship === "Attending" && extra.registration) row.attendingRegistration = extra.registration;
       groups.set(key, row);
     };
@@ -679,13 +673,16 @@ export default function MyConferences() {
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2">
-                    <span
-                      className={`inline-flex w-fit rounded-full border px-2.5 py-1 text-[9px] font-extrabold ${
-                        REGISTRATION_STATUS_STYLES[status] || REGISTRATION_STATUS_STYLES.pending
-                      }`}
-                    >
-                      {registration.relationships.join(" · ")}
+                    <span className="inline-flex w-fit rounded-lg border border-[#68748b] bg-[#f1f3f7] px-2.5 py-1 text-[9px] font-extrabold text-[#29354a]">
+                      {registration.relationships.map((label) => label.replace(/\s+\([^)]*\)$/, "")).join(" · ")}
                     </span>
+                    {registration.statuses.map((item) => (
+                      <StatusIndicator
+                        key={`${item.relationship}-${item.status}`}
+                        status={item.status}
+                        context={item.relationship}
+                      />
+                    ))}
 
                     <button
                       type="button"

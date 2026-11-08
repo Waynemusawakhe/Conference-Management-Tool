@@ -3,6 +3,7 @@ import { cleanup, fireEvent, render, screen, within } from "@testing-library/rea
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import NotFound from "../pages/NotFound";
+import Contact from "../pages/Contact";
 
 vi.mock("../context/ThemeContext", () => ({
   useTheme: () => ({ dark: false, toggleTheme: vi.fn() }),
@@ -15,6 +16,17 @@ vi.mock("../context/AuthContext", () => ({
 afterEach(cleanup);
 
 describe("public navigation and not-found experience", () => {
+  it("provides a main landmark on the contact page", () => {
+    render(
+      <MemoryRouter initialEntries={["/contact"]}>
+        <Contact />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByRole("main")).toHaveAttribute("id", "cmt-main-content");
+    expect(screen.getByRole("heading", { name: "Contact Us" })).toBeInTheDocument();
+  });
+
   it("marks the current public destination in the desktop navigation", () => {
     render(
       <MemoryRouter initialEntries={["/about"]}>
@@ -44,6 +56,7 @@ describe("public navigation and not-found experience", () => {
 
     fireEvent.keyDown(window, { key: "Escape" });
     expect(screen.queryByRole("navigation", { name: "Mobile navigation" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Open navigation" })).toHaveFocus();
   });
 
   it("renders a real 404 with home and helpful public destinations", () => {

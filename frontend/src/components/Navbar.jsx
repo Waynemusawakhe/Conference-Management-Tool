@@ -1,5 +1,5 @@
 import { LogOut, Menu, Moon, Sun, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Logo from "./Logo";
 import { useTheme } from "../context/ThemeContext";
@@ -26,6 +26,7 @@ const dashboardByRole = {
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
+  const mobileMenuTrigger = useRef(null);
   const navigate = useNavigate();
   const location = useLocation();
   const { dark, toggleTheme } = useTheme();
@@ -44,6 +45,7 @@ export default function Navbar() {
     const handleKeyDown = (event) => {
       if (event.key === "Escape") {
         setOpen(false);
+        mobileMenuTrigger.current?.focus();
       }
     };
 
@@ -192,6 +194,7 @@ export default function Navbar() {
 
         <button
           type="button"
+          ref={mobileMenuTrigger}
           className="ml-auto grid h-11 w-11 place-items-center rounded-lg border border-white/20 bg-transparent text-white transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b9b3ff] lg:hidden"
           onClick={() => setOpen((value) => !value)}
           aria-label={open ? "Close navigation" : "Open navigation"}

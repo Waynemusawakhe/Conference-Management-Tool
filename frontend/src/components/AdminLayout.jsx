@@ -1,3 +1,4 @@
+import { MessageCircleMore } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -14,7 +15,8 @@ import {
   LogOut,
   Mail,
   Menu,
-  MessageSquareQuote,
+  MessagesSquare,
+  Star,
   Moon,
   Settings,
   Sun,
@@ -69,10 +71,11 @@ const NAV_ITEMS = [
     icon: Users,
   },
 
+  { to: "/discussions", label: "Discussions", icon: MessagesSquare },
   {
     to: "/my-discussions",
     label: "My Discussions",
-    icon: MessageSquareQuote,
+    icon: MessageCircleMore,
   },
   {
     to: "/admin/notifications",
@@ -82,7 +85,7 @@ const NAV_ITEMS = [
   {
     to: "/admin/testimonials",
     label: "Testimonials",
-    icon: MessageSquareQuote,
+    icon: Star,
   },
   {
     to: "/admin/contact-messages",

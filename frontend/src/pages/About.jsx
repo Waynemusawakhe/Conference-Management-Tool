@@ -1,93 +1,524 @@
-import { Sparkles, ShieldCheck, ArrowRight } from "lucide-react";
-import Navbar from "../components/Navbar";
+import { useState } from "react";
 import { Link } from "react-router-dom";
+import {
+  Accessibility,
+  ArrowRight,
+  BarChart3,
+  BookOpen,
+  Building2,
+  CalendarDays,
+  CheckCircle2,
+  Handshake,
+  ClipboardCheck,
+  FileText,
+  GraduationCap,
+  Layers3,
+  MessageCircle,
+  RotateCw,
+  Search,
+  ShieldCheck,
+  Sparkles,
+  Users,
+} from "lucide-react";
+import Navbar from "../components/Navbar";
+
+const WORKFLOWS = {
+  university: {
+    eyebrow: "University example",
+    title: "A research conference across different faculties",
+    description:
+      "A faculty can organise a research conference while students, lecturers, researchers and invited guests take part in the same event.",
+    steps: [
+      { title: "Create and publish", detail: "An organiser adds conference details, dates and submission information." },
+      { title: "Discover and submit", detail: "Researchers find the event and submit proposals where a call for papers is offered." },
+      { title: "Review and decide", detail: "Assigned reviewers evaluate submissions and organisers record decisions." },
+      { title: "Plan and participate", detail: "Organisers manage sessions; attendees can register for the conference." },
+      { title: "View activity", detail: "Authorised users can view available conference information and reports." },
+    ],
+    note: "Example: an annual university research symposium involving several faculties.",
+  },
+  student: {
+    eyebrow: "Student organisation example",
+    title: "A student chapter hosts a campus conference",
+    description:
+      "Student chapters, societies and student leadership groups can bring students from different faculties together for a conference. A committee member with organiser access can publish the details, organise sessions and manage registrations.",
+    steps: [
+      { title: "Plan the conference", detail: "A chapter or student committee agrees on a theme, speakers, sessions and a date." },
+      { title: "Publish the details", detail: "A member with organiser access creates the conference on CMT." },
+      { title: "Invite students", detail: "Students, lecturers and invited guests can find the conference and register." },
+      { title: "Prepare the programme", detail: "Organisers add sessions and check the registration records." },
+      { title: "Bring people together", detail: "Students attend, meet others and learn from the event." },
+    ],
+    note: "Example: a student leadership conference or a technology conference hosted by a campus chapter.",
+  },
+  business: {
+    eyebrow: "Business example",
+    title: "An industry conference from start to finish",
+    description:
+      "A business or professional association can publish a conference, share its details and manage registrations. Not every event needs proposal submissions or peer review.",
+    steps: [
+      { title: "Create the event", detail: "An organiser publishes the event's details, dates and location." },
+      { title: "Share the opportunity", detail: "Visitors discover the event using the public conference listings." },
+      { title: "Manage registrations", detail: "Attendees sign up, and organisers can work with registration records." },
+      { title: "Organise sessions", detail: "Organisers manage the available conference sessions and programme information." },
+      { title: "Review activity", detail: "Authorised users access available reporting and conference records." },
+    ],
+    note: "Example: an industry conference or a professional association's annual gathering.",
+  },
+};
+
+const FEATURES = [
+  { icon: Search, title: "Conference discovery", description: "Browse available conferences and use search and filters to find relevant events." },
+  { icon: ShieldCheck, title: "Workspaces for each role", description: "Authors, reviewers, organisers, attendees and admins have interfaces for their tasks." },
+  { icon: FileText, title: "Submissions and reviews", description: "Support proposals, assigned peer reviews and organiser decisions when an event needs them." },
+  { icon: Users, title: "Attendee registration", description: "Let attendees register and help organisers keep track of registration records." },
+  { icon: CalendarDays, title: "Sessions and schedules", description: "Organise conference sessions and make event programme information available." },
+  { icon: BarChart3, title: "Administration and reports", description: "Give authorised team members access to available records, summaries and reports." },
+];
+
+const FOCUS_RING = "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#8b7eff]";
+
+function FlipCard({ number, icon: Icon, title, description, points, colorClass, bgClass }) {
+  const [isFlipped, setIsFlipped] = useState(false);
+
+  const handleFlip = () => setIsFlipped(!isFlipped);
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      handleFlip();
+    }
+  };
+
+  return (
+    <div
+      className="group h-[420px] w-full cursor-pointer [perspective:1000px]"
+      onClick={handleFlip}
+      onKeyDown={handleKeyDown}
+      role="button"
+      tabIndex={0}
+      aria-label={`Flip card to read more about ${title}`}
+    >
+      <div
+        className={`relative h-full w-full transition-all duration-500 [transform-style:preserve-3d] ${
+          isFlipped ? "[transform:rotateY(180deg)]" : ""
+        }`}
+      >
+        {/* Front of Card */}
+        <div className="absolute inset-0 flex flex-col rounded-[22px] border border-[#e0e5ef] bg-white p-6 shadow-[0_16px_45px_rgba(12,28,62,.05)] transition group-hover:-translate-y-1 group-hover:shadow-[0_20px_50px_rgba(12,28,62,.08)] [backface-visibility:hidden] dark:border-[#1e293b] dark:bg-[#0f172a] dark:group-hover:shadow-[0_20px_50px_rgba(0,0,0,.3)] sm:p-8">
+          <div className="flex items-start justify-between">
+            <span className="text-4xl font-black tracking-tighter text-[#e4e8f0] dark:text-[#1e293b]">
+              {String(number).padStart(2, '0')}
+            </span>
+            <span className={`rounded-2xl p-3 ${bgClass} ${colorClass} dark:bg-opacity-20`}>
+              <Icon size={24} aria-hidden="true" />
+            </span>
+          </div>
+          
+          <h3 className="mt-5 text-xl font-bold text-[#0d1b3d] dark:text-white sm:text-2xl">{title}</h3>
+          
+          <p className="mt-4 text-[14px] leading-7 text-[#53617b] dark:text-[#94a3b8] line-clamp-6">
+            {description}
+          </p>
+          
+          <div className="mt-auto flex items-center justify-between pt-4">
+             <span className="text-[10px] font-extrabold text-[#5c50ec] uppercase tracking-wider dark:text-[#a9a2ff]">
+                Tap to flip
+             </span>
+             <span className="grid h-8 w-8 place-items-center rounded-full bg-[#f4f3ff] text-[#5c50ec] transition group-hover:bg-[#5c50ec] group-hover:text-white dark:bg-[#1e293b] dark:text-[#a9a2ff] dark:group-hover:bg-[#5c50ec] dark:group-hover:text-white">
+                <RotateCw size={14} />
+             </span>
+          </div>
+        </div>
+
+        {/* Back of Card */}
+        <div className="absolute inset-0 flex flex-col rounded-[22px] border border-[#e0e5ef] bg-white p-6 shadow-[0_16px_45px_rgba(12,28,62,.05)] transition group-hover:-translate-y-1 group-hover:shadow-[0_20px_50px_rgba(12,28,62,.08)] [backface-visibility:hidden] [transform:rotateY(180deg)] dark:border-[#1e293b] dark:bg-[#0f172a] dark:group-hover:shadow-[0_20px_50px_rgba(0,0,0,.3)] sm:p-8">
+          <div className="flex items-center gap-3 border-b border-[#f0f2f6] pb-4 dark:border-[#1e293b]">
+            <span className="text-xl font-black tracking-tighter text-[#5c50ec] dark:text-[#a9a2ff]">
+              {String(number).padStart(2, '0')}
+            </span>
+            <h3 className="text-[17px] font-bold leading-tight text-[#0d1b3d] dark:text-white">
+              {title}
+            </h3>
+          </div>
+          
+          <ul className="mt-4 space-y-3 text-[13px] leading-6 text-[#34425e] overflow-y-auto pr-2 custom-scrollbar dark:text-[#cbd5e1]">
+            {points.map((point, idx) => (
+              <li key={idx} className="flex gap-2.5">
+                <CheckCircle2 className="mt-1 shrink-0 text-[#5c50ec] dark:text-[#a9a2ff]" size={16} aria-hidden="true" /> 
+                <span>{point}</span>
+              </li>
+            ))}
+          </ul>
+          
+          <div className="mt-auto flex items-center justify-between pt-4">
+             <span className="text-[10px] font-extrabold text-[#66728b] uppercase tracking-wider dark:text-[#94a3b8]">
+                Flip back
+             </span>
+             <span className="grid h-8 w-8 place-items-center rounded-full bg-[#f0f2f6] text-[#66728b] transition hover:bg-[#e4e8f0] dark:bg-[#1e293b] dark:text-[#94a3b8] dark:hover:bg-[#334155]">
+                <RotateCw size={14} className="-scale-x-100" />
+             </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function About() {
+  const [audience, setAudience] = useState("university");
+  const workflow = WORKFLOWS[audience];
+
   return (
-    <div className="min-h-screen overflow-clip bg-[#f7f9fc] text-[#0d1b3d]">
+    <div className="min-h-screen overflow-x-clip bg-[#f7f9fc] text-[#0d1b3d] dark:bg-[#0a0f1f] dark:text-white">
       <Navbar />
 
-      <main>
-        <section className="relative overflow-hidden bg-[radial-gradient(circle_at_75%_32%,rgba(98,83,245,.2),transparent_27%),linear-gradient(135deg,#07132f_0%,#0a1740_52%,#15165a_100%)] px-5 py-24 text-white">
-          <div className="relative z-[2] mx-auto w-[min(1200px,100%)]">
-            <span className="inline-flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-[.1em] text-[#b9b3ff]"><Sparkles size={15} /> About CMT</span>
-            <h1 className="my-4 max-w-[720px] text-[clamp(34px,4.4vw,54px)] font-bold leading-tight tracking-[-.05em]">One platform for the whole conference journey.</h1>
-            <p className="max-w-[620px] text-[15px] leading-7 text-white/75">
-              CMT replaces scattered conference work — emails, spreadsheets, chat
-              threads and separate forms — with a single, role-based flow: submit,
-              review, decide, schedule, register, communicate and report.
+      <main id="cmt-main-content">
+        <section
+          aria-labelledby="about-title"
+          className="relative overflow-hidden bg-[radial-gradient(circle_at_78%_22%,rgba(98,83,245,.25),transparent_35%),linear-gradient(135deg,#07132f_0%,#0a1740_55%,#15165a_100%)] px-5 py-16 text-white sm:py-24"
+        >
+          <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full border border-white/10" aria-hidden="true" />
+          <div className="pointer-events-none absolute -bottom-32 right-[12%] h-80 w-80 rounded-full border border-white/10" aria-hidden="true" />
+
+          <div className="relative z-10 mx-auto max-w-[1200px]">
+            <span className="inline-flex items-center gap-2 text-xs font-extrabold uppercase tracking-[.12em] text-[#c4bdff]">
+              <Sparkles size={17} aria-hidden="true" /> About CMT
+            </span>
+            <h1
+              id="about-title"
+              className="mb-5 mt-5 max-w-[900px] text-4xl font-extrabold leading-[1.12] tracking-[-.045em] sm:text-5xl lg:text-[60px]"
+            >
+              Conferences bring people together. <span className="text-[#c4bdff]">CMT makes them easier to manage.</span>
+            </h1>
+            <p className="max-w-[760px] text-base leading-8 text-white/80 sm:text-lg">
+              Whether it is a faculty research conference, a student chapter summit
+              or an industry gathering, CMT helps organisers publish event details
+              and helps people find conferences they want to attend.
             </p>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Link
+                to="/conferences"
+                className={`inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-[#6655f6] to-[#7869ff] px-6 py-3 text-sm font-extrabold text-white shadow-[0_12px_28px_rgba(103,87,245,.28)] motion-safe:transition-all hover:from-[#4a3ec9] hover:to-[#5b4be0] hover:-translate-y-px ${FOCUS_RING}`}
+              >
+                Explore conferences <ArrowRight size={18} aria-hidden="true" />
+              </Link>
+              <a
+                href="#how-cmt-works"
+                className={`inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-white/30 px-6 py-3 text-sm font-extrabold text-white motion-safe:transition-colors hover:bg-white/10 ${FOCUS_RING}`}
+              >
+                See how CMT works
+              </a>
+            </div>
+            <div className="mt-10 flex flex-wrap gap-x-7 gap-y-3 text-sm font-semibold text-white/80">
+              <span className="inline-flex items-center gap-2"><GraduationCap size={18} aria-hidden="true" /> Universities</span>
+              <span className="inline-flex items-center gap-2"><Users size={18} aria-hidden="true" /> Student chapters and societies</span>
+              <span className="inline-flex items-center gap-2"><Building2 size={18} aria-hidden="true" /> Businesses and organisations</span>
+            </div>
           </div>
         </section>
 
-        <section className="bg-white px-5 py-[88px]">
-          <div className="mx-auto grid w-[min(1200px,100%)] grid-cols-[.92fr_1.08fr] items-center gap-[60px] max-[820px]:grid-cols-1">
+        <section aria-labelledby="why-heading" className="bg-white px-5 py-16 dark:bg-[#0f172a] sm:py-20">
+          <div className="mx-auto grid max-w-[1200px] items-start gap-10 lg:grid-cols-[.95fr_1.05fr] lg:gap-16">
             <div>
-              <span className="mb-2 inline-block text-[10px] font-extrabold uppercase tracking-[.12em] text-[#5c50ec]">Why CMT exists</span>
-              <h2 className="m-0 text-[clamp(30px,3.3vw,42px)] font-bold leading-tight tracking-[-.045em]">Conference admin, without the chaos.</h2>
-              <p className="mt-5 max-w-[580px] text-[13px] leading-7 text-[#66728b]">
-                Conference work gets difficult once information is spread across
-                inboxes, spreadsheets, group chats and PDFs. Submissions get lost
-                or duplicated, reviewer assignment is manual, and it becomes hard
-                to say what's actually happening at any given moment.
+              <p className="text-xs font-extrabold uppercase tracking-[.12em] text-[#5c50ec] dark:text-[#a9a2ff]">Why CMT exists</p>
+              <h2 id="why-heading" className="mt-3 text-3xl font-bold leading-tight tracking-[-.04em] text-[#0d1b3d] dark:text-white sm:text-4xl">
+                Running a conference should not mean chasing emails.
+              </h2>
+              <p className="mt-5 text-base leading-8 text-[#53617b] dark:text-[#94a3b8]">
+                Conference details, submissions and registrations can end up in
+                different inboxes and spreadsheets. It becomes difficult to know
+                who has registered, what still needs review or which information
+                is up to date.
               </p>
-              <p className="mt-4 max-w-[580px] text-[13px] leading-7 text-[#66728b]">
-                CMT is built to be the control room instead — one place where
-                submissions, reviews, decisions, the programme and reporting all
-                live together, with each role seeing exactly what they need to.
+              <p className="mt-4 text-base leading-8 text-[#53617b] dark:text-[#94a3b8]">
+                CMT brings the main conference tasks into one place. Organisers
+                can manage events, while authors, reviewers and attendees see
+                the information relevant to them.
               </p>
-              <div className="mt-6 grid gap-3">
-                <div className="flex items-center gap-2.5 text-xs font-semibold text-[#43506a]"><ShieldCheck className="text-[#27b779]" size={17} /> One source of truth for every submission</div>
-                <div className="flex items-center gap-2.5 text-xs font-semibold text-[#43506a]"><ShieldCheck className="text-[#27b779]" size={17} /> Clear, role-based workflow for every stakeholder</div>
-                <div className="flex items-center gap-2.5 text-xs font-semibold text-[#43506a]"><ShieldCheck className="text-[#27b779]" size={17} /> Structured peer review with a visible audit trail</div>
-                <div className="flex items-center gap-2.5 text-xs font-semibold text-[#43506a]"><ShieldCheck className="text-[#27b779]" size={17} /> Reporting built in from day one, not bolted on</div>
+              <div className="mt-6 flex items-start gap-3 rounded-xl border border-[#e3e3ff] bg-[#f4f3ff] p-4 text-sm leading-7 text-[#39336e] dark:border-[#2a2354] dark:bg-[#1e1a44] dark:text-[#d1ccff]">
+                <CheckCircle2 className="mt-1 shrink-0 text-[#5c50ec] dark:text-[#a9a2ff]" size={20} aria-hidden="true" />
+                <span>A faculty, student society or business can start with the conference features it actually needs.</span>
               </div>
             </div>
 
-            <div className="rounded-[20px] bg-[#091634] p-6 text-white shadow-[0_24px_60px_rgba(7,19,47,.18)]">
-              <div className="flex items-center gap-2 text-[11px] font-extrabold">
-                <span className="h-2 w-2 rounded-full bg-[#32d08c] shadow-[0_0_14px_rgba(50,208,140,.7)]" /> WHAT CMT MANAGES
+            <div className="rounded-[22px] bg-[#091634] p-6 text-white shadow-[0_24px_60px_rgba(7,19,47,.16)] dark:bg-[#111c33] dark:shadow-[0_24px_60px_rgba(0,0,0,.4)] sm:p-8">
+              <p className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-[.1em] text-[#beb7ff]">
+                <Layers3 size={18} aria-hidden="true" /> What CMT brings together
+              </p>
+              <ul className="mt-6 grid gap-4">
+                {[
+                  "Public conference information and discovery",
+                  "Users, permissions and separate workspaces for each role",
+                  "Proposal submissions and peer reviews, when needed",
+                  "Attendee registration and session management",
+                  "Administrative records and available reports",
+                ].map((item) => (
+                  <li key={item} className="flex items-start gap-3 text-sm leading-7 text-[#e6e9f6]">
+                    <CheckCircle2 className="mt-1 shrink-0 text-[#9e95ff]" size={19} aria-hidden="true" />
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-7 rounded-xl bg-white/10 p-4 text-sm leading-7 text-[#d8def2]">
+                <strong className="block text-white">Our goal</strong>
+                Help people find conferences and give organising teams a clearer way to run them.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* FLIP CARDS SECTION */}
+        <section aria-labelledby="audience-heading" className="px-5 py-16 sm:py-20">
+          <div className="mx-auto max-w-[1200px]">
+            <div className="max-w-[800px]">
+              <p className="text-xs font-extrabold uppercase tracking-[.12em] text-[#5c50ec] dark:text-[#a9a2ff]">Who can use CMT?</p>
+              <h2 id="audience-heading" className="mt-3 text-3xl font-bold tracking-[-.04em] text-[#0d1b3d] dark:text-white sm:text-4xl">
+                Conferences for campuses, student groups and businesses.
+              </h2>
+              <p className="mt-4 text-base leading-8 text-[#53617b] dark:text-[#94a3b8]">
+                CMT is intended for more than one faculty or department. Student
+                chapters, research teams and professional groups also organise
+                conferences. They need a straightforward way to share event information
+                and manage attendance.
+              </p>
+            </div>
+
+            <div className="mt-10 grid grid-cols-1 gap-6 lg:grid-cols-3">
+              <FlipCard
+                number={1}
+                icon={GraduationCap}
+                title="Faculties and researchers"
+                description="A faculty or department can use CMT to organise research conferences and share them with the wider university community."
+                colorClass="text-[#5c50ec]"
+                bgClass="bg-[#efedff]"
+                points={[
+                  "Researchers and postgraduate students can discover conferences and submit proposals when applicable.",
+                  "Lecturers and appointed reviewers can assess assigned submissions.",
+                  "Faculty organisers can manage conference details, sessions and registrations.",
+                  "Authorised staff can access available reports."
+                ]}
+              />
+
+              <FlipCard
+                number={2}
+                icon={Handshake}
+                title="Student chapters and organisations"
+                description="Student chapters, campus clubs, and academic societies bring students together for talks and leadership gatherings. CMT gives the committee a place to publish details and track registrations."
+                colorClass="text-[#5145b9]"
+                bgClass="bg-[#f0f4ff]"
+                points={[
+                  "A committee member with organiser access can publish the event details.",
+                  "Students across different faculties can find the event and register.",
+                  "The organising committee can share session information and check registrations.",
+                  "Lecturers, students and industry guests can use the same conference listing."
+                ]}
+              />
+
+              <FlipCard
+                number={3}
+                icon={Building2}
+                title="Businesses and industry"
+                description="Companies and professional associations can use CMT to share conference information and coordinate attendance. They can use core event features without an academic review process."
+                colorClass="text-[#264eac]"
+                bgClass="bg-[#edf3ff]"
+                points={[
+                  "Organisers can publish event information in a central location.",
+                  "Professionals and guests can discover events and register to attend.",
+                  "Teams can organise sessions and work with registration records.",
+                  "Available reports can help authorised users review event activity."
+                ]}
+              />
+            </div>
+          </div>
+        </section>
+
+        <section id="how-cmt-works" aria-labelledby="workflow-heading" className="scroll-mt-8 bg-white px-5 py-16 dark:bg-[#0f172a] sm:py-20">
+          <div className="mx-auto max-w-[1200px]">
+            <div className="max-w-[820px]">
+              <p className="text-xs font-extrabold uppercase tracking-[.12em] text-[#5c50ec] dark:text-[#a9a2ff]">How CMT works</p>
+              <h2 id="workflow-heading" className="mt-3 text-3xl font-bold tracking-[-.04em] text-[#0d1b3d] dark:text-white sm:text-4xl">
+                Here is how a conference could work.
+              </h2>
+              <p className="mt-4 text-base leading-8 text-[#53617b] dark:text-[#94a3b8]">
+                Choose an example to see how the main steps fit together.
+                These examples explain the process. They do not create an actual conference.
+              </p>
+            </div>
+
+            <div className="mt-8 inline-flex max-w-full flex-wrap gap-2 rounded-2xl bg-[#f1f2fb] p-2 dark:bg-[#111c33]" role="group" aria-label="Choose a conference example">
+              <button
+                type="button"
+                aria-pressed={audience === "university"}
+                onClick={() => setAudience("university")}
+                className={`inline-flex min-h-11 items-center gap-2 rounded-xl px-4 py-3 text-sm font-bold motion-safe:transition-colors ${FOCUS_RING} ${audience === "university" ? "bg-[#5c50ec] text-white shadow-sm" : "text-[#43506a] hover:bg-white dark:text-[#94a3b8] dark:hover:bg-[#1e293b]"}`}
+              >
+                <GraduationCap size={19} aria-hidden="true" /> University example
+              </button>
+              <button
+                type="button"
+                aria-pressed={audience === "student"}
+                onClick={() => setAudience("student")}
+                className={`inline-flex min-h-11 items-center gap-2 rounded-xl px-4 py-3 text-sm font-bold motion-safe:transition-colors ${FOCUS_RING} ${audience === "student" ? "bg-[#5c50ec] text-white shadow-sm" : "text-[#43506a] hover:bg-white dark:text-[#94a3b8] dark:hover:bg-[#1e293b]"}`}
+              >
+                <Handshake size={19} aria-hidden="true" /> Student organisation
+              </button>
+              <button
+                type="button"
+                aria-pressed={audience === "business"}
+                onClick={() => setAudience("business")}
+                className={`inline-flex min-h-11 items-center gap-2 rounded-xl px-4 py-3 text-sm font-bold motion-safe:transition-colors ${FOCUS_RING} ${audience === "business" ? "bg-[#5c50ec] text-white shadow-sm" : "text-[#43506a] hover:bg-white dark:text-[#94a3b8] dark:hover:bg-[#1e293b]"}`}
+              >
+                <Building2 size={19} aria-hidden="true" /> Business example
+              </button>
+            </div>
+
+            <p className="sr-only" role="status" aria-live="polite">
+              Showing {audience === "university" ? "university" : audience === "student" ? "student organisation" : "business"} conference workflow.
+            </p>
+            <div className="mt-6 rounded-[22px] border border-[#e1e5ef] bg-[#f9faff] p-5 dark:border-[#1e293b] dark:bg-[#0b1224] sm:p-8">
+              <p className="text-xs font-bold uppercase tracking-[.12em] text-[#5c50ec] dark:text-[#a9a2ff]">{workflow.eyebrow}</p>
+              <h3 className="mt-2 text-2xl font-bold tracking-[-.03em] text-[#0d1b3d] dark:text-white sm:text-3xl">{workflow.title}</h3>
+              <p className="mt-3 max-w-[850px] text-base leading-8 text-[#53617b] dark:text-[#94a3b8]">{workflow.description}</p>
+
+              <ol className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+                {workflow.steps.map((step, index) => (
+                  <li key={`${audience}-${step.title}`} className="rounded-2xl border border-[#e2e6f1] bg-white p-5 dark:border-[#1e293b] dark:bg-[#0f172a]">
+                    <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#efedff] text-sm font-extrabold text-[#5546df] dark:bg-[#2a2354] dark:text-[#a9a2ff]" aria-hidden="true">
+                      {String(index + 1).padStart(2, "0")}
+                    </span>
+                    <h4 className="mt-4 text-base font-bold text-[#0d1b3d] dark:text-white">{step.title}</h4>
+                    <p className="mt-2 text-sm leading-7 text-[#53617b] dark:text-[#94a3b8]">{step.detail}</p>
+                  </li>
+                ))}
+              </ol>
+              <p className="mt-6 border-t border-[#e0e5ef] pt-5 text-sm font-medium leading-7 text-[#405078] dark:border-[#1e293b] dark:text-[#94a3b8]">
+                <BookOpen size={18} className="mr-2 inline-block align-middle text-[#5c50ec] dark:text-[#a9a2ff]" aria-hidden="true" />
+                {workflow.note}
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section aria-labelledby="features-heading" className="px-5 py-16 sm:py-20">
+          <div className="mx-auto max-w-[1200px]">
+            <p className="text-xs font-extrabold uppercase tracking-[.12em] text-[#5c50ec] dark:text-[#a9a2ff]">What the platform offers</p>
+            <h2 id="features-heading" className="mt-3 text-3xl font-bold tracking-[-.04em] text-[#0d1b3d] dark:text-white sm:text-4xl">
+              What you can do with CMT.
+            </h2>
+            <div className="mt-9 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {FEATURES.map(({ icon: Icon, title, description }) => (
+                <article key={title} className="rounded-2xl border border-[#e1e5ef] bg-white p-6 shadow-[0_12px_30px_rgba(12,28,62,.04)] dark:border-[#1e293b] dark:bg-[#0f172a]">
+                  <span className="inline-flex rounded-xl bg-[#efedff] p-3 text-[#5c50ec] dark:bg-[#2a2354] dark:text-[#a9a2ff]"><Icon size={23} aria-hidden="true" /></span>
+                  <h3 className="mt-5 text-lg font-bold text-[#0d1b3d] dark:text-white">{title}</h3>
+                  <p className="mt-2 text-sm leading-7 text-[#53617b] dark:text-[#94a3b8]">{description}</p>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section aria-labelledby="inclusion-heading" className="bg-white px-5 py-16 dark:bg-[#0f172a] sm:py-20">
+          <div className="mx-auto grid max-w-[1200px] items-center gap-8 lg:grid-cols-[1.1fr_.9fr] lg:gap-14">
+            <div>
+              <p className="text-xs font-extrabold uppercase tracking-[.12em] text-[#5c50ec] dark:text-[#a9a2ff]">Designed for real people</p>
+              <h2 id="inclusion-heading" className="mt-3 text-3xl font-bold tracking-[-.04em] text-[#0d1b3d] dark:text-white sm:text-4xl">
+                Making the website easier to use.
+              </h2>
+              <p className="mt-5 text-base leading-8 text-[#53617b] dark:text-[#94a3b8]">
+                People should be able to find conference information whether
+                they are using a laptop, a phone or assistive technology. Our
+                frontend supports keyboard navigation, and we are testing tools
+                for reading text aloud, enlarging text and increasing contrast.
+              </p>
+              <p className="mt-4 text-sm leading-7 text-[#66728b] dark:text-[#94a3b8]">
+                We are still testing the experience with screen readers and across
+                different user journeys. These extra controls are not a replacement
+                for a screen reader.
+              </p>
+            </div>
+
+            <div className="grid gap-4">
+              <div className="flex items-start gap-4 rounded-2xl border border-[#e1e5ef] bg-[#f9faff] p-5 dark:border-[#1e293b] dark:bg-[#0b1224]">
+                <Accessibility className="mt-1 shrink-0 text-[#5c50ec] dark:text-[#a9a2ff]" size={25} aria-hidden="true" />
+                <div>
+                  <h3 className="font-bold text-[#0d1b3d] dark:text-white">Accessibility improvements</h3>
+                  <p className="mt-1 text-sm leading-7 text-[#53617b] dark:text-[#94a3b8]">Keyboard navigation, clear focus handling and optional tools that read page content aloud.</p>
+                </div>
               </div>
-              <div className="mt-[22px] grid gap-3">
-                <div className="flex items-center gap-2.5 text-xs text-[#dfe4f4]"><ShieldCheck size={17} color="#8b7eff" /> Users, roles and permissions</div>
-                <div className="flex items-center gap-2.5 text-xs text-[#dfe4f4]"><ShieldCheck size={17} color="#8b7eff" /> Abstracts, papers and reviews</div>
-                <div className="flex items-center gap-2.5 text-xs text-[#dfe4f4]"><ShieldCheck size={17} color="#8b7eff" /> Decisions and sessions</div>
-                <div className="flex items-center gap-2.5 text-xs text-[#dfe4f4]"><ShieldCheck size={17} color="#8b7eff" /> Registration records</div>
-                <div className="flex items-center gap-2.5 text-xs text-[#dfe4f4]"><ShieldCheck size={17} color="#8b7eff" /> Communication logs and reports</div>
+              <div className="flex items-start gap-4 rounded-2xl border border-[#e1e5ef] bg-[#f9faff] p-5 dark:border-[#1e293b] dark:bg-[#0b1224]">
+                <MessageCircle className="mt-1 shrink-0 text-[#5c50ec] dark:text-[#a9a2ff]" size={25} aria-hidden="true" />
+                <div>
+                  <h3 className="font-bold text-[#0d1b3d] dark:text-white">Help when it is needed</h3>
+                  <p className="mt-1 text-sm leading-7 text-[#53617b] dark:text-[#94a3b8]">The chatbot interface offers help while people browse. Its answers depend on the service configured for the site.</p>
+                </div>
               </div>
-              <div className="mt-[18px] rounded-[11px] bg-white/5 p-[13px_15px] text-[10px] leading-relaxed text-[#9ca9c2]">
-                <span className="mb-1 block font-extrabold text-white">In one line</span>
-                A Conference Management Tool covers the full lifecycle of an
-                academic conference, from call-for-papers to the final programme
-                and post-event reporting.
+              <div className="flex items-start gap-4 rounded-2xl border border-[#e1e5ef] bg-[#f9faff] p-5 dark:border-[#1e293b] dark:bg-[#0b1224]">
+                <ClipboardCheck className="mt-1 shrink-0 text-[#5c50ec] dark:text-[#a9a2ff]" size={25} aria-hidden="true" />
+                <div>
+                  <h3 className="font-bold text-[#0d1b3d] dark:text-white">Responsibilities by role</h3>
+                  <p className="mt-1 text-sm leading-7 text-[#53617b] dark:text-[#94a3b8]">Different workspaces help users find the tools relevant to their tasks.</p>
+                </div>
               </div>
             </div>
           </div>
         </section>
 
-        <section className="bg-white px-5 pb-[88px]">
-          <div className="mx-auto w-[min(1200px,100%)]">
-            <div className="flex items-center justify-between gap-9 rounded-[22px] bg-gradient-to-br from-[#111e4b] to-[#342b87] p-10 text-white shadow-[0_25px_60px_rgba(20,28,80,.18)] max-[700px]:block">
-              <div>
-                <span className="inline-flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-[.1em] text-[#b9b3ff]"><Sparkles size={15} /> Ready when you are</span>
-                <h2 className="my-2 text-[clamp(26px,3vw,36px)] font-bold tracking-[-.04em]">See what's on offer right now.</h2>
-                <p className="max-w-[650px] text-xs leading-7 text-white/65">Browse upcoming conferences, or reach out if you've got questions about how CMT works.</p>
-              </div>
-              <Link to="/conferences" className="inline-flex items-center gap-2 rounded-[11px] bg-white px-[18px] py-[11px] text-[13px] font-bold text-[#192354] no-underline">
-                Explore conferences <ArrowRight size={16} />
+        <section aria-labelledby="value-heading" className="px-5 py-16 sm:py-20">
+          <div className="mx-auto max-w-[1200px]">
+            <p className="text-xs font-extrabold uppercase tracking-[.12em] text-[#5c50ec] dark:text-[#a9a2ff]">Why choose CMT?</p>
+            <h2 id="value-heading" className="mt-3 text-3xl font-bold tracking-[-.04em] text-[#0d1b3d] dark:text-white sm:text-4xl">
+              Less admin for organisers. Clearer information for everyone.
+            </h2>
+            <div className="mt-8 grid gap-4 md:grid-cols-3">
+              {[
+                { title: "Keep things together", detail: "Keep conference details, submissions and registrations in one place instead of across different files." },
+                { title: "Useful across campus", detail: "A faculty research conference or a student chapter summit can use the same core tools." },
+                { title: "Know what is happening", detail: "Organisers and authorised staff can check registrations, submissions and available reports." },
+              ].map((item) => (
+                <div key={item.title} className="rounded-2xl border border-[#e1e5ef] bg-white p-6 dark:border-[#1e293b] dark:bg-[#0f172a]">
+                  <CheckCircle2 size={22} className="text-[#5c50ec] dark:text-[#a9a2ff]" aria-hidden="true" />
+                  <h3 className="mt-4 text-lg font-bold text-[#0d1b3d] dark:text-white">{item.title}</h3>
+                  <p className="mt-2 text-sm leading-7 text-[#53617b] dark:text-[#94a3b8]">{item.detail}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section aria-labelledby="cta-heading" className="bg-white px-5 pb-20 pt-4 dark:bg-[#0f172a] sm:pb-24">
+          <div className="mx-auto flex max-w-[1200px] flex-col gap-7 rounded-[22px] bg-gradient-to-br from-[#111e4b] to-[#342b87] p-7 text-white shadow-[0_25px_60px_rgba(20,28,80,.18)] dark:shadow-[0_25px_60px_rgba(0,0,0,.4)] sm:p-10 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <p className="inline-flex items-center gap-2 text-xs font-extrabold uppercase tracking-[.1em] text-[#c4bdff]"><Sparkles size={17} aria-hidden="true" /> Find a conference</p>
+              <h2 id="cta-heading" className="mt-3 text-2xl font-bold tracking-[-.04em] sm:text-4xl">See what is happening on CMT.</h2>
+              <p className="mt-3 max-w-[650px] text-base leading-7 text-white/80">
+                Looking for a university conference, a student society event or an industry gathering? Explore the conferences listed on CMT.
+              </p>
+            </div>
+            <div className="flex shrink-0 flex-wrap gap-3">
+              <Link
+                to="/conferences"
+                className={`inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-extrabold text-[#192354] motion-safe:transition-colors hover:bg-[#efedff] ${FOCUS_RING}`}
+              >
+                Explore conferences <ArrowRight size={17} aria-hidden="true" />
+              </Link>
+              <Link
+                to="/contact"
+                className={`inline-flex min-h-12 items-center justify-center rounded-xl border border-white/40 px-5 py-3 text-sm font-extrabold text-white motion-safe:transition-colors hover:bg-white/10 ${FOCUS_RING}`}
+              >
+                Contact us
               </Link>
             </div>
           </div>
         </section>
       </main>
 
-      <footer className="bg-[#07132f] text-white/60">
-        <div className="mx-auto flex min-h-[100px] w-[min(1200px,calc(100%-40px))] items-center justify-between gap-5 text-[10px] max-[560px]:block max-[560px]:py-6">
+      <footer className="bg-[#07132f] text-white/75 dark:bg-[#030814]">
+        <div className="mx-auto flex min-h-[112px] max-w-[1200px] flex-col justify-center gap-5 px-5 py-6 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <LogoFallback />
-            <p className="mt-1 text-[9px] text-white/45">Conference Management Tool</p>
+            <p className="mt-1 text-xs text-white/60">Conference Management Tool</p>
           </div>
-          <span>© {new Date().getFullYear()} CMT. Conference Management Tool.</span>
+          <p className="text-xs">© {new Date().getFullYear()} CMT. Conference Management Tool.</p>
         </div>
       </footer>
     </div>
@@ -96,11 +527,11 @@ export default function About() {
 
 function LogoFallback() {
   return (
-    <div className="flex items-center gap-2.5 text-white">
-      <img className="h-[34px] w-[34px] object-contain" src="/cmt-mark.png" alt="CMT logo" />
-      <div className="flex flex-col leading-[1.05]">
+    <div className="flex items-center gap-3 text-white">
+      <img className="h-9 w-9 object-contain" src="/cmt-mark.png" alt="" aria-hidden="true" />
+      <div className="flex flex-col leading-tight">
         <strong className="text-xl tracking-[-.04em]">CMT</strong>
-        <span className="mt-1 whitespace-nowrap text-[9px] text-white/70">Conference Management Tool</span>
+        <span className="text-xs text-white/70">Conference Management Tool</span>
       </div>
     </div>
   );

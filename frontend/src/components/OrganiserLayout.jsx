@@ -1,3 +1,4 @@
+import { MessageCircleMore } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
@@ -10,7 +11,8 @@ import {
   LoaderCircle,
   LogOut,
   Menu,
-  MessageSquareQuote,
+  MessagesSquare,
+  Star,
   Moon,
   Plus,
   Settings as SettingsIcon,
@@ -29,10 +31,11 @@ const PRIMARY_NAV = [
   { label: "My conferences", to: "/organiser/conferences", icon: CalendarDays },
   { label: "Reviews", to: "/organiser/reviews", icon: CheckCheck },
   { label: "Attendees", to: "/organiser/registrations", icon: Users },
+  { label: "Discussions", to: "/discussions", icon: MessagesSquare },
     {
     label: "My Discussions",
     to: "/my-discussions",
-    icon: MessageSquareQuote,
+    icon: MessageCircleMore,
   },
   { label: "Create conference", to: "/create-conference", icon: Plus },
 ];
@@ -411,7 +414,7 @@ export default function OrganiserLayout({ children }) {
             onClick={() => setSidebarOpen(false)}
             className={navItemClass("/user-testimonials")}
           >
-            <MessageSquareQuote size={16} />
+            <Star size={16} />
             <span className="truncate">Testimonials</span>
           </Link>
 

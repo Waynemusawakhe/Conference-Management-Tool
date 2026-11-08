@@ -1,3 +1,4 @@
+import { MessageCircleMore } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
@@ -11,7 +12,8 @@ import {
   Lock,
   LogOut,
   Menu,
-  MessageSquareQuote,
+  MessagesSquare,
+  Star,
   Moon,
   Sun,
   X,
@@ -42,10 +44,11 @@ export const REVIEWER_NAV = [
     icon: FileText,
     to: "/reviewer-dashboard?filter=submitted",
   },
-    {
+    { key: "community", label: "Discussions", icon: MessagesSquare, to: "/discussions" },
+  {
     key: "discussions",
     label: "My Discussions",
-    icon: MessageSquareQuote,
+    icon: MessageCircleMore,
     to: "/my-discussions",
   },
   {
@@ -506,7 +509,7 @@ export default function ReviewerLayout({ children, focusMode = false }) {
                   location.pathname === "/user-testimonials",
                 )}
               >
-                <MessageSquareQuote size={16} />
+                <Star size={16} />
                 <span className="flex-1 truncate">Testimonials</span>
               </Link>
             </nav>

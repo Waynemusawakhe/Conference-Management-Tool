@@ -59,12 +59,12 @@ const ROLES = {
       {
         label: "Where can I see conference details?",
         icon: CalendarClock,
-        tint: "bg-[#fff1e0] text-[#d9760b]",
+        tint: "bg-[#fff1e0] text-[#a94e00]",
       },
       {
         label: "Conferences in South Africa",
         icon: Globe2,
-        tint: "bg-[#dff7ee] text-[#0f9d6b]",
+        tint: "bg-[#dff7ee] text-[#006746]",
       },
     ],
   },
@@ -85,12 +85,12 @@ const ROLES = {
       {
         label: "Track submissions",
         icon: FileText,
-        tint: "bg-[#fff1e0] text-[#d9760b]",
+        tint: "bg-[#fff1e0] text-[#a94e00]",
       },
       {
         label: "Plan the programme",
         icon: Users,
-        tint: "bg-[#dff7ee] text-[#0f9d6b]",
+        tint: "bg-[#dff7ee] text-[#006746]",
       },
     ],
   },
@@ -111,7 +111,7 @@ const ROLES = {
       {
         label: "Review deadlines",
         icon: CalendarClock,
-        tint: "bg-[#fff1e0] text-[#d9760b]",
+        tint: "bg-[#fff1e0] text-[#a94e00]",
       },
       {
         label: "Report a conflict of interest",
@@ -132,7 +132,7 @@ const ROLES = {
       {
         label: "Approve conferences",
         icon: ClipboardCheck,
-        tint: "bg-[#dff7ee] text-[#0f9d6b]",
+        tint: "bg-[#dff7ee] text-[#006746]",
       },
       {
         label: "University-wide reports",
@@ -158,12 +158,12 @@ const ROLES = {
       {
         label: "Check my submission status",
         icon: ClipboardCheck,
-        tint: "bg-[#dff7ee] text-[#0f9d6b]",
+        tint: "bg-[#dff7ee] text-[#006746]",
       },
       {
         label: "Submission deadlines",
         icon: CalendarClock,
-        tint: "bg-[#fff1e0] text-[#d9760b]",
+        tint: "bg-[#fff1e0] text-[#a94e00]",
       },
       {
         label: "Find conferences",
@@ -552,12 +552,23 @@ function ChatBotSession({ role, userId }) {
 
   const scrollToBottom = useCallback((behavior = "smooth") => {
     const el = scrollRef.current;
-    if (el) el.scrollTo({ top: el.scrollHeight, behavior });
+    if (!el) return;
+    if (typeof el.scrollTo === "function") {
+      el.scrollTo({ top: el.scrollHeight, behavior });
+    } else {
+      el.scrollTop = el.scrollHeight;
+    }
   }, []);
 
   useLayoutEffect(() => {
     if (!open) return;
-    if (onlyWelcome) scrollRef.current?.scrollTo({ top: 0 });
+    if (onlyWelcome) {
+      const el = scrollRef.current;
+      if (el) {
+        if (typeof el.scrollTo === "function") el.scrollTo({ top: 0 });
+        else el.scrollTop = 0;
+      }
+    }
     else scrollToBottom();
   }, [messages, sending, open, onlyWelcome, scrollToBottom]);
 
@@ -704,6 +715,7 @@ function ChatBotSession({ role, userId }) {
     <>
       <style>{`
 
+        @keyframes cmt-launcher-appear { 0% { opacity:0; transform:translateY(14px) scale(.82); } 70% { transform:translateY(-3px) scale(1.04); } 100% { opacity:1; transform:translateY(0) scale(1); } }
         @keyframes cmt-panel-in { from { opacity:0; transform: translateY(22px) scale(.95); } to { opacity:1; transform:none; } }
 
         @keyframes cmt-msg-in   { from { opacity:0; transform: translateY(10px); } to { opacity:1; transform:none; } }
@@ -741,35 +753,25 @@ function ChatBotSession({ role, userId }) {
       {/* ---------- launcher ---------- */}
 
       <div className="fixed bottom-5 right-5 z-[90] flex items-center gap-3 max-[560px]:bottom-4 max-[560px]:right-4">
-        {!open && (
-          <span className="cmt-msg-in pointer-events-none hidden items-center gap-2 rounded-full border border-[#e7e9f1] bg-white py-2.5 pl-3 pr-4 text-xs font-extrabold text-[#0d1b3d] shadow-[0_14px_36px_rgba(15,28,65,.16)] sm:inline-flex">
-            <span className="h-2 w-2 rounded-full bg-[#1fc98a]" />
-            Need help? Ask CMT
-          </span>
-        )}
-
         <button
           type="button"
           ref={launchRef}
-          aria-label={open ? "Close chat" : "Open chat assistant"}
+          aria-label={open ? "Hide chat assistant" : "Open chat assistant"}
 
           aria-expanded={open}
 
           onClick={() => (open ? closeChat() : setOpen(true))}
 
-          className="group relative grid h-[62px] w-[62px] place-items-center rounded-full bg-[linear-gradient(135deg,#0a1740,#15165a)] text-white shadow-[0_16px_40px_rgba(15,28,65,.45)] outline-none ring-2 ring-white/20 transition duration-300 hover:scale-105 focus-visible:ring-4 focus-visible:ring-[#b9b3ff]/70 active:scale-95"
+          className="group relative grid motion-safe:animate-[cmt-launcher-appear_.65s_ease-out_both] h-11 w-11 place-items-center rounded-full bg-[linear-gradient(135deg,#0a1740,#15165a)] text-white shadow-[0_6px_18px_rgba(15,28,65,.24)] outline-none ring-2 ring-white/20 transition duration-300 hover:scale-105 focus-visible:ring-4 focus-visible:ring-[#b9b3ff]/70 active:scale-95"
         >
-          {!open && (
-            <span className="cmt-ring absolute inset-0 rounded-full border-2 border-[#6655f6]" />
-          )}
 
           <span className="absolute inset-[5px] rounded-full bg-gradient-to-br from-[#6655f6] to-[#7869ff] opacity-90" />
 
           <span className="relative transition duration-300">
             {open ? (
-              <X size={25} strokeWidth={2.4} />
+              <X size={20} strokeWidth={2.4} />
             ) : (
-              <MessageCircle size={26} strokeWidth={2.2} />
+              <MessageCircle size={21} strokeWidth={2.2} />
             )}
           </span>
 
@@ -789,7 +791,7 @@ function ChatBotSession({ role, userId }) {
 
           aria-label="CMT chat assistant"
 
-          className={`cmt-panel-in fixed z-[95] flex origin-bottom-right flex-col overflow-hidden border border-[#e1e5f0] bg-[#f7f9fc] text-[#0d1b3d] shadow-[0_40px_100px_rgba(7,19,47,.35)] transition-[width,height] duration-300
+          className={`cmt-panel-in cmt-chat-panel fixed z-[95] flex origin-bottom-right flex-col overflow-hidden border border-[#e1e5f0] bg-[#f7f9fc] text-[#0d1b3d] shadow-[0_40px_100px_rgba(7,19,47,.35)] transition-[width,height] duration-300
 
             max-[560px]:inset-0 max-[560px]:rounded-none
 
@@ -1014,12 +1016,12 @@ function ChatBotSession({ role, userId }) {
 
                           onClick={() => send(s.label)}
 
-                          className="group flex flex-col items-start gap-2.5 rounded-2xl border border-[#e7e9f1] bg-white p-3 text-left shadow-[0_2px_10px_rgba(15,28,65,.04)] transition duration-300 hover:-translate-y-0.5 hover:border-[#cbc6ff] hover:shadow-[0_14px_30px_rgba(102,85,246,.14)] active:scale-[.98]"
+                          className="cmt-chat-starter-card group flex flex-col items-start gap-2.5 rounded-2xl border border-[#e7e9f1] bg-white p-3 text-left shadow-[0_2px_10px_rgba(15,28,65,.04)] transition duration-300 hover:-translate-y-0.5 hover:border-[#cbc6ff] hover:shadow-[0_14px_30px_rgba(102,85,246,.14)] active:scale-[.98]"
                         >
                           <span
-                            className={`grid h-9 w-9 place-items-center rounded-xl ${s.tint}`}
+                            className={`cmt-chat-starter-icon grid h-9 w-9 place-items-center rounded-xl ${s.tint}`}
                           >
-                            <Icon size={18} strokeWidth={2.2} />
+                            <Icon size={18} strokeWidth={2.2} aria-hidden="true" />
                           </span>
 
                           <span className="text-[12.5px] font-bold leading-snug text-[#0d1b3d]">
@@ -1156,7 +1158,7 @@ function ChatBotSession({ role, userId }) {
 
                 aria-label="Send message"
 
-                className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-gradient-to-br from-[#6655f6] to-[#7869ff] text-white shadow-[0_8px_20px_rgba(102,85,246,.35)] transition duration-300 enabled:hover:-translate-y-0.5 enabled:hover:shadow-[0_12px_26px_rgba(102,85,246,.5)] disabled:cursor-not-allowed disabled:bg-[#d9dcec] disabled:bg-none disabled:text-white disabled:shadow-none"
+                className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-gradient-to-br from-[#6655f6] to-[#7869ff] text-white shadow-[0_8px_20px_rgba(102,85,246,.35)] transition duration-300 enabled:hover:-translate-y-0.5 enabled:hover:shadow-[0_12px_26px_rgba(102,85,246,.5)] disabled:cursor-not-allowed disabled:bg-[#d9dcec] disabled:bg-none disabled:text-[#43506a] disabled:shadow-none"
               >
                 <Send size={17} strokeWidth={2.3} className="-ml-px mt-px" />
               </button>
