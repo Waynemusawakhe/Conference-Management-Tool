@@ -704,6 +704,7 @@ function ChatBotSession({ role, userId }) {
     <>
       <style>{`
 
+        @keyframes cmt-launcher-appear { 0% { opacity:0; transform:translateY(14px) scale(.82); } 70% { transform:translateY(-3px) scale(1.04); } 100% { opacity:1; transform:translateY(0) scale(1); } }
         @keyframes cmt-panel-in { from { opacity:0; transform: translateY(22px) scale(.95); } to { opacity:1; transform:none; } }
 
         @keyframes cmt-msg-in   { from { opacity:0; transform: translateY(10px); } to { opacity:1; transform:none; } }
@@ -741,13 +742,6 @@ function ChatBotSession({ role, userId }) {
       {/* ---------- launcher ---------- */}
 
       <div className="fixed bottom-5 right-5 z-[90] flex items-center gap-3 max-[560px]:bottom-4 max-[560px]:right-4">
-        {!open && (
-          <span className="cmt-msg-in pointer-events-none hidden items-center gap-2 rounded-full border border-[#e7e9f1] bg-white py-2.5 pl-3 pr-4 text-xs font-extrabold text-[#0d1b3d] shadow-[0_14px_36px_rgba(15,28,65,.16)] sm:inline-flex">
-            <span className="h-2 w-2 rounded-full bg-[#1fc98a]" />
-            Need help? Ask CMT
-          </span>
-        )}
-
         <button
           type="button"
           ref={launchRef}
@@ -757,19 +751,16 @@ function ChatBotSession({ role, userId }) {
 
           onClick={() => (open ? closeChat() : setOpen(true))}
 
-          className="group relative grid h-[62px] w-[62px] place-items-center rounded-full bg-[linear-gradient(135deg,#0a1740,#15165a)] text-white shadow-[0_16px_40px_rgba(15,28,65,.45)] outline-none ring-2 ring-white/20 transition duration-300 hover:scale-105 focus-visible:ring-4 focus-visible:ring-[#b9b3ff]/70 active:scale-95"
+          className="group relative grid motion-safe:animate-[cmt-launcher-appear_.65s_ease-out_both] h-11 w-11 place-items-center rounded-full bg-[linear-gradient(135deg,#0a1740,#15165a)] text-white shadow-[0_6px_18px_rgba(15,28,65,.24)] outline-none ring-2 ring-white/20 transition duration-300 hover:scale-105 focus-visible:ring-4 focus-visible:ring-[#b9b3ff]/70 active:scale-95"
         >
-          {!open && (
-            <span className="cmt-ring absolute inset-0 rounded-full border-2 border-[#6655f6]" />
-          )}
 
           <span className="absolute inset-[5px] rounded-full bg-gradient-to-br from-[#6655f6] to-[#7869ff] opacity-90" />
 
           <span className="relative transition duration-300">
             {open ? (
-              <X size={25} strokeWidth={2.4} />
+              <X size={20} strokeWidth={2.4} />
             ) : (
-              <MessageCircle size={26} strokeWidth={2.2} />
+              <MessageCircle size={21} strokeWidth={2.2} />
             )}
           </span>
 
