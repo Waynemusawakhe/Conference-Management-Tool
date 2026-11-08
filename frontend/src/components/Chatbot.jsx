@@ -552,12 +552,23 @@ function ChatBotSession({ role, userId }) {
 
   const scrollToBottom = useCallback((behavior = "smooth") => {
     const el = scrollRef.current;
-    if (el) el.scrollTo({ top: el.scrollHeight, behavior });
+    if (!el) return;
+    if (typeof el.scrollTo === "function") {
+      el.scrollTo({ top: el.scrollHeight, behavior });
+    } else {
+      el.scrollTop = el.scrollHeight;
+    }
   }, []);
 
   useLayoutEffect(() => {
     if (!open) return;
-    if (onlyWelcome) scrollRef.current?.scrollTo({ top: 0 });
+    if (onlyWelcome) {
+      const el = scrollRef.current;
+      if (el) {
+        if (typeof el.scrollTo === "function") el.scrollTo({ top: 0 });
+        else el.scrollTop = 0;
+      }
+    }
     else scrollToBottom();
   }, [messages, sending, open, onlyWelcome, scrollToBottom]);
 
@@ -745,7 +756,7 @@ function ChatBotSession({ role, userId }) {
         <button
           type="button"
           ref={launchRef}
-          aria-label={open ? "Close chat" : "Open chat assistant"}
+          aria-label={open ? "Hide chat assistant" : "Open chat assistant"}
 
           aria-expanded={open}
 

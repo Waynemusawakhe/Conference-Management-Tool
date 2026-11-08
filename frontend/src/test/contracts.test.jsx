@@ -1,6 +1,3 @@
-
-
-
 import React from "react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import {
@@ -273,9 +270,14 @@ describe("catalogue and relationship contracts", () => {
     wrapper(<MyConferences />);
     await screen.findByText("Second page event");
     expect(screen.getAllByText("Research Summit")).toHaveLength(1);
-    expect(
-      screen.getByText(/Attending \(Confirmed\).*Submitted \(Pending\)/),
-    ).toBeInTheDocument();
+    // Attendance and submission statuses render as separate semantic badges.
+    // Wait for both API requests to settle before asserting their labels.
+    await waitFor(() => {
+      const conferenceRow = screen.getByText("Research Summit").closest("article");
+      expect(conferenceRow).not.toBeNull();
+      expect(within(conferenceRow).getByText("Attending: Confirmed")).toBeInTheDocument();
+      expect(within(conferenceRow).getByText("Submitted: Pending")).toBeInTheDocument();
+    });
     expect(screen.getByTestId("role-chrome")).toBeInTheDocument();
     expect(registrationsApi.getAll).toHaveBeenCalledWith({
       page: 2,

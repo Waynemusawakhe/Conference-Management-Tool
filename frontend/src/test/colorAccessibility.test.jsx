@@ -1,6 +1,6 @@
 import React from "react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import AccessibilityTools from "../components/AccessibilityTools";
 import StatusIndicator from "../components/StatusIndicator";
@@ -108,7 +108,7 @@ describe("CMT colour accessibility settings", () => {
     expect(screen.getByRole("radio", { name: /Monochrome/i })).toBeEnabled();
   });
 
-  it("makes Read Aloud tools discoverable and closes the accordion with Escape", () => {
+  it("makes Read Aloud tools discoverable and closes the accordion with Escape", async () => {
     mountTools();
     fireEvent.click(screen.getByRole("button", { name: "Open accessibility settings" }));
     const summary = screen.getByText("Read Aloud and keyboard tools").closest("summary");
@@ -117,12 +117,12 @@ describe("CMT colour accessibility settings", () => {
     expect(summary.querySelectorAll("svg")).toHaveLength(2);
     fireEvent.click(summary);
 
-    expect(summary).toHaveAttribute("aria-expanded", "true");
+    await waitFor(() => expect(summary).toHaveAttribute("aria-expanded", "true"));
     expect(screen.getByText(/Read this page or selected text aloud/)).toBeInTheDocument();
 
     fireEvent.keyDown(summary, { key: "Escape" });
 
-    expect(summary).toHaveAttribute("aria-expanded", "false");
+    await waitFor(() => expect(summary).toHaveAttribute("aria-expanded", "false"));
     expect(summary).toHaveFocus();
   });
 });

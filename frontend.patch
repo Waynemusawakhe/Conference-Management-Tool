@@ -1,0 +1,94 @@
+diff --git a/frontend/src/components/Chatbot.jsx b/frontend/src/components/Chatbot.jsx
+--- a/frontend/src/components/Chatbot.jsx
++++ b/frontend/src/components/Chatbot.jsx
+@@ -552,12 +552,23 @@
+ 
+   const scrollToBottom = useCallback((behavior = "smooth") => {
+     const el = scrollRef.current;
+-    if (el) el.scrollTo({ top: el.scrollHeight, behavior });
++    if (!el) return;
++    if (typeof el.scrollTo === "function") {
++      el.scrollTo({ top: el.scrollHeight, behavior });
++    } else {
++      el.scrollTop = el.scrollHeight;
++    }
+   }, []);
+ 
+   useLayoutEffect(() => {
+     if (!open) return;
+-    if (onlyWelcome) scrollRef.current?.scrollTo({ top: 0 });
++    if (onlyWelcome) {
++      const el = scrollRef.current;
++      if (el) {
++        if (typeof el.scrollTo === "function") el.scrollTo({ top: 0 });
++        else el.scrollTop = 0;
++      }
++    }
+     else scrollToBottom();
+   }, [messages, sending, open, onlyWelcome, scrollToBottom]);
+ 
+@@ -745,7 +756,7 @@
+         <button
+           type="button"
+           ref={launchRef}
+-          aria-label={open ? "Close chat" : "Open chat assistant"}
++          aria-label={open ? "Hide chat assistant" : "Open chat assistant"}
+ 
+           aria-expanded={open}
+ 
+diff --git a/frontend/src/test/colorAccessibility.test.jsx b/frontend/src/test/colorAccessibility.test.jsx
+--- a/frontend/src/test/colorAccessibility.test.jsx
++++ b/frontend/src/test/colorAccessibility.test.jsx
+@@ -1,6 +1,6 @@
+ import React from "react";
+ import { afterEach, beforeEach, describe, expect, it } from "vitest";
+-import { fireEvent, render, screen } from "@testing-library/react";
++import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+ import { MemoryRouter } from "react-router-dom";
+ import AccessibilityTools from "../components/AccessibilityTools";
+ import StatusIndicator from "../components/StatusIndicator";
+@@ -108,7 +108,7 @@
+     expect(screen.getByRole("radio", { name: /Monochrome/i })).toBeEnabled();
+   });
+ 
+-  it("makes Read Aloud tools discoverable and closes the accordion with Escape", () => {
++  it("makes Read Aloud tools discoverable and closes the accordion with Escape", async () => {
+     mountTools();
+     fireEvent.click(screen.getByRole("button", { name: "Open accessibility settings" }));
+     const summary = screen.getByText("Read Aloud and keyboard tools").closest("summary");
+@@ -117,12 +117,12 @@
+     expect(summary.querySelectorAll("svg")).toHaveLength(2);
+     fireEvent.click(summary);
+ 
+-    expect(summary).toHaveAttribute("aria-expanded", "true");
++    await waitFor(() => expect(summary).toHaveAttribute("aria-expanded", "true"));
+     expect(screen.getByText(/Read this page or selected text aloud/)).toBeInTheDocument();
+ 
+     fireEvent.keyDown(summary, { key: "Escape" });
+ 
+-    expect(summary).toHaveAttribute("aria-expanded", "false");
++    await waitFor(() => expect(summary).toHaveAttribute("aria-expanded", "false"));
+     expect(summary).toHaveFocus();
+   });
+ });
+diff --git a/frontend/src/test/contracts.test.jsx b/frontend/src/test/contracts.test.jsx
+--- a/frontend/src/test/contracts.test.jsx
++++ b/frontend/src/test/contracts.test.jsx
+@@ -273,9 +273,14 @@
+     wrapper(<MyConferences />);
+     await screen.findByText("Second page event");
+     expect(screen.getAllByText("Research Summit")).toHaveLength(1);
+-    expect(
+-      screen.getByText(/Attending \(Confirmed\).*Submitted \(Pending\)/),
+-    ).toBeInTheDocument();
++    // Attendance and submission statuses render as separate semantic badges.
++    // Wait for both API requests to settle before asserting their labels.
++    await waitFor(() => {
++      const conferenceRow = screen.getByText("Research Summit").closest("article");
++      expect(conferenceRow).not.toBeNull();
++      expect(within(conferenceRow).getByText("Attending: Confirmed")).toBeInTheDocument();
++      expect(within(conferenceRow).getByText("Submitted: Pending")).toBeInTheDocument();
++    });
+     expect(screen.getByTestId("role-chrome")).toBeInTheDocument();
+     expect(registrationsApi.getAll).toHaveBeenCalledWith({
+       page: 2,
