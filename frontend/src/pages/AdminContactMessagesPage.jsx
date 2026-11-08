@@ -18,6 +18,7 @@ import { useApiResource } from "../hooks/useApiResource";
 import { toArray } from "../api/normalize";
 import { contactMessagesApi } from "../api/contactMessagesApi";
 import { AdminTableToolbar, SortableTh, useAdminTableControls } from "../components/AdminTableControls";
+import StatusIndicator from "../components/StatusIndicator";
 
 const MESSAGE_COLUMNS = [
   { key: "sender", label: "From" },
@@ -309,9 +310,7 @@ export default function ContactMessagesPage() {
                         </p>
                       </td>}
                       {table.columnVisible("status") && <td data-label="Status" className="px-4 py-4">
-                        <span className={`inline-flex rounded-full border px-2.5 py-1 text-[9px] font-extrabold uppercase tracking-[.06em] ${config.chip}`}>
-                          {config.label}
-                        </span>
+                        <StatusIndicator status={key} />
                       </td>}
                       {table.columnVisible("received") && <td data-label="Received" className="px-4 py-4 text-[10px] text-[#7b869b]">
                         {formatDateTime(m.created_at)}

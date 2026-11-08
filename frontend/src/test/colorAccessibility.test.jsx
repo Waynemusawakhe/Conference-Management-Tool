@@ -35,6 +35,15 @@ describe("CMT colour accessibility settings", () => {
     expect(screen.queryByRole("region", { name: "Accessibility" })).not.toBeInTheDocument();
   });
 
+  it("closes on Escape and restores focus to the launcher", () => {
+    mountTools();
+    const launch = screen.getByRole("button", { name: "Open accessibility settings" });
+    fireEvent.click(launch);
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(screen.queryByRole("region", { name: "Accessibility" })).not.toBeInTheDocument();
+    expect(document.activeElement).toBe(launch);
+  });
+
   it("offers accessible colour modes and remembers the choice", () => {
     const { unmount } = mountTools();
     fireEvent.click(screen.getByRole("button", { name: "Open accessibility settings" }));
@@ -45,6 +54,19 @@ describe("CMT colour accessibility settings", () => {
     mountTools();
     fireEvent.click(screen.getByRole("button", { name: "Open accessibility settings" }));
     expect(screen.getByRole("radio", { name: /Colour-blind-friendly/i })).toBeChecked();
+  });
+
+  it.each([
+    ["CMT colours", "default"],
+    ["Colour-blind-friendly", "color-safe"],
+    ["High contrast dark", "high-dark"],
+    ["High contrast light", "high-light"],
+    ["Monochrome", "monochrome"],
+  ])("applies the %s display mode", (label, mode) => {
+    mountTools();
+    fireEvent.click(screen.getByRole("button", { name: "Open accessibility settings" }));
+    fireEvent.click(screen.getByRole("radio", { name: new RegExp(label, "i") }));
+    expect(document.documentElement.dataset.cmtDisplayMode).toBe(mode);
   });
 
   it("supports extra text size, link emphasis and reset", () => {
@@ -66,8 +88,12 @@ describe("semantic status indicators", () => {
     ["accepted", "Accepted", "success"],
     ["rejected", "Rejected", "danger"],
     ["pending", "Pending", "warning"],
+    ["under_review", "Under review", "info"],
+    ["revision_requested", "Revision requested", "warning"],
     ["open", "Open for submissions", "success"],
     ["closed", "Closed", "neutral"],
+    ["submitted", "Submitted", "info"],
+    ["locked", "Locked", "neutral"],
   ])("shows a textual and icon-backed %s state", (status, label, tone) => {
     const { container } = render(<StatusIndicator status={status} />);
     expect(screen.getByText(label)).toBeInTheDocument();

@@ -21,6 +21,7 @@ import { submissionsApi } from "../api/submissionsApi";
 import { conferencesApi } from "../api/conferencesApi";
 import { reviewsApi } from "../api/reviewsApi";
 import { AdminTableToolbar, SortableTh, useAdminTableControls } from "../components/AdminTableControls";
+import StatusIndicator from "../components/StatusIndicator";
 
 const SUBMISSION_COLUMNS = [
   { key: "title", label: "Title" },
@@ -41,15 +42,6 @@ const STATUS_LABELS = {
   withdrawn: "Withdrawn",
 };
 
-const STATUS_TONES = {
-  Pending: "border-[#e9d9a7] bg-[#fff9e9] text-[#9b7414]",
-  "Under review": "border-[#cfd0ff] bg-[#f0efff] text-[#5548d7]",
-  Accepted: "border-[#bfe5d1] bg-[#effaf4] text-[#18794e]",
-  Rejected: "border-[#f1c8c8] bg-[#fff2f2] text-[#b13a3a]",
-  "Revision requested": "border-[#f0d0b9] bg-[#fff6ee] text-[#a55b25]",
-  Withdrawn: "border-[#e2e6ee] bg-[#f5f6fa] text-[#59657d]",
-};
-
 const REC_STYLES = {
   accept: "border-[#bfe5d1] bg-[#effaf4] text-[#18794e]",
   reject: "border-[#f1c8c8] bg-[#fff2f2] text-[#b13a3a]",
@@ -59,10 +51,6 @@ const REC_STYLES = {
 function statusKey(raw) {
   if (!raw) return "pending";
   return String(raw).trim().toLowerCase().replace(/[\s-]+/g, "_");
-}
-
-function statusLabel(raw) {
-  return STATUS_LABELS[statusKey(raw)] ?? String(raw ?? "—");
 }
 
 const subTitle = (s) => s.title ?? s.name ?? `Submission #${s.id}`;
@@ -454,7 +442,6 @@ export default function AdminSubmissionsPage() {
               {!submissionsRes.loading &&
                 !submissionsRes.error &&
                 visibleSubmissions.map((sub) => {
-                  const label = statusLabel(sub.status);
                   return (
                     <tr key={sub.id} className="cmt-admin-list-row group border-b border-[#f0f2f6] transition-colors last:border-0 hover:bg-[#fafbff]">
                       {table.columnVisible("title") && <td data-label="Submission" className="sticky left-0 z-10 bg-white px-6 py-4 dark:bg-[#0f172a]">
@@ -482,9 +469,7 @@ export default function AdminSubmissionsPage() {
                         </span>
                       </td>}
                       {table.columnVisible("status") && <td data-label="Status" className="px-4 py-4">
-                        <span className={`inline-flex rounded-full border px-2.5 py-1 text-[9px] font-extrabold uppercase tracking-[.06em] ${STATUS_TONES[label] ?? "border-[#e2e6ee] bg-[#f5f6fa] text-[#59657d]"}`}>
-                          {label}
-                        </span>
+                        <StatusIndicator status={sub.status} />
                       </td>}
                       {table.columnVisible("decision") && <td data-label="Decision" className="px-4 py-4 text-[10px] font-semibold text-[#5c6880]">
                         {subDecision(sub)}

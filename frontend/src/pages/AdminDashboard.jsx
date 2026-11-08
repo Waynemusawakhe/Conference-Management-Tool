@@ -21,35 +21,11 @@ import { submissionsApi } from "../api/submissionsApi";
 import { usersApi } from "../api/usersApi";
 import { reportsApi } from "../api/reportsApi";
 import { contactMessagesApi } from "../api/contactMessagesApi";
-
-const STATUS_LABELS = {
-  pending: "Pending",
-  under_review: "Under review",
-  accepted: "Accepted",
-  rejected: "Rejected",
-  revision_requested: "Revision requested",
-};
-
-const STATUS_STYLES = {
-  Pending: "border-[#e9d9a7] bg-[#fff9e9] text-[#9b7414]",
-  "Under review": "border-[#cfd0ff] bg-[#f0efff] text-[#5548d7]",
-  Accepted: "border-[#bfe5d1] bg-[#effaf4] text-[#18794e]",
-  Rejected: "border-[#f1c8c8] bg-[#fff2f2] text-[#b13a3a]",
-  "Revision requested": "border-[#f0d0b9] bg-[#fff6ee] text-[#a55b25]",
-};
-
-const MESSAGE_STATUS = {
-  new: { label: "New", className: "border-[#cfd0ff] bg-[#f0efff] text-[#5548d7]" },
-  in_progress: { label: "In progress", className: "border-[#e9d9a7] bg-[#fff9e9] text-[#9b7414]" },
-  resolved: { label: "Resolved", className: "border-[#bfe5d1] bg-[#effaf4] text-[#18794e]" },
-};
+import StatusIndicator from "../components/StatusIndicator";
 
 function statusKey(raw) {
   if (!raw) return "pending";
   return String(raw).trim().toLowerCase().replace(/[\s-]+/g, "_");
-}
-function statusLabel(raw) {
-  return STATUS_LABELS[statusKey(raw)] ?? String(raw ?? "—");
 }
 function pickNumber(...values) {
   for (const value of values) {
@@ -382,20 +358,13 @@ export default function AdminDashboard() {
             <RecentEmpty message="No submissions yet." />
           ) : (
             recentSubmissions.map((sub) => {
-              const label = statusLabel(sub.status);
               return (
                 <RecentRow
                   key={sub.id}
                   primary={subTitle(sub)}
                   secondary={`${subAuthor(sub)} · #${sub.id}`}
                   badge={
-                    <span
-                      className={`inline-flex shrink-0 rounded-full border px-2 py-0.5 text-[9px] font-extrabold ${
-                        STATUS_STYLES[label] ?? "border-gray-200 bg-gray-50 text-gray-700"
-                      }`}
-                    >
-                      {label}
-                    </span>
+                    <StatusIndicator status={sub.status} className="shrink-0" />
                   }
                   meta={formatDate(sub.created_at ?? sub.submitted_at)}
                   onClick={() => navigate("/admin/submissions")}
@@ -430,17 +399,12 @@ export default function AdminDashboard() {
           ) : (
             recentMessages.map((m) => {
               const key = statusKey(m.status ?? "new");
-              const meta = MESSAGE_STATUS[key] ?? MESSAGE_STATUS.new;
               return (
                 <RecentRow
                   key={m.id}
                   primary={m.name ?? "—"}
                   secondary={m.email ?? "—"}
-                  badge={
-                    <span className={`inline-flex shrink-0 rounded-full border px-2 py-0.5 text-[9px] font-extrabold ${meta.className}`}>
-                      {meta.label}
-                    </span>
-                  }
+                  badge={<StatusIndicator status={key} className="shrink-0" />}
                   meta={formatDate(m.created_at)}
                   onClick={() => navigate(`/admin/contact-messages/${m.id}`)}
                 />

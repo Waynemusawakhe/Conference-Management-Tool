@@ -15,6 +15,7 @@ import RoleChrome from "../components/RoleChrome";
 import { useAuth } from "../context/AuthContext";
 import { submissionsApi } from "../api/submissionsApi";
 import { reviewsApi } from "../api/reviewsApi";
+import StatusIndicator from "../components/StatusIndicator";
 
 const STATUS_LABELS = {
   pending: "Pending",
@@ -23,15 +24,6 @@ const STATUS_LABELS = {
   rejected: "Rejected",
   revision_requested: "Revision requested",
   withdrawn: "Withdrawn",
-};
-
-const STATUS_STYLES = {
-  pending: "border-[#e9d9a7] bg-[#fff9e9] text-[#9b7414]",
-  under_review: "border-[#cfd0ff] bg-[#f0efff] text-[#5548d7]",
-  accepted: "border-[#bfe5d1] bg-[#effaf4] text-[#18794e]",
-  rejected: "border-[#f1c8c8] bg-[#fff2f2] text-[#b13a3a]",
-  revision_requested: "border-[#f0d0b9] bg-[#fff6ee] text-[#a55b25]",
-  withdrawn: "border-[#d7dce5] bg-[#f4f6f9] text-[#68748b]",
 };
 
 const REC_STYLES = {
@@ -233,13 +225,7 @@ export default function AuthorFeedback() {
                         </span>
                       </div>
                     </div>
-                    <span
-                      className={`inline-flex rounded-full border px-2.5 py-1 text-[9px] font-extrabold ${
-                        STATUS_STYLES[status] || STATUS_STYLES.pending
-                      }`}
-                    >
-                      {STATUS_LABELS[status] || status}
-                    </span>
+                    <StatusIndicator status={status} />
                   </div>
 
                   <ul className="mt-4 space-y-3">

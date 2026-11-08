@@ -18,6 +18,7 @@ import { useApiResource } from "../hooks/useApiResource";
 import { toArray } from "../api/normalize";
 import { registrationsApi } from "../api/registrationsApi";
 import { AdminTableToolbar, SortableTh, useAdminTableControls } from "../components/AdminTableControls";
+import StatusIndicator from "../components/StatusIndicator";
 
 const REGISTRATION_COLUMNS = [
   { key: "attendee", label: "Attendee" },
@@ -41,18 +42,6 @@ const regUserName = (r) =>
 const regUserEmail = (r) => r.user?.email ?? r.user_email ?? r.email ?? "—";
 const regStatus = (r) => String(r.status ?? "registered").toLowerCase();
 const regConferenceId = (r) => r.conference_id ?? r.conference?.id ?? null;
-
-const STATUS_TONES = {
-  registered: "border-[#bfe5d1] bg-[#effaf4] text-[#18794e]",
-  confirmed: "border-[#bfe5d1] bg-[#effaf4] text-[#18794e]",
-  pending: "border-[#e9d9a7] bg-[#fff9e9] text-[#9b7414]",
-  cancelled: "border-[#f1c8c8] bg-[#fff2f2] text-[#b13a3a]",
-  canceled: "border-[#f1c8c8] bg-[#fff2f2] text-[#b13a3a]",
-};
-
-function statusTone(status) {
-  return STATUS_TONES[status] ?? "border-[#e2e6ee] bg-[#f5f6fa] text-[#59657d]";
-}
 
 function getInitials(name) {
   if (!name) return "?";
@@ -385,7 +374,7 @@ export default function AdminRegistrationsPage() {
                           <div className="cmt-registration-mobile-meta mt-2 hidden min-w-0 flex-wrap items-center gap-2">
                             {table.columnVisible("conference") && <span className="w-full break-words text-[11px] leading-5 text-[#5c6880]">{regConfName(r)}</span>}
                             <div className="flex w-full flex-wrap items-center justify-between gap-2">
-                              {table.columnVisible("status") && <span className={`inline-flex rounded-full border px-2.5 py-1 text-[9px] font-extrabold uppercase tracking-[.06em] ${statusTone(status)}`}>{status}</span>}
+                              {table.columnVisible("status") && <StatusIndicator status={status} />}
                               {table.columnVisible("registered") && <span className="text-[10px] text-[#7b869b]">{formatDate(r.created_at ?? r.registered_at)}</span>}
                             </div>
                             {table.columnVisible("actions") && <button onClick={() => requestCancel(r)} className="cmt-registration-mobile-cancel mt-1 inline-flex min-h-11 w-full items-center justify-center gap-1.5 rounded-lg bg-red-50 px-3 text-[11px] font-bold text-red-600 transition hover:bg-red-100" aria-label={`Cancel registration for ${name}`}><Trash2 size={14} /> Cancel registration</button>}
@@ -400,9 +389,7 @@ export default function AdminRegistrationsPage() {
                       </span>
                     </td>}
                     {table.columnVisible("status") && <td className="cmt-registration-status px-4 py-4">
-                      <span className={`inline-flex rounded-full border px-2.5 py-1 text-[9px] font-extrabold uppercase tracking-[.06em] ${statusTone(status)}`}>
-                        {status}
-                      </span>
+                      <StatusIndicator status={status} />
                     </td>}
                     {table.columnVisible("registered") && <td className="cmt-registration-date px-4 py-4 text-[10px] text-[#7b869b]">
                       {formatDate(r.created_at ?? r.registered_at)}

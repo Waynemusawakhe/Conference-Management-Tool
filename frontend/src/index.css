@@ -6,6 +6,7 @@
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   color: #0d1b3d;
   background: #f7f9fc;
+  --cmt-text-scale: 1;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -1903,9 +1904,26 @@ html.dark .cmt-manage-hover:active { background-color: #1b3261; }
   outline: 3px solid #b35200;
   outline-offset: 3px;
 }
-:where(main, h1, h2, h3, h4, h5, h6)[tabindex="-1"]:focus { outline: none; }
-html[data-cmt-text-size="125"] { font-size: 125%; }
-html[data-cmt-text-size="150"] { font-size: 150%; }
+#root :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
+  border-color: #68748b;
+}
+#root :is(input, textarea)::placeholder {
+  color: #59657d;
+  opacity: 1;
+}
+#root :is(button, a)[class*="to-[#7869ff]"] {
+  background-image: linear-gradient(135deg, #6655f6, #5c4bd6) !important;
+}
+#root button[class*="bg-[#7869ff]"] {
+  background-color: #5c4bd6 !important;
+}
+:where(main, h1, h2, h3, h4, h5, h6)[tabindex="-1"]:focus {
+  outline: 3px solid #b35200;
+  outline-offset: 3px;
+}
+html[data-cmt-text-size="125"] { --cmt-text-scale: 1.25; }
+html[data-cmt-text-size="150"] { --cmt-text-scale: 1.5; }
+.cmt-application-shell { zoom: var(--cmt-text-scale); }
 html[data-cmt-reading-spacing="true"] :is(main, article, section) :is(p, li, dd, dt, blockquote) {
   line-height: 1.85 !important;
   letter-spacing: .025em;
@@ -1969,6 +1987,7 @@ html[data-cmt-display-mode="color-safe"] #root [class*="bg-[#effaf4]"] { backgro
 html[data-cmt-display-mode="high-dark"] {
   --cmt-contrast-bg: #050a14;
   --cmt-contrast-ink: #fff;
+  --cmt-contrast-muted: #e4e9f2;
   --cmt-contrast-border: #ffe37b;
   --cmt-contrast-link: #ffe37b;
   --cmt-contrast-action: #ffe37b;
@@ -1977,6 +1996,7 @@ html[data-cmt-display-mode="high-dark"] {
 html[data-cmt-display-mode="high-light"] {
   --cmt-contrast-bg: #fff;
   --cmt-contrast-ink: #080808;
+  --cmt-contrast-muted: #292929;
   --cmt-contrast-border: #111;
   --cmt-contrast-link: #0646a0;
   --cmt-contrast-action: #071c4f;
@@ -1985,6 +2005,7 @@ html[data-cmt-display-mode="high-light"] {
 html[data-cmt-display-mode="monochrome"] {
   --cmt-contrast-bg: #fff;
   --cmt-contrast-ink: #080808;
+  --cmt-contrast-muted: #292929;
   --cmt-contrast-border: #111;
   --cmt-contrast-link: #000;
   --cmt-contrast-action: #000;
@@ -2000,7 +2021,7 @@ html:is([data-cmt-display-mode="high-dark"], [data-cmt-display-mode="high-light"
   color: var(--cmt-contrast-ink) !important;
   border-color: var(--cmt-contrast-border) !important;
 }
-html:is([data-cmt-display-mode="high-dark"], [data-cmt-display-mode="high-light"], [data-cmt-display-mode="monochrome"]) #root :is(main, header, nav, aside, footer, section, article) [class*="bg-"] {
+html:is([data-cmt-display-mode="high-dark"], [data-cmt-display-mode="high-light"], [data-cmt-display-mode="monochrome"]) #root :is(main, header, nav, aside, footer, section, article) [class*="bg-"]:not(button) {
   background-color: var(--cmt-contrast-bg) !important;
   background-image: none !important;
   border-color: var(--cmt-contrast-border) !important;
@@ -2009,10 +2030,17 @@ html:is([data-cmt-display-mode="high-dark"], [data-cmt-display-mode="high-light"
   color: var(--cmt-contrast-ink) !important;
   text-shadow: none !important;
 }
+html:is([data-cmt-display-mode="high-dark"], [data-cmt-display-mode="high-light"], [data-cmt-display-mode="monochrome"]) #root :is(main, header, nav, aside, footer, section, article) :where(*) {
+  color: var(--cmt-contrast-ink) !important;
+  text-shadow: none !important;
+}
 html:is([data-cmt-display-mode="high-dark"], [data-cmt-display-mode="high-light"], [data-cmt-display-mode="monochrome"]) #root :is(main, header, nav, aside, footer, section, article) :is(a[href]) {
   color: var(--cmt-contrast-link) !important;
   text-decoration: underline !important;
   text-underline-offset: .18em;
+}
+html:is([data-cmt-display-mode="high-dark"], [data-cmt-display-mode="high-light"], [data-cmt-display-mode="monochrome"]) #root :is(main, header, nav, aside, footer, section, article) :is(a[href]) * {
+  color: var(--cmt-contrast-link) !important;
 }
 html:is([data-cmt-display-mode="high-dark"], [data-cmt-display-mode="high-light"], [data-cmt-display-mode="monochrome"]) #root :is(main, header, nav, aside, footer, section, article) button {
   background: var(--cmt-contrast-action) !important;
@@ -2020,8 +2048,13 @@ html:is([data-cmt-display-mode="high-dark"], [data-cmt-display-mode="high-light"
   border: 2px solid var(--cmt-contrast-border) !important;
   box-shadow: none !important;
 }
-html:is([data-cmt-display-mode="high-dark"], [data-cmt-display-mode="high-light"], [data-cmt-display-mode="monochrome"]) #root :is(main, header, nav, aside, footer, section, article) button :is(span, strong, small) {
+html:is([data-cmt-display-mode="high-dark"], [data-cmt-display-mode="high-light"], [data-cmt-display-mode="monochrome"]) #root :is(main, header, nav, aside, footer, section, article) button * {
   color: var(--cmt-contrast-action-ink) !important;
+}
+html:is([data-cmt-display-mode="high-dark"], [data-cmt-display-mode="high-light"], [data-cmt-display-mode="monochrome"]) #root :is(main, header, nav, aside, footer, section, article) button:disabled {
+  border-style: dashed !important;
+  cursor: not-allowed;
+  opacity: 1;
 }
 html:is([data-cmt-display-mode="high-dark"], [data-cmt-display-mode="high-light"], [data-cmt-display-mode="monochrome"]) #root :is(main, header, nav, aside, footer, section, article) :is(input, select, textarea) {
   background: var(--cmt-contrast-bg) !important;
@@ -2040,6 +2073,19 @@ html:is([data-cmt-display-mode="high-dark"], [data-cmt-display-mode="high-light"
 html[data-cmt-display-mode="monochrome"] .cmt-semantic-status[data-cmt-tone="danger"] { border-style: dashed !important; }
 html[data-cmt-display-mode="monochrome"] .cmt-semantic-status[data-cmt-tone="warning"] { border-style: dotted !important; }
 html[data-cmt-display-mode="monochrome"] .cmt-semantic-status[data-cmt-tone="success"] { border-style: double !important; border-width: 3px; }
+
+html[data-cmt-display-mode="high-dark"] :where(button, a, input, textarea, select, summary, [tabindex]):focus-visible {
+  outline-color: #ffe37b;
+}
+html:is([data-cmt-display-mode="high-light"], [data-cmt-display-mode="monochrome"]) :where(button, a, input, textarea, select, summary, [tabindex]):focus-visible {
+  outline-color: #0646a0;
+}
+html[data-cmt-display-mode="high-dark"] :where(main, h1, h2, h3, h4, h5, h6)[tabindex="-1"]:focus {
+  outline-color: #ffe37b;
+}
+html:is([data-cmt-display-mode="high-light"], [data-cmt-display-mode="monochrome"]) :where(main, h1, h2, h3, h4, h5, h6)[tabindex="-1"]:focus {
+  outline-color: #0646a0;
+}
 
 /* A permanent 52px circular launcher, independent from the chatbot location. */
 .cmt-a11y-widget {
@@ -2070,7 +2116,9 @@ html[data-cmt-display-mode="monochrome"] .cmt-semantic-status[data-cmt-tone="suc
   left: 0;
   width: min(365px, calc(100vw - 1.5rem));
   max-height: min(76vh, 690px);
+  max-height: min(690px, calc(100dvh - 6.5rem - env(safe-area-inset-top) - env(safe-area-inset-bottom)));
   overflow-y: auto;
+  overscroll-behavior: contain;
   border: 1px solid #c7c7dc;
   border-radius: 18px;
   background: #fff !important;
@@ -2079,6 +2127,9 @@ html[data-cmt-display-mode="monochrome"] .cmt-semantic-status[data-cmt-tone="suc
   box-shadow: 0 22px 70px rgba(7,19,47,.35);
   font-size: .875rem;
   line-height: 1.45;
+}
+@supports not (height: 100dvh) {
+  .cmt-a11y-panel { max-height: min(76vh, 690px); }
 }
 .cmt-a11y-panel-header { display: flex; align-items: start; justify-content: space-between; gap: .75rem; }
 .cmt-a11y-panel-header h2 { margin: 0; color: #0d1b3d; font-size: 1.15rem; font-weight: 800; }
@@ -2129,6 +2180,9 @@ html[data-cmt-display-mode="monochrome"] .cmt-semantic-status[data-cmt-tone="suc
 @media (max-width: 480px) {
   .cmt-a11y-widget { left: .75rem; bottom: max(.75rem, env(safe-area-inset-bottom)); }
   .cmt-a11y-panel { width: min(355px, calc(100vw - 1.5rem)); max-height: 74vh; }
+  @supports (height: 100dvh) {
+    .cmt-a11y-panel { max-height: min(690px, calc(100dvh - 6.5rem - env(safe-area-inset-top) - env(safe-area-inset-bottom))); }
+  }
 }
 @media (forced-colors: active) {
   .cmt-a11y-launcher, .cmt-a11y-mode, .cmt-semantic-status { forced-color-adjust: auto; border: 2px solid ButtonText; }

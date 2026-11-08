@@ -185,6 +185,21 @@ describe("role and navigation contracts", () => {
       ),
     );
   });
+  it("announces login validation errors to assistive technology", () => {
+    wrapper(
+      <Routes>
+        <Route path="/login" element={<Login />} />
+      </Routes>,
+      auth("author"),
+      ["/login"],
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /Log in/i }));
+
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Please enter both email and password.",
+    );
+  });
 });
 
 describe("catalogue and relationship contracts", () => {

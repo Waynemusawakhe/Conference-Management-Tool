@@ -15,6 +15,7 @@ import AdminLayout from "../components/AdminLayout";
 import { Card, CardHeader, StateBlock, formatDateTime } from "../components/AdminUI";
 import { useApiResource } from "../hooks/useApiResource";
 import { http } from "../api/client";
+import StatusIndicator from "../components/StatusIndicator";
 
 const STATUS_CONFIG = {
   new: {
@@ -211,10 +212,7 @@ export default function ContactMessageDetailPage() {
                 eyebrow="Message"
                 title="Content"
                 action={
-                  <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[9px] font-extrabold uppercase tracking-[.06em] ${config.chip}`}>
-                    <span className={`h-1.5 w-1.5 rounded-full ${config.dot}`} />
-                    {config.label}
-                  </span>
+                  <StatusIndicator status={key} />
                 }
               />
 
@@ -249,6 +247,7 @@ export default function ContactMessageDetailPage() {
                         <button
                           key={s}
                           disabled={saving || isActive}
+                          aria-pressed={isActive}
                           onClick={() => setStatus(s)}
                           className={`inline-flex items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-[11px] font-extrabold transition ${
                             isActive
