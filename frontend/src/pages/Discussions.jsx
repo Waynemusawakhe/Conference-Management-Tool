@@ -1,303 +1,101 @@
-import { LogOut, Menu, Moon, Sun, X } from "lucide-react";
-import { useEffect, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
-import Logo from "../components/Logo";
-import { useTheme } from "../context/ThemeContext";
+import { useCallback, useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { ArrowRight, Bookmark, ChevronLeft, ChevronRight, Heart, MessageCircle, MessageSquareText, Plus, RefreshCw, Search, Send, SlidersHorizontal, Sparkles, X } from "lucide-react";
+import { discussionsApi } from "../api/discussionsApi";
 import { useAuth } from "../context/AuthContext";
+import DiscussionWorkspaceLayout from "../components/DiscussionWorkspaceLayout";
 
-const navItems = [
-  { label: "Home", target: "/home", section: "top" },
-  { label: "Conferences", target: "/conferences" },
-  { label: "About", target: "/about" },
-  { label: "Testimonials", target: "/testimonials" },
-  { label: "Discussions", target: "/discussions" },
-  { label: "Help & FAQ", target: "/help-faq" },
-  { label: "Contact", target: "/contact" },
-];
+const CATEGORIES = ["All", "General", "Research", "Conference help", "Networking", "Calls for papers"];
+const emptyDraft = { title: "", category: "General", body: "" };
+const unwrap = (r) => r?.data ?? r;
+const errorText = (e) => e?.message || "Something went wrong. Please try again.";
+const formatDate = (value) => value && !Number.isNaN(Date.parse(value)) ? new Date(value).toLocaleDateString("en-ZA", { day: "numeric", month: "short", year: "numeric" }) : "Recently";
 
-const dashboardByRole = {
-  admin: "/admin-dashboard",
-  attendee: "/attendee-dashboard",
-  author: "/author-dashboard",
-  organiser: "/organiser-dashboard",
-  organizer: "/organiser-dashboard",
-  reviewer: "/reviewer-dashboard",
-};
-
-export default function Navbar() {
-  const [open, setOpen] = useState(false);
+export default function Discussions() {
+  const { status } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
-  const { dark, toggleTheme } = useTheme();
-  const { status, role, logout } = useAuth();
+  const signedIn = status === "authenticated";
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [search, setSearch] = useState("");
+  const [query, setQuery] = useState("");
+  const [category, setCategory] = useState("All");
+  const [page, setPage] = useState(1);
+  const [lastPage, setLastPage] = useState(1);
+  const [compose, setCompose] = useState(false);
+  const [draft, setDraft] = useState(emptyDraft);
+  const [saving, setSaving] = useState(false);
+  const [actionError, setActionError] = useState("");
+  const [selectedId, setSelectedId] = useState(null);
+  const [detail, setDetail] = useState(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [reply, setReply] = useState("");
+  const [replying, setReplying] = useState(false);
+  const [busyLike, setBusyLike] = useState(false);
+  const [savedIds, setSavedIds] = useState(() => { try { return JSON.parse(localStorage.getItem("cmt_discussion_bookmarks") || "[]"); } catch { return []; } });
+  const [onlySaved, setOnlySaved] = useState(false);
 
-  const isAuthenticated = status === "authenticated";
-  const dashboardPath = dashboardByRole[role] || "/home";
+  const load = useCallback(async () => {
+    setLoading(true); setError("");
+    try {
+      const response = unwrap(await discussionsApi.getAll({ page, ...(category !== "All" ? { category } : {}), ...(query ? { search: query } : {}) }));
+      setItems(Array.isArray(response?.data) ? response.data : Array.isArray(response) ? response : []);
+      setLastPage(Math.max(1, Number(response?.last_page || 1)));
+    } catch (e) { setError(errorText(e)); }
+    finally { setLoading(false); }
+  }, [page, category, query]);
+  useEffect(() => { load(); }, [load]);
 
-  useEffect(() => {
-    setOpen(false);
-  }, [location.pathname, location.search, location.hash]);
-
-  useEffect(() => {
-    if (!open) return undefined;
-
-    const handleKeyDown = (event) => {
-      if (event.key === "Escape") {
-        setOpen(false);
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [open]);
-
-  const isActive = (target) => {
-    if (target === "/home") {
-      return location.pathname === "/" || location.pathname === "/home";
-    }
-
-    if (target === "/conferences") {
-      return (
-        location.pathname === "/conferences" ||
-        location.pathname.startsWith("/conferences/")
-      );
-    }
-
-    return location.pathname === target;
+  const openDetail = async (id) => {
+    if (!signedIn) { navigate("/login", { state: { from: "/discussions" } }); return; }
+    setSelectedId(id); setDetail(null); setDetailLoading(true); setActionError(""); setReply("");
+    try { setDetail(unwrap(await discussionsApi.getById(id))); }
+    catch (e) { setActionError(errorText(e)); }
+    finally { setDetailLoading(false); }
   };
-
-  const goTo = ({ target, section }) => {
-    setOpen(false);
-
-    const alreadyOnHome =
-      target === "/home" &&
-      (location.pathname === "/" || location.pathname === "/home");
-
-    if (location.pathname === target || alreadyOnHome) {
-      document
-        .getElementById(section || "top")
-        ?.scrollIntoView({ behavior: "smooth" });
-
-      return;
-    }
-
-    navigate(target);
-
-    if (section) {
-      window.setTimeout(() => {
-        document
-          .getElementById(section)
-          ?.scrollIntoView({ behavior: "smooth" });
-      }, 150);
-    }
+  const create = async (e) => {
+    e.preventDefault(); if (saving) return;
+    setSaving(true); setActionError("");
+    try { await discussionsApi.create({ title: draft.title.trim(), body: draft.body.trim(), category: draft.category }); setCompose(false); setDraft(emptyDraft); setSearch(""); setQuery(""); setCategory("All"); setOnlySaved(false); setPage(1); if (page === 1 && category === "All" && !query) await load(); }
+    catch (e) { setActionError(errorText(e)); }
+    finally { setSaving(false); }
   };
-
-  const handleLogout = () => {
-    setOpen(false);
-    logout();
-    navigate("/home", { replace: true });
+  const like = async () => {
+    if (!detail || busyLike) return;
+    setBusyLike(true); setActionError("");
+    try { const data = unwrap(await discussionsApi.toggleLike(detail.id)); setDetail((d) => ({ ...d, is_liked_by_current_user: Boolean(data.liked), likes_count: Number(data.likes_count) })); await load(); }
+    catch (e) { setActionError(errorText(e)); }
+    finally { setBusyLike(false); }
   };
-
-  return (
-    <header className="sticky top-0 z-50 border-b border-white/10 bg-[#07132f]/90 text-white backdrop-blur-xl">
-      <div className="mx-auto flex min-h-[82px] w-[min(1200px,calc(100%-40px))] items-center gap-7">
-        <a
-          href="/home"
-          aria-label="CMT home"
-          className="rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b9b3ff]"
-          onClick={(event) => {
-            event.preventDefault();
-            goTo(navItems[0]);
-          }}
-        >
-          <Logo />
-        </a>
-
-        <nav
-          className="hidden flex-1 items-center justify-center gap-6 lg:flex"
-          aria-label="Main navigation"
-        >
-          {navItems.map((item) => {
-            const active = isActive(item.target);
-
-            return (
-              <button
-                key={item.label}
-                type="button"
-                aria-current={active ? "page" : undefined}
-                className={`relative min-h-11 border-0 bg-transparent px-1 text-[13px] font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b9b3ff] ${
-                  active
-                    ? "text-white after:absolute after:inset-x-1 after:bottom-1 after:h-0.5 after:rounded-full after:bg-[#7d6bff] after:content-['']"
-                    : "text-white/75 hover:text-white"
-                }`}
-                onClick={() => goTo(item)}
-              >
-                {item.label}
-              </button>
-            );
-          })}
-        </nav>
-
-        <div className="hidden items-center gap-2.5 lg:flex">
-          <button
-            type="button"
-            className="grid h-11 w-11 place-items-center rounded-[11px] border border-white/20 bg-transparent text-white transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b9b3ff]"
-            onClick={toggleTheme}
-            aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
-            title={dark ? "Switch to light mode" : "Switch to dark mode"}
-          >
-            {dark ? <Sun size={17} /> : <Moon size={17} />}
-          </button>
-
-          {isAuthenticated ? (
-            <>
-              <button
-                type="button"
-                className="min-h-11 rounded-[11px] border border-white/20 bg-transparent px-[18px] text-[13px] font-bold text-white transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b9b3ff]"
-                onClick={() => navigate(dashboardPath)}
-              >
-                Dashboard
-              </button>
-
-              <button
-                type="button"
-                className="inline-flex min-h-11 items-center gap-2 rounded-[11px] bg-gradient-to-br from-[#6655f6] to-[#7869ff] px-[18px] text-[13px] font-bold text-white shadow-[0_10px_26px_rgba(103,87,245,.26)] transition hover:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b9b3ff]"
-                onClick={handleLogout}
-              >
-                <LogOut size={16} />
-                Logout
-              </button>
-            </>
-          ) : (
-            <>
-              <button
-                type="button"
-                className="min-h-11 rounded-[11px] border border-white/20 bg-transparent px-[18px] text-[13px] font-bold text-white transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b9b3ff]"
-                onClick={() => navigate("/login")}
-              >
-                Login
-              </button>
-
-              <button
-                type="button"
-                className="min-h-11 rounded-[11px] bg-gradient-to-br from-[#6655f6] to-[#7869ff] px-[18px] text-[13px] font-bold text-white shadow-[0_10px_26px_rgba(103,87,245,.26)] transition hover:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b9b3ff]"
-                onClick={() => navigate("/register")}
-              >
-                Register
-              </button>
-            </>
-          )}
-        </div>
-
-        <button
-          type="button"
-          className="ml-auto grid h-11 w-11 place-items-center rounded-lg border border-white/20 bg-transparent text-white transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b9b3ff] lg:hidden"
-          onClick={() => setOpen((value) => !value)}
-          aria-label={open ? "Close navigation" : "Open navigation"}
-          aria-controls="mobile-navigation"
-          aria-expanded={open}
-        >
-          {open ? <X size={22} /> : <Menu size={22} />}
-        </button>
-      </div>
-
-      {open && (
-        <>
-          <button
-            type="button"
-            className="fixed inset-0 z-40 cursor-default bg-[#07132f]/10 lg:hidden"
-            onClick={() => setOpen(false)}
-            aria-label="Close navigation"
-          />
-
-          <div className="absolute inset-x-0 top-full z-50 border-t border-white/10 bg-[#07132f] px-5 py-4 shadow-[0_18px_36px_rgba(7,19,47,.22)] lg:hidden">
-            <nav
-              id="mobile-navigation"
-              className="mx-auto grid w-full max-w-[1200px] gap-1"
-              aria-label="Mobile navigation"
-            >
-              {navItems.map((item) => {
-                const active = isActive(item.target);
-
-                return (
-                  <button
-                    key={item.label}
-                    type="button"
-                    aria-current={active ? "page" : undefined}
-                    className={`min-h-11 w-full rounded-lg border-0 px-3 text-left text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b9b3ff] ${
-                      active
-                        ? "bg-white/10 text-white"
-                        : "bg-transparent text-white/75 hover:bg-white/[.06] hover:text-white"
-                    }`}
-                    onClick={() => goTo(item)}
-                  >
-                    {item.label}
-                  </button>
-                );
-              })}
-
-              <div className="mt-2 flex gap-2.5 border-t border-white/10 pt-4">
-                <button
-                  type="button"
-                  className="grid h-11 w-11 shrink-0 place-items-center rounded-[11px] border border-white/20 bg-transparent text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b9b3ff]"
-                  onClick={toggleTheme}
-                  aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
-                >
-                  {dark ? <Sun size={17} /> : <Moon size={17} />}
-                </button>
-
-                {isAuthenticated ? (
-                  <>
-                    <button
-                      type="button"
-                      className="min-h-11 flex-1 rounded-[11px] border border-white/20 bg-transparent px-[18px] text-[13px] font-bold text-white"
-                      onClick={() => {
-                        setOpen(false);
-                        navigate(dashboardPath);
-                      }}
-                    >
-                      Dashboard
-                    </button>
-
-                    <button
-                      type="button"
-                      className="min-h-11 flex-1 rounded-[11px] bg-gradient-to-br from-[#6655f6] to-[#7869ff] px-[18px] text-[13px] font-bold text-white"
-                      onClick={handleLogout}
-                    >
-                      Logout
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <button
-                      type="button"
-                      className="min-h-11 flex-1 rounded-[11px] border border-white/20 bg-transparent px-[18px] text-[13px] font-bold text-white"
-                      onClick={() => {
-                        setOpen(false);
-                        navigate("/login");
-                      }}
-                    >
-                      Login
-                    </button>
-
-                    <button
-                      type="button"
-                      className="min-h-11 flex-1 rounded-[11px] bg-gradient-to-br from-[#6655f6] to-[#7869ff] px-[18px] text-[13px] font-bold text-white"
-                      onClick={() => {
-                        setOpen(false);
-                        navigate("/register");
-                      }}
-                    >
-                      Register
-                    </button>
-                  </>
-                )}
-              </div>
-            </nav>
-          </div>
-        </>
-      )}
-    </header>
-  );
+  const addReply = async (e) => {
+    e.preventDefault(); if (!detail || replying) return;
+    setReplying(true); setActionError("");
+    try { await discussionsApi.addComment(detail.id, reply.trim()); setReply(""); setDetail(unwrap(await discussionsApi.getById(detail.id))); await load(); }
+    catch (e) { setActionError(errorText(e)); }
+    finally { setReplying(false); }
+  };
+  const toggleSaved = (id) => {
+    const next = savedIds.includes(id) ? savedIds.filter((x) => x !== id) : [...savedIds, id];
+    setSavedIds(next); try { localStorage.setItem("cmt_discussion_bookmarks", JSON.stringify(next)); } catch { /* private browsing */ }
+  };
+  const visible = onlySaved ? items.filter((item) => savedIds.includes(item.id)) : items;
+  return <DiscussionWorkspaceLayout>
+    <div className="min-w-0 text-[#14213d]">
+      <section className="rounded-[24px] bg-gradient-to-br from-[#081a46] via-[#182967] to-[#584bd0] p-6 text-white shadow-lg sm:p-8">
+        <div className="flex flex-wrap items-start justify-between gap-5"><div className="max-w-2xl"><p className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[#c8c4ff]"><Sparkles size={16} /> CMT community</p><h1 className="mt-3 text-3xl font-extrabold sm:text-4xl">Discussions</h1><p className="mt-3 text-sm leading-7 text-white/80">Ask questions, share research ideas and connect with your conference community.</p></div>
+          <div className="flex flex-wrap gap-2">{signedIn && <Link to="/my-discussions" className="inline-flex items-center gap-2 rounded-xl border border-white/35 px-4 py-3 text-sm font-bold hover:bg-white/10"><MessageSquareText size={17} /> My discussions</Link>}<button type="button" onClick={() => signedIn ? (setActionError(""), setCompose(true)) : navigate("/login")} className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-3 text-sm font-bold text-[#3930a6] hover:bg-[#f0eeff]"><Plus size={17} /> Start discussion</button></div></div>
+      </section>
+      <section className="mt-6 rounded-2xl border border-[#e1e6f1] bg-white p-4 shadow-sm" aria-label="Discussion filters">
+        <form onSubmit={(e) => { e.preventDefault(); setPage(1); setQuery(search.trim()); }} className="flex flex-wrap gap-2"><label className="relative min-w-[180px] flex-1"><span className="sr-only">Search discussions</span><Search className="absolute left-3 top-3.5 text-[#6b7590]" size={18} /><input value={search} maxLength={100} onChange={(e) => setSearch(e.target.value)} placeholder="Search questions and topics" className="min-h-11 w-full rounded-xl border border-[#dbe1ee] bg-white pl-10 pr-3 text-sm text-[#14213d]" /></label><button className="rounded-xl bg-[#6252f5] px-5 py-2 font-bold text-white" type="submit">Search</button><button className="inline-flex items-center gap-2 rounded-xl border border-[#dbe1ee] px-3 text-sm font-semibold" type="button" onClick={() => { setSearch(""); setQuery(""); setCategory("All"); setOnlySaved(false); setPage(1); }}><SlidersHorizontal size={17} /> Reset</button></form>
+        <div className="mt-4 flex flex-wrap items-center gap-2">{CATEGORIES.map((item) => <button key={item} type="button" onClick={() => { setCategory(item); setPage(1); }} aria-pressed={category === item} className={`rounded-full px-3 py-2 text-xs font-bold ${category === item ? "bg-[#172b63] text-white" : "bg-[#f0f2fa] text-[#4e5a76] hover:bg-[#e4e8f6]"}`}>{item}</button>)}<button type="button" onClick={() => setOnlySaved(!onlySaved)} aria-pressed={onlySaved} className={`ml-auto inline-flex items-center gap-1 rounded-full px-3 py-2 text-xs font-bold ${onlySaved ? "bg-[#e9e5ff] text-[#4537bb]" : "bg-[#f0f2fa] text-[#4e5a76]"}`}><Bookmark size={15} /> Saved</button></div>
+      </section>
+      {error && <div role="alert" className="mt-4 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">{error} <button type="button" onClick={load} className="ml-2 font-bold underline">Retry</button></div>}
+      <div className="mt-5 flex items-center justify-between gap-2"><h2 className="text-lg font-bold">Community conversations</h2><button type="button" onClick={load} className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-[#5545d2] hover:bg-[#eeebff]"><RefreshCw size={16} /> Refresh</button></div>
+      {loading ? <p role="status" className="mt-4 rounded-2xl bg-white p-8 text-sm">Loading discussions…</p> : visible.length === 0 ? <div className="mt-4 rounded-2xl border border-dashed border-[#cdd4e3] bg-white p-10 text-center"><MessageCircle className="mx-auto text-[#6556f6]" size={32} /><h3 className="mt-3 font-bold">No discussions found</h3><p className="mt-2 text-sm text-[#65718a]">Try another filter or start a conversation.</p></div> : <div className="mt-4 grid gap-4">{visible.map((item) => <article key={item.id} className="rounded-2xl border border-[#e1e6f1] bg-white p-5 shadow-sm transition hover:border-[#b8b0ff] sm:p-6"><div className="flex items-start justify-between gap-3"><div className="min-w-0"><span className="rounded-full bg-[#eeeaff] px-3 py-1 text-xs font-bold text-[#5344c7]">{item.category || "General"}</span>{item.is_pinned && <span className="ml-2 text-xs font-bold text-[#584bd0]">Pinned</span>}<h3 className="mt-3 break-words text-lg font-extrabold">{item.title}</h3><p className="mt-2 line-clamp-3 break-words text-sm leading-6 text-[#64718a]">{item.body}</p></div><button type="button" onClick={() => toggleSaved(item.id)} aria-label={savedIds.includes(item.id) ? "Remove saved discussion" : "Save discussion"} aria-pressed={savedIds.includes(item.id)} className="shrink-0 rounded-lg p-2 text-[#5c50cb] hover:bg-[#f0edff]"><Bookmark size={19} fill={savedIds.includes(item.id) ? "currentColor" : "none"} /></button></div><div className="mt-5 flex flex-wrap items-center gap-3 border-t border-[#edf0f6] pt-4 text-xs text-[#68748c]"><span>{item.user?.name || "CMT member"} · {formatDate(item.created_at)}</span><span className="inline-flex items-center gap-1"><MessageCircle size={15} /> {item.comments_count || 0} replies</span><span className="inline-flex items-center gap-1"><Heart size={15} /> {item.likes_count || 0} likes</span><button type="button" onClick={() => openDetail(item.id)} className="ml-auto inline-flex items-center gap-1 font-bold text-[#5140c5] hover:underline">Read & reply <ArrowRight size={15} /></button></div></article>)}</div>}
+      {!loading && !onlySaved && lastPage > 1 && <nav aria-label="Discussion pages" className="mt-5 flex items-center justify-center gap-4"><button type="button" disabled={page <= 1} onClick={() => setPage((p) => p - 1)} className="rounded-lg border bg-white p-2 disabled:opacity-40" aria-label="Previous page"><ChevronLeft /></button><span className="text-sm">Page {page} of {lastPage}</span><button type="button" disabled={page >= lastPage} onClick={() => setPage((p) => p + 1)} className="rounded-lg border bg-white p-2 disabled:opacity-40" aria-label="Next page"><ChevronRight /></button></nav>}
+    </div>
+    {compose && <div className="fixed inset-0 z-[90] flex items-center justify-center overflow-y-auto bg-[#07132f]/75 p-4" role="presentation"><div role="dialog" aria-modal="true" aria-labelledby="create-discussion-heading" className="max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-2xl bg-white p-6 text-[#14213d]"><div className="flex items-center justify-between"><h2 id="create-discussion-heading" className="text-xl font-bold">Start a discussion</h2><button type="button" aria-label="Close" onClick={() => setCompose(false)}><X /></button></div><form onSubmit={create} className="mt-5 grid gap-4"><label className="grid gap-1 text-sm font-semibold">Title<input required minLength={4} maxLength={180} value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} className="rounded-xl border p-3" placeholder="What would you like to discuss?" /></label><label className="grid gap-1 text-sm font-semibold">Category<select value={draft.category} onChange={(e) => setDraft({ ...draft, category: e.target.value })} className="rounded-xl border p-3">{CATEGORIES.slice(1).map((c) => <option key={c}>{c}</option>)}</select></label><label className="grid gap-1 text-sm font-semibold">Details<textarea required minLength={10} maxLength={5000} rows={6} value={draft.body} onChange={(e) => setDraft({ ...draft, body: e.target.value })} className="rounded-xl border p-3" placeholder="Add context to help others respond" /></label>{actionError && <p role="alert" className="text-sm text-red-700">{actionError}</p>}<button disabled={saving} type="submit" className="rounded-xl bg-[#6252f5] p-3 font-bold text-white disabled:opacity-60">{saving ? "Publishing…" : "Publish discussion"}</button></form></div></div>}
+    {selectedId !== null && <div className="fixed inset-0 z-[90] flex items-center justify-center bg-[#07132f]/75 p-4"><section role="dialog" aria-modal="true" aria-labelledby="discussion-detail-heading" className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-6 text-[#14213d]"><div className="flex justify-end"><button type="button" onClick={() => { setSelectedId(null); setDetail(null); }} aria-label="Close discussion"><X /></button></div>{detailLoading ? <p role="status">Loading conversation…</p> : detail ? <><p className="text-xs font-bold uppercase tracking-wide text-[#6252f5]">{detail.category}</p><h2 id="discussion-detail-heading" className="mt-2 break-words text-2xl font-bold">{detail.title}</h2><p className="mt-2 text-xs text-[#68748c]">{detail.user?.name || "CMT member"} · {formatDate(detail.created_at)}</p><p className="mt-5 whitespace-pre-wrap break-words leading-7">{detail.body}</p><button type="button" onClick={like} disabled={busyLike} aria-pressed={Boolean(detail.is_liked_by_current_user)} className="mt-4 inline-flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-bold text-[#5a49d5]"><Heart size={17} fill={detail.is_liked_by_current_user ? "currentColor" : "none"} /> {detail.likes_count || 0} likes</button><h3 className="mt-6 border-t pt-5 font-bold">Replies ({detail.comments?.length || 0})</h3><div className="mt-3 space-y-3">{(detail.comments || []).map((comment) => <div key={comment.id} className="rounded-xl bg-[#f3f5fa] p-4"><p className="whitespace-pre-wrap break-words text-sm">{comment.body}</p><p className="mt-2 text-xs text-[#6b7690]">{comment.user?.name || "CMT member"} · {formatDate(comment.created_at)}</p></div>)}</div><form onSubmit={addReply} className="mt-5 grid gap-2"><label htmlFor="discussion-reply" className="text-sm font-bold">Add a reply</label><textarea id="discussion-reply" required minLength={2} maxLength={2000} rows={3} value={reply} onChange={(e) => setReply(e.target.value)} className="rounded-xl border p-3" placeholder="Share a helpful response" /><button disabled={replying} type="submit" className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#6252f5] px-5 py-3 font-bold text-white"><Send size={16} /> {replying ? "Posting…" : "Post reply"}</button></form></> : <h2 id="discussion-detail-heading">Discussion unavailable</h2>}{actionError && <p role="alert" className="mt-3 text-sm text-red-700">{actionError}</p>}</section></div>}
+  </DiscussionWorkspaceLayout>;
 }
