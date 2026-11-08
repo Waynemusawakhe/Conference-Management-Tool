@@ -21,6 +21,7 @@ const DEFAULTS = {
   emphasizeLinks: false,
   readingSpacing: false,
   speechRate: 1,
+  routeFocus: false,
 };
 
 function loadPreferences() {
@@ -34,6 +35,7 @@ function loadPreferences() {
         ? saved.displayMode
         : saved.contrast === true ? "high-dark" : "default",
       reduceMotion: saved.reduceMotion === true,
+      routeFocus: saved.routeFocus === true,
       emphasizeLinks: saved.emphasizeLinks === true,
       readingSpacing: saved.readingSpacing === true,
       speechRate: [0.8, 1, 1.2].includes(Number(saved.speechRate)) ? Number(saved.speechRate) : 1,
@@ -234,11 +236,12 @@ export default function AccessibilityTools() {
         main.scrollIntoView?.({ block: "start", behavior: "auto" });
       }}>Skip to main content</a>
 
+      <style>{`@keyframes cmt-a11y-appear { from { opacity:0; transform:translateY(12px) scale(.85); } to { opacity:1; transform:translateY(0) scale(1); } } @media (prefers-reduced-motion: no-preference) { .cmt-a11y-entrance { animation:cmt-a11y-appear .65s ease-out both; } }`}</style>
       <div className="cmt-a11y-widget" data-no-read>
         <button
           type="button"
           ref={trigger}
-          className="cmt-a11y-launcher"
+          className="cmt-a11y-launcher cmt-a11y-entrance"
           aria-label={open ? "Close accessibility settings" : "Open accessibility settings"}
           aria-expanded={open}
           aria-controls="cmt-accessibility-panel"
@@ -320,6 +323,10 @@ export default function AccessibilityTools() {
               <label className="cmt-a11y-check">
                 <input type="checkbox" checked={preferences.readingSpacing} disabled={!preferences.visualEnabled} onChange={(event) => update("readingSpacing", event.target.checked)} />
                 Increase reading spacing
+              </label>
+              <label className="cmt-a11y-check">
+                <input type="checkbox" checked={preferences.routeFocus} disabled={!preferences.visualEnabled} onChange={(event) => update("routeFocus", event.target.checked)} />
+                Move keyboard focus to page headings after navigation
               </label>
               <label className="cmt-a11y-check">
                 <input type="checkbox" checked={preferences.reduceMotion} disabled={!preferences.visualEnabled} onChange={(event) => update("reduceMotion", event.target.checked)} />
